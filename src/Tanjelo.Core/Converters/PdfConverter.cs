@@ -16,12 +16,19 @@ public sealed class PdfConverter : IConverter
 
     public IEnumerable<Target> TargetsFor(string input) => Formats.Key(input) == "pdf" ? Outputs : [];
 
-    public async Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx)
+    public Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx) =>
+        RenderAsync(input, input, target.Key, ctx, ctx.Progress);
+
+    /// <summary>
+    /// Renders every page of <paramref name="pdf"/> as PNG or JPG. The images are named after <paramref name="namedAfter"/>
+    /// and go beside it: one image for a one-page PDF, otherwise a "name pages" folder of numbered images.
+    /// </summary>
+    internal static async Task<IReadOnlyList<string>> RenderAsync(string pdf, string namedAfter, string key, JobContext ctx, IProgress<double> progress)
     {
         PdfDocument document;
         try
         {
-            var file = await StorageFile.GetFileFromPathAsync(Path.GetFullPath(input));
+            var file = await StorageFile.GetFileFromPathAsync(Path.GetFullPath(pdf));
             document = await PdfDocument.LoadFromFileAsync(file);
         }
         catch (Exception ex) when (ex.HResult == unchecked((int)0x8007052B))
@@ -30,8 +37,8 @@ public sealed class PdfConverter : IConverter
         }
 
         var count = (int)document.PageCount;
-        var baseName = Formats.BaseName(input);
-        var directory = OutputPaths.DirectoryOf(input);
+        var baseName = Formats.BaseName(namedAfter);
+        var directory = OutputPaths.DirectoryOf(namedAfter);
         if (count > 1)
             directory = OutputPaths.Unique(directory, baseName + " pages", "");
         Directory.CreateDirectory(directory);
@@ -49,10 +56,10 @@ public sealed class PdfConverter : IConverter
                 {
                     DestinationWidth = (uint)Math.Round(page.Size.Width * scale),
                     DestinationHeight = (uint)Math.Round(page.Size.Height * scale),
-                    BitmapEncoderId = target.Key == "jpg" ? BitmapEncoder.JpegEncoderId : BitmapEncoder.PngEncoderId,
+                    BitmapEncoderId = key == "jpg" ? BitmapEncoder.JpegEncoderId : BitmapEncoder.PngEncoderId,
                 };
                 var name = count == 1 ? baseName : $"{baseName}-{(i + 1).ToString().PadLeft(digits, '0')}";
-                var output = OutputPaths.Unique(directory, name, target.Key);
+                var output = OutputPaths.Unique(directory, name, key);
 
                 using (var rendered = new InMemoryRandomAccessStream())
                 {
@@ -62,7 +69,7 @@ public sealed class PdfConverter : IConverter
                     await rendered.AsStreamForRead().CopyToAsync(file, ctx.Cancellation);
                 }
                 outputs.Add(output);
-                ctx.Progress.Report((i + 1.0) / count);
+                progress.Report((i + 1.0) / count);
             }
         }
         catch

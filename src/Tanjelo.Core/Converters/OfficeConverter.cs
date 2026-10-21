@@ -24,6 +24,9 @@ public sealed class OfficeConverter(Toolbox tools) : IConverter
         new("rtf", "RTF", "Rich text", Section.Document),
         new("odt", "ODT", "OpenDocument text", Section.Document),
         new("txt", "TXT", "Plain text, UTF-8", Section.Document),
+        new("html", "HTML", "Web page; pictures go in a folder beside it", Section.Document),
+        new("png", "PNG", "One image per page", Section.Image),
+        new("jpg", "JPG", "One image per page", Section.Image),
     ];
 
     static readonly Target[] PowerPointOutputs =
@@ -51,7 +54,7 @@ public sealed class OfficeConverter(Toolbox tools) : IConverter
         var key = Formats.Key(input);
         return Formats.KindOf(input) switch
         {
-            FileKind.WordDocument when tools.Word => key == "txt" ? WordOutputs.Where(t => t.Key is "pdf" or "docx") : WordOutputs,
+            FileKind.WordDocument when tools.Word => key == "txt" ? WordOutputs.Where(t => t.Key is "pdf" or "docx" or "html" or "png" or "jpg") : WordOutputs,
             FileKind.Pdf when tools.Word => [new Target("docx", "DOCX", "Editable Word document", Section.Document)],
             FileKind.Presentation when tools.PowerPoint => PowerPointOutputs,
             // Plain-text tables offer the formats worth turning them into, not every Excel format.
@@ -77,13 +80,22 @@ public sealed class OfficeConverter(Toolbox tools) : IConverter
         File.Copy(original, copy);
 
         var kind = Formats.KindOf(input);
+        if (kind == FileKind.WordDocument && target.Key is "png" or "jpg")
+        {
+            // Word can't save pages as images, so it exports a PDF and Windows renders the pages from that.
+            var pdf = Path.Combine(temp.Path, "pages.pdf");
+            await Guarded(office, ctx, () => [office.ConvertWord(copy, pdf, "pdf")]);
+            ctx.Progress.Report(0.5);
+            return await PdfConverter.RenderAsync(pdf, original, target.Key, ctx, new ActionProgress<double>(f => ctx.Progress.Report(0.5 + f / 2)));
+        }
+
         using var stopPromptWatcher = new CancellationTokenSource();
         var promptWatcher = kind == FileKind.Pdf ? PdfImportPrompt.ConfirmUntilAsync(stopPromptWatcher.Token) : Task.CompletedTask;
         try
         {
             return await Guarded(office, ctx, () => kind switch
             {
-                FileKind.WordDocument or FileKind.Pdf => [office.ConvertWord(copy, original, target.Key)],
+                FileKind.WordDocument or FileKind.Pdf => [office.ConvertWord(copy, OutputPaths.Beside(original, target.Key), target.Key)],
                 FileKind.Presentation => office.ConvertPowerPoint(copy, original, target.Key),
                 FileKind.Spreadsheet => [office.ConvertExcel(copy, original, target.Key)],
                 _ => throw new ConversionException("Not an Office document."),
@@ -168,10 +180,10 @@ public sealed class OfficeConverter(Toolbox tools) : IConverter
         bool _ownsWord, _ownsPowerPoint, _ownsExcel;
         int _wordAlerts;
 
-        public string ConvertWord(string source, string original, string key)
+        /// <summary>Opens <paramref name="source"/> in Word and writes it to <paramref name="output"/> in the <paramref name="key"/> format.</summary>
+        public string ConvertWord(string source, string output, string key)
         {
             var word = Word();
-            var output = OutputPaths.Beside(original, key);
             dynamic doc = Formats.Key(source) == "pdf"
                 // A document password makes Word's PDF import treat the file as encrypted, so leave it out here.
                 ? word.Documents.Open(FileName: source, ConfirmConversions: false, ReadOnly: true, AddToRecentFiles: false, Visible: false)
@@ -193,9 +205,10 @@ public sealed class OfficeConverter(Toolbox tools) : IConverter
                         "rtf" => 6,   // wdFormatRTF
                         "odt" => 23,  // wdFormatOpenDocumentText
                         "txt" => 2,   // wdFormatText
+                        "html" => 10, // wdFormatFilteredHTML: clean HTML without Office-only markup
                         _ => throw new ConversionException($"Word can't save as {key}."),
                     };
-                    if (key == "txt")
+                    if (key is "txt" or "html")
                         doc.SaveAs2(FileName: output, FileFormat: format, AddToRecentFiles: false, Encoding: 65001);
                     else
                         doc.SaveAs2(FileName: output, FileFormat: format, AddToRecentFiles: false);

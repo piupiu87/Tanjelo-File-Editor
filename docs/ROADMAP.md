@@ -41,7 +41,7 @@ Conversions
 - [x] WMV and WMA output, via ffmpeg (S, *good first issue*)
 - [x] Plain TAR and single-file GZIP output (S, *good first issue*)
 - [x] PDF to images at 300 DPI by default, up from 200 (S, *good first issue*)
-- [ ] Word and text documents to HTML (Word), and to JPG/PNG (convert to PDF, then render the pages) (S)
+- [x] Word and text documents to HTML (Word), and to JPG/PNG (convert to PDF, then render the pages) (S)
 
 Tools that need no dialog
 - [ ] Mute video (S, *good first issue*)

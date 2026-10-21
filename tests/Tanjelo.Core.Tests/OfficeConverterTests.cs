@@ -44,6 +44,59 @@ public class WordTests
         Assert.Contains("A second paragraph.", File.ReadAllText(txt));
     }
 
+    [Theory]
+    [InlineData("letter.txt")]
+    [InlineData("letter.docx")]
+    public async Task Documents_become_web_pages(string name)
+    {
+        Assert.SkipUnless(Env.Tools.Word, Env.NoWord);
+        using var scratch = new Scratch();
+        var input = scratch.Text("letter.txt", Text);
+        if (name.EndsWith(".docx"))
+        {
+            input = await Env.RunOne("docx", input);
+            File.Delete(scratch.PathOf("letter.txt"));
+        }
+
+        var html = await Env.RunOne("html", input);
+
+        Assert.Equal(scratch.PathOf("letter.html"), html);
+        var content = System.Text.RegularExpressions.Regex.Replace(File.ReadAllText(html), @"\s+", " "); // Word wraps its HTML source
+        Assert.Contains("<html", content, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("A second paragraph.", content);
+    }
+
+    [Theory]
+    [InlineData("png", ImageMagick.MagickFormat.Png)]
+    [InlineData("jpg", ImageMagick.MagickFormat.Jpeg)]
+    public async Task A_one_page_document_becomes_one_image(string key, ImageMagick.MagickFormat format)
+    {
+        Assert.SkipUnless(Env.Tools.Word, Env.NoWord);
+        using var scratch = new Scratch();
+        var output = await Env.RunOne(key, scratch.Text("note.txt", Text));
+
+        Assert.Equal(scratch.PathOf("note." + key), output);
+        var info = Inspect.Image(output);
+        Assert.Equal(format, info.Format);
+        Assert.True(info.Width >= 2400, $"rendered {info.Width} px wide; 300 DPI expected"); // Letter or A4 at 300 DPI
+    }
+
+    [Fact]
+    public async Task A_longer_document_becomes_a_folder_with_an_image_per_page()
+    {
+        Assert.SkipUnless(Env.Tools.Word, Env.NoWord);
+        using var scratch = new Scratch();
+        var lines = string.Join("\r\n", Enumerable.Range(1, 150).Select(i => $"Line {i} of a document long enough for several pages."));
+        var docx = await Env.RunOne("docx", scratch.Text("report.txt", lines));
+
+        var folder = await Env.RunOne("png", docx);
+
+        Assert.Equal(scratch.PathOf("report pages"), folder);
+        var pages = Directory.GetFiles(folder).Select(Path.GetFileName).Order().ToList();
+        Assert.True(pages.Count >= 2, $"{pages.Count} pages");
+        Assert.Equal("report-1.png", pages[0]);
+    }
+
     [Fact]
     public async Task A_pdf_becomes_an_editable_docx()
     {

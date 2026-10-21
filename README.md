@@ -34,7 +34,7 @@ The shortcut is only grabbed while Explorer or the desktop is in front, so other
 | PDF | PNG / JPG (one per page), DOCX (editable, via Word) | Windows PDF renderer (built in), Word |
 | Video (MP4, MOV, MKV, WebM, AVI, WMV…) | MP4, MOV, MKV, WebM, AVI, WMV, animated GIF, and audio only as MP3, M4A, WAV, FLAC | ffmpeg; container-only changes are lossless re-wraps |
 | Audio (MP3, WAV, FLAC, M4A, OGG, Opus, WMA, AIFF) | MP3, M4A, WAV, FLAC, OGG, Opus, AIFF, WMA | ffmpeg |
-| Word, RTF, ODT, TXT | PDF, DOCX, DOC, RTF, ODT, TXT | Microsoft Word (or LibreOffice) |
+| Word, RTF, ODT, TXT | PDF, DOCX, DOC, RTF, ODT, TXT, HTML, PNG / JPG per page | Microsoft Word (or LibreOffice, without HTML and images) |
 | PowerPoint, ODP | PDF, PPTX, PPT, ODP, PNG / JPG per slide | Microsoft PowerPoint (or LibreOffice) |
 | Excel, ODS, CSV, TSV | PDF, XLSX, XLS, ODS, CSV, TSV | Microsoft Excel (or LibreOffice, except TSV) |
 | Subtitles (SRT, VTT) | SRT, VTT, TXT (just the words) | Built in |
