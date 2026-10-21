@@ -25,5 +25,7 @@ Tanjelo starts these as separate programs that the user installs, and doesn't re
 | [LibreOffice](https://www.libreoffice.org) | MPL-2.0 |
 | Microsoft Office | Proprietary; controlled through its documented COM automation interface |
 | Windows `tar.exe` (libarchive) | Part of Windows |
+| [Windows Terminal](https://github.com/microsoft/terminal) | MIT; opened by "Open in Terminal" |
+| Windows PowerShell | Part of Windows; the fallback for "Open in Terminal" |
 
 If you redistribute a build that bundles any of these (for example FFmpeg next to the app), that build takes on their license obligations too.

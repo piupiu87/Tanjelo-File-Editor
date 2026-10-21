@@ -24,6 +24,9 @@ The app isn't code-signed yet, so the first launch may show "Windows protected y
 | "Send to" menu | Turn on *Show in "Send to" menu* in the tray menu, then right-click files → Send to → Tanjelo |
 | Command line | `tanj convert webp *.png` (see below) |
 
+The menu has three tabs: **Convert**, **Tools** and **Actions**. Press **Tab** (or the shortcut again) to switch, or
+just type: `mute` finds the Mute tool from any tab.
+
 The shortcut is only grabbed while Explorer or the desktop is in front, so other apps keep their own Ctrl+Shift+Space.
 
 ## What converts to what
@@ -42,6 +45,26 @@ The shortcut is only grabbed while Explorer or the desktop is in front, so other
 | Any files or folders | Compress to ZIP or 7Z, pack into TAR; single files to GZIP (`notes.txt.gz`) | 7-Zip or .NET |
 
 With several files selected, the menu shows the formats they can all become. Files already in the chosen format are skipped.
+
+## Tools and actions
+
+Tools change a copy of a file and keep its format. The copy goes beside the original, named after the change:
+`talk-muted.mp4`, `song-normalized.mp3`, `clip-part1.mp4`, `Merged.pdf`.
+
+| For | Tools | Engine |
+|---|---|---|
+| Video | Mute (no re-encoding) · 0.5×, 1.5× or 2× speed, keeping the pitch · split in 2, 3 or 4 equal parts (cut losslessly at keyframes when they line up) | ffmpeg |
+| Audio | Normalize volume to −16 LUFS (two passes, one steady gain) · to mono · to stereo · trim silence from the start and end | ffmpeg |
+| PDF | Split into one PDF per page · merge several PDFs in the order selected | PDFsharp (built in) |
+
+Actions work with the selected files and folders themselves:
+
+| Action | What it does |
+|---|---|
+| Copy path | Puts the full path of each item on the clipboard, one per line |
+| Copy | Puts the items on the clipboard, ready to paste into a folder, an email or a chat |
+| Open in Terminal | Opens Windows Terminal (or PowerShell) in each selected folder, or in the folder holding the selected files |
+| Move to… | Moves the selection into a folder you pick; names already taken there get " (2)" |
 
 ## Requirements
 
@@ -75,8 +98,16 @@ Errors are logged to `%LOCALAPPDATA%\Tanjelo\log.txt`.
 
 ```
 tanj tools                          # which external tools were found
-tanj targets <files...>             # what the selection can become
-tanj convert <format> <files...>    # e.g. tanj convert mp3 talk.mp4
+tanj targets <files...>             # what the selection can become, and its tools and actions
+tanj convert <key> <files...>       # e.g. tanj convert mp3 talk.mp4, tanj convert mute talk.mp4
+```
+
+Some tools take settings, shown in brackets by `tanj targets`. Override them with `--name=value`:
+
+```
+tanj convert split-video-2 --parts=5 lecture.mp4
+tanj convert speed-2x --factor=3 timelapse.mp4
+tanj convert move-to --folder=D:\Archive *.jpg
 ```
 
 ## Building
@@ -115,8 +146,8 @@ Office sometimes stops on prompts that its "no alerts" setting doesn't cover. Ta
 
 ## Roadmap
 
-Next up: subtitles, more audio and video tools, PDF merge and split, and quick file actions such as Copy Path and
-Open in Terminal. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are welcome; open an
+Next up: a shared options dialog, then the tools that need one, such as compressing to a target size, cropping,
+metadata editing and joining videos. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are welcome; open an
 issue first for anything big.
 
 ## License

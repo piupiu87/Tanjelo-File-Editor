@@ -32,7 +32,7 @@ Build the plumbing later releases need, and close the easy gaps.
 Foundations
 - [x] Automated tests for `Tanjelo.Core`, run in CI with generated fixtures (M)
 - [x] Tools in the engine: operations that aren't format conversions, with optional parameters (S)
-- [x] Menu tabs **Convert / Tools / Actions**, switched with Tab or a second hotkey (Tangerine uses Shift / ⌘ / Control) (M)
+- [x] Menu tabs **Convert / Tools / Actions**, switched with Tab or by pressing the hotkey again (Tangerine uses Shift / ⌘ / Control) (M)
 - [x] PDF library for page-level work: PDFsharp 6.2.4, the last MIT release (6.5.0 moved to AGPL-3.0) (S)
 
 Conversions
