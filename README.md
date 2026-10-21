@@ -107,6 +107,12 @@ Office sometimes stops on prompts that its "no alerts" setting doesn't cover. Ta
 - Each Office call runs under a 3-minute watchdog. The watchdog only ever closes Office instances that Tanjelo started itself, never one you have open.
 - When Word imports a PDF, its "Word will now convert your PDF…" notice is confirmed automatically. The "don't show again" box is never ticked.
 
+## Roadmap
+
+Next up: subtitles, more audio and video tools, PDF merge and split, and quick file actions such as Copy Path and
+Open in Terminal. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are welcome; open an
+issue first for anything big.
+
 ## License
 
 [MIT](LICENSE). Release builds include ImageMagick and other libraries under their own licences; see
