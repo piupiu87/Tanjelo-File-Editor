@@ -167,7 +167,12 @@ public sealed class CombinePdfOperation : IBatchOperation
     public IEnumerable<Target> TargetsFor(IReadOnlyList<string> inputs)
     {
         if (inputs.Count >= 2 && inputs.All(i => Formats.KindOf(i) == FileKind.Image))
-            yield return new Target("combine-pdf", "One PDF", $"Combine {inputs.Count} images as pages", Section.Document) { IsBatch = true };
+            yield return new Target("combine-pdf", "One PDF", $"Combine {inputs.Count} images as pages", Section.Document)
+            {
+                IsBatch = true,
+                Running = "Combining into a PDF…",
+                Done = "Combined into one PDF",
+            };
     }
 
     public Task<IReadOnlyList<string>> RunAsync(IReadOnlyList<string> inputs, Target target, JobContext ctx) => Task.Run<IReadOnlyList<string>>(() =>

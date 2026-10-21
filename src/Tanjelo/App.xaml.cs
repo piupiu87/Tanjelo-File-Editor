@@ -165,7 +165,7 @@ public partial class App : Application
         {
             var result = await Task.Run(() => engine.RunAsync(files, target, progress, cancel.Token));
             foreach (var failure in result.Failures) Log.Write($"{target.Key}: {failure.Input}: {failure.Message}");
-            toast.ShowResult(target, files.Count, result);
+            toast.ShowResult(target, files, result);
         }
         catch (Exception ex)
         {

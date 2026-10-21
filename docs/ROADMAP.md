@@ -31,7 +31,7 @@ Build the plumbing later releases need, and close the easy gaps.
 
 Foundations
 - [x] Automated tests for `Tanjelo.Core`, run in CI with generated fixtures (M)
-- [ ] Tools in the engine: operations that aren't format conversions, with optional parameters (S)
+- [x] Tools in the engine: operations that aren't format conversions, with optional parameters (S)
 - [ ] Menu tabs **Convert / Tools / Actions**, switched with Tab or a second hotkey (Tangerine uses Shift / ⌘ / Control) (M)
 - [ ] PDF library for page-level work: PDFsharp (MIT) (S)
 

@@ -15,7 +15,7 @@ public sealed class ArchiveConverter(Toolbox tools) : IConverter
         if (!Formats.Archives.Contains(key) || !Archiver.CanExtract(tools, key))
             yield break;
 
-        yield return new Target("extract", "Extract here", "Unpack next to the archive", Section.Archive);
+        yield return new Target("extract", "Extract here", "Unpack next to the archive", Section.Archive) { Running = "Extracting…", Done = "Extracted" };
         if (!Repackable.Contains(key))
             yield break;
         yield return new Target("zip", "ZIP", "Opens anywhere", Section.Archive);
@@ -114,9 +114,9 @@ public sealed class CompressOperation(Toolbox tools) : IBatchOperation
         if (inputs.All(i => Formats.KindOf(i) == FileKind.Archive))
             yield break;
         var what = inputs.Count == 1 ? "Compress into" : $"Compress {inputs.Count} items into";
-        yield return new Target("compress-zip", "ZIP", $"{what} a .zip", Section.Archive) { IsBatch = true };
+        yield return new Target("compress-zip", "ZIP", $"{what} a .zip", Section.Archive) { IsBatch = true, Running = "Compressing…", Done = "Compressed to ZIP" };
         if (tools.SevenZip is not null)
-            yield return new Target("compress-7z", "7Z", $"{what} a .7z (smaller)", Section.Archive) { IsBatch = true };
+            yield return new Target("compress-7z", "7Z", $"{what} a .7z (smaller)", Section.Archive) { IsBatch = true, Running = "Compressing…", Done = "Compressed to 7Z" };
     }
 
     public async Task<IReadOnlyList<string>> RunAsync(IReadOnlyList<string> inputs, Target target, JobContext ctx)

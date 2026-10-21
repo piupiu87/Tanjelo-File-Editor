@@ -37,13 +37,7 @@ public partial class ProgressToast : Window
 
     public void ShowRunning(Target target, int count)
     {
-        Heading.Text = target.Key switch
-        {
-            "extract" => "Extracting…",
-            "compress-zip" or "compress-7z" => "Compressing…",
-            "combine-pdf" => "Combining into a PDF…",
-            _ => $"Converting to {target.Label}…",
-        };
+        Heading.Text = target.RunningText;
         Detail.Text = count == 1 ? "" : $"{count} items";
         SetButtons(primary: null, secondary: ("Cancel", () => CancelRequested?.Invoke()));
     }
@@ -56,39 +50,40 @@ public partial class ProgressToast : Window
         if (!Bar.IsIndeterminate) Bar.Value = progress.Fraction;
     }
 
-    public void ShowResult(Target target, int inputCount, BatchResult result)
+    public void ShowResult(Target target, IReadOnlyList<string> inputs, BatchResult result)
     {
         var outputs = result.Outputs;
         var failures = result.Failures;
+        var inputCount = inputs.Count;
 
         if (result.Canceled)
         {
             Finish(Mood.Info, "Canceled", outputs.Count > 0 ? $"{Count(outputs.Count, "file")} finished before you canceled." : "Nothing was changed.",
                 outputs.Count > 0 ? Reveal(outputs) : null, null, TimeSpan.FromSeconds(4));
         }
-        else if (failures.Count == 0 && outputs.Count == 0)
+        else if (failures.Count == 0 && outputs.Count == 0 && target.Kind != TargetKind.Action)
         {
             Finish(Mood.Info, "Nothing to do", $"Already {target.Label}.", null, null, TimeSpan.FromSeconds(4));
         }
+        else if (failures.Count == 0 && outputs.Count == 0)
+        {
+            // Actions such as "Copy path" work on the selection itself and make no files.
+            var detail = inputCount == 1 ? Path.GetFileName(inputs[0].TrimEnd('\\')) : Count(inputCount, "item");
+            Finish(Mood.Success, target.DoneText, detail, null, null, TimeSpan.FromSeconds(4));
+        }
         else if (failures.Count == 0)
         {
-            var heading = target.Key switch
-            {
-                "extract" => "Extracted",
-                "compress-zip" or "compress-7z" => $"Compressed to {target.Label}",
-                "combine-pdf" => "Combined into one PDF",
-                _ => $"Converted to {target.Label}",
-            };
             var detail = outputs.Count == 1 ? Path.GetFileName(outputs[0]) : Count(outputs.Count, "file");
             if (result.Skipped.Count > 0) detail += $" · {result.Skipped.Count} already {target.Label}";
             (string, Action)? open = outputs.Count == 1 ? ("Open", () => Open(outputs[0])) : null;
-            Finish(Mood.Success, heading, detail, Reveal(outputs), open, TimeSpan.FromSeconds(7));
+            Finish(Mood.Success, target.DoneText, detail, Reveal(outputs), open, TimeSpan.FromSeconds(7));
         }
         else
         {
             var first = failures[0];
+            var what = inputCount == 1 ? Path.GetFileName(first.Input) : Count(inputCount, "item");
             var heading = failures.Count == inputCount
-                ? inputCount == 1 ? $"Couldn't convert {Path.GetFileName(first.Input)}" : $"Couldn't convert {Count(inputCount, "item")}"
+                ? target.Kind == TargetKind.Convert ? $"Couldn't convert {what}" : $"{target.Label} didn't work on {what}"
                 : $"{failures.Count} of {inputCount} failed";
             var detail = inputCount == 1 ? first.Message : $"{Path.GetFileName(first.Input)}: {first.Message}";
             var report = string.Join(Environment.NewLine, failures.Select(f => $"{f.Input}: {f.Message}"));

@@ -17,20 +17,26 @@ public sealed class ConverterEngine
     public ConverterOptions Options { get; }
 
     public ConverterEngine(Toolbox tools, ConverterOptions? options = null)
+        // Order matters: when two converters offer the same key for a file, the earlier one wins.
+        : this(tools, options,
+            [
+                new ImageConverter(),
+                new PdfConverter(),
+                new OfficeConverter(tools),
+                new LibreOfficeConverter(tools),
+                new MediaConverter(tools),
+                new ArchiveConverter(tools),
+            ],
+            [new CombinePdfOperation(), new CompressOperation(tools)])
+    {
+    }
+
+    internal ConverterEngine(Toolbox tools, ConverterOptions? options, IConverter[] converters, IBatchOperation[] batchOperations)
     {
         Tools = tools;
         Options = options ?? new ConverterOptions();
-        // Order matters: when two converters offer the same key for a file, the earlier one wins.
-        _converters =
-        [
-            new ImageConverter(),
-            new PdfConverter(),
-            new OfficeConverter(tools),
-            new LibreOfficeConverter(tools),
-            new MediaConverter(tools),
-            new ArchiveConverter(tools),
-        ];
-        _batchOperations = [new CombinePdfOperation(), new CompressOperation(tools)];
+        _converters = converters;
+        _batchOperations = batchOperations;
     }
 
     /// <summary>Formats every selected file can become, plus whole-selection operations.</summary>
@@ -41,13 +47,16 @@ public sealed class ConverterEngine
 
         // Converters list every output they can write, including the input's own format. A file that is
         // already in a format just gets skipped, so "PNG" stays on offer for a mixed PNG + JPG selection.
+        // Tools and actions have to be offered for every file.
         var perFile = inputs
             .Select(input => (Own: Formats.Key(input), Keys: PerFileTargets(input).Select(x => x.Target.Key).ToHashSet()))
             .ToList();
         var common = inputs
             .SelectMany(input => PerFileTargets(input).Select(x => x.Target))
             .DistinctBy(t => t.Key)
-            .Where(t => perFile.All(f => f.Own == t.Key || f.Keys.Contains(t.Key)) && perFile.Any(f => f.Own != t.Key));
+            .Where(t => t.Kind == TargetKind.Convert
+                ? perFile.All(f => f.Own == t.Key || f.Keys.Contains(t.Key)) && perFile.Any(f => f.Own != t.Key)
+                : perFile.All(f => f.Keys.Contains(t.Key)));
 
         var primary = PrimarySection(inputs[0]);
         var targets = common
@@ -67,6 +76,7 @@ public sealed class ConverterEngine
         return new MenuModel(targets, hints);
     }
 
+    /// <summary>Runs a menu entry over the selection. The entry's parameter values are used as given.</summary>
     public async Task<BatchResult> RunAsync(IReadOnlyList<string> inputs, Target target, IProgress<BatchProgress>? progress = null, CancellationToken ct = default)
     {
         using var ctx = new JobContext { Tools = Tools, Options = Options, Cancellation = ct };
@@ -79,12 +89,14 @@ public sealed class ConverterEngine
             if (target.IsBatch)
             {
                 var label = inputs.Count == 1 ? Path.GetFileName(inputs[0]) : $"{inputs.Count} items";
-                var op = _batchOperations.First(b => b.TargetsFor(inputs).Any(t => t.Key == target.Key));
+                var (op, own) = _batchOperations
+                    .SelectMany(b => b.TargetsFor(inputs).Where(t => t.Key == target.Key).Select(t => (Op: b, Target: t)))
+                    .First();
                 ctx.Progress = new ActionProgress<double>(f => progress?.Report(new BatchProgress(0, 1, label, Math.Clamp(f, 0, 1))));
                 progress?.Report(new BatchProgress(0, 1, label, double.NaN));
                 try
                 {
-                    outputs.AddRange(await op.RunAsync(inputs, target, ctx));
+                    outputs.AddRange(await op.RunAsync(inputs, own.WithParameters(target.Parameters), ctx));
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
@@ -103,7 +115,7 @@ public sealed class ConverterEngine
                     ctx.Progress = new ActionProgress<double>(f =>
                         progress?.Report(new BatchProgress(index, inputs.Count, name, (index + Math.Clamp(f, 0, 1)) / inputs.Count)));
 
-                    if (Formats.Key(input) == target.Key)
+                    if (target.Kind == TargetKind.Convert && Formats.Key(input) == target.Key)
                     {
                         skipped.Add(input);
                         continue;
@@ -111,12 +123,14 @@ public sealed class ConverterEngine
                     var match = PerFileTargets(input).FirstOrDefault(x => x.Target.Key == target.Key);
                     if (match.Converter is null)
                     {
-                        failures.Add(new Failure(input, $"Can't convert this file to {target.Label}."));
+                        failures.Add(new Failure(input, target.Kind == TargetKind.Convert
+                            ? $"Can't convert this file to {target.Label}."
+                            : $"{target.Label} doesn't work on this file."));
                         continue;
                     }
                     try
                     {
-                        outputs.AddRange(await match.Converter.ConvertAsync(input, match.Target, ctx));
+                        outputs.AddRange(await match.Converter.ConvertAsync(input, match.Target.WithParameters(target.Parameters), ctx));
                     }
                     catch (Exception ex) when (ex is not OperationCanceledException)
                     {
