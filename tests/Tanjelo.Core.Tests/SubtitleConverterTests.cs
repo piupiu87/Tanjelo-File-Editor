@@ -138,8 +138,8 @@ public class SubtitleConverterTests
     public void Subtitle_files_offer_the_other_format_and_text()
     {
         using var scratch = new Scratch();
-        Assert.Equal(["vtt", "txt"], Env.Keys(scratch.Text("a.srt", Srt)).Where(k => !k.StartsWith("compress-")));
-        Assert.Equal(["srt", "txt"], Env.Keys(scratch.Text("a.vtt", Vtt)).Where(k => !k.StartsWith("compress-")));
+        Assert.Equal(["vtt", "txt"], Env.Keys(Section.Document, scratch.Text("a.srt", Srt)));
+        Assert.Equal(["srt", "txt"], Env.Keys(Section.Document, scratch.Text("a.vtt", Vtt)));
     }
 
     static bool HasBom(string path) => File.ReadAllBytes(path) is [0xEF, 0xBB, 0xBF, ..];

@@ -49,6 +49,9 @@ static class Env
     }
 
     public static IReadOnlyList<string> Keys(params string[] inputs) => Engine().GetMenu(inputs).Targets.Select(t => t.Key).ToList();
+
+    public static IReadOnlyList<string> Keys(Section section, params string[] inputs) =>
+        Engine().GetMenu(inputs).Targets.Where(t => t.Section == section).Select(t => t.Key).ToList();
 }
 
 /// <summary>A scratch folder per test, with generators for the files the converters read.</summary>

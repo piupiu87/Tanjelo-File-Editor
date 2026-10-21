@@ -51,8 +51,9 @@ public class EngineTests
     public void Folders_and_unknown_files_can_only_be_compressed()
     {
         using var scratch = new Scratch();
-        Assert.All(Env.Keys(scratch.Folder("photos", "a.txt")), key => Assert.StartsWith("compress-", key));
-        Assert.All(Env.Keys(scratch.Text("data.xyz", "?")), key => Assert.StartsWith("compress-", key));
+        var convert = (string[] inputs) => Env.Engine().GetMenu(inputs).Targets.Where(t => t.Kind == TargetKind.Convert).Select(t => t.Key);
+        Assert.All(convert([scratch.Folder("photos", "a.txt")]), key => Assert.StartsWith("compress-", key));
+        Assert.All(convert([scratch.Text("data.xyz", "?")]), key => Assert.True(key.StartsWith("compress-") || key == "gz", key));
     }
 
     [Fact]

@@ -38,8 +38,8 @@ The shortcut is only grabbed while Explorer or the desktop is in front, so other
 | PowerPoint, ODP | PDF, PPTX, PPT, ODP, PNG / JPG per slide | Microsoft PowerPoint (or LibreOffice) |
 | Excel, ODS, CSV, TSV | PDF, XLSX, XLS, ODS, CSV, TSV | Microsoft Excel (or LibreOffice, except TSV) |
 | Subtitles (SRT, VTT) | SRT, VTT, TXT (just the words) | Built in |
-| ZIP, 7Z, RAR, TAR(.GZ/.BZ2/.XZ), ISO, CAB | Extract here, ZIP, 7Z, TAR.GZ | 7-Zip, Windows `tar`, .NET |
-| Any files or folders | Compress to ZIP or 7Z | 7-Zip or .NET |
+| ZIP, 7Z, RAR, TAR(.GZ/.BZ2/.XZ), ISO, CAB, GZ | Extract here, ZIP, 7Z, TAR.GZ, TAR | 7-Zip, Windows `tar`, .NET |
+| Any files or folders | Compress to ZIP or 7Z, pack into TAR; single files to GZIP (`notes.txt.gz`) | 7-Zip or .NET |
 
 With several files selected, the menu shows the formats they can all become. Files already in the chosen format are skipped.
 

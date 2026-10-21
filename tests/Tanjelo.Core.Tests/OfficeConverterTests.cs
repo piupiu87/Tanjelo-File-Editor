@@ -107,8 +107,8 @@ public class ExcelTests
     {
         Assert.SkipUnless(Env.Tools.Excel, Env.NoExcel);
         using var scratch = new Scratch();
-        Assert.Equal(["pdf", "xlsx", "tsv"], Env.Keys(scratch.Text("a.csv", "x")).Where(k => !k.StartsWith("compress-")));
-        Assert.Equal(["pdf", "xlsx", "csv"], Env.Keys(scratch.Text("a.tsv", "x")).Where(k => !k.StartsWith("compress-")));
+        Assert.Equal(["pdf", "xlsx", "tsv"], Env.Keys(Section.Document, scratch.Text("a.csv", "x")));
+        Assert.Equal(["pdf", "xlsx", "csv"], Env.Keys(Section.Document, scratch.Text("a.tsv", "x")));
     }
 
     [Theory]

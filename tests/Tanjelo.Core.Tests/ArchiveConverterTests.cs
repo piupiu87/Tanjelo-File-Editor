@@ -112,6 +112,58 @@ public class ArchiveConverterTests
         Assert.Equal("compressed text", File.ReadAllText(output));
     }
 
+    [Fact]
+    public async Task A_zip_repacks_as_plain_tar_and_back()
+    {
+        using var scratch = new Scratch();
+        var zip = Zip(scratch, "bundle.zip", "a.txt", "b.txt");
+
+        var tar = await Env.RunOne("tar", zip);
+        Assert.Equal(scratch.PathOf("bundle.tar"), tar);
+        File.Delete(zip);
+
+        var folder = await Env.RunOne("extract", tar);
+        Assert.Equal(["a.txt", "b.txt"], Directory.GetFiles(folder).Select(Path.GetFileName).Order());
+    }
+
+    [Fact]
+    public async Task Files_and_folders_pack_into_an_uncompressed_tar()
+    {
+        using var scratch = new Scratch();
+        var output = await Env.RunOne("compress-tar", scratch.Folder("photos", "a.txt"), scratch.Text("notes.txt", "hello"));
+
+        Assert.Equal(scratch.PathOf("Archive.tar"), output);
+        using var reader = new System.Formats.Tar.TarReader(File.OpenRead(output));
+        var names = new List<string>();
+        while (reader.GetNextEntry() is { } entry) names.Add(entry.Name);
+        Assert.Equal(["notes.txt", "photos", "photos/a.txt"], names.Order());
+    }
+
+    [Fact]
+    public async Task Each_file_gzips_on_its_own_and_extracts_back()
+    {
+        using var scratch = new Scratch();
+        var notes = scratch.Text("notes.txt", "some text worth keeping");
+        var data = scratch.Text("data.csv", "a,b");
+
+        var result = await Env.Run("gz", notes, data);
+
+        Assert.Equal([scratch.PathOf("notes.txt.gz"), scratch.PathOf("data.csv.gz")], result.Outputs);
+        File.Delete(notes);
+        Assert.Equal(notes, await Env.RunOne("extract", scratch.PathOf("notes.txt.gz")));
+        Assert.Equal("some text worth keeping", File.ReadAllText(notes));
+    }
+
+    [Fact]
+    public void Gzip_is_offered_for_files_but_not_for_archives_or_folders()
+    {
+        using var scratch = new Scratch();
+        Assert.Contains("gz", Env.Keys(scratch.Image("a.png")));
+        Assert.DoesNotContain("gz", Env.Keys(Zip(scratch, "b.zip", "x.txt")));
+        Assert.DoesNotContain("gz", Env.Keys(scratch.Folder("c")));
+        Assert.DoesNotContain("gz", Env.Keys(scratch.Image("d.png"), scratch.Folder("e")));
+    }
+
     static string Zip(Scratch scratch, string name, params string[] files)
     {
         var source = scratch.Folder(Path.GetFileNameWithoutExtension(name) + "-source", files);

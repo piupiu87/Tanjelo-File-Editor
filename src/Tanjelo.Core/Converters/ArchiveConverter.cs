@@ -12,7 +12,13 @@ public sealed class ArchiveConverter(Toolbox tools) : IConverter
     public IEnumerable<Target> TargetsFor(string input)
     {
         var key = Formats.Key(input);
-        if (!Formats.Archives.Contains(key) || !Archiver.CanExtract(tools, key))
+        if (!Formats.Archives.Contains(key))
+        {
+            // Any single file can be gzipped on its own: notes.txt becomes notes.txt.gz.
+            yield return new Target("gz", "GZIP", "Compress this file to .gz", Section.Archive) { Running = "Compressing…", Done = "Compressed to GZIP" };
+            yield break;
+        }
+        if (!Archiver.CanExtract(tools, key))
             yield break;
 
         yield return new Target("extract", "Extract here", "Unpack next to the archive", Section.Archive) { Running = "Extracting…", Done = "Extracted" };
@@ -22,6 +28,7 @@ public sealed class ArchiveConverter(Toolbox tools) : IConverter
         if (tools.SevenZip is not null)
             yield return new Target("7z", "7Z", "Smaller, needs 7-Zip to open", Section.Archive);
         yield return new Target("tar.gz", "TAR.GZ", "Common on Linux and macOS", Section.Archive);
+        yield return new Target("tar", "TAR", "Uncompressed, common on Linux", Section.Archive);
     }
 
     public string? HintFor(string input)
@@ -34,6 +41,12 @@ public sealed class ArchiveConverter(Toolbox tools) : IConverter
     {
         if (target.Key == "extract")
             return [await ExtractHereAsync(input, ctx)];
+        if (target.Key == "gz")
+        {
+            var gz = OutputPaths.Unique(OutputPaths.DirectoryOf(input), Path.GetFileName(input), "gz");
+            await Archiver.GzipAsync(input, gz, ctx.Cancellation, ctx.Progress);
+            return [gz];
+        }
 
         using var temp = OutputPaths.CreateTemp();
         await Archiver.ExtractAsync(tools, input, temp.Path, ctx.Cancellation);
@@ -117,11 +130,13 @@ public sealed class CompressOperation(Toolbox tools) : IBatchOperation
         yield return new Target("compress-zip", "ZIP", $"{what} a .zip", Section.Archive) { IsBatch = true, Running = "Compressing…", Done = "Compressed to ZIP" };
         if (tools.SevenZip is not null)
             yield return new Target("compress-7z", "7Z", $"{what} a .7z (smaller)", Section.Archive) { IsBatch = true, Running = "Compressing…", Done = "Compressed to 7Z" };
+        var pack = inputs.Count == 1 ? "Pack into" : $"Pack {inputs.Count} items into";
+        yield return new Target("compress-tar", "TAR", $"{pack} a .tar, uncompressed", Section.Archive) { IsBatch = true, Running = "Packing…", Done = "Packed into TAR" };
     }
 
     public async Task<IReadOnlyList<string>> RunAsync(IReadOnlyList<string> inputs, Target target, JobContext ctx)
     {
-        var ext = target.Key == "compress-7z" ? "7z" : "zip";
+        var ext = target.Key["compress-".Length..];
         var baseName = inputs.Count == 1 ? Formats.BaseName(inputs[0]) : "Archive";
         var output = OutputPaths.Unique(OutputPaths.DirectoryOf(inputs[0]), baseName, ext);
         await Archiver.CompressAsync(tools, inputs.Select(Path.GetFullPath).ToList(), output, ext, ctx.Cancellation, ctx.Progress);
@@ -193,8 +208,8 @@ static class Archiver
                 case "zip":
                     await Task.Run(() => WriteZip(items, output, ct, progress), ct);
                     break;
-                case "tar.gz":
-                    await Task.Run(() => WriteTarGz(items, output, ct, progress), ct);
+                case "tar.gz" or "tar":
+                    await Task.Run(() => WriteTar(items, output, gzip: format == "tar.gz", ct, progress), ct);
                     break;
                 default:
                     throw new ConversionException($"Can't create .{format} archives.");
@@ -225,6 +240,28 @@ static class Archiver
         await using var source = new GZipStream(File.OpenRead(archive), CompressionMode.Decompress);
         await using var target = File.Create(output);
         await source.CopyToAsync(target, ct);
+    }
+
+    public static async Task GzipAsync(string input, string output, CancellationToken ct, IProgress<double> progress)
+    {
+        try
+        {
+            await using var source = File.OpenRead(input);
+            await using var target = new GZipStream(File.Create(output), CompressionLevel.Optimal);
+            var buffer = new byte[1 << 20];
+            long done = 0;
+            for (int read; (read = await source.ReadAsync(buffer, ct)) > 0;)
+            {
+                await target.WriteAsync(buffer.AsMemory(0, read), ct);
+                done += read;
+                progress.Report((double)done / Math.Max(1, source.Length));
+            }
+        }
+        catch
+        {
+            OutputPaths.TryDelete(output);
+            throw;
+        }
     }
 
     /// <summary>Every file and folder under the items, with archive-style relative names ("Photos/2024/a.jpg").</summary>
@@ -268,14 +305,14 @@ static class Archiver
         }
     }
 
-    static void WriteTarGz(IReadOnlyList<string> items, string output, CancellationToken ct, IProgress<double> progress)
+    static void WriteTar(IReadOnlyList<string> items, string output, bool gzip, CancellationToken ct, IProgress<double> progress)
     {
         var entries = Entries(items);
         var total = Math.Max(1, entries.Sum(e => e.Size));
         long done = 0;
         using var file = File.Create(output);
-        using var gzip = new GZipStream(file, CompressionLevel.Optimal);
-        using var tar = new TarWriter(gzip, TarEntryFormat.Pax);
+        using var stream = gzip ? new GZipStream(file, CompressionLevel.Optimal) : (Stream)file;
+        using var tar = new TarWriter(stream, TarEntryFormat.Pax);
         foreach (var entry in entries)
         {
             ct.ThrowIfCancellationRequested();
