@@ -41,6 +41,9 @@ public sealed record Target(string Key, string Label, string Description, Sectio
     /// <summary>Result heading such as "Muted"; conversions get "Converted to PNG".</summary>
     public string? Done { get; init; }
 
+    /// <summary>When set, the front end asks for a folder with this prompt and passes it as the "folder" parameter.</summary>
+    public string? FolderPrompt { get; init; }
+
     public string RunningText => Running ?? $"Converting to {Label}…";
     public string DoneText => Done ?? $"Converted to {Label}";
 
@@ -76,6 +79,9 @@ public interface IConverter
 
     /// <summary>Explains why nothing is offered for a file this converter would normally handle, e.g. a missing tool.</summary>
     string? HintFor(string input) => null;
+
+    /// <summary>Whether <see cref="TargetsFor"/> should be asked about folders too; most converters only take files.</summary>
+    bool HandlesFolders => false;
 
     /// <summary>Writes the output next to the input and returns the created paths.</summary>
     Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx);

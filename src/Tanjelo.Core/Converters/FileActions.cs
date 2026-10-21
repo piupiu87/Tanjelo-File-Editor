@@ -145,3 +145,94 @@ public sealed class OpenTerminalAction(Toolbox tools) : IBatchOperation
         return folders.Select(f => new ProcessStartInfo("powershell.exe") { UseShellExecute = true, WorkingDirectory = f, Arguments = "-NoLogo" }).ToList();
     }
 }
+
+/// <summary>Moves files and folders into a folder the user picks. Names already taken there get " (2)" and so on.</summary>
+public sealed class MoveToFolderAction : IConverter
+{
+    public bool HandlesFolders => true;
+
+    public IEnumerable<Target> TargetsFor(string input) =>
+    [
+        new("move-to", "Move to…", "Choose a folder to move this to", Section.File)
+        {
+            Kind = TargetKind.Action,
+            Running = "Moving…",
+            Done = "Moved",
+            FolderPrompt = "Move to which folder?",
+            Parameters = new Dictionary<string, string> { ["folder"] = "" },
+        },
+    ];
+
+    public Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx) => Task.Run<IReadOnlyList<string>>(() =>
+    {
+        var chosen = target.Parameter("folder");
+        if (chosen.Length == 0)
+            throw new ConversionException("Choose a folder to move to.");
+        var destination = Path.GetFullPath(chosen);
+        if (!Directory.Exists(destination))
+            throw new ConversionException("That folder doesn't exist.");
+
+        var source = Path.GetFullPath(input).TrimEnd('\\');
+        var isFolder = Directory.Exists(source);
+        if (string.Equals(OutputPaths.DirectoryOf(source).TrimEnd('\\'), destination.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase))
+            throw new ConversionException("It's already in that folder.");
+        if (isFolder && (destination + "\\").StartsWith(source + "\\", StringComparison.OrdinalIgnoreCase))
+            throw new ConversionException("A folder can't be moved into itself.");
+
+        var output = isFolder ? OutputPaths.Unique(destination, Path.GetFileName(source), "") : FreeFileName(source, destination);
+        if (!isFolder)
+            File.Move(source, output);
+        else if (string.Equals(Path.GetPathRoot(source), Path.GetPathRoot(output), StringComparison.OrdinalIgnoreCase))
+            Directory.Move(source, output);
+        else
+            MoveAcrossDrives(source, output, ctx.Cancellation);
+        ctx.Progress.Report(1);
+        return [output];
+    }, ctx.Cancellation);
+
+    /// <summary>The name a file can take in <paramref name="destination"/>, keeping its extension exactly as written.</summary>
+    static string FreeFileName(string source, string destination)
+    {
+        var name = Path.GetFileName(source);
+        var baseName = Formats.BaseName(source);
+        var ext = name.Length > baseName.Length ? name[(baseName.Length + 1)..] : "";
+        return OutputPaths.Unique(destination, baseName, ext);
+    }
+
+    /// <summary>
+    /// A folder can't simply be renamed onto another drive, so it's copied and then the original is deleted. If
+    /// the copy fails, the partial copy goes and the original stays untouched.
+    /// </summary>
+    internal static void MoveAcrossDrives(string source, string output, CancellationToken ct)
+    {
+        try
+        {
+            CopyFolder(source, output, ct);
+        }
+        catch
+        {
+            OutputPaths.TryDelete(output);
+            throw;
+        }
+        try
+        {
+            Directory.Delete(source, recursive: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            throw new ConversionException($"Copied to {output}, but some of the original folder couldn't be deleted: {ex.Message}", ex);
+        }
+    }
+
+    static void CopyFolder(string source, string destination, CancellationToken ct)
+    {
+        Directory.CreateDirectory(destination);
+        foreach (var file in Directory.EnumerateFiles(source))
+        {
+            ct.ThrowIfCancellationRequested();
+            File.Copy(file, Path.Combine(destination, Path.GetFileName(file)));
+        }
+        foreach (var folder in Directory.EnumerateDirectories(source))
+            CopyFolder(folder, Path.Combine(destination, Path.GetFileName(folder)), ct);
+    }
+}

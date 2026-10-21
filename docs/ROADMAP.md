@@ -57,7 +57,7 @@ File actions (also for folders and mixed selections)
 - [x] Copy path, one per line (S, *good first issue*)
 - [x] Copy files to the clipboard (S, *good first issue*)
 - [x] Open in Terminal: Windows Terminal, falling back to PowerShell (S, *good first issue*)
-- [ ] Move to a chosen folder (S)
+- [x] Move to a chosen folder (S)
 
 ## v0.3: tools with options
 

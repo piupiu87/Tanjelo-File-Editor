@@ -142,6 +142,8 @@ public partial class App : Application
             _menu = menu;
             var target = await menu.PickAsync();
             if (_menu == menu) _menu = null;
+            if (target?.FolderPrompt is not null)
+                target = AskForFolder(target);
             if (target is not null)
                 await ConvertAsync(engine, files, target);
         }
@@ -154,6 +156,23 @@ public partial class App : Application
         {
             ExitIfDone();
         }
+    }
+
+    /// <summary>
+    /// For actions such as "Move to…": asks for a folder and returns the entry with it filled in, or null if
+    /// canceled. Windows remembers the last folder picked for this dialog and opens there next time.
+    /// </summary>
+    static Target? AskForFolder(Target target)
+    {
+        var dialog = new OpenFolderDialog
+        {
+            Title = target.FolderPrompt,
+            ClientGuid = new Guid("5E3A8C1B-7F4D-4E2A-9B6C-1D0F2A3B4C5D"),
+            Multiselect = false,
+        };
+        if (dialog.ShowDialog() != true)
+            return null;
+        return target.WithParameters(new Dictionary<string, string> { ["folder"] = dialog.FolderName });
     }
 
     async Task ConvertAsync(ConverterEngine engine, IReadOnlyList<string> files, Target target)

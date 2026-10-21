@@ -37,6 +37,7 @@ public partial class FormatMenuWindow : Window
             "copy-path" => "",                   // link
             "copy-files" => "",                  // copy
             "open-terminal" => "",               // command prompt
+            "move-to" => "",                     // move to folder
             _ => Target.Section switch
             {
                 Section.Image => "",             // picture

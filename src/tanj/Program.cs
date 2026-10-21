@@ -73,6 +73,11 @@ switch (args[0])
             values[name] = value;
         }
         target = target.WithParameters(values);
+        if (target.FolderPrompt is not null && target.Parameters.GetValueOrDefault("folder") is null or "")
+        {
+            Console.Error.WriteLine($"{target.Key} needs a destination: tanj convert {target.Key} --folder=<path> <files...>");
+            return 2;
+        }
 
         using var cancel = new CancellationTokenSource();
         Console.CancelKeyPress += (_, e) => { e.Cancel = true; cancel.Cancel(); };

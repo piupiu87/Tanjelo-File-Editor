@@ -29,6 +29,7 @@ public sealed class ConverterEngine
                 new MediaConverter(tools),
                 new MediaTools(tools),
                 new ArchiveConverter(tools),
+                new MoveToFolderAction(),
             ],
             [
                 new CombinePdfOperation(),
@@ -72,6 +73,8 @@ public sealed class ConverterEngine
             .Concat(_batchOperations.SelectMany(b => Safe(() => b.TargetsFor(inputs))))
             .Select((target, index) => (target, index))
             .OrderBy(x => x.target.Section == primary ? -1 : (int)x.target.Section)
+            // Actions on the whole selection (copy, open) come before the one that changes each item (move).
+            .ThenBy(x => x.target.Kind == TargetKind.Action && !x.target.IsBatch)
             .ThenBy(x => x.index)
             .Select(x => x.target)
             .ToList();
@@ -157,10 +160,9 @@ public sealed class ConverterEngine
 
     IEnumerable<(Target Target, IConverter Converter)> PerFileTargets(string input)
     {
-        if (Directory.Exists(input))
-            yield break;
+        var folder = Directory.Exists(input);
         var seen = new HashSet<string>();
-        foreach (var converter in _converters)
+        foreach (var converter in _converters.Where(c => !folder || c.HandlesFolders))
             foreach (var target in Safe(() => converter.TargetsFor(input).ToList()))
                 if (seen.Add(target.Key))
                     yield return (target, converter);
