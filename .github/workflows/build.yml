@@ -36,7 +36,7 @@ jobs:
 
       - name: Publish
         run: |
-          # A tag like v1.2.3 sets the version; other builds keep the one in Tanjelo.csproj.
+          # A tag like v1.2.3 sets the version; other builds keep the one in Directory.Build.props.
           $extra = @()
           if ('${{ github.ref_type }}' -eq 'tag') { $extra += "-p:Version=$('${{ github.ref_name }}'.TrimStart('v'))" }
           dotnet publish src/Tanjelo -c Release @extra
