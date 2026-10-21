@@ -23,6 +23,7 @@ public partial class FormatMenuWindow : Window
             Section.Video => "Video",
             Section.Audio => "Audio",
             Section.Document => "Document",
+            Section.File => "Files",
             _ => "Archive",
         };
         public string Glyph => Target.Key switch
@@ -33,6 +34,8 @@ public partial class FormatMenuWindow : Window
             _ when Target.Key.StartsWith("split-") => "",   // scissors
             "normalize" => "",                   // volume
             "trim-silence" => "",                // scissors
+            "copy-path" => "",                   // link
+            "copy-files" => "",                  // copy
             _ => Target.Section switch
             {
                 Section.Image => "",             // picture

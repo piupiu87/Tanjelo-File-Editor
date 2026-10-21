@@ -1,7 +1,7 @@
 namespace Tanjelo.Core;
 
 /// <summary>Groups menu entries by what the output is, not what the input was.</summary>
-public enum Section { Image, Video, Audio, Document, Archive }
+public enum Section { Image, Video, Audio, Document, Archive, File }
 
 /// <summary>Which tab of the menu an entry is on.</summary>
 public enum TargetKind

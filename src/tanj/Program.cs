@@ -91,6 +91,8 @@ switch (args[0])
         Console.Error.WriteLine();
         foreach (var output in result.Outputs)
             Console.WriteLine($"ok    {output}");
+        if (target.Kind == TargetKind.Action && result.Outputs.Count == 0 && result.Failures.Count == 0 && !result.Canceled)
+            Console.WriteLine($"ok    {target.DoneText}");
         foreach (var failure in result.Failures)
             Console.WriteLine($"FAIL  {failure.Input}: {failure.Message}");
         foreach (var skipped in result.Skipped)

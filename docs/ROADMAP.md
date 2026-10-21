@@ -54,8 +54,8 @@ Tools that need no dialog
 - [x] Merge PDFs in selection order (S)
 
 File actions (also for folders and mixed selections)
-- [ ] Copy path, one per line (S, *good first issue*)
-- [ ] Copy files to the clipboard (S, *good first issue*)
+- [x] Copy path, one per line (S, *good first issue*)
+- [x] Copy files to the clipboard (S, *good first issue*)
 - [ ] Open in Terminal: Windows Terminal, falling back to PowerShell (S, *good first issue*)
 - [ ] Move to a chosen folder (S)
 
