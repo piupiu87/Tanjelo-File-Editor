@@ -12,6 +12,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- PDFsharp (through Tanjelo.Core) asks for 8.0.1, which has known vulnerabilities. Projects using the Windows
+         Desktop runtime get this assembly from the runtime, but tanj doesn't reference that runtime directly. -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Tanjelo.Core\Tanjelo.Core.csproj" />
   </ItemGroup>
 
