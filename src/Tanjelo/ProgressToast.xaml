@@ -1,0 +1,33 @@
+<Window x:Class="Tanjelo.ProgressToast"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Tanjelo" Width="360" SizeToContent="Height"
+        Style="{StaticResource PopupWindow}" ShowActivated="False">
+    <Grid Margin="16,14,10,14">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <Grid Width="32" Height="32" VerticalAlignment="Top" Margin="0,1,12,0">
+            <Ellipse x:Name="Badge" Fill="{DynamicResource AccentSoft}" />
+            <TextBlock x:Name="Glyph" FontFamily="{StaticResource IconFont}" FontSize="14" Text="&#xE8AB;"
+                       Foreground="{DynamicResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Grid>
+
+        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+            <TextBlock x:Name="Heading" FontWeight="SemiBold" FontSize="13.5" TextTrimming="CharacterEllipsis" />
+            <TextBlock x:Name="Detail" FontSize="12" Margin="0,2,0,0" Foreground="{DynamicResource TextSecondary}"
+                       TextWrapping="Wrap" MaxHeight="52" TextTrimming="CharacterEllipsis" />
+            <ProgressBar x:Name="Bar" Style="{StaticResource ThinProgress}" Margin="0,10,6,2" IsIndeterminate="True" />
+            <StackPanel x:Name="Actions" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,4,0" Visibility="Collapsed">
+                <Button x:Name="SecondaryButton" Style="{StaticResource SubtleButton}" Visibility="Collapsed" />
+                <Button x:Name="PrimaryButton" Style="{StaticResource PrimaryButton}" Visibility="Collapsed" />
+            </StackPanel>
+        </StackPanel>
+
+        <Button x:Name="CloseButton" Grid.Column="2" Style="{StaticResource IconButton}" Content="&#xE711;"
+                VerticalAlignment="Top" Margin="2,-4,0,0" ToolTip="Close" />
+    </Grid>
+</Window>

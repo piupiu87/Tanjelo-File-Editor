@@ -1,0 +1,83 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish
+        run: |
+          # A tag like v1.2.3 sets the version; other builds keep the one in Tanjelo.csproj.
+          $extra = @()
+          if ('${{ github.ref_type }}' -eq 'tag') { $extra += "-p:Version=$('${{ github.ref_name }}'.TrimStart('v'))" }
+          dotnet publish src/Tanjelo -c Release @extra
+          if ($LASTEXITCODE -ne 0) { throw "publishing the app failed" }
+          dotnet publish src/tanj -c Release @extra
+          if ($LASTEXITCODE -ne 0) { throw "publishing tanj failed" }
+
+          $out = "artifacts/Tanjelo"
+          New-Item -ItemType Directory -Force $out | Out-Null
+          Copy-Item src/Tanjelo/bin/Release/net10.0-windows10.0.19041.0/win-x64/publish/* $out -Recurse -Force
+          Copy-Item src/tanj/bin/Release/net10.0-windows10.0.19041.0/win-x64/publish/* $out -Recurse -Force
+
+      - name: Smoke test
+        working-directory: artifacts
+        run: |
+          # Exercises the published binaries: ImageMagick's native DLL, the Windows PDF renderer, and zip creation.
+          $tanj = "./Tanjelo/tanj.exe"
+          & $tanj tools
+          Add-Type -AssemblyName System.Drawing
+          $bitmap = [System.Drawing.Bitmap]::new(64, 48)
+          [System.Drawing.Graphics]::FromImage($bitmap).Clear([System.Drawing.Color]::Orange)
+          $bitmap.Save("$PWD/smoke.png")
+          $bitmap.Dispose()
+          foreach ($step in @(@('jpg', 'smoke.png'), @('pdf', 'smoke.png'), @('png', 'smoke.pdf'), @('compress-zip', 'smoke.png'))) {
+            & $tanj convert $step[0] $step[1]
+            if ($LASTEXITCODE -ne 0) { throw "tanj convert $($step -join ' ') failed" }
+          }
+          foreach ($file in 'Tanjelo/LICENSE.txt', 'Tanjelo/THIRD-PARTY-NOTICES.md', 'Tanjelo/licenses/ImageMagick-NOTICE.txt') {
+            if (-not (Test-Path $file)) { throw "missing $file" }
+          }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Tanjelo-win-x64
+          path: artifacts/Tanjelo
+
+  release:
+    if: github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Tanjelo-win-x64
+          path: Tanjelo
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          zip_name="Tanjelo-${GITHUB_REF_NAME#v}-win-x64.zip"
+          (cd Tanjelo && zip -r "../$zip_name" .)
+          gh release create "$GITHUB_REF_NAME" "$zip_name" --repo "$GITHUB_REPOSITORY" --title "Tanjelo $GITHUB_REF_NAME" --generate-notes
