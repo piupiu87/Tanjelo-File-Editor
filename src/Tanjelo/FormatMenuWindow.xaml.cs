@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using Run = System.Windows.Documents.Run;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -9,7 +10,7 @@ using Tanjelo.Core;
 
 namespace Tanjelo;
 
-/// <summary>The menu of output formats that pops up at the mouse pointer.</summary>
+/// <summary>The menu that pops up at the mouse pointer, with Convert, Tools and Actions tabs.</summary>
 public partial class FormatMenuWindow : Window
 {
     public sealed record Entry(Target Target)
@@ -26,47 +27,63 @@ public partial class FormatMenuWindow : Window
         };
         public string Glyph => Target.Key switch
         {
-            "extract" => "",                       // folder
+            "extract" => "",                     // folder
             _ => Target.Section switch
             {
-                Section.Image => "",               // picture
-                Section.Video => "",               // video
-                Section.Audio => "",               // music note
-                Section.Document => "",            // document
-                _ => "",                           // package
+                Section.Image => "",             // picture
+                Section.Video => "",             // video
+                Section.Audio => "",             // music note
+                Section.Document => "",          // document
+                _ => "",                         // package
             },
         };
     }
 
+    sealed record Tab(TargetKind Kind, string Title, string Placeholder, string Empty, RadioButton Button);
+
     readonly TaskCompletionSource<Target?> _picked = new();
     readonly ICollectionView _view;
+    readonly List<Entry> _entries;
+    readonly Tab[] _tabs;
+    readonly (ModifierKeys Modifiers, Key Key)? _hotkey;
+    Tab _tab;
     Native.POINT _anchor;
+    bool _above; // opened above the pointer, so a change in height keeps the bottom edge where it is
     bool _closing;
 
-    public FormatMenuWindow(IReadOnlyList<string> files, MenuModel menu)
+    /// <param name="hotkey">The global shortcut. Pressing it again while the menu is open switches tabs.</param>
+    public FormatMenuWindow(IReadOnlyList<string> files, MenuModel menu, (ModifierKeys, Key)? hotkey = null)
     {
         InitializeComponent();
+        _hotkey = hotkey;
+        _entries = menu.Targets.Select(t => new Entry(t)).ToList();
+        _tabs =
+        [
+            new(TargetKind.Convert, "Convert", "Convert to…", "There's nothing to convert this selection to.", ConvertTab),
+            new(TargetKind.Tool, "Tools", "Find a tool…", "There are no tools for this selection.", ToolsTab),
+            new(TargetKind.Action, "Actions", "Find an action…", "There are no actions for this selection.", ActionsTab),
+        ];
+
+        _tab = _tabs.FirstOrDefault(t => Count(t) > 0) ?? _tabs[0];
 
         var source = (CollectionViewSource)Resources["Entries"];
-        source.Source = menu.Targets.Select(t => new Entry(t)).ToList();
+        source.Source = _entries;
         _view = source.View;
-        _view.Filter = Matches;
+        _view.Filter = item => ((Entry)item).Target.Kind == _tab.Kind && Matches((Entry)item);
 
         DescribeSelection(files);
         HintList.ItemsSource = menu.Hints;
         if (menu.Targets.Count == 0)
-        {
-            EmptyText.Text = "There's nothing to convert this selection to.";
-            EmptyText.Visibility = Visibility.Visible;
             Search.IsEnabled = false;
-        }
-        SelectFirst();
+        foreach (var tab in _tabs)
+            tab.Button.Checked += (_, _) => ShowTab(tab);
+        ShowTab(_tab, refresh: true);
 
         Search.TextChanged += (_, _) =>
         {
             Placeholder.Visibility = Search.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
-            _view.Refresh();
-            SelectFirst();
+            // Typing the name of a tool while on Convert jumps to the tab that has it.
+            ShowTab(Count(_tab) > 0 ? _tab : _tabs.FirstOrDefault(t => Count(t) > 0) ?? _tab, refresh: true);
         };
         PreviewKeyDown += OnKey;
         Deactivated += (_, _) => Finish(null);
@@ -75,7 +92,7 @@ public partial class FormatMenuWindow : Window
         ContentRendered += OnContentRendered;
     }
 
-    /// <summary>Shows the menu and completes with the chosen format, or null if dismissed.</summary>
+    /// <summary>Shows the menu and completes with the chosen entry, or null if dismissed.</summary>
     public Task<Target?> PickAsync()
     {
         Show();
@@ -114,15 +131,57 @@ public partial class FormatMenuWindow : Window
         _ => $"{bytes / 1024.0 / 1024 / 1024:0.##} GB",
     };
 
-    bool Matches(object item)
+    bool Matches(Entry entry)
     {
         var query = Search.Text.Trim();
         if (query.Length == 0) return true;
-        var entry = (Entry)item;
         return entry.Label.Contains(query, StringComparison.OrdinalIgnoreCase)
             || entry.Target.Key.Contains(query, StringComparison.OrdinalIgnoreCase)
             || entry.Description.Contains(query, StringComparison.OrdinalIgnoreCase)
             || entry.Group.Contains(query, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Entries on a tab that match the filter text.</summary>
+    int Count(Tab tab) => _entries.Count(e => e.Target.Kind == tab.Kind && Matches(e));
+
+    void ShowTab(Tab tab, bool refresh = false)
+    {
+        if (tab == _tab && !refresh) return;
+        _tab = tab;
+        tab.Button.IsChecked = true;
+        Placeholder.Text = tab.Placeholder;
+        _view.Refresh();
+
+        foreach (var t in _tabs)
+        {
+            var count = Count(t);
+            var header = new TextBlock();
+            header.Inlines.Add(new Run(t.Title) { FontWeight = FontWeights.SemiBold });
+            if (count > 0)
+                header.Inlines.Add(new Run("  " + count) { FontSize = 11.5, Foreground = (Brush)FindResource("TextTertiary") });
+            t.Button.Content = header;
+            t.Button.IsEnabled = count > 0 || t == tab;
+        }
+
+        var empty = List.Items.Count == 0;
+        EmptyText.Text = Search.Text.Trim().Length > 0 ? $"Nothing matches “{Search.Text.Trim()}”." : tab.Empty;
+        EmptyText.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
+        SelectFirst();
+    }
+
+    /// <summary>Moves to the next (or previous) tab that has entries.</summary>
+    void CycleTabs(int direction)
+    {
+        var index = Array.IndexOf(_tabs, _tab);
+        for (var step = 1; step < _tabs.Length; step++)
+        {
+            var next = _tabs[((index + direction * step) % _tabs.Length + _tabs.Length) % _tabs.Length];
+            if (Count(next) > 0)
+            {
+                ShowTab(next);
+                return;
+            }
+        }
     }
 
     void SelectFirst()
@@ -141,10 +200,21 @@ public partial class FormatMenuWindow : Window
 
     void OnKey(object sender, KeyEventArgs e)
     {
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+        if (_hotkey is { } hotkey && key == hotkey.Key && Keyboard.Modifiers == hotkey.Modifiers)
+        {
+            CycleTabs(1);
+            e.Handled = true;
+            return;
+        }
+
         switch (e.Key)
         {
             case Key.Escape:
                 Finish(null);
+                break;
+            case Key.Tab:
+                CycleTabs(Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? -1 : 1);
                 break;
             case Key.Down:
                 Move(1);
@@ -193,6 +263,16 @@ public partial class FormatMenuWindow : Window
 
     void OnContentRendered(object? sender, EventArgs e)
     {
+        Place(first: true);
+        Opacity = 1;
+        Activate();
+        Search.Focus();
+        // Switching tabs changes the height; keep the menu on the same side of the pointer.
+        SizeChanged += (_, _) => Place(first: false);
+    }
+
+    void Place(bool first)
+    {
         var hwnd = new WindowInteropHelper(this).Handle;
         Native.GetWindowRect(hwnd, out var rect);
         int width = rect.Right - rect.Left, height = rect.Bottom - rect.Top;
@@ -200,12 +280,11 @@ public partial class FormatMenuWindow : Window
 
         var x = _anchor.X + 2;
         if (x + width > work.Right) x = Math.Max(work.Left, _anchor.X - width - 2);
-        var y = _anchor.Y + 2;
-        if (y + height > work.Bottom) y = Math.Max(work.Top, Math.Min(_anchor.Y - height - 2, work.Bottom - height));
+        if (first) _above = _anchor.Y + 2 + height > work.Bottom;
+        var y = _above
+            ? Math.Max(work.Top, Math.Min(_anchor.Y - height - 2, work.Bottom - height))
+            : Math.Max(work.Top, Math.Min(_anchor.Y + 2, work.Bottom - height));
 
-        Native.SetWindowPos(hwnd, IntPtr.Zero, x, y, 0, 0, Native.SWP_NOSIZE | Native.SWP_NOZORDER);
-        Opacity = 1;
-        Activate();
-        Search.Focus();
+        Native.SetWindowPos(hwnd, IntPtr.Zero, x, y, 0, 0, Native.SWP_NOSIZE | Native.SWP_NOZORDER | (first ? 0 : Native.SWP_NOACTIVATE));
     }
 }

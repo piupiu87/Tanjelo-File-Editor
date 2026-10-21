@@ -136,7 +136,9 @@ public partial class App : Application
         {
             _menu?.Close();
             var engine = Engine();
-            var menu = new FormatMenuWindow(files, engine.GetMenu(files));
+            (System.Windows.Input.ModifierKeys, System.Windows.Input.Key)? hotkey =
+                Settings.TryParseHotkey(_settings.Hotkey, out var modifiers, out var key) ? (modifiers, key) : null;
+            var menu = new FormatMenuWindow(files, engine.GetMenu(files), hotkey);
             _menu = menu;
             var target = await menu.PickAsync();
             if (_menu == menu) _menu = null;
