@@ -188,6 +188,47 @@ public class MediaToolsTests
         Assert.Equal("This file is already mono.", Assert.Single(result.Failures).Message);
     }
 
+    [Theory]
+    [InlineData("adelay=1000:all=1,apad=pad_dur=1.5", 2.0)] // silence at both ends
+    [InlineData("adelay=1500:all=1", 2.0)]                  // only at the start
+    [InlineData("apad=pad_dur=2", 2.0)]                     // only at the end
+    public async Task Trim_silence_cuts_quiet_from_the_ends(string shape, double seconds)
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        var output = await Env.RunOne("trim-silence", scratch.Tone("take.mp3", seconds: 2, filter: shape));
+
+        Assert.Equal(scratch.PathOf("take-trimmed.mp3"), output);
+        Assert.Equal(seconds, Inspect.Media(output).Duration, 0.15);
+    }
+
+    [Fact]
+    public async Task Pauses_in_the_middle_are_kept()
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        // 1 s tone, 1 s of silence, 1 s tone, then 1 s of silence to trim.
+        var take = scratch.Tone("take.wav", seconds: 4, filter: "volume='if(between(t,1,2)+gte(t,3),0,1)':eval=frame");
+
+        var output = await Env.RunOne("trim-silence", take);
+
+        Assert.Equal(3.0, Inspect.Media(output).Duration, 0.15);
+    }
+
+    [Fact]
+    public async Task Audio_without_silence_at_the_ends_is_left_alone()
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        var tone = scratch.Tone("tone.wav");
+        var engine = Env.Engine();
+
+        var result = await engine.RunAsync([tone], Env.Offered(engine, "trim-silence", [tone]), ct: TestContext.Current.CancellationToken);
+
+        Assert.Equal("There's no silence at the start or end to trim.", Assert.Single(result.Failures).Message);
+        Assert.Equal(["tone.wav"], scratch.Files());
+    }
+
     [Fact]
     public async Task Muting_a_silent_video_explains_why_nothing_happened()
     {

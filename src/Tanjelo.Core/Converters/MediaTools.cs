@@ -36,6 +36,7 @@ public sealed class MediaTools(Toolbox tools) : IConverter
         Tool("normalize", "Normalize volume", "Even loudness, at the level podcasts and streaming use", Section.Audio, "Normalizing…", "Normalized"),
         Tool("mono", "To mono", "Mix all channels into one", Section.Audio, "Mixing to mono…", "Mixed to mono"),
         Tool("stereo", "To stereo", "Two channels; mono plays on both sides", Section.Audio, "Making stereo…", "Made stereo"),
+        Tool("trim-silence", "Trim silence", "Cut the quiet from the start and end", Section.Audio, "Trimming silence…", "Silence trimmed"),
     ];
 
     /// <summary>EBU R128 loudness: -16 LUFS integrated, peaks at most -1.5 dBTP.</summary>
@@ -61,6 +62,7 @@ public sealed class MediaTools(Toolbox tools) : IConverter
             "normalize" => [await NormalizeAsync(input, media, ctx)],
             "mono" => [await ChannelsAsync(input, media, 1, ctx)],
             "stereo" => [await ChannelsAsync(input, media, 2, ctx)],
+            "trim-silence" => [await TrimSilenceAsync(input, media, ctx)],
             _ => throw new ConversionException($"Unknown tool '{target.Key}'."),
         };
     }
@@ -211,6 +213,50 @@ public sealed class MediaTools(Toolbox tools) : IConverter
         string[] args = ["-map", "0:a:0", "-ac", channels.ToString(CultureInfo.InvariantCulture), .. Ffmpeg.AudioEncoder(Formats.Key(input))];
         await Ffmpeg.RunFirstWorkingAsync(tools, input, output, [args], media.Duration, ctx);
         return output;
+    }
+
+    /// <summary>
+    /// Finds silence (below -50 dB for at least 0.2 s) and keeps what lies between the silence at the start and the
+    /// silence at the end. Pauses in the middle stay. Measuring first and then cutting keeps memory use flat, where
+    /// the usual reverse-the-audio trick would hold the whole file in memory.
+    /// </summary>
+    async Task<string> TrimSilenceAsync(string input, MediaInfo media, JobContext ctx)
+    {
+        var silences = new List<(double Start, double? End)>();
+        await Ffmpeg.RunAsync(tools, input, "-", ["-map", "0:a:0", "-af", "silencedetect=noise=-50dB:d=0.2", "-f", "null"], media.Duration,
+            new ActionProgress<double>(f => ctx.Progress.Report(f / 2)), ctx.Cancellation, logLevel: "info", onLog: line =>
+            {
+                if (Seconds(line, "silence_start: ") is { } start)
+                    lock (silences) silences.Add((start, null));
+                else if (Seconds(line, "silence_end: ") is { } end)
+                    lock (silences) if (silences.Count > 0) silences[^1] = (silences[^1].Start, end);
+            });
+
+        var duration = media.Duration;
+        double from = 0, to = duration;
+        if (silences is [var first, ..] && first.Start <= 0.05)
+            from = first.End ?? duration;
+        // Older ffmpeg builds leave out the end of a silence that runs to the end of the file.
+        if (silences is [.., var last] && (last.End is null || last.End >= duration - 0.05) && last.Start > 0.05)
+            to = last.Start;
+        if (to - from < 0.05)
+            throw new ConversionException("This file is silent.");
+        if (from <= 0 && to >= duration)
+            throw new ConversionException("There's no silence at the start or end to trim.");
+
+        var output = OutputPaths.Suffixed(input, "trimmed");
+        string Time(double seconds) => seconds.ToString("0.###", CultureInfo.InvariantCulture);
+        string[] args = ["-ss", Time(from), "-t", Time(to - from), "-map", "0:a:0", .. Ffmpeg.AudioEncoder(Formats.Key(input))];
+        await Ffmpeg.RunFirstWorkingAsync(tools, input, output, [args], to - from, ctx, new ActionProgress<double>(f => ctx.Progress.Report(0.5 + f / 2)));
+        return output;
+
+        static double? Seconds(string line, string label)
+        {
+            var at = line.IndexOf(label, StringComparison.Ordinal);
+            if (at < 0) return null;
+            var text = line[(at + label.Length)..].Split(' ', 2)[0];
+            return double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? Math.Max(0, value) : null;
+        }
     }
 
     /// <summary>ffmpeg's atempo changes speed without changing pitch; each step must stay within 0.5 to 2.</summary>
