@@ -13,6 +13,7 @@ public sealed class MediaConverter(Toolbox tools) : IConverter
         new("mkv", "MKV", "Matroska, keeps every track", Section.Video),
         new("webm", "WebM", "VP9 + Opus for the web", Section.Video),
         new("avi", "AVI", "Legacy MPEG-4", Section.Video),
+        new("wmv", "WMV", "Windows Media, for older Windows apps", Section.Video),
         new("gif", "GIF", "Animated, 15 fps, up to 640 px", Section.Image),
     ];
 
@@ -25,6 +26,7 @@ public sealed class MediaConverter(Toolbox tools) : IConverter
         new("ogg", "OGG", "Ogg Vorbis", Section.Audio),
         new("opus", "Opus", "Small and efficient", Section.Audio),
         new("aiff", "AIFF", "Uncompressed (Apple)", Section.Audio),
+        new("wma", "WMA", "Windows Media Audio, 192 kbps", Section.Audio),
     ];
 
     static readonly HashSet<string> ExtractableAudio = ["mp3", "m4a", "wav", "flac"];
@@ -89,6 +91,7 @@ public sealed class MediaConverter(Toolbox tools) : IConverter
         string[] h264 = [.. videoMap, "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p",
             "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2", "-c:a", "aac", "-b:a", "192k"];
         string[] hevcTag = m.Video == "hevc" ? ["-tag:v", "hvc1"] : [];
+        string[] upToStereo = m.Channels > 2 ? ["-ac", "2"] : []; // Windows Media Audio holds at most two channels
 
         switch (key)
         {
@@ -114,6 +117,10 @@ public sealed class MediaConverter(Toolbox tools) : IConverter
                 break;
             case "avi":
                 yield return [.. videoMap, "-c:v", "mpeg4", "-vtag", "xvid", "-q:v", "3", "-c:a", "libmp3lame", "-q:a", "3"];
+                break;
+            case "wmv":
+                yield return [.. videoMap, "-c:v", "wmv2", "-q:v", "3", "-pix_fmt", "yuv420p", "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+                    "-c:a", "wmav2", "-b:a", "192k", .. upToStereo];
                 break;
             case "gif":
                 yield return ["-an", "-vf", "fps=15,scale='min(640,iw)':-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle", "-loop", "0"];
@@ -141,6 +148,9 @@ public sealed class MediaConverter(Toolbox tools) : IConverter
             case "aiff":
                 yield return [.. audioMap, "-c:a", "pcm_s16be"];
                 break;
+            case "wma":
+                yield return [.. audioMap, "-c:a", "wmav2", "-b:a", "192k", .. upToStereo];
+                break;
             default:
                 throw new ConversionException($"Unknown media target '{key}'.");
         }
@@ -159,7 +169,8 @@ public sealed class MediaConverter(Toolbox tools) : IConverter
             throw new ConversionException($"ffmpeg failed: {result.LastError}");
     }
 
-    sealed record MediaInfo(bool Probed, string? Video, string? Audio, double Duration);
+    /// <param name="Channels">Channels in the first audio track; 0 when unknown.</param>
+    sealed record MediaInfo(bool Probed, string? Video, string? Audio, double Duration, int Channels = 0);
 
     async Task<MediaInfo> ProbeAsync(string input, CancellationToken ct)
     {
@@ -167,12 +178,13 @@ public sealed class MediaConverter(Toolbox tools) : IConverter
             return new MediaInfo(false, null, null, 0);
 
         var result = await ProcessRunner.RunAsync(tools.Ffprobe,
-            ["-v", "error", "-show_entries", "format=duration:stream=codec_type,codec_name:stream_disposition=attached_pic", "-of", "json", input], ct);
+            ["-v", "error", "-show_entries", "format=duration:stream=codec_type,codec_name,channels:stream_disposition=attached_pic", "-of", "json", input], ct);
         if (result.ExitCode != 0)
             throw new ConversionException($"ffmpeg can't read this file: {result.LastError}");
 
         using var json = JsonDocument.Parse(result.StdOut);
         string? video = null, audio = null;
+        var channels = 0;
         if (json.RootElement.TryGetProperty("streams", out var streams))
         {
             foreach (var stream in streams.EnumerateArray())
@@ -181,12 +193,16 @@ public sealed class MediaConverter(Toolbox tools) : IConverter
                 var codec = stream.TryGetProperty("codec_name", out var c) ? c.GetString() : null;
                 var coverArt = stream.TryGetProperty("disposition", out var d) && d.TryGetProperty("attached_pic", out var a) && a.GetInt32() == 1;
                 if (type == "video" && !coverArt) video ??= codec;
-                if (type == "audio") audio ??= codec;
+                if (type == "audio" && audio is null)
+                {
+                    audio = codec;
+                    if (stream.TryGetProperty("channels", out var ch)) channels = ch.GetInt32();
+                }
             }
         }
         var duration = 0.0;
         if (json.RootElement.TryGetProperty("format", out var format) && format.TryGetProperty("duration", out var dur))
             double.TryParse(dur.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out duration);
-        return new MediaInfo(true, video, audio, duration);
+        return new MediaInfo(true, video, audio, duration, channels);
     }
 }

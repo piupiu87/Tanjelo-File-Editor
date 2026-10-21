@@ -7,6 +7,7 @@ public class MediaConverterTests
     [InlineData("mov", "h264", "aac")]   // stream copy
     [InlineData("webm", "vp9", "opus")]
     [InlineData("avi", "mpeg4", "mp3")]
+    [InlineData("wmv", "wmv2", "wmav2")]
     public async Task Video_converts_between_containers(string key, string video, string audio)
     {
         Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
@@ -88,6 +89,7 @@ public class MediaConverterTests
     [InlineData("ogg", "vorbis")]
     [InlineData("opus", "opus")]
     [InlineData("aiff", "pcm_s16be")]
+    [InlineData("wma", "wmav2")]
     public async Task Audio_converts_between_formats(string key, string codec)
     {
         Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
@@ -96,6 +98,15 @@ public class MediaConverterTests
 
         Assert.Equal(codec, Inspect.Codec(output, "audio"));
         Assert.Equal(2.0, Inspect.Media(output).Duration, 0.1);
+    }
+
+    [Fact]
+    public async Task Surround_audio_is_downmixed_to_stereo_for_wma()
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        var output = await Env.RunOne("wma", scratch.Tone("surround.wav", channels: 6));
+        Assert.Equal(2, Inspect.Media(output).Channels);
     }
 
     [Fact]
