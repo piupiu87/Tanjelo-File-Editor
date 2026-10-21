@@ -201,4 +201,14 @@ static class Inspect
     }
 
     public static string? Codec(string path, string type) => Media(path).Streams.FirstOrDefault(s => s.Type == type).Codec;
+
+    /// <summary>Integrated loudness in LUFS, as ffmpeg's loudnorm measures it.</summary>
+    public static double Loudness(string path)
+    {
+        var result = ProcessRunner.RunAsync(Env.Tools.Ffmpeg!,
+            ["-hide_banner", "-nostdin", "-nostats", "-v", "info", "-i", path, "-af", "loudnorm=print_format=summary", "-f", "null", "-"], CancellationToken.None).GetAwaiter().GetResult();
+        var match = System.Text.RegularExpressions.Regex.Match(result.StdErr, @"Input Integrated:\s+(-?[\d.]+) LUFS");
+        Assert.True(match.Success, $"no loudness reported for {path}");
+        return double.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
+    }
 }

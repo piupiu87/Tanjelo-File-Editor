@@ -31,6 +31,7 @@ public partial class FormatMenuWindow : Window
             "mute" => "",                        // speaker, muted
             _ when Target.Key.StartsWith("speed-") => "",   // stopwatch
             _ when Target.Key.StartsWith("split-") => "",   // scissors
+            "normalize" => "",                   // volume
             _ => Target.Section switch
             {
                 Section.Image => "",             // picture

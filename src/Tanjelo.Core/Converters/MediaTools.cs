@@ -31,7 +31,13 @@ public sealed class MediaTools(Toolbox tools) : IConverter
             Parameters = new Dictionary<string, string> { ["factor"] = factor },
         };
 
-    static readonly Target[] AudioTools = [];
+    static readonly Target[] AudioTools =
+    [
+        Tool("normalize", "Normalize volume", "Even loudness, at the level podcasts and streaming use", Section.Audio, "Normalizing…", "Normalized"),
+    ];
+
+    /// <summary>EBU R128 loudness: -16 LUFS integrated, peaks at most -1.5 dBTP.</summary>
+    const string Loudness = "loudnorm=I=-16:TP=-1.5:LRA=11";
 
     public IEnumerable<Target> TargetsFor(string input)
     {
@@ -50,6 +56,7 @@ public sealed class MediaTools(Toolbox tools) : IConverter
             "mute" => [await MuteAsync(input, media, ctx)],
             _ when target.Key.StartsWith("speed-", StringComparison.Ordinal) => [await SpeedAsync(input, media, target, ctx)],
             _ when target.Key.StartsWith("split-video-", StringComparison.Ordinal) => await SplitAsync(input, media, target, ctx),
+            "normalize" => [await NormalizeAsync(input, media, ctx)],
             _ => throw new ConversionException($"Unknown tool '{target.Key}'."),
         };
     }
@@ -158,6 +165,36 @@ public sealed class MediaTools(Toolbox tools) : IConverter
             }
             return true;
         }
+    }
+
+    /// <summary>
+    /// Two passes: the first measures the loudness, the second applies one steady gain to reach the target.
+    /// A single pass would adjust the gain as it goes, squashing the file's quiet and loud moments together.
+    /// </summary>
+    async Task<string> NormalizeAsync(string input, MediaInfo media, JobContext ctx)
+    {
+        var log = new List<string>();
+        await Ffmpeg.RunAsync(tools, input, "-", ["-map", "0:a:0", "-af", Loudness + ":print_format=json", "-f", "null"], media.Duration,
+            new ActionProgress<double>(f => ctx.Progress.Report(f / 2)), ctx.Cancellation, logLevel: "info", onLog: line => { lock (log) log.Add(line); });
+
+        string text;
+        lock (log) text = string.Join('\n', log);
+        int open = text.LastIndexOf('{'), close = text.LastIndexOf('}');
+        if (open < 0 || close < open)
+            throw new ConversionException("ffmpeg didn't report the loudness of this file.");
+        using var json = System.Text.Json.JsonDocument.Parse(text[open..(close + 1)]);
+        string Measured(string name) => json.RootElement.GetProperty(name).GetString()!;
+        if (!double.TryParse(Measured("input_i"), NumberStyles.Float, CultureInfo.InvariantCulture, out var loudness) || double.IsInfinity(loudness))
+            throw new ConversionException("This file is silent.");
+
+        var output = OutputPaths.Suffixed(input, "normalized");
+        // loudnorm works at 192 kHz internally, so ask for the original rate back (Opus only takes 48 kHz).
+        var rate = Formats.Key(input) == "opus" || media.SampleRate <= 0 ? 48000 : media.SampleRate;
+        var filter = $"{Loudness}:measured_I={Measured("input_i")}:measured_TP={Measured("input_tp")}:measured_LRA={Measured("input_lra")}" +
+            $":measured_thresh={Measured("input_thresh")}:offset={Measured("target_offset")}:linear=true";
+        string[] args = ["-map", "0:a:0", "-af", filter, "-ar", rate.ToString(CultureInfo.InvariantCulture), .. Ffmpeg.AudioEncoder(Formats.Key(input))];
+        await Ffmpeg.RunFirstWorkingAsync(tools, input, output, [args], media.Duration, ctx, new ActionProgress<double>(f => ctx.Progress.Report(0.5 + f / 2)));
+        return output;
     }
 
     /// <summary>ffmpeg's atempo changes speed without changing pitch; each step must stay within 0.5 to 2.</summary>

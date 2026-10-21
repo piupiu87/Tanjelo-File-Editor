@@ -127,6 +127,38 @@ public class MediaToolsTests
         Assert.Equal("This video is too short to split into 3 parts.", Assert.Single(result.Failures).Message);
     }
 
+    [Theory]
+    [InlineData("quiet.mp3", "quiet-normalized.mp3", "mp3")]
+    [InlineData("quiet.opus", "quiet-normalized.opus", "opus")]
+    [InlineData("quiet.wav", "quiet-normalized.wav", "pcm_s16le")]
+    public async Task Normalize_brings_quiet_audio_to_the_target_loudness(string name, string expected, string codec)
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        var quiet = scratch.Tone(name, seconds: 5, filter: "volume=0.02");
+        Assert.True(Inspect.Loudness(quiet) < -35);
+
+        var output = await Env.RunOne("normalize", quiet);
+
+        Assert.Equal(scratch.PathOf(expected), output);
+        Assert.Equal(codec, Inspect.Codec(output, "audio"));
+        Assert.Equal(-16, Inspect.Loudness(output), 1.5);
+        Assert.Equal(5.0, Inspect.Media(output).Duration, 0.1);
+    }
+
+    [Fact]
+    public async Task Normalizing_silence_explains_why_nothing_happened()
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        var silence = scratch.Tone("silence.wav", filter: "volume=0");
+        var engine = Env.Engine();
+
+        var result = await engine.RunAsync([silence], Env.Offered(engine, "normalize", [silence]), ct: TestContext.Current.CancellationToken);
+
+        Assert.Equal("This file is silent.", Assert.Single(result.Failures).Message);
+    }
+
     [Fact]
     public async Task Muting_a_silent_video_explains_why_nothing_happened()
     {

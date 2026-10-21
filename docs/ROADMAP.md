@@ -47,7 +47,7 @@ Tools that need no dialog
 - [x] Mute video (S, *good first issue*)
 - [x] Video speed presets: 0.5×, 1.5×, 2×, keeping audio pitch (S)
 - [x] Split video into equal parts (S)
-- [ ] Normalize audio volume (S)
+- [x] Normalize audio volume (S)
 - [ ] Audio to mono / to stereo (S)
 - [ ] Trim silence from the start and end of audio (S)
 - [ ] Split a PDF into one file per page (S)
