@@ -32,7 +32,10 @@ public partial class FormatMenuWindow : Window
             "mute" => "",                        // speaker, muted
             _ when Target.Key.StartsWith("speed-") => "",   // stopwatch
             _ when Target.Key.StartsWith("split-") => "",   // scissors
+            "merge-pdf" => "",                   // merge
             "normalize" => "",                   // volume
+            "mono" => "",                        // one speaker
+            "stereo" => "",                      // headphones: left and right
             "trim-silence" => "",                // scissors
             "copy-path" => "",                   // link
             "copy-files" => "",                  // copy
