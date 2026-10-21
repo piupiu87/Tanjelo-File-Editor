@@ -29,6 +29,8 @@ public partial class FormatMenuWindow : Window
         {
             "extract" => "",                     // folder
             "mute" => "",                        // speaker, muted
+            _ when Target.Key.StartsWith("speed-") => "",   // stopwatch
+            _ when Target.Key.StartsWith("split-") => "",   // scissors
             _ => Target.Section switch
             {
                 Section.Image => "",             // picture
