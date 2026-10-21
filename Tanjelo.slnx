@@ -4,4 +4,7 @@
     <Project Path="src/Tanjelo.Core/Tanjelo.Core.csproj" />
     <Project Path="src/Tanjelo/Tanjelo.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Tanjelo.Core.Tests/Tanjelo.Core.Tests.csproj" />
+  </Folder>
 </Solution>

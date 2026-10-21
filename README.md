@@ -82,22 +82,27 @@ tanj convert <format> <files...>    # e.g. tanj convert mp3 talk.mp4
 
 ```
 dotnet build Tanjelo.slnx
+dotnet test --project tests\Tanjelo.Core.Tests
 dotnet publish src\Tanjelo -c Release
 dotnet publish src\tanj -c Release
 ```
+
+The tests generate their own fixture files. Tests that need ffmpeg, 7-Zip, Office or LibreOffice skip themselves when
+that tool isn't installed.
 
 The published apps land in `src\<project>\bin\Release\net10.0-windows10.0.19041.0\win-x64\publish\`, with the license
 and third-party notices included. If your checkout path contains a comma, `dotnet publish -o <dir>` fails (MSBuild
 reads commas as separators), so publish to the default folder and copy from there.
 `tools\make-icon.ps1` regenerates the app icon.
 
-Pushing a tag such as `v0.1.0` makes the GitHub Actions workflow build, smoke-test, and attach a zip to a new release.
+Pushing a tag such as `v0.1.0` makes the GitHub Actions workflow build, test, smoke-test, and attach a zip to a new release.
 
 | Project | What's in it |
 |---|---|
 | `src/Tanjelo.Core` | Formats, the conversion engine, and one converter per engine (`Converters/`) |
 | `src/Tanjelo` | WPF tray app: hotkey, Explorer selection, the format menu, progress cards |
 | `src/tanj` | Command-line front end |
+| `tests/Tanjelo.Core.Tests` | xUnit tests for the engine and every converter |
 
 ## Notes on Office automation
 

@@ -23,6 +23,17 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      # Optional: without ffmpeg the audio and video tests are skipped, not failed.
+      - name: Install ffmpeg
+        continue-on-error: true
+        run: choco install ffmpeg --no-progress -y
+
+      - name: Test
+        # Fixtures are generated at test time; Office and LibreOffice tests skip themselves on the runner.
+        run: |
+          dotnet test --project tests/Tanjelo.Core.Tests -c Release
+          if ($LASTEXITCODE -ne 0) { throw "tests failed" }
+
       - name: Publish
         run: |
           # A tag like v1.2.3 sets the version; other builds keep the one in Tanjelo.csproj.
