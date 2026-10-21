@@ -34,6 +34,8 @@ public sealed class MediaTools(Toolbox tools) : IConverter
     static readonly Target[] AudioTools =
     [
         Tool("normalize", "Normalize volume", "Even loudness, at the level podcasts and streaming use", Section.Audio, "Normalizing…", "Normalized"),
+        Tool("mono", "To mono", "Mix all channels into one", Section.Audio, "Mixing to mono…", "Mixed to mono"),
+        Tool("stereo", "To stereo", "Two channels; mono plays on both sides", Section.Audio, "Making stereo…", "Made stereo"),
     ];
 
     /// <summary>EBU R128 loudness: -16 LUFS integrated, peaks at most -1.5 dBTP.</summary>
@@ -57,6 +59,8 @@ public sealed class MediaTools(Toolbox tools) : IConverter
             _ when target.Key.StartsWith("speed-", StringComparison.Ordinal) => [await SpeedAsync(input, media, target, ctx)],
             _ when target.Key.StartsWith("split-video-", StringComparison.Ordinal) => await SplitAsync(input, media, target, ctx),
             "normalize" => [await NormalizeAsync(input, media, ctx)],
+            "mono" => [await ChannelsAsync(input, media, 1, ctx)],
+            "stereo" => [await ChannelsAsync(input, media, 2, ctx)],
             _ => throw new ConversionException($"Unknown tool '{target.Key}'."),
         };
     }
@@ -194,6 +198,18 @@ public sealed class MediaTools(Toolbox tools) : IConverter
             $":measured_thresh={Measured("input_thresh")}:offset={Measured("target_offset")}:linear=true";
         string[] args = ["-map", "0:a:0", "-af", filter, "-ar", rate.ToString(CultureInfo.InvariantCulture), .. Ffmpeg.AudioEncoder(Formats.Key(input))];
         await Ffmpeg.RunFirstWorkingAsync(tools, input, output, [args], media.Duration, ctx, new ActionProgress<double>(f => ctx.Progress.Report(0.5 + f / 2)));
+        return output;
+    }
+
+    /// <summary>Downmixes to mono, or makes stereo: a mono source plays on both sides, surround is mixed down.</summary>
+    async Task<string> ChannelsAsync(string input, MediaInfo media, int channels, JobContext ctx)
+    {
+        var name = channels == 1 ? "mono" : "stereo";
+        if (media.Channels == channels)
+            throw new ConversionException($"This file is already {name}.");
+        var output = OutputPaths.Suffixed(input, name);
+        string[] args = ["-map", "0:a:0", "-ac", channels.ToString(CultureInfo.InvariantCulture), .. Ffmpeg.AudioEncoder(Formats.Key(input))];
+        await Ffmpeg.RunFirstWorkingAsync(tools, input, output, [args], media.Duration, ctx);
         return output;
     }
 

@@ -159,6 +159,35 @@ public class MediaToolsTests
         Assert.Equal("This file is silent.", Assert.Single(result.Failures).Message);
     }
 
+    [Theory]
+    [InlineData("mono", "song.flac", 2, "song-mono.flac", 1)]
+    [InlineData("mono", "surround.wav", 6, "surround-mono.wav", 1)]
+    [InlineData("stereo", "voice.m4a", 1, "voice-stereo.m4a", 2)]
+    [InlineData("stereo", "surround.ogg", 6, "surround-stereo.ogg", 2)]
+    public async Task Channels_are_mixed_to_mono_or_stereo(string key, string name, int before, string expected, int after)
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        var output = await Env.RunOne(key, scratch.Tone(name, channels: before));
+
+        Assert.Equal(scratch.PathOf(expected), output);
+        Assert.Equal(after, Inspect.Media(output).Channels);
+        Assert.Equal(2.0, Inspect.Media(output).Duration, 0.1);
+    }
+
+    [Fact]
+    public async Task Mono_audio_isnt_made_mono_again()
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        var mono = scratch.Tone("voice.mp3", channels: 1);
+        var engine = Env.Engine();
+
+        var result = await engine.RunAsync([mono], Env.Offered(engine, "mono", [mono]), ct: TestContext.Current.CancellationToken);
+
+        Assert.Equal("This file is already mono.", Assert.Single(result.Failures).Message);
+    }
+
     [Fact]
     public async Task Muting_a_silent_video_explains_why_nothing_happened()
     {
