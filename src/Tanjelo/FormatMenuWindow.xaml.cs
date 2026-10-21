@@ -36,6 +36,7 @@ public partial class FormatMenuWindow : Window
             "trim-silence" => "",                // scissors
             "copy-path" => "",                   // link
             "copy-files" => "",                  // copy
+            "open-terminal" => "",               // command prompt
             _ => Target.Section switch
             {
                 Section.Image => "",             // picture

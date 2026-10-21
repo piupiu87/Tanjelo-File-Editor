@@ -15,7 +15,7 @@ public class FileActionsTests
 
     readonly FakeClipboard _clipboard = new();
 
-    ConverterEngine Engine() => new(Env.Tools, null, [], [new ClipboardActions(_clipboard)]);
+    ConverterEngine Engine() => new(Env.Tools, null, [], [new ClipboardActions(_clipboard), new OpenTerminalAction(Env.Tools)]);
 
     [Fact]
     public void Actions_are_offered_for_files_folders_and_mixed_selections()
@@ -23,7 +23,7 @@ public class FileActionsTests
         using var scratch = new Scratch();
         var file = scratch.Text("notes.txt", "x");
         var folder = scratch.Folder("photos");
-        string[] expected = ["copy-path", "copy-files"];
+        string[] expected = ["copy-path", "copy-files", "open-terminal"];
 
         foreach (var selection in new[] { [file], [folder], new[] { file, folder } })
         {
@@ -67,6 +67,34 @@ public class FileActionsTests
         await engine.RunAsync([a, b], Env.Offered(engine, "copy-files", [a, b]), ct: TestContext.Current.CancellationToken);
 
         Assert.Equal([a, b], _clipboard.Files);
+    }
+
+    [Fact]
+    public void Terminal_opens_in_each_folder_once_and_in_the_folder_of_each_file()
+    {
+        using var scratch = new Scratch();
+        var sub = scratch.Folder("sub");
+        var folders = OpenTerminalAction.Folders([scratch.Text("a.txt", ""), scratch.Text("b.txt", ""), sub, sub + "\\"]);
+        Assert.Equal([scratch.Dir, sub], folders);
+    }
+
+    [Fact]
+    public void Windows_terminal_gets_one_new_window_with_a_tab_per_folder()
+    {
+        var start = Assert.Single(OpenTerminalAction.StartInfos([@"C:\one", @"D:\two;three"], @"C:\wt.exe"));
+
+        Assert.Equal(@"C:\wt.exe", start.FileName);
+        Assert.Equal(["-w", "new", "-d", @"C:\one", ";", "new-tab", "-d", @"D:\two\;three"], start.ArgumentList);
+    }
+
+    [Fact]
+    public void Without_windows_terminal_each_folder_gets_a_powershell_window()
+    {
+        var starts = OpenTerminalAction.StartInfos([@"C:\one", @"C:\two"], windowsTerminal: null);
+
+        Assert.All(starts, s => Assert.Equal("powershell.exe", s.FileName));
+        Assert.All(starts, s => Assert.True(s.UseShellExecute));
+        Assert.Equal([@"C:\one", @"C:\two"], starts.Select(s => s.WorkingDirectory));
     }
 
 }

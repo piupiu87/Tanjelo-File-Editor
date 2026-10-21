@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
 
@@ -75,5 +76,72 @@ public sealed class ClipboardActions(IClipboard clipboard) : IBatchOperation
         else
             clipboard.SetFiles(paths);
         return Task.FromResult<IReadOnlyList<string>>([]);
+    }
+}
+
+/// <summary>Opens Windows Terminal (or PowerShell) in the selected folders, or in the folder holding the selected files.</summary>
+public sealed class OpenTerminalAction(Toolbox tools) : IBatchOperation
+{
+    const int MaxFolders = 10;
+
+    public IEnumerable<Target> TargetsFor(IReadOnlyList<string> inputs)
+    {
+        yield return new Target("open-terminal", "Open in Terminal", tools.WindowsTerminal is null ? "PowerShell, in this folder" : "Windows Terminal, in this folder", Section.File)
+        {
+            IsBatch = true,
+            Kind = TargetKind.Action,
+            Running = "Opening…",
+            Done = "Opened in Terminal",
+        };
+    }
+
+    public Task<IReadOnlyList<string>> RunAsync(IReadOnlyList<string> inputs, Target target, JobContext ctx)
+    {
+        var folders = Folders(inputs);
+        if (folders.Count > MaxFolders)
+            throw new ConversionException($"That's {folders.Count} different folders; Tanjelo opens at most {MaxFolders} at once.");
+        foreach (var start in StartInfos(folders, tools.WindowsTerminal))
+        {
+            try
+            {
+                using var _ = Process.Start(start);
+            }
+            catch (System.ComponentModel.Win32Exception ex)
+            {
+                throw new ConversionException($"Couldn't open {Path.GetFileName(start.FileName)}: {ex.Message}", ex);
+            }
+        }
+        return Task.FromResult<IReadOnlyList<string>>([]);
+    }
+
+    /// <summary>Each selected folder, and the folder of each selected file, without repeats and in selection order.</summary>
+    internal static List<string> Folders(IReadOnlyList<string> inputs) => inputs
+        .Select(p => Directory.Exists(p) ? Path.GetFullPath(p) : OutputPaths.DirectoryOf(p))
+        .DistinctBy(p => p.TrimEnd('\\'), StringComparer.OrdinalIgnoreCase)
+        .ToList();
+
+    /// <summary>One Windows Terminal window with a tab per folder, or else one PowerShell window per folder.</summary>
+    internal static List<ProcessStartInfo> StartInfos(IReadOnlyList<string> folders, string? windowsTerminal)
+    {
+        if (windowsTerminal is not null)
+        {
+            var start = new ProcessStartInfo(windowsTerminal) { UseShellExecute = false };
+            // "-w new" keeps it out of any terminal window the user already has open.
+            start.ArgumentList.Add("-w");
+            start.ArgumentList.Add("new");
+            for (var i = 0; i < folders.Count; i++)
+            {
+                if (i > 0)
+                {
+                    start.ArgumentList.Add(";");
+                    start.ArgumentList.Add("new-tab");
+                }
+                start.ArgumentList.Add("-d");
+                start.ArgumentList.Add(folders[i].Replace(";", "\\;")); // wt reads a bare ";" as "next command"
+            }
+            return [start];
+        }
+        // Shell execute gives each its own console window, even when started from tanj's console.
+        return folders.Select(f => new ProcessStartInfo("powershell.exe") { UseShellExecute = true, WorkingDirectory = f, Arguments = "-NoLogo" }).ToList();
     }
 }

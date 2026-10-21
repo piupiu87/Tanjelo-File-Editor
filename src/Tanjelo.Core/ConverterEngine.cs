@@ -35,6 +35,7 @@ public sealed class ConverterEngine
                 new MergePdfOperation(),
                 new CompressOperation(tools),
                 new ClipboardActions(new WindowsClipboard()),
+                new OpenTerminalAction(tools),
             ])
     {
     }

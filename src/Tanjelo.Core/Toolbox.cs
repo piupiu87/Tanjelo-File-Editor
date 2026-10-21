@@ -12,6 +12,9 @@ public sealed class Toolbox
     public bool PowerPoint { get; init; }
     public bool Excel { get; init; }
 
+    /// <summary>Windows Terminal's wt.exe, usually an app execution alias in %LOCALAPPDATA%MicrosoftWindowsApps.</summary>
+    public string? WindowsTerminal { get; init; }
+
     public static Toolbox Detect(string? ffmpegPath = null, string? sevenZipPath = null)
     {
         var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
@@ -30,6 +33,7 @@ public sealed class Toolbox
             Word = Type.GetTypeFromProgID("Word.Application") is not null,
             PowerPoint = Type.GetTypeFromProgID("PowerPoint.Application") is not null,
             Excel = Type.GetTypeFromProgID("Excel.Application") is not null,
+            WindowsTerminal = FirstExisting([Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "WindowsApps", "wt.exe"), FindOnPath("wt.exe")]),
         };
     }
 
