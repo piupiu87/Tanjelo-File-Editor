@@ -51,7 +51,7 @@ Tools that need no dialog
 - [x] Audio to mono / to stereo (S)
 - [x] Trim silence from the start and end of audio (S)
 - [x] Split a PDF into one file per page (S)
-- [ ] Merge PDFs in selection order (S)
+- [x] Merge PDFs in selection order (S)
 
 File actions (also for folders and mixed selections)
 - [ ] Copy path, one per line (S, *good first issue*)

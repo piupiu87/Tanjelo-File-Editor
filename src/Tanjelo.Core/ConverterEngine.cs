@@ -30,7 +30,7 @@ public sealed class ConverterEngine
                 new MediaTools(tools),
                 new ArchiveConverter(tools),
             ],
-            [new CombinePdfOperation(), new CompressOperation(tools)])
+            [new CombinePdfOperation(), new MergePdfOperation(), new CompressOperation(tools)])
     {
     }
 

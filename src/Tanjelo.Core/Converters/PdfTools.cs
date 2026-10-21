@@ -44,3 +44,57 @@ public sealed class SplitPdfTool : IConverter
         return [folder];
     }, ctx.Cancellation);
 }
+
+/// <summary>Merges several PDFs into one, in the order they were selected.</summary>
+public sealed class MergePdfOperation : IBatchOperation
+{
+    public IEnumerable<Target> TargetsFor(IReadOnlyList<string> inputs)
+    {
+        if (inputs.Count >= 2 && inputs.All(i => Formats.Key(i) == "pdf"))
+            yield return new Target("merge-pdf", "Merge into one PDF", $"All {inputs.Count} PDFs, in the order selected", Section.Document)
+            {
+                IsBatch = true,
+                Kind = TargetKind.Tool,
+                Running = "Merging…",
+                Done = "Merged into one PDF",
+            };
+    }
+
+    public Task<IReadOnlyList<string>> RunAsync(IReadOnlyList<string> inputs, Target target, JobContext ctx) => Task.Run<IReadOnlyList<string>>(() =>
+    {
+        PdfDocument? merged = null;
+        try
+        {
+            for (var i = 0; i < inputs.Count; i++)
+            {
+                ctx.Cancellation.ThrowIfCancellationRequested();
+                using var source = Open(inputs[i]);
+                merged ??= PdfFiles.NewLike(source);
+                merged.Version = Math.Max(merged.Version, source.Version);
+                foreach (var page in source.Pages)
+                    merged.AddPage(page);
+                ctx.Progress.Report((i + 1.0) / (inputs.Count + 1));
+            }
+            var output = OutputPaths.Unique(OutputPaths.DirectoryOf(inputs[0]), "Merged", "pdf");
+            PdfFiles.Save(merged!, output);
+            return [output];
+        }
+        finally
+        {
+            merged?.Dispose();
+        }
+    }, ctx.Cancellation);
+
+    // The whole selection is one job, so say which file was the problem.
+    static PdfDocument Open(string path)
+    {
+        try
+        {
+            return PdfFiles.OpenForImport(path);
+        }
+        catch (ConversionException ex)
+        {
+            throw new ConversionException($"{Path.GetFileName(path)}: {ex.Message}", ex);
+        }
+    }
+}
