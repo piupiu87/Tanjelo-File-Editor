@@ -50,7 +50,7 @@ Tools that need no dialog
 - [x] Normalize audio volume (S)
 - [x] Audio to mono / to stereo (S)
 - [x] Trim silence from the start and end of audio (S)
-- [ ] Split a PDF into one file per page (S)
+- [x] Split a PDF into one file per page (S)
 - [ ] Merge PDFs in selection order (S)
 
 File actions (also for folders and mixed selections)

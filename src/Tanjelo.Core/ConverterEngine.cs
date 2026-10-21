@@ -23,6 +23,7 @@ public sealed class ConverterEngine
                 new ImageConverter(),
                 new SubtitleConverter(),
                 new PdfConverter(),
+                new SplitPdfTool(),
                 new OfficeConverter(tools),
                 new LibreOfficeConverter(tools),
                 new MediaConverter(tools),

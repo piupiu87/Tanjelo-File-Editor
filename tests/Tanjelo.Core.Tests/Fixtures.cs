@@ -110,14 +110,14 @@ sealed class Scratch : IDisposable
         return path;
     }
 
-    /// <summary>A PDF of blank US Letter pages.</summary>
-    public string Pdf(string name, int pages = 1)
+    /// <summary>A PDF of blank pages, US Letter unless <paramref name="width"/> (in points) says otherwise.</summary>
+    public string Pdf(string name, int pages = 1, int width = 612)
     {
         var path = PathOf(name);
         using var collection = new MagickImageCollection();
         for (var i = 0; i < pages; i++)
         {
-            var page = new MagickImage(MagickColors.White, 612, 792) { Density = new Density(72, 72, DensityUnit.PixelsPerInch) };
+            var page = new MagickImage(MagickColors.White, (uint)width, 792) { Density = new Density(72, 72, DensityUnit.PixelsPerInch) };
             collection.Add(page);
         }
         collection.Write(path, MagickFormat.Pdf);

@@ -1,0 +1,46 @@
+using PdfSharp.Pdf;
+
+namespace Tanjelo.Core.Converters;
+
+/// <summary>Splits a PDF into one file per page. Pages are copied as they are, so nothing is re-rendered or lost.</summary>
+public sealed class SplitPdfTool : IConverter
+{
+    static readonly Target Split = new("split-pdf", "Split into pages", "One PDF per page, in a folder", Section.Document)
+    {
+        Kind = TargetKind.Tool,
+        Running = "Splitting…",
+        Done = "Split into pages",
+    };
+
+    public IEnumerable<Target> TargetsFor(string input) => Formats.Key(input) == "pdf" ? [Split] : [];
+
+    public Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx) => Task.Run<IReadOnlyList<string>>(() =>
+    {
+        using var source = PdfFiles.OpenForImport(input);
+        var count = source.PageCount;
+        if (count < 2)
+            throw new ConversionException("This PDF has only one page.");
+
+        var baseName = Formats.BaseName(input);
+        var folder = OutputPaths.Unique(OutputPaths.DirectoryOf(input), baseName + " pages", "");
+        Directory.CreateDirectory(folder);
+        var digits = count.ToString().Length;
+        try
+        {
+            for (var i = 0; i < count; i++)
+            {
+                ctx.Cancellation.ThrowIfCancellationRequested();
+                using var page = PdfFiles.NewLike(source);
+                page.AddPage(source.Pages[i]);
+                PdfFiles.Save(page, OutputPaths.Unique(folder, $"{baseName}-{(i + 1).ToString().PadLeft(digits, '0')}", "pdf"));
+                ctx.Progress.Report((i + 1.0) / count);
+            }
+        }
+        catch
+        {
+            OutputPaths.TryDelete(folder);
+            throw;
+        }
+        return [folder];
+    }, ctx.Cancellation);
+}
