@@ -25,7 +25,7 @@ Every feature should keep these true:
 Hotkey menu in File Explorer and on the desktop, tray icon, "Send to" entry and the `tanj` CLI. Converts images, PDF pages,
 audio, video, Office documents and archives; combines images into one PDF; extracts and creates archives. Light and dark themes.
 
-## v0.2: foundations and quick wins
+## v0.2.0: foundations and quick wins (released)
 
 Build the plumbing later releases need, and close the easy gaps.
 

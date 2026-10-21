@@ -13,7 +13,7 @@
     <SelfContained>false</SelfContained>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <!-- WFO0003 wants WinForms' own DPI setting; this is a WPF app (WinForms only supplies the tray icon), so the manifest is correct. -->
     <NoWarn>$(NoWarn);WFO0003</NoWarn>
   </PropertyGroup>
