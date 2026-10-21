@@ -61,7 +61,7 @@ Tray menu → *Edit settings…* opens `%APPDATA%\Tanjelo\settings.json`. Change
   "theme": "system",          // "system", "light" or "dark"
   "jpegQuality": 90,
   "webpQuality": 90,
-  "pdfRenderDpi": 200,        // resolution for PDF -> image
+  "pdfRenderDpi": 300,        // resolution for PDF -> image
   "ffmpegPath": null,         // only needed if ffmpeg isn't found automatically
   "sevenZipPath": null
 }

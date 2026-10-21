@@ -14,6 +14,16 @@ public class PdfConverterTests
         Assert.Equal(MagickFormat.Png, Inspect.Image(output).Format);
     }
 
+    [Fact]
+    public async Task Pages_render_at_300_dpi_by_default()
+    {
+        using var scratch = new Scratch();
+        var output = await Env.RunOne("png", scratch.Pdf("letter.pdf"));
+
+        var info = Inspect.Image(output);
+        Assert.Equal((2550u, 3300u), (info.Width, info.Height)); // US Letter, 8.5 x 11 in
+    }
+
     [Theory]
     [InlineData(200, 1700, 2200)]
     [InlineData(96, 816, 1056)]

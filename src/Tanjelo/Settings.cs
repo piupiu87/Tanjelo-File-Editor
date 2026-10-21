@@ -12,7 +12,7 @@ sealed class Settings
     public string Theme { get; set; } = "system"; // "system", "light" or "dark"
     public int JpegQuality { get; set; } = 90;
     public int WebpQuality { get; set; } = 90;
-    public int PdfRenderDpi { get; set; } = 200;
+    public int PdfRenderDpi { get; set; } = 300;
     public string? FfmpegPath { get; set; }
     public string? SevenZipPath { get; set; }
 
