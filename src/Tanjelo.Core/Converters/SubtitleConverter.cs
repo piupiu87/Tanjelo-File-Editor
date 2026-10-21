@@ -10,9 +10,9 @@ public sealed partial class SubtitleConverter : IConverter
 {
     static readonly Target[] Outputs =
     [
-        new("srt", "SRT", "SubRip subtitles, plays almost anywhere", Section.Document),
-        new("vtt", "VTT", "WebVTT, for video on the web", Section.Document),
-        new("txt", "TXT", "Just the words, without timings", Section.Document),
+        new("srt", "SRT", "SubRip, plays anywhere", Section.Document),
+        new("vtt", "VTT", "WebVTT, for web video", Section.Document),
+        new("txt", "TXT", "Just the words", Section.Document),
     ];
 
     public IEnumerable<Target> TargetsFor(string input) => Formats.KindOf(input) == FileKind.Subtitle ? Outputs : [];

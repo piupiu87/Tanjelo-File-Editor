@@ -5,7 +5,7 @@ namespace Tanjelo.Core.Converters;
 /// <summary>Splits a PDF into one file per page. Pages are copied as they are, so nothing is re-rendered or lost.</summary>
 public sealed class SplitPdfTool : IConverter
 {
-    static readonly Target Split = new("split-pdf", "Split into pages", "One PDF per page, in a folder", Section.Document)
+    static readonly Target Split = new("split-pdf", "Split into pages", "One PDF per page", Section.Document)
     {
         Kind = TargetKind.Tool,
         Running = "Splitting…",
@@ -51,7 +51,7 @@ public sealed class MergePdfOperation : IBatchOperation
     public IEnumerable<Target> TargetsFor(IReadOnlyList<string> inputs)
     {
         if (inputs.Count >= 2 && inputs.All(i => Formats.Key(i) == "pdf"))
-            yield return new Target("merge-pdf", "Merge into one PDF", $"All {inputs.Count} PDFs, in the order selected", Section.Document)
+            yield return new Target("merge-pdf", "Merge into one PDF", "In the order selected", Section.Document)
             {
                 IsBatch = true,
                 Kind = TargetKind.Tool,

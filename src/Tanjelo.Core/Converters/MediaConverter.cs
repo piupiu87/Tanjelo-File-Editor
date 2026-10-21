@@ -10,7 +10,7 @@ public sealed class MediaConverter(Toolbox tools) : IConverter
         new("mkv", "MKV", "Matroska, keeps every track", Section.Video),
         new("webm", "WebM", "VP9 + Opus for the web", Section.Video),
         new("avi", "AVI", "Legacy MPEG-4", Section.Video),
-        new("wmv", "WMV", "Windows Media, for older Windows apps", Section.Video),
+        new("wmv", "WMV", "Windows Media Video", Section.Video),
         new("gif", "GIF", "Animated, 15 fps, up to 640 px", Section.Image),
     ];
 
@@ -23,7 +23,7 @@ public sealed class MediaConverter(Toolbox tools) : IConverter
         new("ogg", "OGG", "Ogg Vorbis", Section.Audio),
         new("opus", "Opus", "Small and efficient", Section.Audio),
         new("aiff", "AIFF", "Uncompressed (Apple)", Section.Audio),
-        new("wma", "WMA", "Windows Media Audio, 192 kbps", Section.Audio),
+        new("wma", "WMA", "Windows Media, 192 kbps", Section.Audio),
     ];
 
     static readonly HashSet<string> ExtractableAudio = ["mp3", "m4a", "wav", "flac"];

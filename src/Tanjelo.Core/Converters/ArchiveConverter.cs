@@ -131,7 +131,7 @@ public sealed class CompressOperation(Toolbox tools) : IBatchOperation
         if (tools.SevenZip is not null)
             yield return new Target("compress-7z", "7Z", $"{what} a .7z (smaller)", Section.Archive) { IsBatch = true, Running = "Compressing…", Done = "Compressed to 7Z" };
         var pack = inputs.Count == 1 ? "Pack into" : $"Pack {inputs.Count} items into";
-        yield return new Target("compress-tar", "TAR", $"{pack} a .tar, uncompressed", Section.Archive) { IsBatch = true, Running = "Packing…", Done = "Packed into TAR" };
+        yield return new Target("compress-tar", "TAR", $"{pack} a .tar", Section.Archive) { IsBatch = true, Running = "Packing…", Done = "Packed into TAR" };
     }
 
     public async Task<IReadOnlyList<string>> RunAsync(IReadOnlyList<string> inputs, Target target, JobContext ctx)

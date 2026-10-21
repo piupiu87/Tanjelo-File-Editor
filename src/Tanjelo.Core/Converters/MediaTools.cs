@@ -10,7 +10,7 @@ public sealed class MediaTools(Toolbox tools) : IConverter
 
     static readonly Target[] VideoTools =
     [
-        Tool("mute", "Mute", "Remove the sound; the picture isn't re-encoded", Section.Video, "Muting…", "Muted"),
+        Tool("mute", "Mute", "Remove the sound, losslessly", Section.Video, "Muting…", "Muted"),
         Speed("0.5", "Slow motion, same pitch"),
         Speed("1.5", "Faster, same pitch"),
         Speed("2", "Twice as fast, same pitch"),
@@ -20,7 +20,7 @@ public sealed class MediaTools(Toolbox tools) : IConverter
     ];
 
     static Target Split(int parts, string count) =>
-        Tool($"split-video-{parts}", $"Split in {parts}", $"{count} equal parts, cut without re-encoding if possible", Section.Video, "Splitting…", "Split") with
+        Tool($"split-video-{parts}", $"Split in {parts}", $"{count} equal parts", Section.Video, "Splitting…", "Split") with
         {
             Parameters = new Dictionary<string, string> { ["parts"] = parts.ToString(CultureInfo.InvariantCulture) },
         };
@@ -33,10 +33,10 @@ public sealed class MediaTools(Toolbox tools) : IConverter
 
     static readonly Target[] AudioTools =
     [
-        Tool("normalize", "Normalize volume", "Even loudness, at the level podcasts and streaming use", Section.Audio, "Normalizing…", "Normalized"),
-        Tool("mono", "To mono", "Mix all channels into one", Section.Audio, "Mixing to mono…", "Mixed to mono"),
-        Tool("stereo", "To stereo", "Two channels; mono plays on both sides", Section.Audio, "Making stereo…", "Made stereo"),
-        Tool("trim-silence", "Trim silence", "Cut the quiet from the start and end", Section.Audio, "Trimming silence…", "Silence trimmed"),
+        Tool("normalize", "Normalize volume", "Even loudness, -16 LUFS", Section.Audio, "Normalizing…", "Normalized"),
+        Tool("mono", "To mono", "All channels in one", Section.Audio, "Mixing to mono…", "Mixed to mono"),
+        Tool("stereo", "To stereo", "Two channels", Section.Audio, "Making stereo…", "Made stereo"),
+        Tool("trim-silence", "Trim silence", "At the start and end", Section.Audio, "Trimming silence…", "Silence trimmed"),
     ];
 
     /// <summary>EBU R128 loudness: -16 LUFS integrated, peaks at most -1.5 dBTP.</summary>

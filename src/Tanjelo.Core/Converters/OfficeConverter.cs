@@ -24,7 +24,7 @@ public sealed class OfficeConverter(Toolbox tools) : IConverter
         new("rtf", "RTF", "Rich text", Section.Document),
         new("odt", "ODT", "OpenDocument text", Section.Document),
         new("txt", "TXT", "Plain text, UTF-8", Section.Document),
-        new("html", "HTML", "Web page; pictures go in a folder beside it", Section.Document),
+        new("html", "HTML", "Web page", Section.Document),
         new("png", "PNG", "One image per page", Section.Image),
         new("jpg", "JPG", "One image per page", Section.Image),
     ];
@@ -46,7 +46,7 @@ public sealed class OfficeConverter(Toolbox tools) : IConverter
         new("xls", "XLS", "Excel 97-2003", Section.Document),
         new("ods", "ODS", "OpenDocument spreadsheet", Section.Document),
         new("csv", "CSV", "Active sheet, UTF-8", Section.Document),
-        new("tsv", "TSV", "Active sheet, tab-separated, UTF-8", Section.Document),
+        new("tsv", "TSV", "Tab-separated, UTF-8", Section.Document),
     ];
 
     public IEnumerable<Target> TargetsFor(string input)

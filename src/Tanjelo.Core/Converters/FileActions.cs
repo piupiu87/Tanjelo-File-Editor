@@ -52,14 +52,14 @@ public sealed class ClipboardActions(IClipboard clipboard) : IBatchOperation
     public IEnumerable<Target> TargetsFor(IReadOnlyList<string> inputs)
     {
         var one = inputs.Count == 1;
-        yield return new Target("copy-path", one ? "Copy path" : "Copy paths", one ? "The full path, to paste anywhere" : "One full path per line", Section.File)
+        yield return new Target("copy-path", one ? "Copy path" : "Copy paths", one ? "Full path as text" : "One path per line", Section.File)
         {
             IsBatch = true,
             Kind = TargetKind.Action,
             Running = "Copying…",
             Done = one ? "Path copied" : "Paths copied",
         };
-        yield return new Target("copy-files", "Copy", "Paste into another folder, an email or a chat", Section.File)
+        yield return new Target("copy-files", "Copy", "Ready to paste anywhere", Section.File)
         {
             IsBatch = true,
             Kind = TargetKind.Action,
@@ -86,7 +86,7 @@ public sealed class OpenTerminalAction(Toolbox tools) : IBatchOperation
 
     public IEnumerable<Target> TargetsFor(IReadOnlyList<string> inputs)
     {
-        yield return new Target("open-terminal", "Open in Terminal", tools.WindowsTerminal is null ? "PowerShell, in this folder" : "Windows Terminal, in this folder", Section.File)
+        yield return new Target("open-terminal", "Open in Terminal", tools.WindowsTerminal is null ? "PowerShell" : "Windows Terminal", Section.File)
         {
             IsBatch = true,
             Kind = TargetKind.Action,
@@ -153,7 +153,7 @@ public sealed class MoveToFolderAction : IConverter
 
     public IEnumerable<Target> TargetsFor(string input) =>
     [
-        new("move-to", "Move to…", "Choose a folder to move this to", Section.File)
+        new("move-to", "Move to…", "Pick a folder", Section.File)
         {
             Kind = TargetKind.Action,
             Running = "Moving…",
