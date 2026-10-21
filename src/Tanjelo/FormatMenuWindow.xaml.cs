@@ -28,6 +28,7 @@ public partial class FormatMenuWindow : Window
         public string Glyph => Target.Key switch
         {
             "extract" => "",                     // folder
+            "mute" => "",                        // speaker, muted
             _ => Target.Section switch
             {
                 Section.Image => "",             // picture

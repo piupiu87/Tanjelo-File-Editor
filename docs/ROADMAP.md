@@ -44,7 +44,7 @@ Conversions
 - [x] Word and text documents to HTML (Word), and to JPG/PNG (convert to PDF, then render the pages) (S)
 
 Tools that need no dialog
-- [ ] Mute video (S, *good first issue*)
+- [x] Mute video (S, *good first issue*)
 - [ ] Video speed presets: 0.5×, 1.5×, 2×, keeping audio pitch (S)
 - [ ] Split video into equal parts (S)
 - [ ] Normalize audio volume (S)

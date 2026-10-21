@@ -26,6 +26,7 @@ public sealed class ConverterEngine
                 new OfficeConverter(tools),
                 new LibreOfficeConverter(tools),
                 new MediaConverter(tools),
+                new MediaTools(tools),
                 new ArchiveConverter(tools),
             ],
             [new CombinePdfOperation(), new CompressOperation(tools)])

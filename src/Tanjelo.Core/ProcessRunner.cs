@@ -14,7 +14,8 @@ public static class ProcessRunner
 {
     const int MaxCapturedChars = 64 * 1024;
 
-    public static async Task<ProcessResult> RunAsync(string exe, IEnumerable<string> args, CancellationToken ct, Action<string>? onStdOut = null, string? workingDirectory = null)
+    public static async Task<ProcessResult> RunAsync(string exe, IEnumerable<string> args, CancellationToken ct, Action<string>? onStdOut = null,
+        string? workingDirectory = null, Action<string>? onStdErr = null)
     {
         var psi = new ProcessStartInfo(exe)
         {
@@ -41,7 +42,9 @@ public static class ProcessRunner
         };
         process.ErrorDataReceived += (_, e) =>
         {
-            if (e.Data is not null) Append(stderr, e.Data);
+            if (e.Data is null) return;
+            Append(stderr, e.Data);
+            onStdErr?.Invoke(e.Data);
         };
 
         try

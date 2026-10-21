@@ -5,6 +5,10 @@ public static class OutputPaths
 {
     public static string Beside(string input, string ext) => Unique(DirectoryOf(input), Formats.BaseName(input), ext);
 
+    /// <summary>For tools: "talk.mp4" with "muted" becomes "talk-muted.mp4", keeping the extension unless another is given.</summary>
+    public static string Suffixed(string input, string suffix, string? ext = null) =>
+        Unique(DirectoryOf(input), Formats.BaseName(input) + "-" + suffix, ext ?? Formats.Ext(input));
+
     /// <param name="ext">Extension without the dot; empty for a folder.</param>
     public static string Unique(string directory, string baseName, string ext)
     {
