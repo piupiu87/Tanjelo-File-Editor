@@ -36,7 +36,7 @@ Foundations
 - [x] PDF library for page-level work: PDFsharp 6.2.4, the last MIT release (6.5.0 moved to AGPL-3.0) (S)
 
 Conversions
-- [ ] Subtitles: SRT ↔ VTT, and either to TXT (S, *good first issue*)
+- [x] Subtitles: SRT ↔ VTT, and either to TXT (S, *good first issue*)
 - [ ] TSV in and out, via Excel (S, *good first issue*)
 - [ ] WMV and WMA output, via ffmpeg (S, *good first issue*)
 - [ ] Plain TAR and single-file GZIP output (S, *good first issue*)

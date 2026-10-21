@@ -37,6 +37,7 @@ The shortcut is only grabbed while Explorer or the desktop is in front, so other
 | Word, RTF, ODT, TXT | PDF, DOCX, DOC, RTF, ODT, TXT | Microsoft Word (or LibreOffice) |
 | PowerPoint, ODP | PDF, PPTX, PPT, ODP, PNG / JPG per slide | Microsoft PowerPoint (or LibreOffice) |
 | Excel, ODS, CSV | PDF, XLSX, XLS, ODS, CSV | Microsoft Excel (or LibreOffice) |
+| Subtitles (SRT, VTT) | SRT, VTT, TXT (just the words) | Built in |
 | ZIP, 7Z, RAR, TAR(.GZ/.BZ2/.XZ), ISO, CAB | Extract here, ZIP, 7Z, TAR.GZ | 7-Zip, Windows `tar`, .NET |
 | Any files or folders | Compress to ZIP or 7Z | 7-Zip or .NET |
 

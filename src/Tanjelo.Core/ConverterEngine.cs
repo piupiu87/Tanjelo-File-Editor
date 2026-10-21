@@ -21,6 +21,7 @@ public sealed class ConverterEngine
         : this(tools, options,
             [
                 new ImageConverter(),
+                new SubtitleConverter(),
                 new PdfConverter(),
                 new OfficeConverter(tools),
                 new LibreOfficeConverter(tools),
@@ -162,7 +163,7 @@ public sealed class ConverterEngine
         FileKind.Image => Section.Image,
         FileKind.Video => Section.Video,
         FileKind.Audio => Section.Audio,
-        FileKind.Pdf or FileKind.WordDocument or FileKind.Presentation or FileKind.Spreadsheet => Section.Document,
+        FileKind.Pdf or FileKind.WordDocument or FileKind.Presentation or FileKind.Spreadsheet or FileKind.Subtitle => Section.Document,
         _ => Section.Archive,
     };
 

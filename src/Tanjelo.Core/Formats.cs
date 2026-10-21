@@ -1,6 +1,6 @@
 namespace Tanjelo.Core;
 
-public enum FileKind { Unknown, Folder, Image, Video, Audio, Pdf, WordDocument, Presentation, Spreadsheet, Archive }
+public enum FileKind { Unknown, Folder, Image, Video, Audio, Pdf, WordDocument, Presentation, Spreadsheet, Archive, Subtitle }
 
 public static class Formats
 {
@@ -10,6 +10,7 @@ public static class Formats
     public static readonly IReadOnlySet<string> WordDocuments = Set("doc", "docx", "docm", "dotx", "rtf", "odt", "txt");
     public static readonly IReadOnlySet<string> Presentations = Set("ppt", "pptx", "pptm", "ppsx", "odp");
     public static readonly IReadOnlySet<string> Spreadsheets = Set("xls", "xlsx", "xlsm", "xlsb", "ods", "csv");
+    public static readonly IReadOnlySet<string> Subtitles = Set("srt", "vtt");
     public static readonly IReadOnlySet<string> Archives = Set("zip", "7z", "rar", "tar", "tar.gz", "tar.bz2", "tar.xz", "gz", "bz2", "xz", "iso", "cab");
 
     // Suffix -> canonical extension, checked before the plain extension so "x.tar.gz" isn't read as "gz".
@@ -69,6 +70,7 @@ public static class Formats
         if (Presentations.Contains(ext)) return FileKind.Presentation;
         if (Spreadsheets.Contains(ext)) return FileKind.Spreadsheet;
         if (Archives.Contains(ext)) return FileKind.Archive;
+        if (Subtitles.Contains(ext)) return FileKind.Subtitle;
         return FileKind.Unknown;
     }
 
