@@ -75,10 +75,56 @@ public class ExcelTests
         Assert.Equal(["fruit,count", "apple,3", "pear,5"], File.ReadAllLines(csv));
     }
 
+    [Fact]
+    public async Task Tsv_survives_a_round_trip_through_xlsx()
+    {
+        Assert.SkipUnless(Env.Tools.Excel, Env.NoExcel);
+        using var scratch = new Scratch();
+        var xlsx = await Env.RunOne("xlsx", scratch.Text("stock.tsv", "fruit\tcount\tnote\r\napple\t3\tcrunchy, sweet\r\npear\t5\tnaïve café\r\n"));
+        File.Delete(scratch.PathOf("stock.tsv"));
+
+        var tsv = await Env.RunOne("tsv", xlsx);
+
+        Assert.Equal(["fruit\tcount\tnote", "apple\t3\tcrunchy, sweet", "pear\t5\tnaïve café"], File.ReadAllLines(tsv));
+        Assert.Equal([0xEF, 0xBB, 0xBF], File.ReadAllBytes(tsv)[..3]);
+    }
+
+    [Fact]
+    public async Task Csv_and_tsv_convert_into_each_other()
+    {
+        Assert.SkipUnless(Env.Tools.Excel, Env.NoExcel);
+        using var scratch = new Scratch();
+
+        var tsv = await Env.RunOne("tsv", scratch.Text("a.csv", "x,y\r\n1,\"two, three\"\r\n"));
+        Assert.Equal(["x\ty", "1\ttwo, three"], File.ReadAllLines(tsv));
+
+        var csv = await Env.RunOne("csv", scratch.Text("b.tsv", "x\ty\r\n1\ttwo, three\r\n"));
+        Assert.Equal(["x,y", "1,\"two, three\""], File.ReadAllLines(csv));
+    }
+
+    [Fact]
+    public void Text_tables_offer_the_other_text_format()
+    {
+        Assert.SkipUnless(Env.Tools.Excel, Env.NoExcel);
+        using var scratch = new Scratch();
+        Assert.Equal(["pdf", "xlsx", "tsv"], Env.Keys(scratch.Text("a.csv", "x")).Where(k => !k.StartsWith("compress-")));
+        Assert.Equal(["pdf", "xlsx", "csv"], Env.Keys(scratch.Text("a.tsv", "x")).Where(k => !k.StartsWith("compress-")));
+    }
+
+    [Theory]
+    [InlineData("a\t\"b, c\"\r\n", "a\tb, c\r\n")]                          // Excel's needless quotes go
+    [InlineData("\"say \"\"hi\"\"\"\tx\r\n", "\"say \"\"hi\"\"\"\tx\r\n")] // quotes inside a cell stay escaped
+    [InlineData("\"two\r\nlines\"\ty", "\"two\r\nlines\"\ty")]               // so do line breaks
+    [InlineData("plain\tcells\r\n\r\n", "plain\tcells\r\n\r\n")]
+    [InlineData("\"unterminated", "unterminated")]
+    public void Tab_separated_text_is_only_quoted_where_needed(string excel, string expected) =>
+        Assert.Equal(expected, Converters.OfficeConverter.Requote(excel));
+
     [Theory]
     [InlineData("pdf")]
     [InlineData("xls")]
     [InlineData("ods")]
+    [InlineData("tsv")]
     public async Task A_workbook_converts_to(string key)
     {
         Assert.SkipUnless(Env.Tools.Excel, Env.NoExcel);

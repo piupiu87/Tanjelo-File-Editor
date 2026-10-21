@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows.Automation;
 
 namespace Tanjelo.Core.Converters;
@@ -42,6 +43,7 @@ public sealed class OfficeConverter(Toolbox tools) : IConverter
         new("xls", "XLS", "Excel 97-2003", Section.Document),
         new("ods", "ODS", "OpenDocument spreadsheet", Section.Document),
         new("csv", "CSV", "Active sheet, UTF-8", Section.Document),
+        new("tsv", "TSV", "Active sheet, tab-separated, UTF-8", Section.Document),
     ];
 
     public IEnumerable<Target> TargetsFor(string input)
@@ -52,7 +54,8 @@ public sealed class OfficeConverter(Toolbox tools) : IConverter
             FileKind.WordDocument when tools.Word => key == "txt" ? WordOutputs.Where(t => t.Key is "pdf" or "docx") : WordOutputs,
             FileKind.Pdf when tools.Word => [new Target("docx", "DOCX", "Editable Word document", Section.Document)],
             FileKind.Presentation when tools.PowerPoint => PowerPointOutputs,
-            FileKind.Spreadsheet when tools.Excel => key == "csv" ? ExcelOutputs.Where(t => t.Key is "xlsx" or "pdf") : ExcelOutputs,
+            // Plain-text tables offer the formats worth turning them into, not every Excel format.
+            FileKind.Spreadsheet when tools.Excel => key is "csv" or "tsv" ? ExcelOutputs.Where(t => t.Key is "xlsx" or "pdf" or "csv" or "tsv") : ExcelOutputs,
             _ => [],
         };
     }
@@ -61,7 +64,7 @@ public sealed class OfficeConverter(Toolbox tools) : IConverter
         Formats.KindOf(input) is FileKind.WordDocument or FileKind.Presentation or FileKind.Spreadsheet
         && !tools.Word && !tools.PowerPoint && !tools.Excel && tools.LibreOffice is null
             ? "Office documents need Microsoft Office or LibreOffice."
-            : null;
+            : Formats.Key(input) == "tsv" && !tools.Excel ? "TSV files need Microsoft Excel." : null;
 
     public async Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx)
     {
@@ -91,6 +94,40 @@ public sealed class OfficeConverter(Toolbox tools) : IConverter
             stopPromptWatcher.Cancel();
             await promptWatcher;
         }
+    }
+
+    /// <summary>
+    /// Excel quotes every cell that contains a comma, even in tab-separated text, and most TSV readers would keep
+    /// those quotes. This re-quotes only the cells that need it: ones holding a tab, a line break or a quote.
+    /// </summary>
+    internal static string Requote(string text)
+    {
+        var result = new StringBuilder(text.Length);
+        var field = new StringBuilder();
+        var quoted = false;
+        for (var i = 0; i <= text.Length; i++)
+        {
+            var c = i < text.Length ? text[i] : '\n';
+            if (quoted)
+            {
+                if (c == '"' && i + 1 < text.Length && text[i + 1] == '"') { field.Append('"'); i++; }
+                else if (c == '"') quoted = false;
+                else if (i < text.Length) field.Append(c);
+                else { quoted = false; i--; } // unterminated quote: end the field here
+                continue;
+            }
+            if (c == '"' && field.Length == 0) { quoted = true; continue; }
+            if (c is '\t' or '\n' or '\r')
+            {
+                var value = field.ToString();
+                result.Append(value.IndexOfAny(['\t', '\n', '\r', '"']) >= 0 ? "\"" + value.Replace("\"", "\"\"") + "\"" : value);
+                field.Clear();
+                if (i < text.Length) result.Append(c);
+                continue;
+            }
+            field.Append(c);
+        }
+        return result.ToString();
     }
 
     static async Task<IReadOnlyList<string>> Guarded(OfficeSession office, JobContext ctx, Func<IReadOnlyList<string>> work)
@@ -228,12 +265,21 @@ public sealed class OfficeConverter(Toolbox tools) : IConverter
         {
             var excel = Excel();
             var output = OutputPaths.Beside(original, key);
-            dynamic book = excel.Workbooks.Open(Filename: source, UpdateLinks: 0, ReadOnly: true, Password: NoPassword, AddToMru: false);
+            dynamic book = Formats.Key(source) == "tsv"
+                ? OpenTabSeparated(excel, source)
+                : excel.Workbooks.Open(Filename: source, UpdateLinks: 0, ReadOnly: true, Password: NoPassword, AddToMru: false);
+            string? unicodeText = null;
             try
             {
                 if (key == "pdf")
                 {
                     book.ExportAsFixedFormat(Type: 0 /* xlTypePDF */, Filename: output, OpenAfterPublish: false);
+                }
+                else if (key == "tsv")
+                {
+                    // Excel only writes tab-separated text as UTF-16; it's re-encoded once the workbook is closed.
+                    unicodeText = Path.Combine(Path.GetDirectoryName(source)!, Guid.NewGuid().ToString("N") + ".txt");
+                    book.SaveAs(Filename: unicodeText, FileFormat: 42 /* xlUnicodeText */);
                 }
                 else
                 {
@@ -253,7 +299,42 @@ public sealed class OfficeConverter(Toolbox tools) : IConverter
                 book.Close(SaveChanges: false);
                 Marshal.FinalReleaseComObject(book);
             }
+            if (unicodeText is not null)
+            {
+                // With a byte order mark, like Excel's own UTF-8 CSV, so Excel reads it back correctly.
+                var table = Requote(File.ReadAllText(unicodeText, Encoding.Unicode));
+                File.WriteAllText(output, table, new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+            }
             return output;
+        }
+
+        /// <summary>Opens a .tsv as tab-separated text; Excel's own guess would read it as one column.</summary>
+        static dynamic OpenTabSeparated(dynamic excel, string source)
+        {
+            excel.Workbooks.OpenText(Filename: source, Origin: TextOrigin(source), StartRow: 1, DataType: 1 /* xlDelimited */,
+                TextQualifier: 1 /* xlTextQualifierDoubleQuote */, ConsecutiveDelimiter: false,
+                Tab: true, Semicolon: false, Comma: false, Space: false, Other: false);
+            // OpenText doesn't return the workbook. It activates it, and it's named after our temp copy.
+            dynamic book = excel.ActiveWorkbook;
+            if (book is null || !string.Equals((string)book.Name, Path.GetFileName(source), StringComparison.OrdinalIgnoreCase))
+                throw new ConversionException("Excel couldn't open this file.");
+            return book;
+        }
+
+        /// <summary>The code page Excel should read a text file in: UTF-16 or UTF-8 when it is, otherwise the ANSI code page.</summary>
+        static int TextOrigin(string path)
+        {
+            var bytes = File.ReadAllBytes(path);
+            if (bytes is [0xFF, 0xFE, ..]) return 1200;
+            try
+            {
+                new UTF8Encoding(false, throwOnInvalidBytes: true).GetString(bytes);
+                return 65001;
+            }
+            catch (DecoderFallbackException)
+            {
+                return 2; // xlWindows
+            }
         }
 
         /// <summary>

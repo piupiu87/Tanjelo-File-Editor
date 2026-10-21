@@ -37,7 +37,7 @@ Foundations
 
 Conversions
 - [x] Subtitles: SRT ↔ VTT, and either to TXT (S, *good first issue*)
-- [ ] TSV in and out, via Excel (S, *good first issue*)
+- [x] TSV in and out, via Excel (S, *good first issue*)
 - [ ] WMV and WMA output, via ffmpeg (S, *good first issue*)
 - [ ] Plain TAR and single-file GZIP output (S, *good first issue*)
 - [ ] PDF to images at 300 DPI by default, up from 200 (S, *good first issue*)

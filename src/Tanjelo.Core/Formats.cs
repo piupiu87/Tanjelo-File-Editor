@@ -9,7 +9,7 @@ public static class Formats
     public static readonly IReadOnlySet<string> Audio = Set("mp3", "wav", "flac", "m4a", "aac", "ogg", "oga", "opus", "wma", "aif", "aiff");
     public static readonly IReadOnlySet<string> WordDocuments = Set("doc", "docx", "docm", "dotx", "rtf", "odt", "txt");
     public static readonly IReadOnlySet<string> Presentations = Set("ppt", "pptx", "pptm", "ppsx", "odp");
-    public static readonly IReadOnlySet<string> Spreadsheets = Set("xls", "xlsx", "xlsm", "xlsb", "ods", "csv");
+    public static readonly IReadOnlySet<string> Spreadsheets = Set("xls", "xlsx", "xlsm", "xlsb", "ods", "csv", "tsv");
     public static readonly IReadOnlySet<string> Subtitles = Set("srt", "vtt");
     public static readonly IReadOnlySet<string> Archives = Set("zip", "7z", "rar", "tar", "tar.gz", "tar.bz2", "tar.xz", "gz", "bz2", "xz", "iso", "cab");
 

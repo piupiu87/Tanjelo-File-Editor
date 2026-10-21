@@ -17,7 +17,8 @@ public sealed class LibreOfficeConverter(Toolbox tools) : IConverter
         {
             FileKind.WordDocument when !tools.Word => Writer,
             FileKind.Presentation when !tools.PowerPoint => Impress,
-            FileKind.Spreadsheet when !tools.Excel => Calc,
+            // TSV import is only wired up for Excel; LibreOffice would need an explicit import filter.
+            FileKind.Spreadsheet when !tools.Excel && Formats.Key(input) != "tsv" => Calc,
             _ => [],
         };
     }
