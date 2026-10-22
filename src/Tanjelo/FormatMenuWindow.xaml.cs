@@ -49,6 +49,7 @@ public partial class FormatMenuWindow : Window
             "collage" => "",                     // grid
             "join-videos" => "",                 // merge
             "save-frames" => "",                 // camera
+            "visualize" => "",                   // waveform
             _ => Target.Section switch
             {
                 Section.Image => "",             // picture

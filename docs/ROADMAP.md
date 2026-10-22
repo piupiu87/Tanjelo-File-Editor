@@ -73,7 +73,7 @@ A shared options dialog, then the tools that need it.
 - [x] Join videos: reorder clips, save one MP4 (M)
 - [x] Save chosen video frames as full-resolution PNGs (M)
 - [x] Split video at chosen points (M)
-- [ ] Audio visualizer: waveform or still image to MP4, in landscape, portrait or square (M)
+- [x] Audio visualizer: waveform or still image to MP4, in landscape, portrait or square (M)
 - [ ] Per-channel audio volume (M)
 
 ## v0.4: more formats and sharing

@@ -33,6 +33,7 @@ public sealed class ConverterEngine
                 new CropImageTool(),
                 new CropVideoTool(tools),
                 new VideoMomentsTool(tools),
+                new VisualizerTool(tools),
                 new BackgroundTool(),
                 new ArchiveConverter(tools),
                 new MoveToFolderAction(),

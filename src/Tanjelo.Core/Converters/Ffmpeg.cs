@@ -12,6 +12,9 @@ sealed record MediaInfo(bool Probed, string? Video, string? Audio, double Durati
     public int Width { get; init; }
     public int Height { get; init; }
 
+    /// <summary>Whether the file carries a picture of its own, such as an album cover.</summary>
+    public bool CoverArt { get; init; }
+
     /// <summary>The turn the file asks players to make, in degrees; 0 when there's none.</summary>
     public int Rotation { get; init; }
 
@@ -88,6 +91,7 @@ static class Ffmpeg
         using var json = JsonDocument.Parse(result.StdOut);
         string? video = null, audio = null, layout = null, pixels = null;
         int channels = 0, sampleRate = 0, width = 0, height = 0, rotation = 0;
+        var cover = false;
         long audioBitrate = 0;
         double frameRate = 0;
         if (json.RootElement.TryGetProperty("streams", out var streams))
@@ -97,6 +101,7 @@ static class Ffmpeg
                 var type = stream.TryGetProperty("codec_type", out var t) ? t.GetString() : null;
                 var codec = stream.TryGetProperty("codec_name", out var c) ? c.GetString() : null;
                 var coverArt = stream.TryGetProperty("disposition", out var d) && d.TryGetProperty("attached_pic", out var a) && a.GetInt32() == 1;
+                cover |= type == "video" && coverArt;
                 if (type == "video" && !coverArt && video is null)
                 {
                     video = codec;
@@ -142,6 +147,7 @@ static class Ffmpeg
             Width = width,
             Height = height,
             Rotation = rotation,
+            CoverArt = cover,
             FrameRate = frameRate,
             PixelFormat = pixels,
             Bitrate = bitrate,

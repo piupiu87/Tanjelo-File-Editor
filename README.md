@@ -73,6 +73,7 @@ settings as `--name=value`; `tanj options <key> <files>` lists them.
 | Join videos… (`join-videos`) | Two or more videos | The order, the picture size (like the first clip, like the largest, 1080p or 720p) and how clips of another shape fit (black bars, or fill and crop). Clips that match are joined without re-encoding; others are encoded once to one size and frame rate, with silence for clips without sound. Saved as `Joined.mp4` | ffmpeg |
 | Save frames… (`save-frames`) | Video | Moments picked on a slider over the video (with the frame under it as the preview) or typed as times. Each becomes a full-size PNG, upright even for phone video: `clip-1m05.5s.png` | ffmpeg |
 | Split at… (`split-video-at`) | Video | Moments picked the same way, each starting a new part (`clip-part1.mp4`…); the preview lists the parts. Cut losslessly when keyframes fall on the moments, otherwise re-encoded so every cut is exact | ffmpeg |
+| Make a video… (`visualize`) | Audio | A moving waveform (in a colour you pick) or a still picture, landscape, portrait or square at full HD, on a background colour; the picture can be any file or the audio's own cover art, and the video can cover just part of the sound. Saved as `song-video.mp4` | ffmpeg |
 
 Actions work with the selected files and folders themselves:
 
