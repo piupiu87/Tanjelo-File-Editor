@@ -146,7 +146,14 @@ public sealed class ImageConverter : IConverter
         image.Alpha(AlphaAction.Remove);
     }
 
-    static MagickFormat FormatFor(string key) => key switch
+    /// <summary>
+    /// The format for a changed copy, such as a cropped picture: the input's own when Tanjelo can write it,
+    /// otherwise PNG, or JPG for an opaque photo (from HEIC, say).
+    /// </summary>
+    internal static string ChangedCopyKey(string input, bool alpha) =>
+        Formats.Key(input) is "png" or "jpg" or "webp" or "avif" or "gif" or "bmp" or "tiff" ? Formats.Key(input) : alpha ? "png" : "jpg";
+
+    internal static MagickFormat FormatFor(string key) => key switch
     {
         "png" => MagickFormat.Png,
         "jpg" => MagickFormat.Jpeg,

@@ -44,6 +44,7 @@ public partial class FormatMenuWindow : Window
             "move-to" => "",                     // move to folder
             "compress" => "",                    // arrows pointing in
             "metadata" => "",                    // tag
+            "crop" => "",                        // crop
             _ => Target.Section switch
             {
                 Section.Image => "",             // picture

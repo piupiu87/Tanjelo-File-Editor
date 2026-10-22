@@ -66,7 +66,7 @@ A shared options dialog, then the tools that need it.
 - [x] Options dialog framework: live preview where it helps, sensible defaults, remembers last settings (M)
 - [x] Compress to a target size or percentage, optionally resizing (images, video, audio) (M)
 - [x] View, edit or remove metadata: location, camera, author (images, audio, video, PDF) (M)
-- [ ] Crop images: aspect presets or exact pixels (M)
+- [x] Crop images: aspect presets or exact pixels (M)
 - [ ] Crop video (M)
 - [ ] Add a background: colour, gradient or image; padding, rounded corners, shadow (M)
 - [ ] Collage: grid, row, column or featured layout (M)

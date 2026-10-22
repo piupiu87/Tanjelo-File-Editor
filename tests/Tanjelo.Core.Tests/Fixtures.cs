@@ -94,6 +94,19 @@ sealed class Scratch : IDisposable
         return path;
     }
 
+    /// <summary>A JPEG stored <paramref name="width"/> by <paramref name="height"/> with an EXIF note to turn it a quarter, as phones save portraits.</summary>
+    public string Sideways(string name, int width = 120, int height = 80)
+    {
+        var path = PathOf(name);
+        using var image = new MagickImage("plasma:", (uint)width, (uint)height);
+        var exif = new ExifProfile();
+        exif.SetValue(ExifTag.Orientation, (ushort)6);
+        image.SetProfile(exif);
+        image.Orientation = Orientation.RightTop; // ImageMagick writes this into the EXIF
+        image.Write(path);
+        return path;
+    }
+
     /// <summary>A PNG that is transparent except for an opaque square in the middle.</summary>
     public string TransparentPng(string name, int size = 40)
     {
