@@ -280,24 +280,28 @@ public partial class FormatMenuWindow : Window
         Opacity = 1;
         Activate();
         Search.Focus();
-        // Switching tabs changes the height; keep the menu on the same side of the pointer.
-        SizeChanged += (_, _) => Place(first: false);
+        // Switching tabs or filtering changes the height; keep the menu on the same side of the pointer.
+        SizeChanged += (_, args) => Place(first: false, args.NewSize);
     }
 
-    void Place(bool first)
+    /// <param name="newSize">
+    /// The size WPF is about to give the window. During SizeChanged the window itself still has its old size, so
+    /// placing it by that would always be one change behind and could push the menu off the screen.
+    /// </param>
+    void Place(bool first, Size? newSize = null)
     {
         var hwnd = new WindowInteropHelper(this).Handle;
         Native.GetWindowRect(hwnd, out var rect);
         int width = rect.Right - rect.Left, height = rect.Bottom - rect.Top;
+        if (newSize is { } size)
+        {
+            var dpi = VisualTreeHelper.GetDpi(this);
+            (width, height) = ((int)Math.Round(size.Width * dpi.DpiScaleX), (int)Math.Round(size.Height * dpi.DpiScaleY));
+        }
         var work = Native.WorkAreaAt(_anchor);
 
-        var x = _anchor.X + 2;
-        if (x + width > work.Right) x = Math.Max(work.Left, _anchor.X - width - 2);
-        if (first) _above = _anchor.Y + 2 + height > work.Bottom;
-        var y = _above
-            ? Math.Max(work.Top, Math.Min(_anchor.Y - height - 2, work.Bottom - height))
-            : Math.Max(work.Top, Math.Min(_anchor.Y + 2, work.Bottom - height));
-
+        if (first) _above = MenuPlacement.OpensAbove(_anchor, work, height);
+        var (x, y) = MenuPlacement.Position(_anchor, work, width, height, _above);
         Native.SetWindowPos(hwnd, IntPtr.Zero, x, y, 0, 0, Native.SWP_NOSIZE | Native.SWP_NOZORDER | (first ? 0 : Native.SWP_NOACTIVATE));
     }
 }

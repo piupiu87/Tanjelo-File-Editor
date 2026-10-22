@@ -25,6 +25,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Tanjelo.Core\Tanjelo.Core.csproj" />
+    <!-- For the app's pure helpers, such as where the menu is placed. -->
+    <ProjectReference Include="..\..\src\Tanjelo\Tanjelo.csproj" />
   </ItemGroup>
 
 </Project>

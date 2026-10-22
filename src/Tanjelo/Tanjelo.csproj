@@ -30,6 +30,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Tanjelo.Core.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\..\LICENSE" Link="LICENSE.txt" Visible="false" CopyToPublishDirectory="PreserveNewest" />
     <None Include="..\..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" Visible="false" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
