@@ -27,6 +27,9 @@ The app isn't code-signed yet, so the first launch may show "Windows protected y
 The menu has three tabs: **Convert**, **Tools** and **Actions**. Press **Tab** (or the shortcut again) to switch, or
 just type: `mute` finds the Mute tool from any tab.
 
+Tools whose names end in "…" need a few settings first, so they open a small options dialog: it starts from the
+settings you used last time, shows a live preview where that helps, and runs on **Enter** (**Esc** cancels).
+
 The shortcut is only grabbed while Explorer or the desktop is in front, so other apps keep their own Ctrl+Shift+Space.
 
 ## What converts to what
@@ -90,7 +93,8 @@ Tray menu → *Edit settings…* opens `%APPDATA%\Tanjelo\settings.json`. Change
 }
 ```
 
-Errors are logged to `%LOCALAPPDATA%\Tanjelo\log.txt`.
+The options dialogs remember each tool's last settings in `%APPDATA%\Tanjelo\tools.json`; delete it to go back to the
+defaults. Errors are logged to `%LOCALAPPDATA%\Tanjelo\log.txt`.
 
 ## Command line
 
@@ -99,10 +103,12 @@ Errors are logged to `%LOCALAPPDATA%\Tanjelo\log.txt`.
 ```
 tanj tools                          # which external tools were found
 tanj targets <files...>             # what the selection can become, and its tools and actions
+tanj options <key> <files...>       # the settings a tool takes, with their defaults and allowed values
 tanj convert <key> <files...>       # e.g. tanj convert mp3 talk.mp4, tanj convert mute talk.mp4
 ```
 
-Some tools take settings, shown in brackets by `tanj targets`. Override them with `--name=value`:
+Some tools take settings, shown in brackets by `tanj targets`. Override them with `--name=value`. Tools that open
+an options dialog in the app take the same settings here, starting from their defaults (not the dialog's last values):
 
 ```
 tanj convert split-video-2 --parts=5 lecture.mp4
@@ -132,7 +138,7 @@ Pushing a tag such as `v0.1.0` makes the GitHub Actions workflow build, test, sm
 | Project | What's in it |
 |---|---|
 | `src/Tanjelo.Core` | Formats, the conversion engine, and one converter per engine (`Converters/`) |
-| `src/Tanjelo` | WPF tray app: hotkey, Explorer selection, the format menu, progress cards |
+| `src/Tanjelo` | WPF tray app: hotkey, Explorer selection, the format menu, options dialogs, progress cards |
 | `src/tanj` | Command-line front end |
 | `tests/Tanjelo.Core.Tests` | xUnit tests for the engine and every converter |
 

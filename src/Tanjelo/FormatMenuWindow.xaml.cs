@@ -158,7 +158,7 @@ public partial class FormatMenuWindow : Window
         Logo.Source = LogoSizes.FirstOrDefault(f => f.PixelWidth >= pixels) ?? LogoSizes[^1];
     }
 
-    static string FormatSize(long bytes) => bytes switch
+    internal static string FormatSize(long bytes) => bytes switch
     {
         < 1024 => $"{bytes} bytes",
         < 1024 * 1024 => $"{bytes / 1024.0:0} KB",

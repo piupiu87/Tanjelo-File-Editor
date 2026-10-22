@@ -3,6 +3,7 @@ using Tanjelo.Core;
 // tanj: command-line front end to the same engine the tray app uses.
 //   tanj tools                                 show which external tools were found
 //   tanj targets <files...>                    list what the selection can become, and the tools and actions for it
+//   tanj options <key> <files...>              explain the settings a tool takes
 //   tanj convert <key> [--name=value] <files>  run one of those, writing outputs next to the inputs
 
 if (args.Length == 0 || args[0] is "-h" or "--help" or "help")
@@ -11,9 +12,11 @@ if (args.Length == 0 || args[0] is "-h" or "--help" or "help")
         usage:
           tanj tools
           tanj targets <files...>
+          tanj options <key> <files...>
           tanj convert <key> [--name=value...] <files...>
 
         --name=value overrides a tool's setting, e.g. tanj convert split-video-2 --parts=5 clip.mp4
+        tanj options explains the settings of tools that ask for them, such as compress.
         """);
     return 0;
 }
@@ -51,16 +54,45 @@ switch (args[0])
         return 0;
     }
 
+    case "options" when args.Length > 2:
+    {
+        var target = Find(args[1], Inputs(args[2..]));
+        if (target is null) return 2;
+        Console.WriteLine($"{target.Key}: {target.Label}  {target.Description}");
+        if (target.Options.Count == 0)
+        {
+            var settings = string.Join(", ", target.Parameters.Select(p => $"--{p.Key}={p.Value}"));
+            Console.WriteLine(settings.Length == 0 ? "  It takes no settings." : $"  Settings: {settings}");
+            return 0;
+        }
+        foreach (var option in target.Options)
+        {
+            var allowed = option.Kind switch
+            {
+                OptionKind.Number => $"{OptionValues.Format(option.Min)} to {OptionValues.Format(option.Max)}{(option.Unit is { } unit ? " " + unit : "")}",
+                OptionKind.Choice => string.Join(", ", option.Choices.Select(c => $"{c.Value} ({c.Label})")),
+                OptionKind.Toggle => "true or false",
+                OptionKind.Colour => "#RRGGBB, or #RRGGBBAA with transparency",
+                OptionKind.File => option.Optional ? "a file, or empty" : "a file",
+                OptionKind.TimeRange => "from-to, such as 0:30-1:45; empty for all of it",
+                OptionKind.Times => "times such as 0:05,1:12.5",
+                OptionKind.Order => "each file's place in the selection, such as 2,1,3",
+                _ => option.Optional ? "text, or empty" : "text",
+            };
+            var when = option.ShownWhen is { } w ? $"  (with --{w.Name}={string.Join("|", w.Values)})" : "";
+            Console.WriteLine($"  --{option.Name}={target.Parameters[option.Name],-10} {option.Label}: {allowed}{when}");
+            if (option.Hint is { } hint)
+                Console.WriteLine($"  {"",-14} {hint}");
+        }
+        return 0;
+    }
+
     case "convert" when args.Length > 2:
     {
         var options = args[2..].TakeWhile(a => a.StartsWith("--", StringComparison.Ordinal)).ToList();
         var inputs = Inputs(args[(2 + options.Count)..]);
-        var target = engine.GetMenu(inputs).Targets.FirstOrDefault(x => string.Equals(x.Key, args[1], StringComparison.OrdinalIgnoreCase));
-        if (target is null)
-        {
-            Console.Error.WriteLine($"'{args[1]}' isn't available for this selection. Run: tanj targets <files>");
-            return 2;
-        }
+        var target = Find(args[1], inputs);
+        if (target is null) return 2;
 
         var values = new Dictionary<string, string>();
         foreach (var option in options)
@@ -75,6 +107,14 @@ switch (args[0])
             values[name] = value;
         }
         target = target.WithParameters(values);
+        foreach (var option in target.Options.Where(o => o.IsShown(target.Parameters)))
+        {
+            if (option.Problem(target.Parameters[option.Name]) is { } problem)
+            {
+                Console.Error.WriteLine($"--{option.Name} ({option.Label}) {problem}. Run: tanj options {target.Key} <files>");
+                return 2;
+            }
+        }
         if (target.FolderPrompt is not null && target.Parameters.GetValueOrDefault("folder") is null or "")
         {
             Console.Error.WriteLine($"{target.Key} needs a destination: tanj convert {target.Key} --folder=<path> <files...>");
@@ -113,6 +153,14 @@ switch (args[0])
     default:
         Console.Error.WriteLine("unknown command; run tanj --help");
         return 2;
+}
+
+Target? Find(string key, IReadOnlyList<string> inputs)
+{
+    var target = engine.GetMenu(inputs).Targets.FirstOrDefault(x => string.Equals(x.Key, key, StringComparison.OrdinalIgnoreCase));
+    if (target is null)
+        Console.Error.WriteLine($"'{key}' isn't available for this selection. Run: tanj targets <files>");
+    return target;
 }
 
 static List<string> Inputs(string[] paths)

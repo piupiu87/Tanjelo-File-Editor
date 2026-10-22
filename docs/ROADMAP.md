@@ -63,7 +63,7 @@ File actions (also for folders and mixed selections)
 
 A shared options dialog, then the tools that need it.
 
-- [ ] Options dialog framework: live preview where it helps, sensible defaults, remembers last settings (M)
+- [x] Options dialog framework: live preview where it helps, sensible defaults, remembers last settings (M)
 - [ ] Compress to a target size or percentage, optionally resizing (images, video, audio) (M)
 - [ ] View, edit or remove metadata: location, camera, author (images, audio, video, PDF) (M)
 - [ ] Crop images: aspect presets or exact pixels (M)

@@ -57,4 +57,18 @@ public class MenuPlacementTests
     {
         Assert.Equal(1800 - 413 - 2, MenuPlacement.Position(Pointer(1800, 100), Work, 413, 381, above: false).X);
     }
+
+    [Fact]
+    public void Dialogs_are_centred_across_the_pointer()
+    {
+        Assert.Equal((960 - 330, 500 - 200), MenuPlacement.Centered(Pointer(960, 500), Work, 660, 600));
+    }
+
+    [Fact]
+    public void Dialogs_stay_inside_the_work_area()
+    {
+        Assert.Equal((0, 0), MenuPlacement.Centered(Pointer(20, 10), Work, 660, 600));
+        Assert.Equal((1920 - 660, 1150 - 600), MenuPlacement.Centered(Pointer(1900, 1140), Work, 660, 600));
+        Assert.Equal((1920 - 660, 1150 - 700), MenuPlacement.Inside(Work, 1500, 900, 660, 700));
+    }
 }

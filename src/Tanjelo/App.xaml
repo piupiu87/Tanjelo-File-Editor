@@ -40,6 +40,11 @@
                         <Border x:Name="Chrome" CornerRadius="4" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Chrome" Property="Opacity" Value="0.45" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -77,6 +82,156 @@
                     <Setter Property="Background" Value="{DynamicResource Hover}" />
                 </Trigger>
             </Style.Triggers>
+        </Style>
+
+        <!-- Fields in the options dialog. A text box shows its Tag as a placeholder while it's empty. -->
+        <Style x:Key="FieldBox" TargetType="TextBox">
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+            <Setter Property="CaretBrush" Value="{DynamicResource TextPrimary}" />
+            <Setter Property="SelectionBrush" Value="{DynamicResource Accent}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource FieldBorder}" />
+            <Setter Property="Padding" Value="6,0" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="Frame" CornerRadius="5" BorderThickness="1" Background="{DynamicResource Field}" BorderBrush="{TemplateBinding BorderBrush}">
+                            <Grid Margin="{TemplateBinding Padding}">
+                                <TextBlock x:Name="Placeholder" Text="{TemplateBinding Tag}" Margin="2,0,0,0" Foreground="{DynamicResource TextTertiary}"
+                                           IsHitTestVisible="False" Visibility="Collapsed" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                <ScrollViewer x:Name="PART_ContentHost" Focusable="False" VerticalAlignment="Center"
+                                              HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" />
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Text" Value="">
+                                <Setter TargetName="Placeholder" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Frame" Property="BorderBrush" Value="{DynamicResource Accent}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- One choice among a few, as a row of chips. -->
+        <Style x:Key="Chip" TargetType="RadioButton">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Margin" Value="0,0,6,6" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Back" CornerRadius="5" Padding="10,5" BorderThickness="1" Background="{DynamicResource Subtle}" BorderBrush="Transparent">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Back" Property="Background" Value="{DynamicResource SubtleHover}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Back" Property="Background" Value="{DynamicResource Selected}" />
+                                <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Back" Property="BorderBrush" Value="{DynamicResource Accent}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="Check" TargetType="CheckBox">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid Background="Transparent">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="Box" Width="18" Height="18" CornerRadius="4" BorderThickness="1" VerticalAlignment="Top" Margin="0,1,0,0"
+                                    Background="{DynamicResource Field}" BorderBrush="{DynamicResource TextTertiary}">
+                                <TextBlock x:Name="Tick" Text="&#xE73E;" FontFamily="{StaticResource IconFont}" FontSize="11" Visibility="Hidden"
+                                           Foreground="{DynamicResource OnAccent}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <ContentPresenter Grid.Column="1" Margin="9,0,0,0" VerticalAlignment="Center" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Box" Property="Background" Value="{DynamicResource AccentButton}" />
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource AccentButton}" />
+                                <Setter TargetName="Tick" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource Accent}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SliderPart" TargetType="RepeatButton">
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="IsTabStop" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton">
+                        <Grid Background="Transparent">
+                            <Border Height="4" CornerRadius="2" Background="{TemplateBinding Background}" VerticalAlignment="Center" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Thin track, filled with the accent up to a round thumb. -->
+        <Style x:Key="ThinSlider" TargetType="Slider">
+            <Setter Property="IsMoveToPointEnabled" Value="True" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid Height="22" Background="Transparent">
+                            <Border Height="4" CornerRadius="2" Background="{DynamicResource Track}" VerticalAlignment="Center" />
+                            <Track x:Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="Slider.DecreaseLarge" Style="{StaticResource SliderPart}" Background="{DynamicResource Accent}" />
+                                </Track.DecreaseRepeatButton>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="Slider.IncreaseLarge" Style="{StaticResource SliderPart}" Background="Transparent" />
+                                </Track.IncreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Ellipse x:Name="Knob" Width="14" Height="14" Fill="{DynamicResource AccentButton}"
+                                                         Stroke="{DynamicResource Surface}" StrokeThickness="2" />
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <!-- Slim scrollbar: a rounded thumb on an invisible track, no arrow buttons. -->

@@ -1,0 +1,82 @@
+<Window x:Class="Tanjelo.OptionsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Tanjelo" SizeToContent="WidthAndHeight"
+        Style="{StaticResource PopupWindow}" Opacity="0">
+    <Grid Margin="18,14,14,16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- The tool and what it works on. Drag here to move the dialog. -->
+        <Grid x:Name="Header" Background="Transparent" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid Width="32" Height="32" Margin="0,0,12,0">
+                <Ellipse Fill="{DynamicResource AccentSoft}" />
+                <TextBlock x:Name="Glyph" FontFamily="{StaticResource IconFont}" FontSize="14" Foreground="{DynamicResource Accent}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Grid>
+            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                <TextBlock x:Name="Heading" FontWeight="SemiBold" FontSize="14" TextTrimming="CharacterEllipsis" />
+                <TextBlock x:Name="Subheading" FontSize="12" Margin="0,1,0,0" Foreground="{DynamicResource TextSecondary}" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+            <Button x:Name="CloseButton" Grid.Column="2" Style="{StaticResource IconButton}" Content="&#xE711;"
+                    VerticalAlignment="Top" Margin="8,-4,0,0" ToolTip="Cancel (Esc)" />
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- What the tool will make, redrawn as the settings change -->
+            <StackPanel x:Name="PreviewPane" Width="320" Margin="0,0,20,0" Visibility="Collapsed">
+                <Border x:Name="PreviewFrame" Height="260" CornerRadius="6" ClipToBounds="True">
+                    <Grid>
+                        <!-- Sized to the picture, so its checkerboard only shows through transparent parts -->
+                        <Border x:Name="PreviewChecker" Margin="10" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Image x:Name="PreviewImage" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
+                        </Border>
+                        <TextBlock x:Name="PreviewMessage" Margin="24" FontSize="12.5" TextWrapping="Wrap" TextAlignment="Center"
+                                   VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" />
+                        <ProgressBar x:Name="PreviewBusy" Style="{StaticResource ThinProgress}" IsIndeterminate="True" Height="3"
+                                     VerticalAlignment="Bottom" Margin="10,0,10,6" Visibility="Collapsed" />
+                    </Grid>
+                </Border>
+                <ItemsControl x:Name="FactList" Margin="2,10,2,0" Grid.IsSharedSizeScope="True" Focusable="False">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,0,0,3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="FactLabel" />
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding Label}" FontSize="12" Margin="0,0,12,0" Foreground="{DynamicResource TextTertiary}" />
+                                <TextBlock Grid.Column="1" Text="{Binding Value}" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <!-- One field per option, built from the tool's options -->
+            <StackPanel x:Name="Fields" Grid.Column="1" Width="300" />
+        </Grid>
+
+        <Grid Grid.Row="2" Margin="0,8,0,0">
+            <TextBlock x:Name="Note" FontSize="12" Foreground="{DynamicResource TextTertiary}" VerticalAlignment="Center"
+                       Text="Saved as a copy beside the original" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="CancelButton" Style="{StaticResource SubtleButton}" Content="Cancel" />
+                <Button x:Name="RunButton" Style="{StaticResource PrimaryButton}" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>
