@@ -63,6 +63,65 @@ public class VideoMomentsTests
     }
 
     [Fact]
+    public async Task A_video_is_split_exactly_at_the_chosen_moments()
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        var clip = scratch.Video("talk.mp4", seconds: 4);
+
+        var outputs = await RunOk("split-video-at", clip, "2.5, 1");
+
+        Assert.Equal([scratch.PathOf("talk-part1.mp4"), scratch.PathOf("talk-part2.mp4"), scratch.PathOf("talk-part3.mp4")], outputs);
+        Assert.Equal([1.0, 1.5, 1.5], outputs.Select(o => Math.Round(Inspect.Media(o).Duration * 10) / 10));
+        Assert.All(outputs, o => Assert.Equal([("video", "h264"), ("audio", "aac")], Inspect.Media(o).Streams));
+    }
+
+    [Fact]
+    public async Task Cuts_at_keyframes_keep_the_original_encoding()
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        // A keyframe every second, so cuts at whole seconds need no re-encoding; a stream copy keeps the odd profile.
+        var clip = scratch.Video("talk.mp4", seconds: 3, codec: ["-c:v", "libx264", "-profile:v", "baseline", "-g", "25", "-pix_fmt", "yuv420p", "-c:a", "aac"]);
+
+        var outputs = await RunOk("split-video-at", clip, "1, 2");
+
+        Assert.Equal(3, outputs.Count);
+        var profile = await ProcessRunner.RunAsync(Env.Tools.Ffprobe!, ["-v", "error", "-select_streams", "v:0", "-show_entries", "stream=profile", "-of", "csv=p=0", outputs[1]],
+            TestContext.Current.CancellationToken);
+        Assert.Contains("Baseline", profile.StdOut);
+    }
+
+    [Fact]
+    public async Task Parts_shorter_than_half_a_second_are_refused()
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        var result = await Run("split-video-at", scratch.Video("clip.mp4"), "1, 1.2");
+
+        Assert.Equal("Every part needs to be at least half a second long.", Assert.Single(result.Failures).Message);
+    }
+
+    [Fact]
+    public async Task The_split_preview_lists_the_parts()
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        var clip = scratch.Video("clip.mp4", seconds: 3);
+        var engine = Env.Engine();
+        var target = Env.Offered(engine, "split-video-at", [clip]).WithParameters(new Dictionary<string, string> { ["times"] = "0:01.5" });
+
+        var preview = await engine.PreviewAsync([clip], target, new PreviewRequest(80), TestContext.Current.CancellationToken);
+
+        Assert.Equal(
+        [
+            new Fact("Showing", "0:01.5 of 0:03"),
+            new Fact("Part 1", "0:00 to 0:01.5 · 0:01.5 long"),
+            new Fact("Part 2", "0:01.5 to 0:03 · 0:01.5 long"),
+        ], preview!.Facts);
+    }
+
+    [Fact]
     public async Task The_preview_shows_the_frame_under_the_slider_before_any_moment_is_chosen()
     {
         Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);

@@ -72,6 +72,7 @@ settings as `--name=value`; `tanj options <key> <files>` lists them.
 | Collage… (`collage`) | Two or more images | A grid (balanced, or a set number of columns), a row, a column, or featured (the first picture large, the rest stacked beside it); pictures filling their cells or shown whole; the width, the space between, the background colour and the order. Saved as `Collage.jpg` (`.png` on a see-through background) | Magick.NET |
 | Join videos… (`join-videos`) | Two or more videos | The order, the picture size (like the first clip, like the largest, 1080p or 720p) and how clips of another shape fit (black bars, or fill and crop). Clips that match are joined without re-encoding; others are encoded once to one size and frame rate, with silence for clips without sound. Saved as `Joined.mp4` | ffmpeg |
 | Save frames… (`save-frames`) | Video | Moments picked on a slider over the video (with the frame under it as the preview) or typed as times. Each becomes a full-size PNG, upright even for phone video: `clip-1m05.5s.png` | ffmpeg |
+| Split at… (`split-video-at`) | Video | Moments picked the same way, each starting a new part (`clip-part1.mp4`…); the preview lists the parts. Cut losslessly when keyframes fall on the moments, otherwise re-encoded so every cut is exact | ffmpeg |
 
 Actions work with the selected files and folders themselves:
 

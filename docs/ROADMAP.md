@@ -72,7 +72,7 @@ A shared options dialog, then the tools that need it.
 - [x] Collage: grid, row, column or featured layout (M)
 - [x] Join videos: reorder clips, save one MP4 (M)
 - [x] Save chosen video frames as full-resolution PNGs (M)
-- [ ] Split video at chosen points (M)
+- [x] Split video at chosen points (M)
 - [ ] Audio visualizer: waveform or still image to MP4, in landscape, portrait or square (M)
 - [ ] Per-channel audio volume (M)
 
