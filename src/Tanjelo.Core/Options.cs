@@ -34,8 +34,14 @@ public enum OptionKind
 
 public sealed record Choice(string Value, string Label);
 
-/// <summary>Shows an option only while another option has one of these values.</summary>
-public sealed record Condition(string Name, params string[] Values);
+/// <summary>Shows an option only while another option has one of these values, or while <see cref="Or"/> holds.</summary>
+public sealed record Condition(string Name, params string[] Values)
+{
+    public Condition? Or { get; init; }
+
+    public bool Holds(IReadOnlyDictionary<string, string> values) =>
+        (values.TryGetValue(Name, out var value) && Values.Contains(value)) || Or?.Holds(values) == true;
+}
 
 /// <summary>
 /// A setting a tool asks for before it runs: the options dialog shows a field for it, and tanj takes it as
@@ -72,8 +78,7 @@ public sealed record Option(string Name, string Label, OptionKind Kind, string D
     public bool Remember { get; init; } = true;
 
     /// <summary>Whether this option applies given the other values; a hidden option keeps its value but isn't used.</summary>
-    public bool IsShown(IReadOnlyDictionary<string, string> values) =>
-        ShownWhen is not { } when || (values.TryGetValue(when.Name, out var value) && when.Values.Contains(value));
+    public bool IsShown(IReadOnlyDictionary<string, string> values) => ShownWhen?.Holds(values) ?? true;
 
     /// <summary>What's wrong with <paramref name="value"/>, phrased to follow the option's label ("must be…"), or null if it's fine.</summary>
     public string? Problem(string value)
@@ -244,6 +249,28 @@ public sealed record Preview(byte[]? Image, IReadOnlyList<Fact> Facts)
 {
     /// <summary>The input's length in seconds, so the dialog can offer a scrubber for times; 0 when it has none.</summary>
     public double Duration { get; init; }
+
+    /// <summary>A box people can drag on the picture, such as a crop; null when there's none.</summary>
+    public PreviewBox? Box { get; init; }
+}
+
+/// <summary>
+/// A rectangle drawn over the preview picture that can be moved, resized or drawn anew. Sizes are in the input's own
+/// pixels; the preview picture shows the whole input, scaled. Dragging writes the box into the four named options.
+/// </summary>
+/// <param name="SourceWidth">The input's width in pixels, which the picture's width stands for.</param>
+public sealed record PreviewBox(int SourceWidth, int SourceHeight, int X, int Y, int Width, int Height)
+{
+    public required string XOption { get; init; }
+    public required string YOption { get; init; }
+    public required string WidthOption { get; init; }
+    public required string HeightOption { get; init; }
+
+    /// <summary>Width over height to keep while resizing; null for any shape.</summary>
+    public double? Ratio { get; init; }
+
+    /// <summary>Other options to set as a drag starts, so the tool goes on to use the dragged box, such as mode=free.</summary>
+    public IReadOnlyDictionary<string, string> OnDrag { get; init; } = new Dictionary<string, string>();
 }
 
 /// <param name="MaxSize">The longest side of the picture, in pixels.</param>

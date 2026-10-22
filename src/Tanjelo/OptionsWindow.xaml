@@ -42,7 +42,11 @@
                     <Grid>
                         <!-- Sized to the picture, so its checkerboard only shows through transparent parts -->
                         <Border x:Name="PreviewChecker" Margin="10" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Image x:Name="PreviewImage" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
+                            <Grid>
+                                <Image x:Name="PreviewImage" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
+                                <!-- A box to drag over the picture, such as a crop; only for tools whose preview has one -->
+                                <Canvas x:Name="BoxLayer" Background="Transparent" ClipToBounds="True" Visibility="Collapsed" />
+                            </Grid>
                         </Border>
                         <TextBlock x:Name="PreviewMessage" Margin="24" FontSize="12.5" TextWrapping="Wrap" TextAlignment="Center"
                                    VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" />

@@ -1,10 +1,12 @@
 using System.Globalization;
 using ImageMagick;
-using ImageMagick.Drawing;
 
 namespace Tanjelo.Core.Converters;
 
-/// <summary>Where a crop goes: by aspect ratio or exact pixels, anchored to a side or corner, or at a given offset.</summary>
+/// <summary>
+/// Where a crop goes: by aspect ratio or exact pixels, anchored to a side or corner or at a given offset, or a free
+/// box, which in the options dialog is dragged on the picture.
+/// </summary>
 public static class Crop
 {
     public readonly record struct Box(int X, int Y, int Width, int Height);
@@ -21,28 +23,54 @@ public static class Crop
     /// <summary>The crop settings shared by pictures and video.</summary>
     public static Option[] Options =>
     [
-        new("mode", "Crop to", OptionKind.Choice, "aspect") { Choices = [new("aspect", "Aspect ratio"), new("pixels", "Exact size")] },
+        new("mode", "Crop to", OptionKind.Choice, "aspect")
+        {
+            Choices = [new("aspect", "Aspect ratio"), new("pixels", "Exact size"), new("free", "Free")],
+            Hint = "Or drag the box on the picture, which switches to Free.",
+        },
         new("aspect", "Aspect ratio", OptionKind.Choice, "1:1") { Choices = Ratios.Select(r => new Choice(r, r)).ToArray(), ShownWhen = new("mode", "aspect") },
-        new("width", "Width", OptionKind.Number, "1080") { Min = 1, Max = 100_000, Whole = true, Unit = "px", ShownWhen = new("mode", "pixels") },
+        new("lock", "Shape", OptionKind.Choice, "free")
+        {
+            Choices = [new("free", "Any"), .. Ratios.Select(r => new Choice(r, r))],
+            ShownWhen = new("mode", "free"),
+            Hint = "Drag inside the box to move it, pull its edges or corners to resize it, or drag outside it to draw a new one.",
+        },
+        new("width", "Width", OptionKind.Number, "1080") { Min = 1, Max = 100_000, Whole = true, Unit = "px", ShownWhen = new("mode", "pixels", "free") },
         new("height", "Height", OptionKind.Number, "1080")
         {
-            Min = 1, Max = 100_000, Whole = true, Unit = "px", ShownWhen = new("mode", "pixels"),
+            Min = 1, Max = 100_000, Whole = true, Unit = "px", ShownWhen = new("mode", "pixels", "free"),
             Hint = "Larger than the picture? It's cut to fit.",
         },
-        new("position", "Keep", OptionKind.Choice, "center") { Choices = Positions },
-        new("x", "From the left", OptionKind.Number, "0") { Min = 0, Max = 100_000, Whole = true, Unit = "px", ShownWhen = new("position", "custom") },
-        new("y", "From the top", OptionKind.Number, "0") { Min = 0, Max = 100_000, Whole = true, Unit = "px", ShownWhen = new("position", "custom") },
+        new("position", "Keep", OptionKind.Choice, "center") { Choices = Positions, ShownWhen = new("mode", "aspect", "pixels") },
+        // Offsets belong to one picture, so they aren't carried over to the next.
+        new("x", "From the left", OptionKind.Number, "0")
+        {
+            Min = 0, Max = 100_000, Whole = true, Unit = "px", Remember = false, ShownWhen = new("position", "custom") { Or = new("mode", "free") },
+        },
+        new("y", "From the top", OptionKind.Number, "0")
+        {
+            Min = 0, Max = 100_000, Whole = true, Unit = "px", Remember = false, ShownWhen = new("position", "custom") { Or = new("mode", "free") },
+        },
     ];
+
+    /// <summary>"16:9" as 16 / 9.</summary>
+    static double Ratio(string text)
+    {
+        var parts = text.Split(':');
+        return double.Parse(parts[0], CultureInfo.InvariantCulture) / double.Parse(parts[1], CultureInfo.InvariantCulture);
+    }
 
     /// <param name="even">Round to even numbers, which video with 4:2:0 colour needs.</param>
     public static Box Compute(int width, int height, Target target, bool even = false)
     {
         int Round(double value) => even ? (int)(value / 2) * 2 : (int)Math.Round(value);
+        if (target.Choice("mode") == "free")
+            return Free(width, height, target, even);
+
         int w, h;
         if (target.Choice("mode") == "aspect")
         {
-            var parts = target.Choice("aspect").Split(':');
-            var ratio = double.Parse(parts[0], CultureInfo.InvariantCulture) / double.Parse(parts[1], CultureInfo.InvariantCulture);
+            var ratio = Ratio(target.Choice("aspect"));
             (w, h) = (double)width / height > ratio ? (Round(height * ratio), Round(height)) : (Round(width), Round(width / ratio));
         }
         else
@@ -71,31 +99,48 @@ public static class Crop
     }
 
     /// <summary>
-    /// For previews: the whole picture made to fit <paramref name="maxSize"/>, darkened outside the crop and with
-    /// the crop outlined, so you see what's kept and what goes.
+    /// A free box at x, y, cut to fit the picture. With a shape to keep, the box shrinks on one side to match it.
     /// </summary>
-    internal static byte[] Outline(IMagickImage<byte> picture, Box box, int fullWidth, int maxSize)
+    static Box Free(int width, int height, Target target, bool even)
     {
-        if (picture.Width > maxSize || picture.Height > maxSize)
-            picture.Resize((uint)maxSize, (uint)maxSize);
-        var scale = (double)picture.Width / fullWidth;
-        int left = (int)Math.Round(box.X * scale), top = (int)Math.Round(box.Y * scale);
-        int width = Math.Max(1, (int)Math.Round(box.Width * scale)), height = Math.Max(1, (int)Math.Round(box.Height * scale));
+        int Round(double value) => even ? (int)(value / 2) * 2 : (int)Math.Round(value);
+        var x = Math.Min(target.Number("x"), width - 2);
+        var y = Math.Min(target.Number("y"), height - 2);
+        var w = Math.Min(target.Number("width"), width - x);
+        var h = Math.Min(target.Number("height"), height - y);
+        if (target.Choice("lock") is var shape && shape != "free")
+        {
+            var ratio = Ratio(shape);
+            if (w / h > ratio) w = h * ratio;
+            else h = w / ratio;
+        }
+        var box = new Box(Round(x), Round(y), Round(w), Round(h));
+        if (box.Width < 2 || box.Height < 2)
+            throw new ConversionException("That leaves too little of the picture.");
+        return box;
+    }
 
-        // A darkened copy of the whole picture, with the part that's kept pasted back at full brightness.
-        using var shown = picture.Clone();
-        shown.Evaluate(Channels.RGB, EvaluateOperator.Multiply, 0.4);
-        using var kept = picture.Clone();
-        kept.Crop(new MagickGeometry(left, top, (uint)width, (uint)height));
-        kept.ResetPage();
-        shown.Composite(kept, left, top, CompositeOperator.Over);
-        new Drawables()
-            .FillColor(MagickColors.Transparent)
-            .StrokeColor(MagickColors.White)
-            .StrokeWidth(Math.Max(1.5, picture.Width / 300.0))
-            .Rectangle(left, top, left + width - 1, top + height - 1)
-            .Draw(shown);
-        return shown.ToByteArray(MagickFormat.Png);
+    /// <summary>
+    /// The crop as a box the options dialog lets people drag. Dragging switches to a free box, keeping the shape the
+    /// crop had: an aspect ratio stays locked, an exact size becomes any shape.
+    /// </summary>
+    internal static PreviewBox Draggable(Box box, int width, int height, Target target)
+    {
+        var shape = target.Choice("mode") switch
+        {
+            "aspect" => target.Choice("aspect"),
+            "free" => target.Choice("lock"),
+            _ => "free",
+        };
+        return new PreviewBox(width, height, box.X, box.Y, box.Width, box.Height)
+        {
+            XOption = "x",
+            YOption = "y",
+            WidthOption = "width",
+            HeightOption = "height",
+            Ratio = shape == "free" ? null : Ratio(shape),
+            OnDrag = new Dictionary<string, string> { ["mode"] = "free", ["lock"] = shape },
+        };
     }
 
     internal static IReadOnlyList<Fact> Facts(Box box, int width, int height) =>
@@ -108,7 +153,7 @@ public static class Crop
 /// <summary>Crops pictures, animations included, after turning them the way they're meant to be seen.</summary>
 public sealed class CropImageTool : IConverter, IPreviewer
 {
-    static readonly Target Entry = new Target("crop", "Crop…", "Aspect ratio or exact size", Section.Image)
+    static readonly Target Entry = new Target("crop", "Crop…", "Aspect ratio, size or free", Section.Image)
     {
         Kind = TargetKind.Tool,
         Running = "Cropping…",
@@ -161,7 +206,9 @@ public sealed class CropImageTool : IConverter, IPreviewer
         picture.AutoOrient();
         var (width, height) = ((int)picture.Width, (int)picture.Height);
         var box = Crop.Compute(width, height, target);
-        return new Preview(Crop.Outline(picture, box, width, request.MaxSize), Crop.Facts(box, width, height));
+        // The whole picture: the dialog draws the box over it, so it can be dragged.
+        picture.Thumbnail((uint)request.MaxSize, (uint)request.MaxSize);
+        return new Preview(picture.ToByteArray(MagickFormat.Png), Crop.Facts(box, width, height)) { Box = Crop.Draggable(box, width, height, target) };
     }, ctx.Cancellation);
 }
 
@@ -171,7 +218,7 @@ public sealed class CropImageTool : IConverter, IPreviewer
 /// </summary>
 public sealed class CropVideoTool(Toolbox tools) : IConverter, IPreviewer
 {
-    static readonly Target Entry = new Target("crop", "Crop…", "Aspect ratio or exact size", Section.Video)
+    static readonly Target Entry = new Target("crop", "Crop…", "Aspect ratio, size or free", Section.Video)
     {
         Kind = TargetKind.Tool,
         Running = "Cropping…",
@@ -201,9 +248,8 @@ public sealed class CropVideoTool(Toolbox tools) : IConverter, IPreviewer
     {
         var media = await Ffmpeg.ProbeAsync(tools, inputs[0], ctx.Cancellation);
         var box = BoxFor(media, target);
-        var frame = await Ffmpeg.FrameAsync(tools, inputs[0], media.Duration / 3, 0, ctx.Cancellation);
-        using var picture = new MagickImage(frame);
-        return new Preview(Crop.Outline(picture, box, media.Width, request.MaxSize), Crop.Facts(box, media.Width, media.Height));
+        var frame = await Ffmpeg.FrameAsync(tools, inputs[0], media.Duration / 3, request.MaxSize, ctx.Cancellation);
+        return new Preview(frame, Crop.Facts(box, media.Width, media.Height)) { Box = Crop.Draggable(box, media.Width, media.Height, target) };
     }
 
     static Crop.Box BoxFor(MediaInfo media, Target target)

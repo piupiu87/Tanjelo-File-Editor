@@ -140,6 +140,10 @@ public class OptionsTests
 
         Assert.False(size.IsShown(Tool(Mode, size).Parameters));
         Assert.True(size.IsShown(new Dictionary<string, string> { ["mode"] = "size" }));
+
+        var either = size with { ShownWhen = new Condition("mode", "size") { Or = new Condition("fit", "exact") } };
+        Assert.True(either.IsShown(new Dictionary<string, string> { ["mode"] = "percent", ["fit"] = "exact" }));
+        Assert.False(either.IsShown(new Dictionary<string, string> { ["mode"] = "percent", ["fit"] = "loose" }));
     }
 
     [Fact]

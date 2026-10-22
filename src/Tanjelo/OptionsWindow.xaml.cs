@@ -8,6 +8,7 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 using Tanjelo.Core;
 using Forms = System.Windows.Forms;
+using Shapes = System.Windows.Shapes;
 
 namespace Tanjelo;
 
@@ -31,6 +32,18 @@ public partial class OptionsWindow : Window
     readonly Dictionary<string, string> _values;
     readonly List<Field> _fields = [];
     readonly List<Scrubber> _scrubbers = [];
+
+    /// <summary>Puts a value into a field's controls, which pass it on as if it had been typed or clicked.</summary>
+    readonly Dictionary<string, Action<string>> _show = [];
+
+    // The box dragged over the preview, such as a crop: as the last preview placed it, as it's drawn now (in the
+    // picture's own pixels), the drag under way, and the shapes that draw it.
+    PreviewBox? _box;
+    Rect _drawn;
+    BoxDrag? _drag;
+    Shapes.Path? _shade;
+    Shapes.Rectangle? _frame, _frameShadow;
+    Shapes.Rectangle[] _handles = [];
     readonly TaskCompletionSource<Target?> _result = new();
     readonly DispatcherTimer _previewDelay = new() { Interval = TimeSpan.FromMilliseconds(250) };
     readonly bool _canPreview;
@@ -92,6 +105,24 @@ public partial class OptionsWindow : Window
             _previewCancel?.Cancel();
             _result.TrySetResult(null);
         };
+        BoxLayer.MouseLeftButtonDown += (_, e) =>
+        {
+            if (!BeginDrag(e.GetPosition(BoxLayer))) return;
+            BoxLayer.CaptureMouse();
+            e.Handled = true;
+        };
+        BoxLayer.MouseMove += (_, e) =>
+        {
+            if (_drag is null) BoxLayer.Cursor = CursorAt(e.GetPosition(BoxLayer));
+            else DragTo(e.GetPosition(BoxLayer));
+        };
+        BoxLayer.MouseLeftButtonUp += (_, _) =>
+        {
+            EndDrag();
+            BoxLayer.ReleaseMouseCapture();
+        };
+        BoxLayer.LostMouseCapture += (_, _) => EndDrag();
+        BoxLayer.SizeChanged += (_, _) => DrawBox();
         SourceInitialized += OnSourceInitialized;
         ContentRendered += OnContentRendered;
         Refresh(preview: true);
@@ -143,6 +174,7 @@ public partial class OptionsWindow : Window
         var box = Box(width: 84);
         box.Text = _values[option.Name];
         box.TextChanged += (_, _) => Set(option.Name, box.Text);
+        _show[option.Name] = value => box.Text = value;
         var line = new StackPanel { Orientation = Orientation.Horizontal };
         line.Children.Add(box);
         if (option.Unit is { } unit)
@@ -188,6 +220,7 @@ public partial class OptionsWindow : Window
     {
         // Chips have a bottom margin so wrapped rows keep apart; the panel takes it back.
         var panel = new WrapPanel { Margin = new Thickness(0, 0, 0, -6) };
+        var chips = new Dictionary<string, RadioButton>();
         RadioButton? first = null;
         foreach (var choice in option.Choices)
         {
@@ -200,8 +233,13 @@ public partial class OptionsWindow : Window
             };
             chip.Checked += (_, _) => Set(option.Name, choice.Value);
             panel.Children.Add(chip);
+            chips[choice.Value] = chip;
             if (first is null || chip.IsChecked == true) first = chip;
         }
+        _show[option.Name] = value =>
+        {
+            if (chips.TryGetValue(value, out var chip)) chip.IsChecked = true;
+        };
         return (panel, first);
     }
 
@@ -507,6 +545,19 @@ public partial class OptionsWindow : Window
         PreviewFrame.Visibility = PreviewImage.Source is null && PreviewMessage.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
         FactList.Margin = new Thickness(2, PreviewFrame.Visibility == Visibility.Visible ? 10 : 0, 2, 0);
         FactList.ItemsSource = preview?.Facts;
+        if (preview?.Box is { } box && PreviewImage.Source is not null)
+        {
+            _box = box;
+            // A preview that arrives mid-drag doesn't pull the box back to where it was.
+            if (_drag is null) _drawn = new Rect(box.X, box.Y, box.Width, box.Height);
+            BoxLayer.Visibility = Visibility.Visible;
+            DrawBox();
+        }
+        else if (_drag is null)
+        {
+            _box = null;
+            BoxLayer.Visibility = Visibility.Collapsed;
+        }
         if (preview is { Duration: > 0 } media)
         {
             foreach (var scrubber in _scrubbers)
@@ -525,6 +576,118 @@ public partial class OptionsWindow : Window
                 }
             }
         }
+    }
+
+    /// <summary>How near an edge, in screen pixels, still counts as on it.</summary>
+    const double Grip = 6;
+
+    /// <summary>The picture's pixels per pixel of the preview on screen.</summary>
+    double Scale => _box is { } box && BoxLayer.ActualWidth > 0 ? box.SourceWidth / BoxLayer.ActualWidth : 1;
+
+    Point ToPicture(Point onScreen) => new(onScreen.X * Scale, onScreen.Y * Scale);
+
+    /// <summary>Starts a drag at a point on the preview; false when there's no box to drag.</summary>
+    internal bool BeginDrag(Point onScreen)
+    {
+        if (_box is not { } box) return false;
+        _drag = BoxDrag.Start(ToPicture(onScreen), _drawn, new Size(box.SourceWidth, box.SourceHeight), box.Ratio, Grip * Scale);
+        // The tool switches to the dragged box (a crop to Free), starting from the box as it is now.
+        CommitBox();
+        foreach (var (name, value) in box.OnDrag)
+            SetValue(name, value);
+        return true;
+    }
+
+    internal void DragTo(Point onScreen)
+    {
+        if (_drag is null) return;
+        _drawn = _drag.To(ToPicture(onScreen));
+        DrawBox();
+        CommitBox();
+    }
+
+    internal void EndDrag() => _drag = null;
+
+    /// <summary>Writes the box as drawn into its options, which shows the numbers in their fields too.</summary>
+    void CommitBox()
+    {
+        if (_box is not { } box) return;
+        static string Whole(double value) => OptionValues.Format(Math.Round(value));
+        SetValue(box.XOption, Whole(_drawn.X));
+        SetValue(box.YOption, Whole(_drawn.Y));
+        SetValue(box.WidthOption, Whole(_drawn.Width));
+        SetValue(box.HeightOption, Whole(_drawn.Height));
+    }
+
+    /// <summary>Changes an option as if it had been typed or clicked, so its field shows the new value.</summary>
+    void SetValue(string name, string value)
+    {
+        if (_values.TryGetValue(name, out var old) && old == value) return;
+        if (_show.TryGetValue(name, out var show)) show(value);
+        else Set(name, value);
+    }
+
+    /// <summary>The shading outside the box, its outline, and handles on its corners (and edges, when any shape goes).</summary>
+    void DrawBox()
+    {
+        if (_box is not { } box || BoxLayer.ActualWidth <= 0) return;
+        if (_shade is null)
+        {
+            _shade = new Shapes.Path { Fill = new SolidColorBrush(Color.FromArgb(140, 0, 0, 0)) };
+            _frameShadow = new Shapes.Rectangle { Stroke = new SolidColorBrush(Color.FromArgb(110, 0, 0, 0)), StrokeThickness = 3.5 };
+            _frame = new Shapes.Rectangle { Stroke = Brushes.White, StrokeThickness = 1.5 };
+            _handles = Enumerable.Range(0, 8).Select(_ => new Shapes.Rectangle
+            {
+                Width = 9,
+                Height = 9,
+                Fill = Brushes.White,
+                Stroke = new SolidColorBrush(Color.FromArgb(150, 0, 0, 0)),
+                StrokeThickness = 1,
+            }).ToArray();
+            foreach (var shape in new Shapes.Shape[] { _shade, _frameShadow, _frame }.Concat(_handles))
+            {
+                shape.IsHitTestVisible = false;
+                BoxLayer.Children.Add(shape);
+            }
+        }
+        var scale = 1 / Scale;
+        var rect = new Rect(_drawn.X * scale, _drawn.Y * scale, _drawn.Width * scale, _drawn.Height * scale);
+        _shade.Data = new CombinedGeometry(GeometryCombineMode.Exclude,
+            new RectangleGeometry(new Rect(0, 0, BoxLayer.ActualWidth, BoxLayer.ActualHeight)), new RectangleGeometry(rect));
+        foreach (var frame in new[] { _frameShadow!, _frame! })
+        {
+            Canvas.SetLeft(frame, rect.X);
+            Canvas.SetTop(frame, rect.Y);
+            (frame.Width, frame.Height) = (rect.Width, rect.Height);
+        }
+        // Corners, then the middles of the edges, which only resize when the shape is free.
+        (double X, double Y)[] spots =
+        [
+            (rect.Left, rect.Top), (rect.Right, rect.Top), (rect.Right, rect.Bottom), (rect.Left, rect.Bottom),
+            (rect.Left + rect.Width / 2, rect.Top), (rect.Right, rect.Top + rect.Height / 2),
+            (rect.Left + rect.Width / 2, rect.Bottom), (rect.Left, rect.Top + rect.Height / 2),
+        ];
+        for (var i = 0; i < _handles.Length; i++)
+        {
+            Canvas.SetLeft(_handles[i], spots[i].X - _handles[i].Width / 2);
+            Canvas.SetTop(_handles[i], spots[i].Y - _handles[i].Height / 2);
+            _handles[i].Visibility = i < 4 || box.Ratio is null ? Visibility.Visible : Visibility.Collapsed;
+        }
+    }
+
+    /// <summary>The pointer for what a drag from here would do: resize, move, or draw a new box.</summary>
+    Cursor? CursorAt(Point onScreen)
+    {
+        if (_box is not { } box) return null;
+        var at = ToPicture(onScreen);
+        return BoxDrag.Hit(at, _drawn, Grip * Scale, cornersOnly: box.Ratio is not null) switch
+        {
+            BoxDrag.Edges.Left | BoxDrag.Edges.Top or BoxDrag.Edges.Right | BoxDrag.Edges.Bottom => Cursors.SizeNWSE,
+            BoxDrag.Edges.Right | BoxDrag.Edges.Top or BoxDrag.Edges.Left | BoxDrag.Edges.Bottom => Cursors.SizeNESW,
+            BoxDrag.Edges.Left or BoxDrag.Edges.Right => Cursors.SizeWE,
+            BoxDrag.Edges.Top or BoxDrag.Edges.Bottom => Cursors.SizeNS,
+            _ => _drawn.Contains(at) ? Cursors.SizeAll : Cursors.Cross,
+        };
     }
 
     static BitmapImage Decode(byte[] bytes)

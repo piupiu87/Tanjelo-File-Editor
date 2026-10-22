@@ -79,7 +79,7 @@ switch (args[0])
                 OptionKind.Order => "each file's place in the selection, such as 2,1,3",
                 _ => option.Optional ? "text, or empty" : "text",
             };
-            var when = option.ShownWhen is { } w ? $"  (with --{w.Name}={string.Join("|", w.Values)})" : "";
+            var when = option.ShownWhen is { } w ? $"  (with {ShownWhen(w)})" : "";
             Console.WriteLine($"  {$"--{option.Name}={target.Parameters[option.Name]}",-22} {option.Label}: {allowed}{when}");
             if (option.Hint is { } hint)
                 Console.WriteLine($"  {"",-22} {hint}");
@@ -154,6 +154,9 @@ switch (args[0])
         Console.Error.WriteLine("unknown command; run tanj --help");
         return 2;
 }
+
+static string ShownWhen(Condition condition) =>
+    $"--{condition.Name}={string.Join("|", condition.Values)}" + (condition.Or is { } or ? " or " + ShownWhen(or) : "");
 
 Target? Find(string key, IReadOnlyList<string> inputs)
 {

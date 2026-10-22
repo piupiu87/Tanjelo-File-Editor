@@ -139,16 +139,63 @@ public class CropToolTests
     }
 
     [Fact]
-    public async Task The_preview_outlines_what_is_kept()
+    public async Task The_preview_is_the_whole_picture_with_a_box_to_drag()
     {
         using var scratch = new Scratch();
         var photo = scratch.Photo("photo.png", 400, 300);
         var engine = Env.Engine();
+        var target = Env.Offered(engine, "crop", [photo]).WithParameters(new Dictionary<string, string> { ["aspect"] = "4:3" });
 
-        var preview = await engine.PreviewAsync([photo], Env.Offered(engine, "crop", [photo]), new PreviewRequest(200), TestContext.Current.CancellationToken);
+        var preview = await engine.PreviewAsync([photo], target, new PreviewRequest(200), TestContext.Current.CancellationToken);
 
         using var picture = new MagickImage(preview!.Image!);
         Assert.Equal((200u, 150u), (picture.Width, picture.Height));
-        Assert.Equal([new Fact("Keeps", "300 × 300, from 50, 0"), new Fact("Of", "400 × 300")], preview.Facts);
+        Assert.Equal([new Fact("Keeps", "400 × 300, from 0, 0"), new Fact("Of", "400 × 300")], preview.Facts);
+        var box = preview.Box!;
+        Assert.Equal((400, 300, 0, 0, 400, 300), (box.SourceWidth, box.SourceHeight, box.X, box.Y, box.Width, box.Height));
+        Assert.Equal(4 / 3.0, box.Ratio!.Value, 3);
+        Assert.Equal(("x", "y", "width", "height"), (box.XOption, box.YOption, box.WidthOption, box.HeightOption));
+        // Dragging an aspect-ratio crop turns it into a free box of the same shape.
+        Assert.Equal(new Dictionary<string, string> { ["mode"] = "free", ["lock"] = "4:3" }, box.OnDrag);
+    }
+
+    [Fact]
+    public void A_free_box_is_cut_to_fit_the_picture()
+    {
+        var free = Settings(("mode", "free"), ("x", "300"), ("y", "50"), ("width", "200"), ("height", "100"));
+        Assert.Equal(new Crop.Box(300, 50, 100, 100), Crop.Compute(400, 300, free));
+
+        var outside = Settings(("mode", "free"), ("x", "900"), ("y", "900"), ("width", "50"), ("height", "50"));
+        Assert.Equal(new Crop.Box(398, 298, 2, 2), Crop.Compute(400, 300, outside));
+    }
+
+    [Fact]
+    public void A_free_box_with_a_shape_shrinks_on_one_side_to_keep_it()
+    {
+        var wide = Settings(("mode", "free"), ("lock", "1:1"), ("x", "10"), ("y", "10"), ("width", "200"), ("height", "100"));
+        Assert.Equal(new Crop.Box(10, 10, 100, 100), Crop.Compute(400, 300, wide));
+
+        var video = Settings(("mode", "free"), ("lock", "16:9"), ("x", "11"), ("y", "7"), ("width", "321"), ("height", "999"));
+        Assert.Equal(new Crop.Box(10, 6, 320, 180), Crop.Compute(1280, 720, video, even: true));
+    }
+
+    [Fact]
+    public void Free_boxes_show_their_offsets_and_size()
+    {
+        var target = Settings(("mode", "free"));
+        var shown = target.Options.Where(o => o.IsShown(target.Parameters)).Select(o => o.Name);
+        Assert.Equal(["mode", "lock", "width", "height", "x", "y"], shown);
+
+        var anchored = Settings(("position", "top"));
+        Assert.Equal(["mode", "aspect", "position"], anchored.Options.Where(o => o.IsShown(anchored.Parameters)).Select(o => o.Name));
+    }
+
+    [Fact]
+    public async Task A_free_crop_cuts_exactly_the_box()
+    {
+        using var scratch = new Scratch();
+        var output = await Run(scratch.Photo("photo.jpg", 400, 300), ("mode", "free"), ("x", "20"), ("y", "30"), ("width", "150"), ("height", "90"));
+
+        Assert.Equal((150u, 90u), (Inspect.Image(output).Width, Inspect.Image(output).Height));
     }
 }
