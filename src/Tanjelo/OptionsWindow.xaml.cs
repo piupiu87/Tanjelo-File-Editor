@@ -23,7 +23,7 @@ public partial class OptionsWindow : Window
     sealed record Field(Option Option, FrameworkElement Row, TextBlock Error, Control? Input);
 
     /// <summary>A slider over the length of the video or audio, for picking times; shown once the preview reports the length.</summary>
-    sealed record Scrubber(FrameworkElement Row, Slider Slider);
+    sealed record Scrubber(string Name, FrameworkElement Row, Slider Slider);
 
     readonly ConverterEngine _engine;
     readonly IReadOnlyList<string> _files;
@@ -38,6 +38,11 @@ public partial class OptionsWindow : Window
     double? _at;
     Native.POINT _anchor;
     bool _closing;
+
+    // An empty field only turns red once it has been edited or the user tried to run the tool.
+    readonly HashSet<string> _touched = [];
+    bool _triedRun;
+    bool _placingSlider;
 
     /// <param name="remembered">Values to start from instead of the defaults, such as the ones used last time.</param>
     public OptionsWindow(ConverterEngine engine, IReadOnlyList<string> files, Target target, IReadOnlyDictionary<string, string> remembered)
@@ -346,6 +351,7 @@ public partial class OptionsWindow : Window
         slider.ValueChanged += (_, e) =>
         {
             time.Text = OptionValues.FormatTime(e.NewValue);
+            if (_placingSlider) return;
             _at = e.NewValue;
             SchedulePreview();
         };
@@ -362,7 +368,7 @@ public partial class OptionsWindow : Window
         scrub.Children.Add(add);
         scrub.Children.Add(time);
         scrub.Children.Add(slider);
-        _scrubbers.Add(new Scrubber(scrub, slider));
+        _scrubbers.Add(new Scrubber(option.Name, scrub, slider));
 
         var panel = new StackPanel();
         panel.Children.Add(box);
@@ -420,6 +426,7 @@ public partial class OptionsWindow : Window
     void Set(string name, string value)
     {
         _values[name] = value;
+        _touched.Add(name);
         Refresh(preview: true);
     }
 
@@ -427,26 +434,33 @@ public partial class OptionsWindow : Window
     void Refresh(bool preview)
     {
         var ok = true;
+        var red = false;
         foreach (var field in _fields)
         {
             var shown = field.Option.IsShown(_values);
             field.Row.Visibility = shown ? Visibility.Visible : Visibility.Collapsed;
-            var problem = shown ? field.Option.Problem(_values[field.Option.Name]) : null;
-            field.Error.Text = problem is null ? "" : $"{field.Option.Label} {problem}.";
-            field.Error.Visibility = problem is null ? Visibility.Collapsed : Visibility.Visible;
+            var value = _values[field.Option.Name];
+            var problem = shown ? field.Option.Problem(value) : null;
+            var flag = problem is not null && (value.Trim().Length > 0 || _touched.Contains(field.Option.Name) || _triedRun);
+            field.Error.Text = flag ? $"{field.Option.Label} {problem}." : "";
+            field.Error.Visibility = flag ? Visibility.Visible : Visibility.Collapsed;
             ok &= problem is null;
+            red |= flag;
         }
         RunButton.IsEnabled = ok;
-        if (preview && ok)
+        // Tools with a scrubber preview the frame under it even before any time has been picked.
+        if (preview && (ok || _scrubbers.Count > 0))
         {
             SchedulePreview();
         }
-        else if (!ok && _canPreview)
+        else if (!ok && _canPreview && _scrubbers.Count == 0)
         {
             _previewDelay.Stop();
             _previewCancel?.Cancel();
             PreviewBusy.Visibility = Visibility.Collapsed;
-            ShowPreview(null, "The preview comes back when the settings marked in red are fixed.");
+            ShowPreview(null, red
+                ? "The preview comes back when the settings marked in red are fixed."
+                : "The preview appears once every setting is filled in.");
         }
     }
 
@@ -497,10 +511,18 @@ public partial class OptionsWindow : Window
         {
             foreach (var scrubber in _scrubbers)
             {
+                var first = scrubber.Row.Visibility != Visibility.Visible;
                 scrubber.Slider.Maximum = media.Duration;
                 scrubber.Slider.LargeChange = media.Duration / 20;
                 scrubber.Slider.SmallChange = Math.Min(1, media.Duration / 100);
                 scrubber.Row.Visibility = Visibility.Visible;
+                // The slider starts at the first moment already chosen, which is what the preview shows.
+                if (first && _at is null && OptionValues.TryTimes(_values[scrubber.Name], out var times) && times.Count > 0)
+                {
+                    _placingSlider = true;
+                    scrubber.Slider.Value = Math.Min(times[0], media.Duration);
+                    _placingSlider = false;
+                }
             }
         }
     }
@@ -532,6 +554,7 @@ public partial class OptionsWindow : Window
 
     void Run()
     {
+        _triedRun = true;
         Refresh(preview: false);
         if (RunButton.IsEnabled) Finish(_target.WithParameters(_values));
     }
