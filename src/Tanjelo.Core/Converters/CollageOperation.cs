@@ -14,7 +14,7 @@ public sealed class CollageOperation : IBatchOperation, IPreviewer
     public IEnumerable<Target> TargetsFor(IReadOnlyList<string> inputs)
     {
         if (inputs.Count < 2 || !inputs.All(i => Formats.KindOf(i) == FileKind.Image)) yield break;
-        yield return new Target("collage", "Collage…", $"{inputs.Count} pictures in a grid, row or column", Section.Image)
+        yield return new Target("collage", "Collage…", $"{inputs.Count} pictures in one", Section.Image)
         {
             IsBatch = true,
             Kind = TargetKind.Tool,

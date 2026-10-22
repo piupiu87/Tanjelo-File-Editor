@@ -10,7 +10,7 @@ namespace Tanjelo.Core.Converters;
 /// </summary>
 public sealed class ChannelVolumeTool(Toolbox tools) : IConverter, IPreviewer
 {
-    static Target Entry(Section section) => new Target("channel-volume", "Channel volume…", "Louder or quieter on each side", section)
+    static Target Entry(Section section) => new Target("channel-volume", "Channel volume…", "Left and right apart", section)
     {
         Kind = TargetKind.Tool,
         Running = "Changing the volume…",

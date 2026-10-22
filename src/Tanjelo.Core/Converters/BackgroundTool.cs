@@ -13,7 +13,7 @@ public sealed class BackgroundTool : IConverter, IPreviewer
 {
     internal const string Pictures = "Pictures|*.png;*.jpg;*.jpeg;*.webp;*.avif;*.heic;*.bmp;*.gif;*.tif;*.tiff|All files|*.*";
 
-    static readonly Target Entry = new Target("background", "Add background…", "Colour, gradient or picture, with a shadow", Section.Image)
+    static readonly Target Entry = new Target("background", "Add background…", "Colour, gradient or picture", Section.Image)
     {
         Kind = TargetKind.Tool,
         Running = "Adding a background…",

@@ -108,7 +108,7 @@ public static class Crop
 /// <summary>Crops pictures, animations included, after turning them the way they're meant to be seen.</summary>
 public sealed class CropImageTool : IConverter, IPreviewer
 {
-    static readonly Target Entry = new Target("crop", "Crop…", "To an aspect ratio or exact size", Section.Image)
+    static readonly Target Entry = new Target("crop", "Crop…", "Aspect ratio or exact size", Section.Image)
     {
         Kind = TargetKind.Tool,
         Running = "Cropping…",
@@ -171,7 +171,7 @@ public sealed class CropImageTool : IConverter, IPreviewer
 /// </summary>
 public sealed class CropVideoTool(Toolbox tools) : IConverter, IPreviewer
 {
-    static readonly Target Entry = new Target("crop", "Crop…", "To an aspect ratio or exact size", Section.Video)
+    static readonly Target Entry = new Target("crop", "Crop…", "Aspect ratio or exact size", Section.Video)
     {
         Kind = TargetKind.Tool,
         Running = "Cropping…",

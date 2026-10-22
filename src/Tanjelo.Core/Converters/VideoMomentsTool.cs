@@ -6,7 +6,7 @@ namespace Tanjelo.Core.Converters;
 /// </summary>
 public sealed class VideoMomentsTool(Toolbox tools) : IConverter, IPreviewer
 {
-    static readonly Target Frames = new Target("save-frames", "Save frames…", "Chosen moments as full-size PNGs", Section.Video)
+    static readonly Target Frames = new Target("save-frames", "Save frames…", "Moments as full-size PNGs", Section.Video)
     {
         Kind = TargetKind.Tool,
         Running = "Saving frames…",

@@ -28,7 +28,7 @@ public sealed class VisualizerTool(Toolbox tools) : IConverter, IPreviewer
             FileFilter = BackgroundTool.Pictures,
             Hint = "Empty uses the cover art, if the file has some. Behind a waveform, it's darkened.",
         },
-        new Option("range", "Part", OptionKind.TimeRange, "") { Hint = "Empty makes a video of the whole file." });
+        new Option("range", "Part", OptionKind.TimeRange, "") { Remember = false, Hint = "Empty makes a video of the whole file." });
 
     public IEnumerable<Target> TargetsFor(string input) =>
         tools.Ffmpeg is not null && tools.Ffprobe is not null && Formats.Audio.Contains(Formats.Key(input)) ? [Entry] : [];

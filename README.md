@@ -130,6 +130,10 @@ an options dialog in the app take the same settings here, starting from their de
 tanj convert split-video-2 --parts=5 lecture.mp4
 tanj convert speed-2x --factor=3 timelapse.mp4
 tanj convert move-to --folder=D:\Archive *.jpg
+tanj convert compress --mode=size --size=8 clip.mp4
+tanj convert crop --aspect=16:9 --position=top photo.jpg
+tanj convert save-frames --times=0:05,1:12.5 clip.mp4
+tanj convert join-videos --order=2,1 intro.mp4 talk.mp4
 ```
 
 ## Building
@@ -168,8 +172,8 @@ Office sometimes stops on prompts that its "no alerts" setting doesn't cover. Ta
 
 ## Roadmap
 
-Next up: a shared options dialog, then the tools that need one, such as compressing to a target size, cropping,
-metadata editing and joining videos. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are welcome; open an
+Next up: more formats and sharing, such as Markdown and EPUB through pandoc, PDF to text, HEIC output and the Windows
+Share sheet. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are welcome; open an
 issue first for anything big.
 
 ## License
