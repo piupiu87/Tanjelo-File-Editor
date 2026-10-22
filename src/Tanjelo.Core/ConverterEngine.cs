@@ -29,6 +29,7 @@ public sealed class ConverterEngine
                 new MediaConverter(tools),
                 new MediaTools(tools),
                 new CompressTool(tools),
+                new MetadataTool(tools),
                 new ArchiveConverter(tools),
                 new MoveToFolderAction(),
             ],

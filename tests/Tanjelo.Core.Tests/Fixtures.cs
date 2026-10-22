@@ -213,6 +213,16 @@ static class Inspect
 
     public static string? Codec(string path, string type) => Media(path).Streams.FirstOrDefault(s => s.Type == type).Codec;
 
+    /// <summary>A tag on the file itself, such as "title", as ffprobe reports it; null when it isn't there.</summary>
+    public static string? Tag(string path, string name)
+    {
+        var result = ProcessRunner.RunAsync(Env.Tools.Ffprobe!, ["-v", "error", "-show_entries", "format_tags", "-of", "json", path], CancellationToken.None).GetAwaiter().GetResult();
+        Assert.True(result.ExitCode == 0, $"ffprobe can't read {path}: {result.LastError}");
+        using var json = System.Text.Json.JsonDocument.Parse(result.StdOut);
+        if (!json.RootElement.TryGetProperty("format", out var format) || !format.TryGetProperty("tags", out var tags)) return null;
+        return tags.EnumerateObject().FirstOrDefault(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase)).Value.ToString() is { Length: > 0 } value ? value : null;
+    }
+
     /// <summary>Integrated loudness in LUFS, as ffmpeg's loudnorm measures it.</summary>
     public static double Loudness(string path)
     {

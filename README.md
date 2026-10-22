@@ -66,6 +66,7 @@ settings as `--name=value`; `tanj options <key> <files>` lists them.
 | Tool | Works on | What you choose | Engine |
 |---|---|---|---|
 | Compress… (`compress`) | Images, video, audio | A percentage of the original size or a target size in MB, and optionally smaller dimensions. Images get the best quality that fits (JPG, PNG, WebP and AVIF keep their format, a PNG drops to 256 colours if it must, others become JPG); video becomes a two-pass H.264 MP4; lossy audio keeps its format and lossless audio becomes MP3 | Magick.NET, ffmpeg |
+| Metadata… (`metadata`) | JPG, PNG, WebP, audio, video, PDF | Shows the title, author, camera, location, dates and the rest, and saves a copy without the location (ticked by default), camera details or everything else, and with a new title or author. The picture data is copied byte for byte and media isn't re-encoded. MP4 and MOV copies keep only the standard tags, not phones' own; PDFsharp names itself as a PDF's producer | Built in, ffmpeg, PDFsharp |
 
 Actions work with the selected files and folders themselves:
 

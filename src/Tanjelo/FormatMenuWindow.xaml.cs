@@ -43,6 +43,7 @@ public partial class FormatMenuWindow : Window
             "open-terminal" => "",               // command prompt
             "move-to" => "",                     // move to folder
             "compress" => "",                    // arrows pointing in
+            "metadata" => "",                    // tag
             _ => Target.Section switch
             {
                 Section.Image => "",             // picture

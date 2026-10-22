@@ -20,4 +20,8 @@ public static class Describe
     public static string Pixels(int width, int height) => $"{width} × {height}";
 
     public static string Rate(double bitsPerSecond) => string.Format(CultureInfo.InvariantCulture, "{0:N0} kbps", bitsPerSecond / 1000);
+
+    /// <summary>"52.3676° N, 4.9041° E".</summary>
+    public static string Place(double latitude, double longitude) => string.Create(CultureInfo.InvariantCulture,
+        $"{Math.Abs(latitude):0.####}° {(latitude < 0 ? "S" : "N")}, {Math.Abs(longitude):0.####}° {(longitude < 0 ? "W" : "E")}");
 }
