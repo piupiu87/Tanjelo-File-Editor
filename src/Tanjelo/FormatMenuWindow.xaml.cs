@@ -45,6 +45,7 @@ public partial class FormatMenuWindow : Window
             "compress" => "",                    // arrows pointing in
             "metadata" => "",                    // tag
             "crop" => "",                        // crop
+            "background" => "",                  // palette
             _ => Target.Section switch
             {
                 Section.Image => "",             // picture

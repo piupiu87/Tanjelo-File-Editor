@@ -297,6 +297,10 @@ public partial class OptionsWindow : Window
         box.Tag = option.Optional ? "None" : "Choose a file";
         box.Text = _values[option.Name];
         box.TextChanged += (_, _) => Set(option.Name, box.Text);
+        // A long path shows its end, where the file's name is.
+        void ShowName() => box.ScrollToHorizontalOffset(double.MaxValue);
+        box.Loaded += (_, _) => ShowName();
+        box.TextChanged += (_, _) => ShowName();
         var browse = new Button { Content = "Browse…", Style = (Style)FindResource("SubtleButton") };
         browse.Click += (_, _) =>
         {
