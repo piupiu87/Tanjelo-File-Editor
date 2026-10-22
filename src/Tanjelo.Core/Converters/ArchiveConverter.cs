@@ -14,8 +14,8 @@ public sealed class ArchiveConverter(Toolbox tools) : IConverter
         var key = Formats.Key(input);
         if (!Formats.Archives.Contains(key))
         {
-            // Any single file can be gzipped on its own: notes.txt becomes notes.txt.gz.
-            yield return new Target("gz", "GZIP", "Compress this file to .gz", Section.Archive) { Running = "Compressing…", Done = "Compressed to GZIP" };
+            // Each file is gzipped on its own: notes.txt becomes notes.txt.gz. The wording has to fit one file or many.
+            yield return new Target("gz", "GZIP", "Compress to .gz, one per file", Section.Archive) { Running = "Compressing…", Done = "Compressed to GZIP" };
             yield break;
         }
         if (!Archiver.CanExtract(tools, key))

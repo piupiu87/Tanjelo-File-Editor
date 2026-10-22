@@ -155,6 +155,16 @@ public class ArchiveConverterTests
     }
 
     [Fact]
+    public void Gzip_says_it_makes_one_archive_per_file()
+    {
+        using var scratch = new Scratch();
+        var menu = Env.Engine().GetMenu([scratch.Pdf("a.pdf"), scratch.Pdf("b.pdf")]);
+
+        var gzip = Assert.Single(menu.Targets, t => t.Key == "gz");
+        Assert.Equal("Compress to .gz, one per file", gzip.Description);
+    }
+
+    [Fact]
     public void Gzip_is_offered_for_files_but_not_for_archives_or_folders()
     {
         using var scratch = new Scratch();
