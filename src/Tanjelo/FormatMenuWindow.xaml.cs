@@ -96,7 +96,8 @@ public partial class FormatMenuWindow : Window
         {
             Placeholder.Visibility = Search.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
             // Typing the name of a tool while on Convert jumps to the tab that has it.
-            ShowTab(Count(_tab) > 0 ? _tab : _tabs.FirstOrDefault(t => Count(t) > 0) ?? _tab, refresh: true);
+            var best = MenuSearch.BestTab(_entries.Select(e => (e.Target.Kind, Score(e))), _tab.Kind, _tabs.Select(t => t.Kind).ToList());
+            ShowTab(_tabs.FirstOrDefault(t => t.Kind == best) ?? _tab, refresh: true);
         };
         PreviewKeyDown += OnKey;
         Deactivated += (_, _) => Finish(null);
@@ -144,15 +145,9 @@ public partial class FormatMenuWindow : Window
         _ => $"{bytes / 1024.0 / 1024 / 1024:0.##} GB",
     };
 
-    bool Matches(Entry entry)
-    {
-        var query = Search.Text.Trim();
-        if (query.Length == 0) return true;
-        return entry.Label.Contains(query, StringComparison.OrdinalIgnoreCase)
-            || entry.Target.Key.Contains(query, StringComparison.OrdinalIgnoreCase)
-            || entry.Description.Contains(query, StringComparison.OrdinalIgnoreCase)
-            || entry.Group.Contains(query, StringComparison.OrdinalIgnoreCase);
-    }
+    int Score(Entry entry) => MenuSearch.Score(entry.Target, Search.Text, entry.Group);
+
+    bool Matches(Entry entry) => Score(entry) > MenuSearch.NoMatch;
 
     /// <summary>Entries on a tab that match the filter text.</summary>
     int Count(Tab tab) => _entries.Count(e => e.Target.Kind == tab.Kind && Matches(e));
@@ -197,10 +192,12 @@ public partial class FormatMenuWindow : Window
         }
     }
 
+    /// <summary>Selects the first entry with the best match, so Enter runs what the typed name most likely meant.</summary>
     void SelectFirst()
     {
-        List.SelectedIndex = List.Items.Count > 0 ? 0 : -1;
-        if (List.SelectedItem is not null) List.ScrollIntoView(List.SelectedItem);
+        var best = List.Items.Cast<Entry>().OrderByDescending(Score).FirstOrDefault(); // a stable sort keeps the menu order among equals
+        List.SelectedItem = best;
+        if (best is not null) List.ScrollIntoView(best);
     }
 
     void Move(int delta)
