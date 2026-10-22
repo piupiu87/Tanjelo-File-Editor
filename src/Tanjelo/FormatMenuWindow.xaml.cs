@@ -46,6 +46,7 @@ public partial class FormatMenuWindow : Window
             "metadata" => "",                    // tag
             "crop" => "",                        // crop
             "background" => "",                  // palette
+            "collage" => "",                     // grid
             _ => Target.Section switch
             {
                 Section.Image => "",             // picture

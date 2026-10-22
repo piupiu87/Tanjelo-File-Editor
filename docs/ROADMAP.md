@@ -69,7 +69,7 @@ A shared options dialog, then the tools that need it.
 - [x] Crop images: aspect presets or exact pixels (M)
 - [x] Crop video (M)
 - [x] Add a background: colour, gradient or image; padding, rounded corners, shadow (M)
-- [ ] Collage: grid, row, column or featured layout (M)
+- [x] Collage: grid, row, column or featured layout (M)
 - [ ] Join videos: reorder clips, save one MP4 (M)
 - [ ] Save chosen video frames as full-resolution PNGs (M)
 - [ ] Split video at chosen points (M)
