@@ -39,6 +39,7 @@ public sealed class ConverterEngine
             [
                 new CombinePdfOperation(),
                 new CollageOperation(),
+                new JoinVideosOperation(tools),
                 new MergePdfOperation(),
                 new CompressOperation(tools),
                 new ClipboardActions(new WindowsClipboard()),

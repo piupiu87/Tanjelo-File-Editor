@@ -12,6 +12,15 @@ sealed record MediaInfo(bool Probed, string? Video, string? Audio, double Durati
     public int Width { get; init; }
     public int Height { get; init; }
 
+    /// <summary>The turn the file asks players to make, in degrees; 0 when there's none.</summary>
+    public int Rotation { get; init; }
+
+    /// <summary>Frames per second of the picture; 0 when unknown.</summary>
+    public double FrameRate { get; init; }
+
+    /// <summary>ffmpeg's name for how the picture's pixels are stored, such as "yuv420p".</summary>
+    public string? PixelFormat { get; init; }
+
     /// <summary>The whole file's bit rate, and the first audio track's, in bits per second; 0 when unknown.</summary>
     public long Bitrate { get; init; }
     public long AudioBitrate { get; init; }
@@ -71,15 +80,16 @@ static class Ffmpeg
 
         var result = await ProcessRunner.RunAsync(tools.Ffprobe,
             ["-v", "error", "-show_entries",
-                "format=duration,bit_rate:format_tags:stream=codec_type,codec_name,width,height,channels,channel_layout,sample_rate,bit_rate:" +
-                "stream_side_data=rotation:stream_disposition=attached_pic", "-of", "json", input], ct);
+                "format=duration,bit_rate:format_tags:stream=codec_type,codec_name,width,height,channels,channel_layout,sample_rate,bit_rate," +
+                "r_frame_rate,pix_fmt:stream_side_data=rotation:stream_disposition=attached_pic", "-of", "json", input], ct);
         if (result.ExitCode != 0)
             throw new ConversionException($"ffmpeg can't read this file: {result.LastError}");
 
         using var json = JsonDocument.Parse(result.StdOut);
-        string? video = null, audio = null, layout = null;
-        int channels = 0, sampleRate = 0, width = 0, height = 0;
+        string? video = null, audio = null, layout = null, pixels = null;
+        int channels = 0, sampleRate = 0, width = 0, height = 0, rotation = 0;
         long audioBitrate = 0;
+        double frameRate = 0;
         if (json.RootElement.TryGetProperty("streams", out var streams))
         {
             foreach (var stream in streams.EnumerateArray())
@@ -92,9 +102,16 @@ static class Ffmpeg
                     video = codec;
                     if (stream.TryGetProperty("width", out var w)) width = w.GetInt32();
                     if (stream.TryGetProperty("height", out var h)) height = h.GetInt32();
+                    if (stream.TryGetProperty("pix_fmt", out var pf)) pixels = pf.GetString();
+                    if (stream.TryGetProperty("r_frame_rate", out var fr) && fr.GetString()?.Split('/') is [var num, var den]
+                        && double.TryParse(num, NumberStyles.Float, CultureInfo.InvariantCulture, out var n)
+                        && double.TryParse(den, NumberStyles.Float, CultureInfo.InvariantCulture, out var dd) && dd > 0)
+                        frameRate = n / dd;
                     // Phones store portrait video sideways with a note to turn it; ffmpeg turns it as it decodes.
                     if (stream.TryGetProperty("side_data_list", out var sides)
-                        && sides.EnumerateArray().Any(s => s.TryGetProperty("rotation", out var r) && Math.Abs(r.GetDouble()) % 180 == 90))
+                        && sides.EnumerateArray().FirstOrDefault(s => s.TryGetProperty("rotation", out _)) is { ValueKind: JsonValueKind.Object } side)
+                        rotation = (int)side.GetProperty("rotation").GetDouble();
+                    if (Math.Abs(rotation) % 180 == 90)
                         (width, height) = (height, width);
                 }
                 if (type == "audio" && audio is null)
@@ -124,6 +141,9 @@ static class Ffmpeg
         {
             Width = width,
             Height = height,
+            Rotation = rotation,
+            FrameRate = frameRate,
+            PixelFormat = pixels,
             Bitrate = bitrate,
             AudioBitrate = audioBitrate,
             ChannelLayout = layout,
