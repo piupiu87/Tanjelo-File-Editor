@@ -82,13 +82,18 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition />
             </Grid.ColumnDefinitions>
-            <Border Width="36" Height="36" Margin="0,0,11,0" CornerRadius="6" Background="{DynamicResource AccentSoft}">
-                <Grid>
-                    <TextBlock x:Name="FallbackGlyph" FontFamily="{StaticResource IconFont}" FontSize="17" Text="&#xE8A5;"
-                               Foreground="{DynamicResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    <Image x:Name="Thumbnail" Width="32" Height="32" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
-                </Grid>
-            </Border>
+            <!-- The Tanjelo logo, badged at its corner with the selected file's own thumbnail -->
+            <Grid Width="36" Height="36" Margin="0,0,13,0">
+                <Image x:Name="Logo" Width="36" Height="36" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
+                <Border Width="20" Height="20" Margin="0,0,-5,-5" HorizontalAlignment="Right" VerticalAlignment="Bottom" CornerRadius="5"
+                        BorderThickness="1" Background="{DynamicResource Surface}" BorderBrush="{DynamicResource FieldBorder}">
+                    <Grid>
+                        <TextBlock x:Name="FallbackGlyph" FontFamily="{StaticResource IconFont}" FontSize="10" Text="&#xE8A5;"
+                                   Foreground="{DynamicResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Image x:Name="Thumbnail" Width="16" Height="16" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
+                    </Grid>
+                </Border>
+            </Grid>
             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                 <TextBlock x:Name="Heading" FontWeight="SemiBold" FontSize="13.5" TextTrimming="CharacterEllipsis" />
                 <TextBlock x:Name="Subheading" FontSize="12" Margin="0,1,0,0" Foreground="{DynamicResource TextSecondary}" TextTrimming="CharacterEllipsis" />

@@ -6,6 +6,7 @@ using Run = System.Windows.Documents.Run;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using Tanjelo.Core;
 
 namespace Tanjelo;
@@ -135,6 +136,26 @@ public partial class FormatMenuWindow : Window
             Thumbnail.Source = thumbnail;
             FallbackGlyph.Visibility = Visibility.Collapsed;
         }
+
+        ShowLogo(VisualTreeHelper.GetDpi(this).DpiScaleX);
+        DpiChanged += (_, args) => ShowLogo(args.NewDpi.DpiScaleX); // the menu opens on the pointer's monitor
+    }
+
+    /// <summary>The app icon's sizes, smallest first; each was drawn for its size, so they stay crisp.</summary>
+    static readonly BitmapFrame[] LogoSizes = LoadLogoSizes();
+
+    static BitmapFrame[] LoadLogoSizes()
+    {
+        using var stream = typeof(FormatMenuWindow).Assembly.GetManifestResourceStream("app.ico")!;
+        var decoder = new IconBitmapDecoder(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
+        return decoder.Frames.OrderBy(f => f.PixelWidth).ToArray();
+    }
+
+    /// <summary>Uses the smallest icon size that still covers the logo's pixels at this display scaling.</summary>
+    void ShowLogo(double dpiScale)
+    {
+        var pixels = Logo.Width * dpiScale;
+        Logo.Source = LogoSizes.FirstOrDefault(f => f.PixelWidth >= pixels) ?? LogoSizes[^1];
     }
 
     static string FormatSize(long bytes) => bytes switch
