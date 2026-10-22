@@ -60,6 +60,13 @@ Tools change a copy of a file and keep its format. The copy goes beside the orig
 | Audio | Normalize volume to −16 LUFS (two passes, one steady gain) · to mono · to stereo · trim silence from the start and end | ffmpeg |
 | PDF | Split into one PDF per page · merge several PDFs in the order selected | PDFsharp (built in) |
 
+Tools marked "…" in the menu ask for their settings first, in a dialog with a preview. With `tanj`, pass the same
+settings as `--name=value`; `tanj options <key> <files>` lists them.
+
+| Tool | Works on | What you choose | Engine |
+|---|---|---|---|
+| Compress… (`compress`) | Images, video, audio | A percentage of the original size or a target size in MB, and optionally smaller dimensions. Images get the best quality that fits (JPG, PNG, WebP and AVIF keep their format, a PNG drops to 256 colours if it must, others become JPG); video becomes a two-pass H.264 MP4; lossy audio keeps its format and lossless audio becomes MP3 | Magick.NET, ffmpeg |
+
 Actions work with the selected files and folders themselves:
 
 | Action | What it does |

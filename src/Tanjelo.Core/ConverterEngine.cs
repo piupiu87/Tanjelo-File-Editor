@@ -28,6 +28,7 @@ public sealed class ConverterEngine
                 new LibreOfficeConverter(tools),
                 new MediaConverter(tools),
                 new MediaTools(tools),
+                new CompressTool(tools),
                 new ArchiveConverter(tools),
                 new MoveToFolderAction(),
             ],

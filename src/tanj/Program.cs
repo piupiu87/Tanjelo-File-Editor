@@ -80,9 +80,9 @@ switch (args[0])
                 _ => option.Optional ? "text, or empty" : "text",
             };
             var when = option.ShownWhen is { } w ? $"  (with --{w.Name}={string.Join("|", w.Values)})" : "";
-            Console.WriteLine($"  --{option.Name}={target.Parameters[option.Name],-10} {option.Label}: {allowed}{when}");
+            Console.WriteLine($"  {$"--{option.Name}={target.Parameters[option.Name]}",-22} {option.Label}: {allowed}{when}");
             if (option.Hint is { } hint)
-                Console.WriteLine($"  {"",-14} {hint}");
+                Console.WriteLine($"  {"",-22} {hint}");
         }
         return 0;
     }

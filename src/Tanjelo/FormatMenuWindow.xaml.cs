@@ -42,6 +42,7 @@ public partial class FormatMenuWindow : Window
             "copy-files" => "",                  // copy
             "open-terminal" => "",               // command prompt
             "move-to" => "",                     // move to folder
+            "compress" => "",                    // arrows pointing in
             _ => Target.Section switch
             {
                 Section.Image => "",             // picture
@@ -122,7 +123,7 @@ public partial class FormatMenuWindow : Window
             Heading.Text = Path.GetFileName(path.TrimEnd('\\'));
             Subheading.Text = Directory.Exists(path)
                 ? "Folder"
-                : $"{Formats.Ext(path).ToUpperInvariant()} file · {FormatSize(new FileInfo(path).Length)}";
+                : $"{Formats.Ext(path).ToUpperInvariant()} file · {Describe.Size(new FileInfo(path).Length)}";
         }
         else
         {
@@ -157,14 +158,6 @@ public partial class FormatMenuWindow : Window
         var pixels = Logo.Width * dpiScale;
         Logo.Source = LogoSizes.FirstOrDefault(f => f.PixelWidth >= pixels) ?? LogoSizes[^1];
     }
-
-    internal static string FormatSize(long bytes) => bytes switch
-    {
-        < 1024 => $"{bytes} bytes",
-        < 1024 * 1024 => $"{bytes / 1024.0:0} KB",
-        < 1024L * 1024 * 1024 => $"{bytes / 1024.0 / 1024:0.#} MB",
-        _ => $"{bytes / 1024.0 / 1024 / 1024:0.##} GB",
-    };
 
     int Score(Entry entry) => MenuSearch.Score(entry.Target, Search.Text, entry.Group);
 

@@ -83,6 +83,17 @@ sealed class Scratch : IDisposable
         return path;
     }
 
+    /// <summary>A noisy, photo-like picture that doesn't compress to nothing, saved at high quality in the format the extension names.</summary>
+    public string Photo(string name, int width = 640, int height = 480)
+    {
+        var path = PathOf(name);
+        using var image = new MagickImage("plasma:orange-steelblue", (uint)width, (uint)height);
+        image.AddNoise(NoiseType.Gaussian);
+        image.Quality = 95;
+        image.Write(path);
+        return path;
+    }
+
     /// <summary>A PNG that is transparent except for an opaque square in the middle.</summary>
     public string TransparentPng(string name, int size = 40)
     {

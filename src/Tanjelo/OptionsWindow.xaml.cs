@@ -53,7 +53,7 @@ public partial class OptionsWindow : Window
         Glyph.Text = new FormatMenuWindow.Entry(target).Glyph;
         Heading.Text = target.Label.TrimEnd('…');
         Subheading.Text = files.Count == 1
-            ? $"{Path.GetFileName(files[0])} · {FormatMenuWindow.FormatSize(new FileInfo(files[0]).Length)}"
+            ? $"{Path.GetFileName(files[0])} · {Describe.Size(new FileInfo(files[0]).Length)}"
             : $"{files.Count} items · " + string.Join(", ", files.Take(3).Select(Path.GetFileName)) + (files.Count > 3 ? ", …" : "");
         Note.Text = files.Count == 1 ? "Saved as a copy beside the original" : "Saved beside the originals";
         RunButton.Content = target.ConfirmText;
@@ -485,6 +485,9 @@ public partial class OptionsWindow : Window
         PreviewImage.Source = preview?.Image is { } bytes ? Decode(bytes) : null;
         PreviewChecker.Visibility = PreviewImage.Source is null ? Visibility.Collapsed : Visibility.Visible;
         PreviewMessage.Text = problem ?? (PreviewImage.Source is null && preview?.Facts.Count is null or 0 ? "No preview for this file." : "");
+        // Some previews are only facts, such as an audio file's new size; then there's no picture to make room for.
+        PreviewFrame.Visibility = PreviewImage.Source is null && PreviewMessage.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+        FactList.Margin = new Thickness(2, PreviewFrame.Visibility == Visibility.Visible ? 10 : 0, 2, 0);
         FactList.ItemsSource = preview?.Facts;
         if (preview is { Duration: > 0 } media)
         {
