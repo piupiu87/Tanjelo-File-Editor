@@ -164,3 +164,54 @@ public sealed class CropImageTool : IConverter, IPreviewer
         return new Preview(Crop.Outline(picture, box, width, request.MaxSize), Crop.Facts(box, width, height));
     }, ctx.Cancellation);
 }
+
+/// <summary>
+/// Crops video through ffmpeg, re-encoding the picture and copying the sound. The crop is worked out on the picture
+/// as it plays, after any rotation a phone asked for.
+/// </summary>
+public sealed class CropVideoTool(Toolbox tools) : IConverter, IPreviewer
+{
+    static readonly Target Entry = new Target("crop", "Crop…", "To an aspect ratio or exact size", Section.Video)
+    {
+        Kind = TargetKind.Tool,
+        Running = "Cropping…",
+        Done = "Cropped",
+    }.WithOptions(Crop.Options);
+
+    public IEnumerable<Target> TargetsFor(string input) =>
+        tools.Ffmpeg is not null && tools.Ffprobe is not null && Formats.Videos.Contains(Formats.Key(input)) ? [Entry] : [];
+
+    public async Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx)
+    {
+        var media = await Ffmpeg.ProbeAsync(tools, input, ctx.Cancellation);
+        var box = BoxFor(media, target);
+        if (box.Width == media.Width && box.Height == media.Height)
+            throw new ConversionException("That keeps the whole picture, so there's nothing to crop.");
+
+        var key = Ffmpeg.CanEncodeVideo(Formats.Key(input)) ? Formats.Key(input) : "mp4";
+        var output = OutputPaths.Suffixed(input, "cropped", key);
+        string[] encode = ["-map", "0:v:0", "-map", "0:a?", "-sn", .. Ffmpeg.VideoEncoder(key, Filter(box)), .. MediaTools.FastStart(output)];
+        // The sound is copied when the container is the same; otherwise, or if that fails, it's re-encoded too.
+        IEnumerable<string[]> plans = key == Formats.Key(input) ? [[.. encode, "-c:a", "copy"], encode] : [encode];
+        await Ffmpeg.RunFirstWorkingAsync(tools, input, output, plans, media.Duration, ctx);
+        return [output];
+    }
+
+    public async Task<Preview> PreviewAsync(IReadOnlyList<string> inputs, Target target, PreviewRequest request, JobContext ctx)
+    {
+        var media = await Ffmpeg.ProbeAsync(tools, inputs[0], ctx.Cancellation);
+        var box = BoxFor(media, target);
+        var frame = await Ffmpeg.FrameAsync(tools, inputs[0], media.Duration / 3, 0, ctx.Cancellation);
+        using var picture = new MagickImage(frame);
+        return new Preview(Crop.Outline(picture, box, media.Width, request.MaxSize), Crop.Facts(box, media.Width, media.Height));
+    }
+
+    static Crop.Box BoxFor(MediaInfo media, Target target)
+    {
+        if (media.Video is null || media.Width <= 0 || media.Height <= 0)
+            throw new ConversionException("Couldn't tell how big this video's picture is.");
+        return Crop.Compute(media.Width, media.Height, target, even: true);
+    }
+
+    static string Filter(Crop.Box box) => $"crop={box.Width}:{box.Height}:{box.X}:{box.Y}";
+}

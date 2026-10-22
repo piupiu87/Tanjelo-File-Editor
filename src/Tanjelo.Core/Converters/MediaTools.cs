@@ -270,5 +270,5 @@ public sealed class MediaTools(Toolbox tools) : IConverter
     }
 
     /// <summary>Moves an MP4's index to the front so it starts playing before it has fully downloaded.</summary>
-    static string[] FastStart(string path) => Formats.Key(path) is "mp4" or "m4v" or "mov" ? ["-movflags", "+faststart"] : [];
+    internal static string[] FastStart(string path) => Formats.Key(path) is "mp4" or "m4v" or "mov" ? ["-movflags", "+faststart"] : [];
 }

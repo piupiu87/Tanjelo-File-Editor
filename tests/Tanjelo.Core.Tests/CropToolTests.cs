@@ -87,6 +87,57 @@ public class CropToolTests
         Assert.All(frames, f => Assert.Equal((20u, 10u), (f.Page.Width == 0 ? f.Width : f.Page.Width, f.Page.Height == 0 ? f.Height : f.Page.Height)));
     }
 
+    static (int Width, int Height) Size(string video)
+    {
+        var result = ProcessRunner.RunAsync(Env.Tools.Ffprobe!, ["-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "csv=p=0", video],
+            CancellationToken.None).GetAwaiter().GetResult();
+        var parts = result.StdOut.Trim().Split(',');
+        return (int.Parse(parts[0]), int.Parse(parts[1]));
+    }
+
+    [Fact]
+    public async Task A_video_is_cropped_and_its_sound_copied()
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        var clip = scratch.Video("clip.mp4", size: "320x180");
+
+        var output = await Run(clip, ("aspect", "4:5"), ("position", "right"));
+
+        Assert.Equal(scratch.PathOf("clip-cropped.mp4"), output);
+        Assert.Equal((144, 180), Size(output));
+        var media = Inspect.Media(output);
+        Assert.Equal([("video", "h264"), ("audio", "aac")], media.Streams);
+        Assert.Equal(2.0, media.Duration, 0.2);
+    }
+
+    [Fact]
+    public async Task A_phone_video_is_cropped_the_way_it_plays()
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        var stored = scratch.Video("stored.mp4", size: "160x120", audio: false);
+        var portrait = scratch.Ffmpeg("portrait.mp4", ["-display_rotation:v:0", "90", "-i", stored, "-c", "copy"]); // plays 120 wide, 160 tall
+
+        var output = await Run(portrait, ("aspect", "16:9"));
+
+        Assert.Equal((120, 66), Size(output));
+    }
+
+    [Fact]
+    public async Task A_webm_stays_webm()
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        var clip = scratch.Video("clip.webm", seconds: 1, codec: ["-c:v", "libvpx-vp9", "-deadline", "realtime", "-c:a", "libopus"]);
+
+        var output = await Run(clip, ("mode", "pixels"), ("width", "100"), ("height", "100"));
+
+        Assert.Equal(scratch.PathOf("clip-cropped.webm"), output);
+        Assert.Equal((100, 100), Size(output));
+        Assert.Equal("opus", Inspect.Codec(output, "audio"));
+    }
+
     [Fact]
     public async Task The_preview_outlines_what_is_kept()
     {
