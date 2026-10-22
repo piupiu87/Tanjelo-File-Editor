@@ -50,6 +50,7 @@ public partial class FormatMenuWindow : Window
             "join-videos" => "",                 // merge
             "save-frames" => "",                 // camera
             "visualize" => "",                   // waveform
+            "channel-volume" => "",              // faders
             _ => Target.Section switch
             {
                 Section.Image => "",             // picture

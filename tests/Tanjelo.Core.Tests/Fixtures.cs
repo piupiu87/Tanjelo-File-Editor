@@ -236,6 +236,17 @@ static class Inspect
         return tags.EnumerateObject().FirstOrDefault(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase)).Value.ToString() is { Length: > 0 } value ? value : null;
     }
 
+    /// <summary>Each channel's RMS level in dB, as ffmpeg's astats measures it; negative infinity for silence.</summary>
+    public static List<double> ChannelLevels(string path)
+    {
+        var result = ProcessRunner.RunAsync(Env.Tools.Ffmpeg!,
+            ["-hide_banner", "-nostdin", "-nostats", "-v", "info", "-i", path, "-map", "0:a:0", "-af", "astats=metadata=0:measure_overall=none", "-f", "null", "-"],
+            CancellationToken.None).GetAwaiter().GetResult();
+        return System.Text.RegularExpressions.Regex.Matches(result.StdErr, @"RMS level dB: (-?[\d.]+|-inf)")
+            .Select(m => m.Groups[1].Value == "-inf" ? double.NegativeInfinity : double.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture))
+            .ToList();
+    }
+
     /// <summary>Integrated loudness in LUFS, as ffmpeg's loudnorm measures it.</summary>
     public static double Loudness(string path)
     {

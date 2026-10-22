@@ -74,7 +74,7 @@ A shared options dialog, then the tools that need it.
 - [x] Save chosen video frames as full-resolution PNGs (M)
 - [x] Split video at chosen points (M)
 - [x] Audio visualizer: waveform or still image to MP4, in landscape, portrait or square (M)
-- [ ] Per-channel audio volume (M)
+- [x] Per-channel audio volume (M)
 
 ## v0.4: more formats and sharing
 

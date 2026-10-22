@@ -74,6 +74,7 @@ settings as `--name=value`; `tanj options <key> <files>` lists them.
 | Save frames… (`save-frames`) | Video | Moments picked on a slider over the video (with the frame under it as the preview) or typed as times. Each becomes a full-size PNG, upright even for phone video: `clip-1m05.5s.png` | ffmpeg |
 | Split at… (`split-video-at`) | Video | Moments picked the same way, each starting a new part (`clip-part1.mp4`…); the preview lists the parts. Cut losslessly when keyframes fall on the moments, otherwise re-encoded so every cut is exact | ffmpeg |
 | Make a video… (`visualize`) | Audio | A moving waveform (in a colour you pick) or a still picture, landscape, portrait or square at full HD, on a background colour; the picture can be any file or the audio's own cover art, and the video can cover just part of the sound. Saved as `song-video.mp4` | ffmpeg |
+| Channel volume… (`channel-volume`) | Audio, video | Left and right from 0% (silent) to 400%; in surround sound every left-side and right-side channel follows its side and the centre and bass stay. The preview draws each channel after the change. A video's picture is copied and only its sound re-encoded | ffmpeg |
 
 Actions work with the selected files and folders themselves:
 
