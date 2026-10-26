@@ -87,9 +87,24 @@ Actions work with the selected files and folders themselves:
 | Copy | Puts the items on the clipboard, ready to paste into a folder, an email or a chat |
 | Open in Terminal | Opens Windows Terminal (or PowerShell) in each selected folder, or in the folder holding the selected files |
 | Share… | Opens the Windows Share sheet for the selected files, next to the pointer: email, apps, nearby PCs and phones. Nearby Sharing appears there when it's turned on in Windows' settings |
+| Float | Parks the selection on the Float shelf (below) |
 | Move to… | Moves the selection into a folder you pick; names already taken there get " (2)" |
 
-Share needs the app; `tanj` lists it but says so when it's run.
+Share and Float need the app; `tanj` lists them but says so when they're run.
+
+### Float shelf
+
+A small panel that stays on top at the right edge of the screen, for files you'll want again in a moment. Drop files
+or folders on it from anywhere, or pick **Float** on the Actions tab, and drag them out later into a folder, an email
+or a chat: one, several (select them first) or all of them with **All**. The shelf holds references, not copies:
+dragging out to another folder on the same drive moves the file, as it would from Explorer (hold Ctrl to copy), and
+files that were moved or deleted drop off.
+
+- Press the Tanjelo shortcut on the shelf to convert what's selected there (or everything on it).
+- **Delete** or × takes an item off the shelf, **Clear** takes them all; the files themselves stay where they are.
+- It doesn't take the focus when it appears and stays out of Alt+Tab and the taskbar. × or **Esc** hides it, and
+  *Show shelf* in the tray menu brings it back. Set `floatHotkey` (below) to show or hide it with a shortcut of its own.
+- The list survives a restart, in `%APPDATA%\Tanjelo\float.json`.
 
 ## Requirements
 
@@ -114,6 +129,7 @@ Tray menu → *Edit settings…* opens `%APPDATA%\Tanjelo\settings.json`. Change
 ```json
 {
   "hotkey": "Ctrl+Shift+Space",
+  "floatHotkey": null,        // e.g. "Ctrl+Shift+F" to show or hide the Float shelf from anywhere
   "theme": "system",          // "system", "light" or "dark"
   "jpegQuality": 90,
   "webpQuality": 90,

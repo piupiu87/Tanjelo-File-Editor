@@ -9,6 +9,9 @@ namespace Tanjelo;
 sealed class Settings
 {
     public string Hotkey { get; set; } = "Ctrl+Shift+Space";
+
+    /// <summary>Shows or hides the Float shelf from anywhere, such as "Ctrl+Shift+F"; off (null) by default.</summary>
+    public string? FloatHotkey { get; set; }
     public string Theme { get; set; } = "system"; // "system", "light" or "dark"
     public int JpegQuality { get; set; } = 90;
     public int WebpQuality { get; set; } = 90;

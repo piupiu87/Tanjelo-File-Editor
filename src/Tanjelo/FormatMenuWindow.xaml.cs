@@ -52,6 +52,7 @@ public partial class FormatMenuWindow : Window
             "visualize" => "",                   // waveform
             "channel-volume" => "",              // faders
             "share" => "",                       // share
+            "float" => "",                       // pin
             _ => Target.Section switch
             {
                 Section.Image => "",             // picture

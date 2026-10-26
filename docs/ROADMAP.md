@@ -89,7 +89,7 @@ Images
 
 Sharing
 - [x] Share through the Windows Share sheet, including Nearby Sharing (M)
-- [ ] Float: an always-on-top shelf to park files, drag them out later, and convert them from there (M)
+- [x] Float: an always-on-top shelf to park files, drag them out later, and convert them from there (M)
 
 ## v0.5: editors
 

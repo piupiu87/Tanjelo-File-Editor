@@ -11,6 +11,7 @@ sealed class TrayIcon : IDisposable
     readonly Forms.ToolStripMenuItem _hotkeyItem, _toolsItem, _startupItem, _sendToItem;
 
     public event Action? ConvertFilesClicked;
+    public event Action? ShowShelfClicked;
     public event Action? SettingsClicked;
     public event Action? QuitClicked;
 
@@ -32,6 +33,7 @@ sealed class TrayIcon : IDisposable
         [
             convert,
             _hotkeyItem,
+            new Forms.ToolStripMenuItem("Show shelf", null, (_, _) => ShowShelfClicked?.Invoke()),
             new Forms.ToolStripSeparator(),
             _toolsItem,
             _startupItem,

@@ -27,8 +27,8 @@ public class FileActionsTests
         {
             // The Share sheet takes files only.
             string[] expected = selection is [var only] && only == file
-                ? ["copy-path", "copy-files", "open-terminal", "share", "move-to"]
-                : ["copy-path", "copy-files", "open-terminal", "move-to"];
+                ? ["copy-path", "copy-files", "open-terminal", "share", "float", "move-to"]
+                : ["copy-path", "copy-files", "open-terminal", "float", "move-to"];
             var actions = Env.Engine().GetMenu(selection).Targets.Where(t => t.Kind == TargetKind.Action).ToList();
             Assert.Equal(expected, actions.Select(t => t.Key));
             Assert.All(actions, a => Assert.Equal(Section.File, a.Section));
