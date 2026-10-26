@@ -59,7 +59,7 @@ File actions (also for folders and mixed selections)
 - [x] Open in Terminal: Windows Terminal, falling back to PowerShell (S, *good first issue*)
 - [x] Move to a chosen folder (S)
 
-## v0.3: tools with options
+## v0.3.0: tools with options (released)
 
 A shared options dialog, then the tools that need it.
 
