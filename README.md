@@ -46,7 +46,7 @@ The shortcut is only grabbed while Explorer or the desktop is in front, so other
 | Subtitles (SRT, VTT) | SRT, VTT, TXT (just the words) | Built in |
 | Markdown (MD) | HTML (a styled page with the pictures from your computer embedded), PDF (A4, or Letter where that's used, printed offline: nothing is fetched from the web), TXT (the text without the markup). Tables, task lists and footnotes included. DOCX and EPUB via pandoc | Markdig, WebView2 (built in), pandoc |
 | EPUB | DOCX, Markdown (pictures in a folder beside it), TXT, HTML (one page, pictures included) and PDF (printed offline like Markdown) | pandoc, WebView2 |
-| HTML | EPUB, titled from the page | pandoc |
+| HTML | PDF (the page as it is, with its own pictures and styles, printed offline with scripts off); Markdown (links to its pictures kept), DOCX and EPUB (titled from the page) via pandoc | WebView2, pandoc |
 | ZIP, 7Z, RAR, TAR(.GZ/.BZ2/.XZ), ISO, CAB, GZ | Extract here, ZIP, 7Z, TAR.GZ, TAR | 7-Zip, Windows `tar`, .NET |
 | Any files or folders | Compress to ZIP or 7Z, pack into TAR; single files to GZIP (`notes.txt.gz`) | 7-Zip or .NET |
 

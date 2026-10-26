@@ -30,6 +30,7 @@ public sealed class ConverterEngine
                 new SubtitleConverter(),
                 new MarkdownConverter(tools),
                 new PandocConverter(tools),
+                new WebPageConverter(tools),
                 new PdfConverter(),
                 new PdfTextConverter(),
                 new PdfSlidesConverter(),

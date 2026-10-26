@@ -27,6 +27,7 @@ public sealed class PandocConverter(Toolbox tools) : IConverter
     static readonly Target Html = T("html", "HTML", "One web page, pictures included");
     static readonly Target Pdf = T("pdf", "PDF", "Printed offline by Windows' WebView2");
     static readonly Target PdfEpub = T("epub", "EPUB", "E-book of the text and headings only");
+    static readonly Target PageMarkdown = T("md", "Markdown", "The page as Markdown, via pandoc");
 
     // Plain Markdown pictures: no sizes, no figure wrappers, and no chapter divs or anchor spans from EPUBs.
     const string PlainMarkdownFilter = """
@@ -57,7 +58,7 @@ public sealed class PandocConverter(Toolbox tools) : IConverter
                 _ => [Markdown, Epub],
             },
             FileKind.Ebook => tools.WebView2 is null ? [Docx, Markdown, Txt, Html] : [Docx, Markdown, Txt, Html, Pdf],
-            FileKind.WebPage => [Epub],
+            FileKind.WebPage => [PageMarkdown, Docx, Epub],
             FileKind.Pdf => [PdfEpub],
             _ => [],
         };
@@ -147,10 +148,13 @@ public sealed class PandocConverter(Toolbox tools) : IConverter
         var filter = Path.Combine(temp, "plain-markdown.lua");
         await File.WriteAllTextAsync(filter, PlainMarkdownFilter, ctx.Cancellation);
 
-        // pandoc runs in the temp folder, so the pictures land there first and the links come out relative.
+        // pandoc runs in the temp folder, so the pictures land there first and the links come out relative. A web
+        // page's pictures are files beside it already (or on the web, which extracting would download), so its
+        // links are kept as they are, and still work from the Markdown beside it.
         var produced = Path.Combine(temp, "out.md");
-        await RunAsync([source.Path, "-f", source.Format, "-t", "gfm", "--wrap=none", "--lua-filter=" + filter, "--extract-media=" + mediaName, "-o", produced],
-            input, ctx, workingDirectory: temp);
+        List<string> args = [source.Path, "-f", source.Format, "-t", "gfm", "--wrap=none", "--lua-filter=" + filter, "-o", produced];
+        if (source.Format != "html") args.Add("--extract-media=" + mediaName);
+        await RunAsync(args, input, ctx, workingDirectory: temp);
 
         var markdown = await File.ReadAllTextAsync(produced, ctx.Cancellation);
         var extracted = Path.Combine(temp, mediaName);

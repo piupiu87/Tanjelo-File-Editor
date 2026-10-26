@@ -214,3 +214,59 @@ public class MarkdownTests
     [InlineData("ws://example.com/", false)]
     public void Only_local_addresses_are_allowed_while_printing(string uri, bool allowed) => Assert.Equal(allowed, HtmlPrinter.IsLocal(uri));
 }
+
+public class WebPageTests
+{
+    const string Page = """
+        <!DOCTYPE html>
+        <html><head><meta charset="utf-8"><title>Saved page</title></head>
+        <body>
+        <h1>A saved web page</h1>
+        <p>It has <strong>bold</strong> text and a local picture.</p>
+        <img src="pic.png" alt="The picture">
+        <script>document.body.innerHTML = "scripts ran";</script>
+        </body></html>
+        """;
+
+    [Fact]
+    public async Task A_web_page_is_printed_as_it_is_without_running_its_scripts()
+    {
+        Assert.SkipWhen(Env.Tools.WebView2 is null, "The WebView2 runtime isn't installed");
+        using var scratch = new Scratch();
+        scratch.Image("pic.png", 200, 100);
+        var pdf = await Env.RunOne("pdf", scratch.Text("page.html", Page));
+
+        Assert.Equal(scratch.PathOf("page.pdf"), pdf);
+        var text = File.ReadAllText(await Env.RunOne("txt", pdf));
+        Assert.Contains("It has bold text and a local picture.", text);
+        Assert.DoesNotContain("scripts ran", text);
+    }
+
+    [Fact]
+    public async Task A_web_page_becomes_markdown_keeping_its_picture_links()
+    {
+        Assert.SkipWhen(Env.Tools.Pandoc is null, "pandoc isn't installed");
+        using var scratch = new Scratch();
+        scratch.Image("pic.png", 200, 100);
+        var output = await Env.RunOne("md", scratch.Text("page.html", Page));
+
+        var markdown = File.ReadAllText(output);
+        Assert.StartsWith("# A saved web page", markdown);
+        Assert.Contains("It has **bold** text and a local picture.", markdown);
+        Assert.Contains("![The picture](pic.png)", markdown);
+        Assert.False(Directory.Exists(scratch.PathOf("page media")));
+    }
+
+    [Fact]
+    public async Task A_web_page_becomes_a_word_document()
+    {
+        Assert.SkipWhen(Env.Tools.Pandoc is null, "pandoc isn't installed");
+        using var scratch = new Scratch();
+        scratch.Image("pic.png", 200, 100);
+        var docx = await Env.RunOne("docx", scratch.Text("page.html", Page));
+
+        using var document = DocumentFormat.OpenXml.Packaging.WordprocessingDocument.Open(docx, false);
+        Assert.Contains("It has bold text and a local picture.", document.MainDocumentPart!.Document!.Body!.InnerText);
+        Assert.Single(document.MainDocumentPart.ImageParts);
+    }
+}
