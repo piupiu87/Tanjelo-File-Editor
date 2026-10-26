@@ -11,6 +11,8 @@ Tanjelo's own code is MIT-licensed (see [LICENSE](LICENSE)). It builds on the co
 | [PDFsharp](https://github.com/empira/PDFsharp) 6.2.4 (`PdfSharp*.dll`) | MIT, © empira Software GmbH | Splits and merges PDF pages, and edits PDF metadata. Version 6.2.4 is the last MIT release; PDFsharp 6.5.0 and later are AGPL-3.0 or commercial, so Tanjelo stays on 6.2.x. The package's `PdfSharp.WPFonts.dll` holds a small Segoe UI subset from an early Windows Phone SDK that PDFsharp uses to draw text; Tanjelo never draws text with it. |
 | [PdfPig](https://github.com/UglyToad/PdfPig) 0.1.16 (`UglyToad.PdfPig*.dll`) | Apache-2.0, with parts derived from Apache PDFBox and Adobe's glyph lists, font metrics and CMaps under their own terms | Reads the text of PDFs for PDF → TXT and Markdown. Its licence and notices are in `licenses/PdfPig-LICENSE.txt` and `licenses/PdfPig-NOTICE.txt` next to the app. |
 | [Open XML SDK](https://github.com/dotnet/Open-XML-SDK) 3.5.1 (`DocumentFormat.OpenXml*.dll`) | MIT, © .NET Foundation and Contributors | Writes PowerPoint files for PDF → PPTX and One PPTX |
+| [Markdig](https://github.com/xoofx/markdig) 1.5.0 (`Markdig.dll`) | BSD-2-Clause, © Alexandre Mutel | Reads Markdown for Markdown → HTML, PDF and TXT. Licence in `licenses/Markdig-LICENSE.txt`. |
+| [WebView2 SDK](https://www.nuget.org/packages/Microsoft.Web.WebView2) 1.0.4314.35 (`Microsoft.Web.WebView2.*.dll`, `WebView2Loader.dll`) | BSD-3-Clause-style licence, © Microsoft Corporation | Drives the WebView2 runtime that is part of Windows, to print pages to PDF. Licence in `licenses/WebView2-LICENSE.txt`. |
 | [Microsoft.Extensions.Logging.Abstractions](https://github.com/dotnet/runtime), Microsoft.Extensions.DependencyInjection.Abstractions and (next to `tanj.exe`) System.Security.Cryptography.Pkcs | MIT, © .NET Foundation | Required by PDFsharp |
 | Microsoft Windows SDK projections for .NET (`Microsoft.Windows.SDK.NET.dll`, `WinRT.Runtime.dll`) | [Windows SDK license terms](https://aka.ms/WinSDKLicenseURL) | Used for the PDF renderer and the OCR built into Windows |
 
@@ -29,5 +31,6 @@ Tanjelo starts these as separate programs that the user installs, and doesn't re
 | Windows `tar.exe` (libarchive) | Part of Windows |
 | [Windows Terminal](https://github.com/microsoft/terminal) | MIT; opened by "Open in Terminal" |
 | Windows PowerShell | Part of Windows; the fallback for "Open in Terminal" |
+| Microsoft Edge WebView2 Runtime | Part of Windows 11 (Microsoft software licence terms); prints Markdown to PDF |
 
 If you redistribute a build that bundles any of these (for example FFmpeg next to the app), that build takes on their license obligations too.

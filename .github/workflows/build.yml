@@ -57,7 +57,8 @@ jobs:
       - name: Smoke test
         working-directory: artifacts
         run: |
-          # Exercises the published binaries: ImageMagick's native DLL, the Windows PDF renderer, and zip creation.
+          # Exercises the published binaries: ImageMagick's native DLL, the Windows PDF renderer, Markdig, the PPTX
+          # writer, and zip creation.
           $tanj = "./Tanjelo/tanj.exe"
           & $tanj tools
           Add-Type -AssemblyName System.Drawing
@@ -65,12 +66,14 @@ jobs:
           [System.Drawing.Graphics]::FromImage($bitmap).Clear([System.Drawing.Color]::Orange)
           $bitmap.Save("$PWD/smoke.png")
           $bitmap.Dispose()
-          foreach ($step in @(@('jpg', 'smoke.png'), @('pdf', 'smoke.png'), @('png', 'smoke.pdf'), @('compress-zip', 'smoke.png'))) {
+          Set-Content -Path smoke.md -Value "# Smoke test`n`nIt *works*." -Encoding utf8
+          foreach ($step in @(@('jpg', 'smoke.png'), @('pdf', 'smoke.png'), @('png', 'smoke.pdf'), @('compress-zip', 'smoke.png'), @('html', 'smoke.md'), @('pptx', 'smoke.pdf'))) {
             & $tanj convert $step[0] $step[1]
             if ($LASTEXITCODE -ne 0) { throw "tanj convert $($step -join ' ') failed" }
           }
           foreach ($file in 'Tanjelo/LICENSE.txt', 'Tanjelo/THIRD-PARTY-NOTICES.md', 'Tanjelo/licenses/ImageMagick-NOTICE.txt',
-                   'Tanjelo/licenses/PdfPig-LICENSE.txt', 'Tanjelo/licenses/PdfPig-NOTICE.txt') {
+                   'Tanjelo/licenses/PdfPig-LICENSE.txt', 'Tanjelo/licenses/PdfPig-NOTICE.txt', 'Tanjelo/licenses/Markdig-LICENSE.txt',
+                   'Tanjelo/licenses/WebView2-LICENSE.txt') {
             if (-not (Test-Path $file)) { throw "missing $file" }
           }
 

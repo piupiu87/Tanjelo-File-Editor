@@ -44,6 +44,7 @@ The shortcut is only grabbed while Explorer or the desktop is in front, so other
 | PowerPoint, ODP | PDF, PPTX, PPT, ODP, PNG / JPG per slide | Microsoft PowerPoint (or LibreOffice) |
 | Excel, ODS, CSV, TSV | PDF, XLSX, XLS, ODS, CSV, TSV | Microsoft Excel (or LibreOffice, except TSV) |
 | Subtitles (SRT, VTT) | SRT, VTT, TXT (just the words) | Built in |
+| Markdown (MD) | HTML (a styled page with the pictures from your computer embedded), PDF (A4, or Letter where that's used, printed offline: nothing is fetched from the web), TXT (the text without the markup). Tables, task lists and footnotes included | Markdig, WebView2 (built in) |
 | ZIP, 7Z, RAR, TAR(.GZ/.BZ2/.XZ), ISO, CAB, GZ | Extract here, ZIP, 7Z, TAR.GZ, TAR | 7-Zip, Windows `tar`, .NET |
 | Any files or folders | Compress to ZIP or 7Z, pack into TAR; single files to GZIP (`notes.txt.gz`) | 7-Zip or .NET |
 
@@ -92,6 +93,9 @@ Actions work with the selected files and folders themselves:
   - **ffmpeg** for audio and video: `winget install Gyan.FFmpeg.Essentials`
   - **7-Zip** for .7z/.rar and faster zips (Windows' built-in `tar` covers the rest)
   - **Microsoft Office** or **LibreOffice** for documents
+  - The **WebView2 Runtime** (Edge's engine) prints Markdown to PDF. Windows 11 has it; on Windows 10:
+    `winget install Microsoft.EdgeWebView2Runtime`. It runs with scripts off and every web address blocked, and keeps
+    its cache in `%LOCALAPPDATA%\Tanjelo\WebView2`
 
 ## Settings
 

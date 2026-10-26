@@ -1,6 +1,6 @@
 namespace Tanjelo.Core;
 
-public enum FileKind { Unknown, Folder, Image, Video, Audio, Pdf, WordDocument, Presentation, Spreadsheet, Archive, Subtitle }
+public enum FileKind { Unknown, Folder, Image, Video, Audio, Pdf, WordDocument, Presentation, Spreadsheet, Archive, Subtitle, Markdown }
 
 public static class Formats
 {
@@ -11,6 +11,7 @@ public static class Formats
     public static readonly IReadOnlySet<string> Presentations = Set("ppt", "pptx", "pptm", "ppsx", "odp");
     public static readonly IReadOnlySet<string> Spreadsheets = Set("xls", "xlsx", "xlsm", "xlsb", "ods", "csv", "tsv");
     public static readonly IReadOnlySet<string> Subtitles = Set("srt", "vtt");
+    public static readonly IReadOnlySet<string> Markdown = Set("md", "markdown");
     public static readonly IReadOnlySet<string> Archives = Set("zip", "7z", "rar", "tar", "tar.gz", "tar.bz2", "tar.xz", "gz", "bz2", "xz", "iso", "cab");
 
     // Suffix -> canonical extension, checked before the plain extension so "x.tar.gz" isn't read as "gz".
@@ -53,6 +54,7 @@ public static class Formats
         "aif" => "aiff",
         "oga" => "ogg",
         "mpeg" => "mpg",
+        "markdown" => "md",
         _ => ext,
     };
 
@@ -71,6 +73,7 @@ public static class Formats
         if (Spreadsheets.Contains(ext)) return FileKind.Spreadsheet;
         if (Archives.Contains(ext)) return FileKind.Archive;
         if (Subtitles.Contains(ext)) return FileKind.Subtitle;
+        if (Markdown.Contains(ext)) return FileKind.Markdown;
         return FileKind.Unknown;
     }
 

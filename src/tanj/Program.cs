@@ -35,6 +35,7 @@ switch (args[0])
         Console.WriteLine($"tar         {t.Tar ?? "-"}");
         Console.WriteLine($"LibreOffice {t.LibreOffice ?? "-"}");
         Console.WriteLine($"Office      Word={t.Word} PowerPoint={t.PowerPoint} Excel={t.Excel}");
+        Console.WriteLine($"WebView2    {t.WebView2 ?? "-"}");
         return 0;
 
     case "targets" when args.Length > 1:

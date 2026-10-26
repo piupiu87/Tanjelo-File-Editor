@@ -25,6 +25,9 @@
     <PackageReference Include="PdfPig" Version="[0.1.16]" />
     <!-- Writes PowerPoint files directly, so PDF to PPTX works without Office. -->
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.5.1" />
+    <PackageReference Include="Markdig" Version="1.5.0" />
+    <!-- Only the SDK; the runtime that prints HTML to PDF is part of Windows. -->
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35" />
     <!-- 6.2.x is the last MIT release. PDFsharp 6.5.0 and later are AGPL-3.0 (or commercial), which Tanjelo can't ship. -->
     <PackageReference Include="PDFsharp" Version="6.2.4" />
   </ItemGroup>
@@ -33,7 +36,7 @@
     <!-- ImageMagick's native DLL bundles many libraries whose licenses require shipping their notices with it. -->
     <None Include="$(PkgMagick_NET-Q8-x64)\Notice.txt" Link="licenses\ImageMagick-NOTICE.txt" Visible="false"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <!-- Apache-2.0 asks for the licence and NOTICE to travel with the binaries; the PdfPig package has neither. -->
+    <!-- Licences and notices that must travel with the binaries, for packages that don't ship them (PdfPig, Markdig, WebView2). -->
     <None Include="..\..\licenses\*.txt" Link="licenses\%(Filename)%(Extension)" Visible="false"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
