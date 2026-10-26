@@ -54,6 +54,14 @@ static class Env
         Engine().GetMenu(inputs).Targets.Where(t => t.Section == section).Select(t => t.Key).ToList();
 }
 
+/// <summary>Lets PDFsharp draw text with the fonts installed in Windows. It can only be set once, before any font is used.</summary>
+static class PdfFonts
+{
+    static PdfFonts() => PdfSharp.Fonts.GlobalFontSettings.UseWindowsFontsUnderWindows = true;
+
+    public static void Ready() { }
+}
+
 /// <summary>A scratch folder per test, with generators for the files the converters read.</summary>
 sealed class Scratch : IDisposable
 {
@@ -145,6 +153,47 @@ sealed class Scratch : IDisposable
             collection.Add(page);
         }
         collection.Write(path, MagickFormat.Pdf);
+        return path;
+    }
+
+    /// <summary>An A4 PDF with real text, each page drawn by one of <paramref name="pages"/> with PDFsharp in Windows' own fonts.</summary>
+    public string TextPdf(string name, params Action<PdfSharp.Drawing.XGraphics>[] pages) => TextPdf(name, null, pages);
+
+    /// <param name="password">Encrypts the PDF so it can only be opened with this password.</param>
+    public string TextPdf(string name, string? password, params Action<PdfSharp.Drawing.XGraphics>[] pages)
+    {
+        PdfFonts.Ready();
+        var path = PathOf(name);
+        using var document = new PdfSharp.Pdf.PdfDocument();
+        foreach (var draw in pages)
+        {
+            var page = document.AddPage();
+            page.Size = PdfSharp.PageSize.A4;
+            using var g = PdfSharp.Drawing.XGraphics.FromPdfPage(page);
+            draw(g);
+        }
+        if (password is not null) document.SecuritySettings.UserPassword = password;
+        document.Save(path);
+        return path;
+    }
+
+    /// <summary>A PDF of one page that is only a picture of text, like a scan, with no text layer.</summary>
+    public string ScannedPdf(string name, params string[] lines)
+    {
+        var path = PathOf(name);
+        using var bitmap = new Bitmap(1700, 2200); // a page at 200 dpi
+        using (var g = Graphics.FromImage(bitmap))
+        using (var font = new Font("Arial", 42, GraphicsUnit.Pixel))
+        {
+            g.Clear(Color.White);
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+            for (var i = 0; i < lines.Length; i++)
+                g.DrawString(lines[i], font, Brushes.Black, 160, 200 + i * 64);
+        }
+        using var stream = new MemoryStream();
+        bitmap.Save(stream, ImageFormat.Png);
+        using var image = new MagickImage(stream.ToArray()) { Density = new Density(200, 200, DensityUnit.PixelsPerInch) };
+        image.Write(path, MagickFormat.Pdf);
         return path;
     }
 

@@ -75,6 +75,7 @@ public partial class ProgressToast : Window
         {
             var detail = outputs.Count == 1 ? Path.GetFileName(outputs[0]) : Count(outputs.Count, "file");
             if (result.Skipped.Count > 0) detail += $" · {result.Skipped.Count} already {target.Label}";
+            foreach (var note in result.Notes) detail += " · " + note;
             (string, Action)? open = outputs.Count == 1 ? ("Open", () => Open(outputs[0])) : null;
             Finish(Mood.Success, target.DoneText, detail, Reveal(outputs), open, TimeSpan.FromSeconds(7));
         }

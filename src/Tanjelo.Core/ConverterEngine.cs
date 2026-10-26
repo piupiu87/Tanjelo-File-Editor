@@ -6,7 +6,11 @@ namespace Tanjelo.Core;
 public sealed record BatchProgress(int Index, int Count, string Current, double Fraction);
 public sealed record Failure(string Input, string Message);
 /// <param name="Skipped">Inputs that were already in the target format.</param>
-public sealed record BatchResult(IReadOnlyList<string> Outputs, IReadOnlyList<Failure> Failures, IReadOnlyList<string> Skipped, bool Canceled);
+public sealed record BatchResult(IReadOnlyList<string> Outputs, IReadOnlyList<Failure> Failures, IReadOnlyList<string> Skipped, bool Canceled)
+{
+    /// <summary>Things worth knowing about the results, such as pages read with OCR, each naming its file when several were selected.</summary>
+    public IReadOnlyList<string> Notes { get; init; } = [];
+}
 
 public sealed class ConverterEngine
 {
@@ -23,6 +27,7 @@ public sealed class ConverterEngine
                 new ImageConverter(),
                 new SubtitleConverter(),
                 new PdfConverter(),
+                new PdfTextConverter(),
                 new SplitPdfTool(),
                 new OfficeConverter(tools),
                 new LibreOfficeConverter(tools),
@@ -105,6 +110,7 @@ public sealed class ConverterEngine
         var outputs = new List<string>();
         var failures = new List<Failure>();
         var skipped = new List<string>();
+        var notes = new List<string>();
 
         try
         {
@@ -124,6 +130,7 @@ public sealed class ConverterEngine
                 {
                     failures.Add(new Failure(label, Describe(ex)));
                 }
+                notes.AddRange(ctx.NotesSince(0));
             }
             else
             {
@@ -150,6 +157,7 @@ public sealed class ConverterEngine
                             : $"{target.Label} doesn't work on this file."));
                         continue;
                     }
+                    var noted = ctx.NoteCount;
                     try
                     {
                         outputs.AddRange(await match.Converter.ConvertAsync(input, match.Target.WithParameters(target.Parameters), ctx));
@@ -158,14 +166,15 @@ public sealed class ConverterEngine
                     {
                         failures.Add(new Failure(input, Describe(ex)));
                     }
+                    notes.AddRange(ctx.NotesSince(noted).Select(note => inputs.Count > 1 ? $"{name}: {note}" : note));
                 }
             }
         }
         catch (OperationCanceledException)
         {
-            return new BatchResult(outputs, failures, skipped, Canceled: true);
+            return new BatchResult(outputs, failures, skipped, Canceled: true) { Notes = notes };
         }
-        return new BatchResult(outputs, failures, skipped, Canceled: false);
+        return new BatchResult(outputs, failures, skipped, Canceled: false) { Notes = notes };
     }
 
     /// <summary>Whether the entry can show its result before it runs, in the options dialog.</summary>

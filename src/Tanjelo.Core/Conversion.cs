@@ -174,6 +174,7 @@ public sealed class ConverterOptions
 public sealed class JobContext : IDisposable
 {
     readonly Dictionary<Type, IDisposable> _sessions = [];
+    readonly List<string> _notes = [];
 
     public required Toolbox Tools { get; init; }
     public required ConverterOptions Options { get; init; }
@@ -181,6 +182,23 @@ public sealed class JobContext : IDisposable
 
     /// <summary>Progress of the current item, 0..1.</summary>
     public IProgress<double> Progress { get; set; } = new ActionProgress<double>(_ => { });
+
+    /// <summary>Something worth knowing about a finished item, such as "2 pages read with OCR", shown with the result.</summary>
+    public void Note(string note)
+    {
+        lock (_notes) _notes.Add(note);
+    }
+
+    /// <summary>The notes added since <paramref name="start"/>, an earlier <see cref="NoteCount"/>.</summary>
+    internal IReadOnlyList<string> NotesSince(int start)
+    {
+        lock (_notes) return _notes.Skip(start).ToList();
+    }
+
+    internal int NoteCount
+    {
+        get { lock (_notes) return _notes.Count; }
+    }
 
     /// <summary>Returns a resource shared by every item in the batch (e.g. a running Word instance), disposed when the batch ends.</summary>
     public T Session<T>(Func<T> create) where T : class, IDisposable

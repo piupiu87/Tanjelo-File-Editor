@@ -69,7 +69,8 @@ jobs:
             & $tanj convert $step[0] $step[1]
             if ($LASTEXITCODE -ne 0) { throw "tanj convert $($step -join ' ') failed" }
           }
-          foreach ($file in 'Tanjelo/LICENSE.txt', 'Tanjelo/THIRD-PARTY-NOTICES.md', 'Tanjelo/licenses/ImageMagick-NOTICE.txt') {
+          foreach ($file in 'Tanjelo/LICENSE.txt', 'Tanjelo/THIRD-PARTY-NOTICES.md', 'Tanjelo/licenses/ImageMagick-NOTICE.txt',
+                   'Tanjelo/licenses/PdfPig-LICENSE.txt', 'Tanjelo/licenses/PdfPig-NOTICE.txt') {
             if (-not (Test-Path $file)) { throw "missing $file" }
           }
 

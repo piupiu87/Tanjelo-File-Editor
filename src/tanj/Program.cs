@@ -146,6 +146,8 @@ switch (args[0])
             Console.WriteLine($"FAIL  {failure.Input}: {failure.Message}");
         foreach (var skipped in result.Skipped)
             Console.WriteLine($"skip  {skipped} (already {target.Label})");
+        foreach (var note in result.Notes)
+            Console.WriteLine($"note  {note}");
         if (result.Canceled)
             Console.WriteLine("canceled");
         Console.Error.WriteLine($"{watch.Elapsed.TotalSeconds:0.0}s");
