@@ -120,8 +120,8 @@ Sharing
 
 ## Project and community
 
-- [ ] CONTRIBUTING.md: building, running tests, and how to add a converter (S)
-- [ ] Issue templates: bug reports that ask for `tanj tools` output, and feature requests (S)
+- [x] CONTRIBUTING.md: building, running tests, and how to add a converter (S)
+- [x] Issue templates: bug reports that ask for `tanj tools` output, and feature requests (S)
 - [ ] Screenshots or a short GIF in the README (S)
 
 ## Not planned

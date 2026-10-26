@@ -181,7 +181,8 @@ dotnet publish src\tanj -c Release
 ```
 
 The tests generate their own fixture files. Tests that need ffmpeg, 7-Zip, Office, LibreOffice, pandoc, the WebView2
-runtime or an OCR language skip themselves when that isn't installed.
+runtime or an OCR language skip themselves when that isn't installed. [CONTRIBUTING.md](CONTRIBUTING.md) covers running
+one test class and adding a converter.
 
 The published apps land in `src\<project>\bin\Release\net10.0-windows10.0.19041.0\win-x64\publish\`, with the license
 and third-party notices included. If your checkout path contains a comma, `dotnet publish -o <dir>` fails (MSBuild
