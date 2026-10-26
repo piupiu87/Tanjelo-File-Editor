@@ -12,6 +12,7 @@ sealed class Settings
     public string Theme { get; set; } = "system"; // "system", "light" or "dark"
     public int JpegQuality { get; set; } = 90;
     public int WebpQuality { get; set; } = 90;
+    public int HeicQuality { get; set; } = 90;
     public int PdfRenderDpi { get; set; } = 300;
     public string? FfmpegPath { get; set; }
     public string? SevenZipPath { get; set; }
@@ -54,6 +55,7 @@ sealed class Settings
     {
         JpegQuality = Math.Clamp(JpegQuality, 1, 100),
         WebpQuality = Math.Clamp(WebpQuality, 1, 100),
+        HeicQuality = Math.Clamp(HeicQuality, 1, 100),
         PdfRenderDpi = Math.Clamp(PdfRenderDpi, 72, 600),
     };
 

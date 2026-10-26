@@ -85,7 +85,7 @@ Documents
 - [x] Markdown and EPUB to and from DOCX, TXT, HTML and Markdown; EPUB to PDF; PDF to EPUB (text only), via pandoc as an optional tool (M)
 
 Images
-- [ ] HEIC output through Windows' own encoder, when the HEIF and HEVC extensions are installed (S)
+- [x] HEIC output through Windows' own encoder, when the HEIF and HEVC extensions are installed (S)
 
 Sharing
 - [ ] Share through the Windows Share sheet, including Nearby Sharing (M)

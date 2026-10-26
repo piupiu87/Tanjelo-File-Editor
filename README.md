@@ -36,7 +36,7 @@ The shortcut is only grabbed while Explorer or the desktop is in front, so other
 
 | From | To | Engine |
 |---|---|---|
-| PNG, JPG, WebP, AVIF, HEIC, GIF, BMP, TIFF, ICO, PSD, TGA, SVG | PNG, JPG, WebP, AVIF, GIF, BMP, TIFF, ICO (16–256 px), PDF; several images → **One PDF** or **One PPTX** (a slide each, shaped like the first picture) | Magick.NET, Open XML SDK (built in) |
+| PNG, JPG, WebP, AVIF, HEIC, GIF, BMP, TIFF, ICO, PSD, TGA, SVG | PNG, JPG, WebP, AVIF, HEIC (upright, keeping the date taken, camera and location; with Windows' HEIF and HEVC extensions), GIF, BMP, TIFF, ICO (16–256 px), PDF; several images → **One PDF** or **One PPTX** (a slide each, shaped like the first picture) | Magick.NET, Open XML SDK (built in), Windows HEIF encoder |
 | PDF | PNG / JPG (one per page), TXT and Markdown (the text in reading order, columns one after the other; Markdown keeps headings, bold, lists and paragraphs; scanned pages are read with Windows' own OCR), PPTX (a slide per page, the size of the pages, with each page's text in the speaker notes; no PowerPoint needed), DOCX (editable, via Word), EPUB (the text and headings, via pandoc) | Windows PDF renderer and OCR, PdfPig, Open XML SDK (built in), Word, pandoc |
 | Video (MP4, MOV, MKV, WebM, AVI, WMV…) | MP4, MOV, MKV, WebM, AVI, WMV, animated GIF, and audio only as MP3, M4A, WAV, FLAC | ffmpeg; container-only changes are lossless re-wraps |
 | Audio (MP3, WAV, FLAC, M4A, OGG, Opus, WMA, AIFF) | MP3, M4A, WAV, FLAC, OGG, Opus, AIFF, WMA | ffmpeg |
@@ -95,6 +95,8 @@ Actions work with the selected files and folders themselves:
   - **ffmpeg** for audio and video: `winget install Gyan.FFmpeg.Essentials`
   - **7-Zip** for .7z/.rar and faster zips (Windows' built-in `tar` covers the rest)
   - **Microsoft Office** or **LibreOffice** for documents
+  - **HEIF Image Extensions** and **HEVC Video Extensions** from the Microsoft Store, for HEIC output (reading HEIC
+    needs nothing). HEVC costs about US$1 unless the PC came with it; `tanj tools` says whether HEIC can be written
   - **pandoc** for Word, EPUB and Markdown-to-DOCX conversions: `winget install JohnMacFarlane.Pandoc`. When it makes
     a DOCX or an EPUB, pandoc downloads the pictures a Markdown or HTML file links to on the web, so they can go inside
     the file (it never uploads anything); pictures on your computer are used as they are
@@ -112,6 +114,7 @@ Tray menu → *Edit settings…* opens `%APPDATA%\Tanjelo\settings.json`. Change
   "theme": "system",          // "system", "light" or "dark"
   "jpegQuality": 90,
   "webpQuality": 90,
+  "heicQuality": 90,
   "pdfRenderDpi": 300,        // resolution for PDF -> image
   "ffmpegPath": null,         // only needed if ffmpeg isn't found automatically
   "sevenZipPath": null

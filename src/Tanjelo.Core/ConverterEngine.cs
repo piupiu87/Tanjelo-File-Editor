@@ -24,7 +24,7 @@ public sealed class ConverterEngine
         // Order matters: when two converters offer the same key for a file, the earlier one wins.
         : this(tools, options,
             [
-                new ImageConverter(),
+                new ImageConverter(tools),
                 new SubtitleConverter(),
                 new MarkdownConverter(tools),
                 new PandocConverter(tools),

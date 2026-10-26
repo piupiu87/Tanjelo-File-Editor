@@ -165,6 +165,7 @@ public sealed class ConverterOptions
 {
     public int JpegQuality { get; set; } = 90;
     public int WebpQuality { get; set; } = 90;
+    public int HeicQuality { get; set; } = 90;
     public int PdfRenderDpi { get; set; } = 300;
 
     /// <summary>How long one Office conversion may take before the Office app we started is shut down.</summary>

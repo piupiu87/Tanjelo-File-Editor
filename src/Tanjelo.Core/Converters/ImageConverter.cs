@@ -2,7 +2,7 @@ using ImageMagick;
 
 namespace Tanjelo.Core.Converters;
 
-public sealed class ImageConverter : IConverter
+public sealed class ImageConverter(Toolbox tools) : IConverter
 {
     static readonly Target[] Outputs =
     [
@@ -17,11 +17,25 @@ public sealed class ImageConverter : IConverter
         new("pdf", "PDF", "Image as a PDF page", Section.Document),
     ];
 
+    static readonly Target Heic = new("heic", "HEIC", "Small photos for iPhone and Mac", Section.Image);
+    static readonly Target HeicStill = Heic with { Description = "First frame only, for iPhone and Mac" };
+
     static readonly HashSet<string> Animated = ["gif", "webp"];
 
-    public IEnumerable<Target> TargetsFor(string input) => Formats.Images.Contains(Formats.Key(input)) ? Outputs : [];
+    public IEnumerable<Target> TargetsFor(string input)
+    {
+        var key = Formats.Key(input);
+        if (!Formats.Images.Contains(key)) return [];
+        // HEIC sits with the other photo formats, after WebP and AVIF.
+        return tools.Heic ? [.. Outputs[..4], key == "gif" ? HeicStill : Heic, .. Outputs[4..]] : Outputs;
+    }
 
-    public Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx) => Task.Run<IReadOnlyList<string>>(() =>
+    // Only for photos, where HEIC is what people would look for; not on every picture's menu.
+    public string? HintFor(string input) => !tools.Heic && Formats.Key(input) is "jpg" or "heic" ? HeicEncoder.Missing : null;
+
+    public Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx) => target.Key == "heic"
+        ? ToHeicAsync(input, ctx)
+        : Task.Run<IReadOnlyList<string>>(() =>
     {
         ctx.Cancellation.ThrowIfCancellationRequested();
         var inputKey = Formats.Key(input);
@@ -57,6 +71,25 @@ public sealed class ImageConverter : IConverter
         ctx.Progress.Report(1);
         return [output];
     }, ctx.Cancellation);
+
+    /// <summary>The first frame, upright, through Windows' HEIF encoder, keeping the date taken, the camera and the location.</summary>
+    static async Task<IReadOnlyList<string>> ToHeicAsync(string input, JobContext ctx)
+    {
+        ctx.Cancellation.ThrowIfCancellationRequested();
+        var output = OutputPaths.Beside(input, "heic");
+        using var frames = Read(input);
+        try
+        {
+            await HeicEncoder.WriteAsync(frames[0], output, ctx.Options.HeicQuality);
+        }
+        catch (Exception ex) when (ex is not (ConversionException or OperationCanceledException))
+        {
+            OutputPaths.TryDelete(output);
+            throw new ConversionException($"Windows couldn't write the HEIC: {ex.Message.Split('\n')[0].Trim()}", ex);
+        }
+        ctx.Progress.Report(1);
+        return [output];
+    }
 
     internal static MagickImageCollection Read(string input)
     {
