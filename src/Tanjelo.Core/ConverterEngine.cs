@@ -6,7 +6,11 @@ namespace Tanjelo.Core;
 public sealed record BatchProgress(int Index, int Count, string Current, double Fraction);
 public sealed record Failure(string Input, string Message);
 /// <param name="Skipped">Inputs that were already in the target format.</param>
-public sealed record BatchResult(IReadOnlyList<string> Outputs, IReadOnlyList<Failure> Failures, IReadOnlyList<string> Skipped, bool Canceled);
+public sealed record BatchResult(IReadOnlyList<string> Outputs, IReadOnlyList<Failure> Failures, IReadOnlyList<string> Skipped, bool Canceled)
+{
+    /// <summary>Things worth knowing about the results, such as pages read with OCR, each naming its file when several were selected.</summary>
+    public IReadOnlyList<string> Notes { get; init; } = [];
+}
 
 public sealed class ConverterEngine
 {
@@ -16,13 +20,20 @@ public sealed class ConverterEngine
     public Toolbox Tools { get; }
     public ConverterOptions Options { get; }
 
-    public ConverterEngine(Toolbox tools, ConverterOptions? options = null)
+    /// <param name="desktop">What the app does with windows (Share, Float); without it those actions say they need the app.</param>
+    public ConverterEngine(Toolbox tools, ConverterOptions? options = null, IDesktopActions? desktop = null)
         // Order matters: when two converters offer the same key for a file, the earlier one wins.
         : this(tools, options,
             [
-                new ImageConverter(),
+                new ImageConverter(tools),
+                new PictureTextConverter(tools),
                 new SubtitleConverter(),
+                new MarkdownConverter(tools),
+                new PandocConverter(tools),
+                new WebPageConverter(tools),
                 new PdfConverter(),
+                new PdfTextConverter(),
+                new PdfSlidesConverter(),
                 new SplitPdfTool(),
                 new OfficeConverter(tools),
                 new LibreOfficeConverter(tools),
@@ -41,12 +52,14 @@ public sealed class ConverterEngine
             ],
             [
                 new CombinePdfOperation(),
+                new CombinePptxOperation(),
                 new CollageOperation(),
                 new JoinVideosOperation(tools),
                 new MergePdfOperation(),
                 new CompressOperation(tools),
                 new ClipboardActions(new WindowsClipboard()),
                 new OpenTerminalAction(tools),
+                new DesktopActions(desktop),
             ])
     {
     }
@@ -105,6 +118,7 @@ public sealed class ConverterEngine
         var outputs = new List<string>();
         var failures = new List<Failure>();
         var skipped = new List<string>();
+        var notes = new List<string>();
 
         try
         {
@@ -124,6 +138,7 @@ public sealed class ConverterEngine
                 {
                     failures.Add(new Failure(label, Describe(ex)));
                 }
+                notes.AddRange(ctx.NotesSince(0));
             }
             else
             {
@@ -150,6 +165,7 @@ public sealed class ConverterEngine
                             : $"{target.Label} doesn't work on this file."));
                         continue;
                     }
+                    var noted = ctx.NoteCount;
                     try
                     {
                         outputs.AddRange(await match.Converter.ConvertAsync(input, match.Target.WithParameters(target.Parameters), ctx));
@@ -158,14 +174,15 @@ public sealed class ConverterEngine
                     {
                         failures.Add(new Failure(input, Describe(ex)));
                     }
+                    notes.AddRange(ctx.NotesSince(noted).Select(note => inputs.Count > 1 ? $"{name}: {note}" : note));
                 }
             }
         }
         catch (OperationCanceledException)
         {
-            return new BatchResult(outputs, failures, skipped, Canceled: true);
+            return new BatchResult(outputs, failures, skipped, Canceled: true) { Notes = notes };
         }
-        return new BatchResult(outputs, failures, skipped, Canceled: false);
+        return new BatchResult(outputs, failures, skipped, Canceled: false) { Notes = notes };
     }
 
     /// <summary>Whether the entry can show its result before it runs, in the options dialog.</summary>
@@ -220,7 +237,7 @@ public sealed class ConverterEngine
         FileKind.Image => Section.Image,
         FileKind.Video => Section.Video,
         FileKind.Audio => Section.Audio,
-        FileKind.Pdf or FileKind.WordDocument or FileKind.Presentation or FileKind.Spreadsheet or FileKind.Subtitle => Section.Document,
+        FileKind.Pdf or FileKind.WordDocument or FileKind.Presentation or FileKind.Spreadsheet or FileKind.Subtitle or FileKind.Markdown or FileKind.Ebook or FileKind.WebPage => Section.Document,
         _ => Section.Archive,
     };
 

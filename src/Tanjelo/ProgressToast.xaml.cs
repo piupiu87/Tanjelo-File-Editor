@@ -75,6 +75,7 @@ public partial class ProgressToast : Window
         {
             var detail = outputs.Count == 1 ? Path.GetFileName(outputs[0]) : Count(outputs.Count, "file");
             if (result.Skipped.Count > 0) detail += $" · {result.Skipped.Count} already {target.Label}";
+            foreach (var note in result.Notes) detail += " · " + note;
             (string, Action)? open = outputs.Count == 1 ? ("Open", () => Open(outputs[0])) : null;
             Finish(Mood.Success, target.DoneText, detail, Reveal(outputs), open, TimeSpan.FromSeconds(7));
         }
@@ -83,7 +84,7 @@ public partial class ProgressToast : Window
             var first = failures[0];
             var what = inputCount == 1 ? Path.GetFileName(first.Input) : Count(inputCount, "item");
             var heading = failures.Count == inputCount
-                ? target.Kind == TargetKind.Convert ? $"Couldn't convert {what}" : $"{target.Label} didn't work on {what}"
+                ? target.Kind == TargetKind.Convert ? $"Couldn't convert {what}" : $"{target.Label.TrimEnd('…')} didn't work on {what}"
                 : $"{failures.Count} of {inputCount} failed";
             var detail = inputCount == 1 ? first.Message : $"{Path.GetFileName(first.Input)}: {first.Message}";
             var report = string.Join(Environment.NewLine, failures.Select(f => $"{f.Input}: {f.Message}"));

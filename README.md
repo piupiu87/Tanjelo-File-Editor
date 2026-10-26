@@ -22,6 +22,7 @@ The app isn't code-signed yet, so the first launch may show "Windows protected y
 | File Explorer or the desktop | Select files → **Ctrl+Shift+Space** → type to filter (`mp3`, `pdf`…) → **Enter**, or click |
 | Notification area | Click the Tanjelo icon to pick files; right-click for options |
 | "Send to" menu | Turn on *Show in "Send to" menu* in the tray menu, then right-click files → Send to → Tanjelo |
+| Float shelf | Drop files on the shelf at the right edge of the screen, drag them out later, or press the shortcut there to convert them |
 | Command line | `tanj convert webp *.png` (see below) |
 
 The menu has three tabs: **Convert**, **Tools** and **Actions**. Press **Tab** (or the shortcut again) to switch, or
@@ -36,14 +37,17 @@ The shortcut is only grabbed while Explorer or the desktop is in front, so other
 
 | From | To | Engine |
 |---|---|---|
-| PNG, JPG, WebP, AVIF, HEIC, GIF, BMP, TIFF, ICO, PSD, TGA, SVG | PNG, JPG, WebP, AVIF, GIF, BMP, TIFF, ICO (16–256 px), PDF; several images → **One PDF** | Magick.NET (built in) |
-| PDF | PNG / JPG (one per page), DOCX (editable, via Word) | Windows PDF renderer (built in), Word |
+| PNG, JPG, WebP, AVIF, HEIC, GIF, BMP, TIFF, ICO, PSD, TGA, SVG | PNG, JPG, WebP, AVIF, HEIC (upright, keeping the date taken, camera and location; with Windows' HEIF and HEVC extensions), GIF, BMP, TIFF, ICO (16–256 px), PDF; several images → **One PDF** or **One PPTX** (a slide each, shaped like the first picture); TXT (the text in a screenshot or a photo of a page, read with Windows' OCR) | Magick.NET, Open XML SDK (built in), Windows HEIF encoder and OCR |
+| PDF | PNG / JPG (one per page), TXT and Markdown (the text in reading order, columns one after the other; Markdown keeps headings, bold, lists and paragraphs; scanned pages are read with Windows' own OCR), PPTX (a slide per page, the size of the pages, with each page's text in the speaker notes; no PowerPoint needed), DOCX (editable, via Word), EPUB (the text and headings, via pandoc) | Windows PDF renderer and OCR, PdfPig, Open XML SDK (built in), Word, pandoc |
 | Video (MP4, MOV, MKV, WebM, AVI, WMV…) | MP4, MOV, MKV, WebM, AVI, WMV, animated GIF, and audio only as MP3, M4A, WAV, FLAC | ffmpeg; container-only changes are lossless re-wraps |
 | Audio (MP3, WAV, FLAC, M4A, OGG, Opus, WMA, AIFF) | MP3, M4A, WAV, FLAC, OGG, Opus, AIFF, WMA | ffmpeg |
-| Word, RTF, ODT, TXT | PDF, DOCX, DOC, RTF, ODT, TXT, HTML, PNG / JPG per page | Microsoft Word (or LibreOffice, without HTML and images) |
+| Word, RTF, ODT, TXT | PDF, DOCX, DOC, RTF, ODT, TXT, HTML, PNG / JPG per page; Markdown (pictures saved in a `name media` folder beside it) and EPUB via pandoc, DOC and RTF going through Word first (TXT: EPUB only) | Microsoft Word (or LibreOffice, without HTML and images), pandoc |
 | PowerPoint, ODP | PDF, PPTX, PPT, ODP, PNG / JPG per slide | Microsoft PowerPoint (or LibreOffice) |
 | Excel, ODS, CSV, TSV | PDF, XLSX, XLS, ODS, CSV, TSV | Microsoft Excel (or LibreOffice, except TSV) |
 | Subtitles (SRT, VTT) | SRT, VTT, TXT (just the words) | Built in |
+| Markdown (MD) | HTML (a styled page with the pictures from your computer embedded), PDF (A4, or Letter where that's used, printed offline: nothing is fetched from the web), TXT (the text without the markup). Tables, task lists and footnotes included. DOCX and EPUB via pandoc | Markdig, WebView2 (built in), pandoc |
+| EPUB | DOCX, Markdown (pictures in a folder beside it), TXT, HTML (one page, pictures included) and PDF (printed offline like Markdown) | pandoc, WebView2 |
+| HTML | PDF (the page as it is, with its own pictures and styles, printed offline with scripts off); Markdown (links to its pictures kept), DOCX and EPUB (titled from the page) via pandoc | WebView2, pandoc |
 | ZIP, 7Z, RAR, TAR(.GZ/.BZ2/.XZ), ISO, CAB, GZ | Extract here, ZIP, 7Z, TAR.GZ, TAR | 7-Zip, Windows `tar`, .NET |
 | Any files or folders | Compress to ZIP or 7Z, pack into TAR; single files to GZIP (`notes.txt.gz`) | 7-Zip or .NET |
 
@@ -83,7 +87,25 @@ Actions work with the selected files and folders themselves:
 | Copy path | Puts the full path of each item on the clipboard, one per line |
 | Copy | Puts the items on the clipboard, ready to paste into a folder, an email or a chat |
 | Open in Terminal | Opens Windows Terminal (or PowerShell) in each selected folder, or in the folder holding the selected files |
+| Share… | Opens the Windows Share sheet for the selected files, next to the pointer: email, apps, nearby PCs and phones. Nearby Sharing appears there when it's turned on in Windows' settings |
+| Float | Parks the selection on the Float shelf (below) |
 | Move to… | Moves the selection into a folder you pick; names already taken there get " (2)" |
+
+Share and Float need the app; `tanj` lists them but says so when they're run.
+
+### Float shelf
+
+A small panel that stays on top at the right edge of the screen, for files you'll want again in a moment. Drop files
+or folders on it from anywhere, or pick **Float** on the Actions tab, and drag them out later into a folder, an email
+or a chat: one, several (select them first) or all of them with **All**. The shelf holds references, not copies:
+dragging out to another folder on the same drive moves the file, as it would from Explorer (hold Ctrl to copy), and
+files that were moved or deleted drop off.
+
+- Press the Tanjelo shortcut on the shelf to convert what's selected there (or everything on it).
+- **Delete** or × takes an item off the shelf, **Clear** takes them all; the files themselves stay where they are.
+- It doesn't take the focus when it appears and stays out of Alt+Tab and the taskbar. × or **Esc** hides it, and
+  *Show shelf* in the tray menu brings it back. Set `floatHotkey` (below) to show or hide it with a shortcut of its own.
+- The list survives a restart, in `%APPDATA%\Tanjelo\float.json`.
 
 ## Requirements
 
@@ -92,6 +114,14 @@ Actions work with the selected files and folders themselves:
   - **ffmpeg** for audio and video: `winget install Gyan.FFmpeg.Essentials`
   - **7-Zip** for .7z/.rar and faster zips (Windows' built-in `tar` covers the rest)
   - **Microsoft Office** or **LibreOffice** for documents
+  - **HEIF Image Extensions** and **HEVC Video Extensions** from the Microsoft Store, for HEIC output (reading HEIC
+    needs nothing). HEVC costs about US$1 unless the PC came with it; `tanj tools` says whether HEIC can be written
+  - **pandoc** for Word, EPUB and Markdown-to-DOCX conversions: `winget install JohnMacFarlane.Pandoc`. When it makes
+    a DOCX or an EPUB, pandoc downloads the pictures a Markdown or HTML file links to on the web, so they can go inside
+    the file (it never uploads anything); pictures on your computer are used as they are
+  - The **WebView2 Runtime** (Edge's engine) prints Markdown to PDF. Windows 11 has it; on Windows 10:
+    `winget install Microsoft.EdgeWebView2Runtime`. It runs with scripts off and every web address blocked, and keeps
+    its cache in `%LOCALAPPDATA%\Tanjelo\WebView2`
 
 ## Settings
 
@@ -100,9 +130,11 @@ Tray menu → *Edit settings…* opens `%APPDATA%\Tanjelo\settings.json`. Change
 ```json
 {
   "hotkey": "Ctrl+Shift+Space",
+  "floatHotkey": null,        // e.g. "Ctrl+Shift+F" to show or hide the Float shelf from anywhere
   "theme": "system",          // "system", "light" or "dark"
   "jpegQuality": 90,
   "webpQuality": 90,
+  "heicQuality": 90,
   "pdfRenderDpi": 300,        // resolution for PDF -> image
   "ffmpegPath": null,         // only needed if ffmpeg isn't found automatically
   "sevenZipPath": null
@@ -134,7 +166,11 @@ tanj convert compress --mode=size --size=8 clip.mp4
 tanj convert crop --aspect=16:9 --position=top photo.jpg
 tanj convert save-frames --times=0:05,1:12.5 clip.mp4
 tanj convert join-videos --order=2,1 intro.mp4 talk.mp4
+tanj convert md --page-breaks=true report.pdf     # a --- line between pages
 ```
+
+When a conversion has something to add, such as how many scanned pages were read with OCR, `tanj` prints it on a
+`note` line and the app adds it to the result card.
 
 ## Building
 
@@ -145,8 +181,9 @@ dotnet publish src\Tanjelo -c Release
 dotnet publish src\tanj -c Release
 ```
 
-The tests generate their own fixture files. Tests that need ffmpeg, 7-Zip, Office or LibreOffice skip themselves when
-that tool isn't installed.
+The tests generate their own fixture files. Tests that need ffmpeg, 7-Zip, Office, LibreOffice, pandoc, the WebView2
+runtime or an OCR language skip themselves when that isn't installed. [CONTRIBUTING.md](CONTRIBUTING.md) covers running
+one test class and adding a converter.
 
 The published apps land in `src\<project>\bin\Release\net10.0-windows10.0.19041.0\win-x64\publish\`, with the license
 and third-party notices included. If your checkout path contains a comma, `dotnet publish -o <dir>` fails (MSBuild
@@ -172,9 +209,9 @@ Office sometimes stops on prompts that its "no alerts" setting doesn't cover. Ta
 
 ## Roadmap
 
-Next up: more formats and sharing, such as Markdown and EPUB through pandoc, PDF to text, HEIC output and the Windows
-Share sheet. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are welcome; open an
-issue first for anything big.
+Next up: editors, such as a photo editor with a live preview, annotations, redaction with local face and text
+detection, and frame-exact trimming. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are
+welcome; open an issue first for anything big, and see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

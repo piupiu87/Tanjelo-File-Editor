@@ -1,0 +1,113 @@
+<Window x:Class="Tanjelo.FloatWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Tanjelo Float" Width="248" SizeToContent="Height"
+        Style="{StaticResource PopupWindow}" ShowActivated="False" AllowDrop="True">
+    <Window.Resources>
+        <Style x:Key="ItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0,1" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+            <Setter Property="ToolTip" Value="{Binding Path}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Back" CornerRadius="5" Background="Transparent">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Back" Property="Background" Value="{DynamicResource Hover}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Back" Property="Background" Value="{DynamicResource Selected}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="8,8,8,8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Title, how many, and the shelf's own buttons -->
+        <Grid Margin="6,0,0,6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE718;" FontSize="13" Margin="0,1,8,0"
+                       VerticalAlignment="Center" Foreground="{DynamicResource Accent}" />
+            <TextBlock Grid.Column="1" VerticalAlignment="Center">
+                <Run Text="Float" FontWeight="SemiBold" FontSize="13.5" />
+                <Run x:Name="CountText" FontSize="11.5" Foreground="{DynamicResource TextTertiary}" />
+            </TextBlock>
+            <Button x:Name="ClearButton" Grid.Column="2" Style="{StaticResource SubtleButton}" Content="Clear" Padding="9,3"
+                    ToolTip="Take everything off the shelf; the files stay where they are" />
+            <Button x:Name="HideButton" Grid.Column="3" Style="{StaticResource IconButton}" Content="&#xE711;" Margin="4,0,0,0"
+                    ToolTip="Hide the shelf; Show shelf in the tray menu brings it back" />
+        </Grid>
+
+        <!-- The parked files, dragged out from here -->
+        <ListBox x:Name="List" Grid.Row="1" BorderThickness="0" Background="Transparent" Padding="0" SelectionMode="Extended"
+                 ItemContainerStyle="{StaticResource ItemStyle}" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 ScrollViewer.CanContentScroll="False">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid Height="46" Background="Transparent">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="44" />
+                            <ColumnDefinition />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Image Source="{Binding Thumbnail}" Width="32" Height="32" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12.5" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding Folder}" FontSize="11" Margin="0,1,0,0" Foreground="{DynamicResource TextSecondary}"
+                                       TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <Button Grid.Column="2" Style="{StaticResource IconButton}" Content="&#xE711;" FontSize="9" Margin="2,0,2,0"
+                                VerticalAlignment="Center" ToolTip="Take off the shelf" Click="OnRemove" />
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <!-- Empty: where to drop. Otherwise: drag everything at once, and the keys -->
+        <Border x:Name="DropZone" Grid.Row="1" Margin="2,2,2,2" Padding="12,22" CornerRadius="6" BorderThickness="1.5"
+                BorderBrush="{DynamicResource FieldBorder}" Background="{DynamicResource Field}">
+            <StackPanel HorizontalAlignment="Center">
+                <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE896;" FontSize="22" HorizontalAlignment="Center"
+                           Foreground="{DynamicResource Accent}" />
+                <TextBlock Text="Drop files here to park them" FontWeight="SemiBold" FontSize="12.5" Margin="0,8,0,2"
+                           HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
+                <TextBlock Text="Drag them out to a folder, an email or a chat when you need them." FontSize="11.5"
+                           Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+
+        <Grid x:Name="Footer" Grid.Row="2" Margin="6,6,2,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="KeysText" FontSize="11" VerticalAlignment="Center" Foreground="{DynamicResource TextTertiary}"
+                       TextWrapping="Wrap" />
+            <Border x:Name="DragAll" Grid.Column="1" CornerRadius="4" Padding="8,3" Margin="6,0,0,0" Cursor="SizeAll"
+                    Background="{DynamicResource Subtle}" ToolTip="Drag everything on the shelf at once">
+                <TextBlock FontSize="11.5">
+                    <Run FontFamily="{StaticResource IconFont}" Text="&#xE7C2;" /><Run Text="  All" />
+                </TextBlock>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

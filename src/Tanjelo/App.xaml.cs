@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Threading;
 using Tanjelo.Core;
+using Tanjelo.Core.Converters;
 using Microsoft.Win32;
 
 namespace Tanjelo;
@@ -23,6 +24,9 @@ public partial class App : Application
     Window? _menu; // the menu, or the options dialog that follows it
     readonly List<ProgressToast> _toasts = []; // newest first; stacked upward from the bottom-right corner
     bool _oneShot;
+    Shelf _shelf = new();
+    FloatWindow? _float;
+    int _sharing; // Share sheets still using the files
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -36,6 +40,9 @@ public partial class App : Application
         {
             if (args.Category == UserPreferenceCategory.General) Dispatcher.BeginInvoke(() => Theme.Apply(Resources));
         };
+
+        _shelf = Shelf.Load(FloatWindow.FilePath);
+        _shelf.Changed += SaveShelf;
 
         var files = e.Args
             .Where(a => !a.StartsWith("--", StringComparison.Ordinal))
@@ -63,18 +70,23 @@ public partial class App : Application
     {
         _tray = new TrayIcon();
         _tray.ConvertFilesClicked += PickFilesAndConvert;
+        _tray.ShowShelfClicked += ShowShelf;
         _tray.SettingsClicked += OpenSettings;
         _tray.QuitClicked += () => Shutdown();
         _tray.SetTools(Engine().Tools);
 
         _hotkey = new HotkeyManager();
         _hotkey.Pressed += OnHotkey;
+        _hotkey.ShelfPressed += ToggleShelf;
+        _hotkey.AlsoIn = hwnd => _float is { IsVisible: true } shelf && hwnd == shelf.Hwnd;
         _hotkey.Conflict += () => _tray.Notify("Shortcut unavailable", $"Another app is already using {_settings.Hotkey}. Choose a different one in Edit settings.");
         ApplyHotkey();
         WatchSettings();
 
         if (showWelcome)
             _tray.Notify("Tanjelo is ready", $"Select files in File Explorer and press {_settings.Hotkey}.");
+        if (_shelf.Open)
+            ShowShelf();
     }
 
     void ApplyHotkey()
@@ -88,6 +100,14 @@ public partial class App : Application
         {
             _tray!.Notify("Shortcut not recognised", $"Couldn't read \"{_settings.Hotkey}\". Use something like Ctrl+Shift+Space.");
         }
+
+        // The shelf's own shortcut is optional and works everywhere.
+        if (string.IsNullOrWhiteSpace(_settings.FloatHotkey))
+            _hotkey!.SetShelf(null);
+        else if (!Settings.TryParseHotkey(_settings.FloatHotkey, out var shelfModifiers, out var shelfKey))
+            _tray!.Notify("Shortcut not recognised", $"Couldn't read the floatHotkey \"{_settings.FloatHotkey}\". Use something like Ctrl+Shift+F.");
+        else if (!_hotkey!.SetShelf((shelfModifiers, shelfKey)))
+            _tray!.Notify("Shortcut unavailable", $"Another app is already using {_settings.FloatHotkey}. Choose a different floatHotkey in Edit settings.");
     }
 
     /// <summary>The engine, rebuilt now and then so tools installed while we run (ffmpeg, 7-Zip) are picked up.</summary>
@@ -95,7 +115,7 @@ public partial class App : Application
     {
         if (_engine is null || DateTime.UtcNow - _engineBuilt > TimeSpan.FromSeconds(30))
         {
-            _engine = new ConverterEngine(Toolbox.Detect(_settings.FfmpegPath, _settings.SevenZipPath), _settings.ToOptions());
+            _engine = new ConverterEngine(Toolbox.Detect(_settings.FfmpegPath, _settings.SevenZipPath), _settings.ToOptions(), new Desktop(this));
             _engineBuilt = DateTime.UtcNow;
             _tray?.SetTools(_engine.Tools);
         }
@@ -105,9 +125,20 @@ public partial class App : Application
     void OnHotkey()
     {
         IReadOnlyList<string> files;
+        var foreground = Native.GetForegroundWindow();
+        if (_float is { IsVisible: true } shelf && foreground == shelf.Hwnd)
+        {
+            // On the shelf, the shortcut converts what's selected there, or everything on it.
+            files = shelf.SelectedOrAll();
+            if (files.Count == 0)
+                Toast().ShowMessage("The shelf is empty", "Drop files on it first.");
+            else
+                _ = ShowMenuAsync(files);
+            return;
+        }
         try
         {
-            files = ExplorerSelection.Get(Native.GetForegroundWindow());
+            files = ExplorerSelection.Get(foreground);
         }
         catch (Exception ex)
         {
@@ -191,6 +222,14 @@ public partial class App : Application
 
     async Task ConvertAsync(ConverterEngine engine, IReadOnlyList<string> files, Target target)
     {
+        if (target.Quiet)
+        {
+            // Share and Float show their own window; a card appears only if something goes wrong.
+            var quiet = await Task.Run(() => engine.RunAsync(files, target));
+            foreach (var failure in quiet.Failures) Log.Write($"{target.Key}: {failure.Input}: {failure.Message}");
+            if (quiet.Failures.Count > 0) Toast().ShowResult(target, files, quiet);
+            return;
+        }
         var toast = Toast();
         using var cancel = new CancellationTokenSource();
         toast.CancelRequested += cancel.Cancel;
@@ -243,8 +282,70 @@ public partial class App : Application
 
     void ExitIfDone()
     {
-        if (_oneShot && _menu is null && _toasts.Count == 0)
+        // From "Send to", the app stays while a Share sheet is still using the files or the shelf is showing.
+        if (_oneShot && _menu is null && _toasts.Count == 0 && _sharing == 0 && _float?.IsVisible != true)
             Shutdown();
+    }
+
+    // ---- Float shelf and Share
+
+    FloatWindow ShelfWindow()
+    {
+        if (_float is not null) return _float;
+        _float = new FloatWindow(_shelf, _settings.Hotkey);
+        _float.IsVisibleChanged += (_, _) =>
+        {
+            _shelf.Open = _float.IsVisible;
+            SaveShelf();
+            ExitIfDone();
+        };
+        return _float;
+    }
+
+    void ShowShelf() => ShelfWindow().Show();
+
+    void ToggleShelf()
+    {
+        if (_float?.IsVisible == true) _float.Hide();
+        else ShowShelf();
+    }
+
+    void SaveShelf()
+    {
+        try
+        {
+            _shelf.Save(FloatWindow.FilePath);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Log.Write($"float.json: {ex.Message}");
+        }
+    }
+
+    async Task ShareAsync(IReadOnlyList<string> files)
+    {
+        _sharing++;
+        try
+        {
+            await ShareSheet.ShowAsync(files);
+        }
+        finally
+        {
+            _sharing--;
+            ExitIfDone();
+        }
+    }
+
+    /// <summary>Share and Float for the engine, which runs them off the UI thread.</summary>
+    sealed class Desktop(App app) : IDesktopActions
+    {
+        public Task ShareAsync(IReadOnlyList<string> files) => app.Dispatcher.InvokeAsync(() => app.ShareAsync(files)).Task.Unwrap();
+
+        public Task FloatAsync(IReadOnlyList<string> paths) => app.Dispatcher.InvokeAsync(() =>
+        {
+            app._shelf.Add(paths);
+            app.ShowShelf();
+        }).Task;
     }
 
     Settings LoadSettings(bool notify)
@@ -316,6 +417,8 @@ public partial class App : Application
         _settingsWatcher?.Dispose();
         _singleInstance?.Dispose();
         base.OnExit(e);
+        // Settings, tool choices and the shelf are saved as they change, so the rest of the shutdown can be skipped.
+        ExitGuard.EndNow(e.ApplicationExitCode);
     }
 }
 

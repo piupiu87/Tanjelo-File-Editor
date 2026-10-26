@@ -53,6 +53,9 @@ public sealed record Target(string Key, string Label, string Description, Sectio
     /// <summary>When set, the front end asks for a folder with this prompt and passes it as the "folder" parameter.</summary>
     public string? FolderPrompt { get; init; }
 
+    /// <summary>For actions that show their own window, like the Share sheet: no progress card, only an error if it fails.</summary>
+    public bool Quiet { get; init; }
+
     public string RunningText => Running ?? $"Converting to {Label}…";
     public string DoneText => Done ?? $"Converted to {Label}";
     public string ConfirmText => Confirm ?? Label.TrimEnd('…');
@@ -165,6 +168,7 @@ public sealed class ConverterOptions
 {
     public int JpegQuality { get; set; } = 90;
     public int WebpQuality { get; set; } = 90;
+    public int HeicQuality { get; set; } = 90;
     public int PdfRenderDpi { get; set; } = 300;
 
     /// <summary>How long one Office conversion may take before the Office app we started is shut down.</summary>
@@ -174,6 +178,7 @@ public sealed class ConverterOptions
 public sealed class JobContext : IDisposable
 {
     readonly Dictionary<Type, IDisposable> _sessions = [];
+    readonly List<string> _notes = [];
 
     public required Toolbox Tools { get; init; }
     public required ConverterOptions Options { get; init; }
@@ -181,6 +186,23 @@ public sealed class JobContext : IDisposable
 
     /// <summary>Progress of the current item, 0..1.</summary>
     public IProgress<double> Progress { get; set; } = new ActionProgress<double>(_ => { });
+
+    /// <summary>Something worth knowing about a finished item, such as "2 pages read with OCR", shown with the result.</summary>
+    public void Note(string note)
+    {
+        lock (_notes) _notes.Add(note);
+    }
+
+    /// <summary>The notes added since <paramref name="start"/>, an earlier <see cref="NoteCount"/>.</summary>
+    internal IReadOnlyList<string> NotesSince(int start)
+    {
+        lock (_notes) return _notes.Skip(start).ToList();
+    }
+
+    internal int NoteCount
+    {
+        get { lock (_notes) return _notes.Count; }
+    }
 
     /// <summary>Returns a resource shared by every item in the batch (e.g. a running Word instance), disposed when the batch ends.</summary>
     public T Session<T>(Func<T> create) where T : class, IDisposable

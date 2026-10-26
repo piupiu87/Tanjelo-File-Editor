@@ -1,0 +1,52 @@
+name: Bug report
+description: Something converted wrongly, failed, or the app misbehaved.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for reporting. Please don't attach files that hold anything private.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you selected (the kind of file), what you picked in the menu, and what you saw instead of what you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Select a scanned PDF in File Explorer
+        2. Press Ctrl+Shift+Space and pick Markdown
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: tools
+    attributes:
+      label: Output of `tanj tools`
+      description: Run `tanj tools` in the folder where you unzipped Tanjelo. It shows which optional tools were found.
+      render: text
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Tanjelo version
+      description: The version in the release zip's name, such as 0.4.0.
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      description: From Settings > System > About, such as Windows 11 23H2.
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: Any matching lines from %LOCALAPPDATA%\Tanjelo\log.txt.
+      render: text

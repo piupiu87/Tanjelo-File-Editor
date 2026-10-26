@@ -76,14 +76,20 @@ A shared options dialog, then the tools that need it.
 - [x] Audio visualizer: waveform or still image to MP4, in landscape, portrait or square (M)
 - [x] Per-channel audio volume (M)
 
-## v0.4: more formats and sharing
+## v0.4.0: more formats and sharing (released)
 
-- [ ] Markdown in and out, and EPUB to and from PDF, DOCX, TXT, Markdown and HTML, via pandoc as an optional tool (M)
-- [ ] PDF to TXT and Markdown, via PdfPig (Apache-2.0) (M)
-- [ ] PDF to PPTX, one page per image slide, via PowerPoint (M)
-- [ ] HEIC output: check whether Windows' HEIF/HEVC extensions can encode it; our ImageMagick build can only read HEIC (M)
-- [ ] Share through the Windows Share sheet and Nearby Sharing (M)
-- [ ] Float: an always-on-top shelf to park files and drag them out later (M)
+Documents
+- [x] PDF to TXT and Markdown, via PdfPig (Apache-2.0); scanned pages read with Windows' built-in OCR (M)
+- [x] PDF to PPTX, one slide per page, and several pictures to one PPTX, built with the Open XML SDK, no PowerPoint needed (M)
+- [x] Markdown to HTML, PDF and TXT, built in (Markdig; PDFs printed by Windows' WebView2) (M)
+- [x] Markdown and EPUB to and from DOCX, TXT, HTML and Markdown; EPUB to PDF; PDF to EPUB (text only), via pandoc as an optional tool (M)
+
+Images
+- [x] HEIC output through Windows' own encoder, when the HEIF and HEVC extensions are installed (S)
+
+Sharing
+- [x] Share through the Windows Share sheet, including Nearby Sharing (M)
+- [x] Float: an always-on-top shelf to park files, drag them out later, and convert them from there (M)
 
 ## v0.5: editors
 
@@ -114,8 +120,8 @@ A shared options dialog, then the tools that need it.
 
 ## Project and community
 
-- [ ] CONTRIBUTING.md: building, running tests, and how to add a converter (S)
-- [ ] Issue templates: bug reports that ask for `tanj tools` output, and feature requests (S)
+- [x] CONTRIBUTING.md: building, running tests, and how to add a converter (S)
+- [x] Issue templates: bug reports that ask for `tanj tools` output, and feature requests (S)
 - [ ] Screenshots or a short GIF in the README (S)
 
 ## Not planned

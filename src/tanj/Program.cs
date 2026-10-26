@@ -23,6 +23,7 @@ if (args.Length == 0 || args[0] is "-h" or "--help" or "help")
 
 // Labels use characters such as × and …, which the console's default OEM code page can't show.
 Console.OutputEncoding = System.Text.Encoding.UTF8;
+ExitGuard.EndWhenMainReturns();
 var engine = new ConverterEngine(Toolbox.Detect());
 
 switch (args[0])
@@ -35,11 +36,16 @@ switch (args[0])
         Console.WriteLine($"tar         {t.Tar ?? "-"}");
         Console.WriteLine($"LibreOffice {t.LibreOffice ?? "-"}");
         Console.WriteLine($"Office      Word={t.Word} PowerPoint={t.PowerPoint} Excel={t.Excel}");
+        Console.WriteLine($"WebView2    {t.WebView2 ?? "-"}");
+        Console.WriteLine($"pandoc      {t.Pandoc ?? "-"}");
+        Console.WriteLine($"HEIC output {(t.Heic ? "Windows HEIF encoder" : "-")}");
+        Console.WriteLine($"OCR         {(t.Ocr ? "Windows OCR" : "-")}");
         return 0;
 
     case "targets" when args.Length > 1:
     {
-        var menu = engine.GetMenu(Inputs(args[1..]));
+        if (Inputs(args[1..]) is not { } selection) return 2;
+        var menu = engine.GetMenu(selection);
         foreach (var group in menu.Targets.GroupBy(x => (x.Kind, x.Section)).OrderBy(g => g.Key.Kind))
         {
             Console.WriteLine($"{group.Key.Kind} / {group.Key.Section}");
@@ -56,7 +62,8 @@ switch (args[0])
 
     case "options" when args.Length > 2:
     {
-        var target = Find(args[1], Inputs(args[2..]));
+        if (Inputs(args[2..]) is not { } selection) return 2;
+        var target = Find(args[1], selection);
         if (target is null) return 2;
         Console.WriteLine($"{target.Key}: {target.Label}  {target.Description}");
         if (target.Options.Count == 0)
@@ -90,7 +97,7 @@ switch (args[0])
     case "convert" when args.Length > 2:
     {
         var options = args[2..].TakeWhile(a => a.StartsWith("--", StringComparison.Ordinal)).ToList();
-        var inputs = Inputs(args[(2 + options.Count)..]);
+        if (Inputs(args[(2 + options.Count)..]) is not { } inputs) return 2;
         var target = Find(args[1], inputs);
         if (target is null) return 2;
 
@@ -144,6 +151,8 @@ switch (args[0])
             Console.WriteLine($"FAIL  {failure.Input}: {failure.Message}");
         foreach (var skipped in result.Skipped)
             Console.WriteLine($"skip  {skipped} (already {target.Label})");
+        foreach (var note in result.Notes)
+            Console.WriteLine($"note  {note}");
         if (result.Canceled)
             Console.WriteLine("canceled");
         Console.Error.WriteLine($"{watch.Elapsed.TotalSeconds:0.0}s");
@@ -166,11 +175,20 @@ Target? Find(string key, IReadOnlyList<string> inputs)
     return target;
 }
 
-static List<string> Inputs(string[] paths)
+// The full paths, or null (with the reason printed) when one is missing or none were given.
+static List<string>? Inputs(string[] paths)
 {
+    if (paths.Length == 0)
+    {
+        Console.Error.WriteLine("No files given.");
+        return null;
+    }
     var full = paths.Select(Path.GetFullPath).ToList();
     var missing = full.Where(p => !File.Exists(p) && !Directory.Exists(p)).ToList();
     if (missing.Count > 0)
-        throw new FileNotFoundException("Not found: " + string.Join(", ", missing));
+    {
+        Console.Error.WriteLine((missing.Count == 1 ? "Not found: " : "These weren't found: ") + string.Join(", ", missing));
+        return null;
+    }
     return full;
 }
