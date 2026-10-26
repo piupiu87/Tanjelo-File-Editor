@@ -20,7 +20,7 @@ public partial class App : Application
     TrayIcon? _tray;
     Mutex? _singleInstance;
     FileSystemWatcher? _settingsWatcher;
-    FormatMenuWindow? _menu;
+    Window? _menu; // the menu, or the options dialog that follows it
     readonly List<ProgressToast> _toasts = []; // newest first; stacked upward from the bottom-right corner
     bool _oneShot;
 
@@ -144,6 +144,8 @@ public partial class App : Application
             if (_menu == menu) _menu = null;
             if (target?.FolderPrompt is not null)
                 target = AskForFolder(target);
+            if (target is { Options.Count: > 0 })
+                target = await AskForOptionsAsync(engine, files, target);
             if (target is not null)
                 await ConvertAsync(engine, files, target);
         }
@@ -173,6 +175,18 @@ public partial class App : Application
         if (dialog.ShowDialog() != true)
             return null;
         return target.WithParameters(new Dictionary<string, string> { ["folder"] = dialog.FolderName });
+    }
+
+    /// <summary>For tools with settings: shows the options dialog and returns the entry with the chosen values, or null if canceled.</summary>
+    async Task<Target?> AskForOptionsAsync(ConverterEngine engine, IReadOnlyList<string> files, Target target)
+    {
+        var memory = new ToolMemory(ToolMemory.DefaultPath);
+        var dialog = new OptionsWindow(engine, files, target, memory.Recall(target));
+        _menu = dialog;
+        var chosen = await dialog.AskAsync();
+        if (_menu == dialog) _menu = null;
+        if (chosen is not null) memory.Store(chosen);
+        return chosen;
     }
 
     async Task ConvertAsync(ConverterEngine engine, IReadOnlyList<string> files, Target target)

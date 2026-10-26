@@ -93,9 +93,9 @@ public sealed class MediaTools(Toolbox tools) : IConverter
     }
 
     /// <summary>
-    /// Cuts the video into equal parts, clip-part1.mp4 and so on. A stream copy is instant and lossless but can only
-    /// cut at keyframes; when that leaves parts of clearly different lengths, the video is re-encoded with
-    /// keyframes at the cut points instead.
+    /// Cuts the video into equal parts. A keyframe cut lands up to one keyframe interval (typically 2 to 10 seconds)
+    /// after the requested point, which is accepted within a tenth of a part, at least 2 and at most 10 seconds, but
+    /// never a quarter of a part.
     /// </summary>
     async Task<IReadOnlyList<string>> SplitAsync(string input, MediaInfo media, Target target, JobContext ctx)
     {
@@ -106,8 +106,23 @@ public sealed class MediaTools(Toolbox tools) : IConverter
             throw new ConversionException($"This video is too short to split into {parts} parts.");
 
         var length = media.Duration / parts;
-        string Times(double shift) => string.Join(',', Enumerable.Range(1, parts - 1)
-            .Select(i => (length * i - shift).ToString("0.###", CultureInfo.InvariantCulture)));
+        var tolerance = Math.Min(Math.Clamp(length / 10, 2, 10), length / 4);
+        return await CutAtAsync(tools, input, media, Enumerable.Range(1, parts - 1).Select(i => length * i).ToList(), tolerance,
+            "ffmpeg couldn't split this video evenly.", ctx);
+    }
+
+    /// <summary>
+    /// Cuts the video at <paramref name="points"/> (in seconds) into clip-part1.mp4 and so on. A stream copy is
+    /// instant and lossless but can only cut at keyframes; when that leaves a part more than
+    /// <paramref name="tolerance"/> seconds off its intended length, the video is re-encoded with keyframes at the
+    /// cut points instead.
+    /// </summary>
+    internal static async Task<IReadOnlyList<string>> CutAtAsync(Toolbox tools, string input, MediaInfo media, IReadOnlyList<double> points,
+        double tolerance, string failure, JobContext ctx)
+    {
+        var bounds = points.Prepend(0).Append(media.Duration).ToList();
+        var lengths = bounds.Zip(bounds.Skip(1), (start, end) => end - start).ToList();
+        string Times(double shift) => string.Join(',', points.Select(p => (p - shift).ToString("0.###", CultureInfo.InvariantCulture)));
         string[] map = ["-map", "0:v:0", "-map", "0:a?", "-sn"];
         string[] Segment(string times) => ["-f", "segment", "-segment_times", times, "-reset_timestamps", "1"];
         var key = Formats.Key(input);
@@ -115,7 +130,7 @@ public sealed class MediaTools(Toolbox tools) : IConverter
 
         using var temp = OutputPaths.CreateTemp();
         var copied = await CutAsync(Formats.Ext(input), [.. map, "-c", "copy", .. Segment(Times(0))], new ActionProgress<double>(f => ctx.Progress.Report(f * 0.1)));
-        var pieces = copied is not null && await EvenAsync(copied) ? copied : null;
+        var pieces = copied is not null && await MatchAsync(copied) ? copied : null;
         if (pieces is null)
         {
             foreach (var file in Directory.GetFiles(temp.Path)) File.Delete(file);
@@ -123,8 +138,8 @@ public sealed class MediaTools(Toolbox tools) : IConverter
             // exactly at the cut and run on to the next one. Each part starts a moment earlier to catch it.
             pieces = await CutAsync(encodeKey, [.. map, .. Ffmpeg.VideoEncoder(encodeKey), "-force_key_frames", Times(0), .. Segment(Times(0.2))],
                 new ActionProgress<double>(f => ctx.Progress.Report(0.1 + f * 0.9)));
-            if (pieces is null || !await EvenAsync(pieces))
-                throw new ConversionException("ffmpeg couldn't split this video evenly.");
+            if (pieces is null || !await MatchAsync(pieces))
+                throw new ConversionException(failure);
         }
 
         var outputs = new List<string>();
@@ -158,16 +173,13 @@ public sealed class MediaTools(Toolbox tools) : IConverter
             return Directory.GetFiles(temp.Path).Order(StringComparer.Ordinal).ToList();
         }
 
-        // A keyframe cut lands up to one keyframe interval (typically 2 to 10 seconds) after the requested point.
-        // That's accepted within a tenth of a part, at least 2 and at most 10 seconds, but never a quarter of a part.
-        async Task<bool> EvenAsync(List<string> files)
+        async Task<bool> MatchAsync(List<string> files)
         {
-            if (files.Count != parts) return false;
-            var tolerance = Math.Min(Math.Clamp(length / 10, 2, 10), length / 4);
-            foreach (var file in files)
+            if (files.Count != lengths.Count) return false;
+            for (var i = 0; i < files.Count; i++)
             {
-                var piece = await Ffmpeg.ProbeAsync(tools, file, ctx.Cancellation);
-                if (Math.Abs(piece.Duration - length) > tolerance) return false;
+                var piece = await Ffmpeg.ProbeAsync(tools, files[i], ctx.Cancellation);
+                if (Math.Abs(piece.Duration - lengths[i]) > tolerance) return false;
             }
             return true;
         }
@@ -270,5 +282,5 @@ public sealed class MediaTools(Toolbox tools) : IConverter
     }
 
     /// <summary>Moves an MP4's index to the front so it starts playing before it has fully downloaded.</summary>
-    static string[] FastStart(string path) => Formats.Key(path) is "mp4" or "m4v" or "mov" ? ["-movflags", "+faststart"] : [];
+    internal static string[] FastStart(string path) => Formats.Key(path) is "mp4" or "m4v" or "mov" ? ["-movflags", "+faststart"] : [];
 }

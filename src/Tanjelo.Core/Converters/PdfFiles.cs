@@ -7,11 +7,16 @@ namespace Tanjelo.Core.Converters;
 static class PdfFiles
 {
     /// <summary>Opens a PDF to copy pages out of, with errors worded for the user.</summary>
-    public static PdfDocument OpenForImport(string path)
+    public static PdfDocument OpenForImport(string path) => Open(path, PdfDocumentOpenMode.Import);
+
+    /// <summary>Opens a PDF to save a changed copy of, such as one with new metadata.</summary>
+    public static PdfDocument OpenForChanges(string path) => Open(path, PdfDocumentOpenMode.Modify);
+
+    static PdfDocument Open(string path, PdfDocumentOpenMode mode)
     {
         try
         {
-            return PdfReader.Open(path, PdfDocumentOpenMode.Import);
+            return PdfReader.Open(path, mode);
         }
         catch (PdfReaderException ex) when (ex.Message.Contains("password", StringComparison.OrdinalIgnoreCase))
         {

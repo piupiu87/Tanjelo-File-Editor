@@ -83,6 +83,30 @@ sealed class Scratch : IDisposable
         return path;
     }
 
+    /// <summary>A noisy, photo-like picture that doesn't compress to nothing, saved at high quality in the format the extension names.</summary>
+    public string Photo(string name, int width = 640, int height = 480)
+    {
+        var path = PathOf(name);
+        using var image = new MagickImage("plasma:orange-steelblue", (uint)width, (uint)height);
+        image.AddNoise(NoiseType.Gaussian);
+        image.Quality = 95;
+        image.Write(path);
+        return path;
+    }
+
+    /// <summary>A JPEG stored <paramref name="width"/> by <paramref name="height"/> with an EXIF note to turn it a quarter, as phones save portraits.</summary>
+    public string Sideways(string name, int width = 120, int height = 80)
+    {
+        var path = PathOf(name);
+        using var image = new MagickImage("plasma:", (uint)width, (uint)height);
+        var exif = new ExifProfile();
+        exif.SetValue(ExifTag.Orientation, (ushort)6);
+        image.SetProfile(exif);
+        image.Orientation = Orientation.RightTop; // ImageMagick writes this into the EXIF
+        image.Write(path);
+        return path;
+    }
+
     /// <summary>A PNG that is transparent except for an opaque square in the middle.</summary>
     public string TransparentPng(string name, int size = 40)
     {
@@ -201,6 +225,27 @@ static class Inspect
     }
 
     public static string? Codec(string path, string type) => Media(path).Streams.FirstOrDefault(s => s.Type == type).Codec;
+
+    /// <summary>A tag on the file itself, such as "title", as ffprobe reports it; null when it isn't there.</summary>
+    public static string? Tag(string path, string name)
+    {
+        var result = ProcessRunner.RunAsync(Env.Tools.Ffprobe!, ["-v", "error", "-show_entries", "format_tags", "-of", "json", path], CancellationToken.None).GetAwaiter().GetResult();
+        Assert.True(result.ExitCode == 0, $"ffprobe can't read {path}: {result.LastError}");
+        using var json = System.Text.Json.JsonDocument.Parse(result.StdOut);
+        if (!json.RootElement.TryGetProperty("format", out var format) || !format.TryGetProperty("tags", out var tags)) return null;
+        return tags.EnumerateObject().FirstOrDefault(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase)).Value.ToString() is { Length: > 0 } value ? value : null;
+    }
+
+    /// <summary>Each channel's RMS level in dB, as ffmpeg's astats measures it; negative infinity for silence.</summary>
+    public static List<double> ChannelLevels(string path)
+    {
+        var result = ProcessRunner.RunAsync(Env.Tools.Ffmpeg!,
+            ["-hide_banner", "-nostdin", "-nostats", "-v", "info", "-i", path, "-map", "0:a:0", "-af", "astats=metadata=0:measure_overall=none", "-f", "null", "-"],
+            CancellationToken.None).GetAwaiter().GetResult();
+        return System.Text.RegularExpressions.Regex.Matches(result.StdErr, @"RMS level dB: (-?[\d.]+|-inf)")
+            .Select(m => m.Groups[1].Value == "-inf" ? double.NegativeInfinity : double.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture))
+            .ToList();
+    }
 
     /// <summary>Integrated loudness in LUFS, as ffmpeg's loudnorm measures it.</summary>
     public static double Loudness(string path)

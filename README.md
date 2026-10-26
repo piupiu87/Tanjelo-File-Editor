@@ -27,6 +27,9 @@ The app isn't code-signed yet, so the first launch may show "Windows protected y
 The menu has three tabs: **Convert**, **Tools** and **Actions**. Press **Tab** (or the shortcut again) to switch, or
 just type: `mute` finds the Mute tool from any tab.
 
+Tools whose names end in "…" need a few settings first, so they open a small options dialog: it starts from the
+settings you used last time, shows a live preview where that helps, and runs on **Enter** (**Esc** cancels).
+
 The shortcut is only grabbed while Explorer or the desktop is in front, so other apps keep their own Ctrl+Shift+Space.
 
 ## What converts to what
@@ -56,6 +59,22 @@ Tools change a copy of a file and keep its format. The copy goes beside the orig
 | Video | Mute (no re-encoding) · 0.5×, 1.5× or 2× speed, keeping the pitch · split in 2, 3 or 4 equal parts (cut losslessly at keyframes when they line up) | ffmpeg |
 | Audio | Normalize volume to −16 LUFS (two passes, one steady gain) · to mono · to stereo · trim silence from the start and end | ffmpeg |
 | PDF | Split into one PDF per page · merge several PDFs in the order selected | PDFsharp (built in) |
+
+Tools marked "…" in the menu ask for their settings first, in a dialog with a preview. With `tanj`, pass the same
+settings as `--name=value`; `tanj options <key> <files>` lists them.
+
+| Tool | Works on | What you choose | Engine |
+|---|---|---|---|
+| Compress… (`compress`) | Images, video, audio | A percentage of the original size or a target size in MB, and optionally smaller dimensions. Images get the best quality that fits (JPG, PNG, WebP and AVIF keep their format, a PNG drops to 256 colours if it must, others become JPG); video becomes a two-pass H.264 MP4; lossy audio keeps its format and lossless audio becomes MP3 | Magick.NET, ffmpeg |
+| Metadata… (`metadata`) | JPG, PNG, WebP, audio, video, PDF | Shows the title, author, camera, location, dates and the rest, and saves a copy without the location (ticked by default), camera details or everything else, and with a new title or author. The picture data is copied byte for byte and media isn't re-encoded. MP4 and MOV copies keep only the standard tags, not phones' own; PDFsharp names itself as a PDF's producer | Built in, ffmpeg, PDFsharp |
+| Crop… (`crop`) | Images (animations included), video | An aspect ratio (1:1, 4:5, 4:3, 3:2, 16:9, 9:16, 3:4, 2:3) or an exact size in pixels, and which part to keep: a side, a corner, the centre or an exact offset. Or a free box: drag on the preview to move it, pull its edges and corners, or draw a new one, with any shape or one of the ratios kept (`--mode=free --x --y --width --height`, optionally `--lock=16:9`). Video is re-encoded in its own container (MP4 if ffmpeg can't write it) and its sound copied | Magick.NET, ffmpeg |
+| Add background… (`background`) | Images | A colour, a two-colour gradient or another picture behind it; space around (a share of the picture, so any resolution looks the same), rounded corners, a soft or strong shadow, and a shape: fit, 1:1, 4:5, 16:9 or 9:16. JPGs stay JPG unless the background is see-through; everything else becomes PNG | Magick.NET |
+| Collage… (`collage`) | Two or more images | A grid (balanced, or a set number of columns), a row, a column, or featured (the first picture large, the rest stacked beside it); pictures filling their cells or shown whole; the width, the space between, the background colour and the order. Saved as `Collage.jpg` (`.png` on a see-through background) | Magick.NET |
+| Join videos… (`join-videos`) | Two or more videos | The order, the picture size (like the first clip, like the largest, 1080p or 720p) and how clips of another shape fit (black bars, or fill and crop). Clips that match are joined without re-encoding; others are encoded once to one size and frame rate, with silence for clips without sound. Saved as `Joined.mp4` | ffmpeg |
+| Save frames… (`save-frames`) | Video | Moments picked on a slider over the video (with the frame under it as the preview) or typed as times. Each becomes a full-size PNG, upright even for phone video: `clip-1m05.5s.png` | ffmpeg |
+| Split at… (`split-video-at`) | Video | Moments picked the same way, each starting a new part (`clip-part1.mp4`…); the preview lists the parts. Cut losslessly when keyframes fall on the moments, otherwise re-encoded so every cut is exact | ffmpeg |
+| Make a video… (`visualize`) | Audio | A moving waveform (in a colour you pick) or a still picture, landscape, portrait or square at full HD, on a background colour; the picture can be any file or the audio's own cover art, and the video can cover just part of the sound. Saved as `song-video.mp4` | ffmpeg |
+| Channel volume… (`channel-volume`) | Audio, video | Left and right from 0% (silent) to 400%; in surround sound every left-side and right-side channel follows its side and the centre and bass stay. The preview draws each channel after the change. A video's picture is copied and only its sound re-encoded | ffmpeg |
 
 Actions work with the selected files and folders themselves:
 
@@ -90,7 +109,8 @@ Tray menu → *Edit settings…* opens `%APPDATA%\Tanjelo\settings.json`. Change
 }
 ```
 
-Errors are logged to `%LOCALAPPDATA%\Tanjelo\log.txt`.
+The options dialogs remember each tool's last settings in `%APPDATA%\Tanjelo\tools.json`; delete it to go back to the
+defaults. Errors are logged to `%LOCALAPPDATA%\Tanjelo\log.txt`.
 
 ## Command line
 
@@ -99,15 +119,21 @@ Errors are logged to `%LOCALAPPDATA%\Tanjelo\log.txt`.
 ```
 tanj tools                          # which external tools were found
 tanj targets <files...>             # what the selection can become, and its tools and actions
+tanj options <key> <files...>       # the settings a tool takes, with their defaults and allowed values
 tanj convert <key> <files...>       # e.g. tanj convert mp3 talk.mp4, tanj convert mute talk.mp4
 ```
 
-Some tools take settings, shown in brackets by `tanj targets`. Override them with `--name=value`:
+Some tools take settings, shown in brackets by `tanj targets`. Override them with `--name=value`. Tools that open
+an options dialog in the app take the same settings here, starting from their defaults (not the dialog's last values):
 
 ```
 tanj convert split-video-2 --parts=5 lecture.mp4
 tanj convert speed-2x --factor=3 timelapse.mp4
 tanj convert move-to --folder=D:\Archive *.jpg
+tanj convert compress --mode=size --size=8 clip.mp4
+tanj convert crop --aspect=16:9 --position=top photo.jpg
+tanj convert save-frames --times=0:05,1:12.5 clip.mp4
+tanj convert join-videos --order=2,1 intro.mp4 talk.mp4
 ```
 
 ## Building
@@ -132,7 +158,7 @@ Pushing a tag such as `v0.1.0` makes the GitHub Actions workflow build, test, sm
 | Project | What's in it |
 |---|---|
 | `src/Tanjelo.Core` | Formats, the conversion engine, and one converter per engine (`Converters/`) |
-| `src/Tanjelo` | WPF tray app: hotkey, Explorer selection, the format menu, progress cards |
+| `src/Tanjelo` | WPF tray app: hotkey, Explorer selection, the format menu, options dialogs, progress cards |
 | `src/tanj` | Command-line front end |
 | `tests/Tanjelo.Core.Tests` | xUnit tests for the engine and every converter |
 
@@ -146,8 +172,8 @@ Office sometimes stops on prompts that its "no alerts" setting doesn't cover. Ta
 
 ## Roadmap
 
-Next up: a shared options dialog, then the tools that need one, such as compressing to a target size, cropping,
-metadata editing and joining videos. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are welcome; open an
+Next up: more formats and sharing, such as Markdown and EPUB through pandoc, PDF to text, HEIC output and the Windows
+Share sheet. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are welcome; open an
 issue first for anything big.
 
 ## License

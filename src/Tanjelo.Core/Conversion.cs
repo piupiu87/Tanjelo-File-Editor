@@ -35,6 +35,15 @@ public sealed record Target(string Key, string Label, string Description, Sectio
     /// </summary>
     public IReadOnlyDictionary<string, string> Parameters { get; init; } = NoParameters;
 
+    /// <summary>
+    /// The parameters the user is asked for before the entry runs; the app shows an options dialog when there are
+    /// any. Set them with <see cref="WithOptions"/>, which puts their defaults in <see cref="Parameters"/>.
+    /// </summary>
+    public IReadOnlyList<Option> Options { get; init; } = [];
+
+    /// <summary>The options dialog's button, such as "Save"; by default the label without its ellipsis.</summary>
+    public string? Confirm { get; init; }
+
     /// <summary>Progress heading such as "Muting…"; conversions get "Converting to PNG…".</summary>
     public string? Running { get; init; }
 
@@ -46,6 +55,7 @@ public sealed record Target(string Key, string Label, string Description, Sectio
 
     public string RunningText => Running ?? $"Converting to {Label}…";
     public string DoneText => Done ?? $"Converted to {Label}";
+    public string ConfirmText => Confirm ?? Label.TrimEnd('…');
 
     public string Parameter(string name) =>
         Parameters.TryGetValue(name, out var value) ? value : throw new ConversionException($"{Label} needs a value for '{name}'.");
@@ -57,6 +67,60 @@ public sealed record Target(string Key, string Label, string Description, Sectio
             || value < min || value > max)
             throw new ConversionException($"'{name}' must be a number from {min} to {max}, not '{text}'.");
         return value;
+    }
+
+    /// <summary>A number option's value, checked against its range.</summary>
+    public double Number(string name) => OptionValues.TryNumber(Checked(name, OptionKind.Number), out var value) ? value : 0;
+
+    public string Choice(string name) => Checked(name, OptionKind.Choice);
+
+    public bool Flag(string name) => OptionValues.TryFlag(Checked(name, OptionKind.Toggle), out var value) && value;
+
+    public string Text(string name) => Checked(name, OptionKind.Text);
+
+    public Colour Colour(string name) => Core.Colour.TryParse(Checked(name, OptionKind.Colour), out var value) ? value : default;
+
+    /// <summary>A file option's full path, or null when it was left empty.</summary>
+    public string? File(string name) => Checked(name, OptionKind.File) is { Length: > 0 } path ? Path.GetFullPath(path) : null;
+
+    /// <summary>A time range option in seconds; the end is null when it runs to the end.</summary>
+    public (double Start, double? End) TimeRange(string name) =>
+        OptionValues.TryRange(Checked(name, OptionKind.TimeRange), out var range) ? range : (0, null);
+
+    /// <summary>A times option in seconds, in order.</summary>
+    public IReadOnlyList<double> Times(string name) => OptionValues.TryTimes(Checked(name, OptionKind.Times), out var times) ? times : [];
+
+    /// <summary>The selection in the chosen order, checking the order lists each of <paramref name="inputs"/> once.</summary>
+    public IReadOnlyList<string> Ordered(string name, IReadOnlyList<string> inputs)
+    {
+        OptionValues.TryOrder(Checked(name, OptionKind.Order), out var order);
+        if (order.Count == 0) return inputs;
+        if (order.Count != inputs.Count)
+            throw new ConversionException($"{OptionLabel(name)} lists {order.Count} files, but {inputs.Count} are selected.");
+        return order.Select(i => inputs[i]).ToList();
+    }
+
+    /// <summary>The value of an option, checked against its kind and limits, with an error that names the option.</summary>
+    string Checked(string name, OptionKind kind)
+    {
+        var option = Options.FirstOrDefault(o => o.Name == name);
+        if (option is null || option.Kind != kind)
+            throw new InvalidOperationException($"{Key} has no {kind} option '{name}'.");
+        var value = Parameter(name).Trim();
+        if (option.Problem(value) is { } problem)
+            throw new ConversionException($"{option.Label} {problem}" + (value.Length > 0 ? $", not '{value}'." : "."));
+        return value;
+    }
+
+    string OptionLabel(string name) => Options.FirstOrDefault(o => o.Name == name)?.Label ?? name;
+
+    /// <summary>A copy that asks for these options, with their defaults added to the parameters.</summary>
+    public Target WithOptions(params Option[] options)
+    {
+        var parameters = new Dictionary<string, string>(Parameters);
+        foreach (var option in options)
+            parameters[option.Name] = option.Default;
+        return this with { Options = options, Parameters = parameters };
     }
 
     /// <summary>A copy whose parameters are these defaults overlaid with <paramref name="values"/>.</summary>

@@ -28,11 +28,21 @@ public sealed class ConverterEngine
                 new LibreOfficeConverter(tools),
                 new MediaConverter(tools),
                 new MediaTools(tools),
+                new CompressTool(tools),
+                new MetadataTool(tools),
+                new CropImageTool(),
+                new CropVideoTool(tools),
+                new VideoMomentsTool(tools),
+                new VisualizerTool(tools),
+                new ChannelVolumeTool(tools),
+                new BackgroundTool(),
                 new ArchiveConverter(tools),
                 new MoveToFolderAction(),
             ],
             [
                 new CombinePdfOperation(),
+                new CollageOperation(),
+                new JoinVideosOperation(tools),
                 new MergePdfOperation(),
                 new CompressOperation(tools),
                 new ClipboardActions(new WindowsClipboard()),
@@ -156,6 +166,43 @@ public sealed class ConverterEngine
             return new BatchResult(outputs, failures, skipped, Canceled: true);
         }
         return new BatchResult(outputs, failures, skipped, Canceled: false);
+    }
+
+    /// <summary>Whether the entry can show its result before it runs, in the options dialog.</summary>
+    public bool CanPreview(IReadOnlyList<string> inputs, Target target) => inputs.Count > 0 && Find(inputs, target).Previewer is not null;
+
+    /// <summary>
+    /// Shows what the entry would do with these parameter values, without writing anything beside the inputs.
+    /// Null when the entry has no preview. Problems with the values come back as <see cref="ConversionException"/>.
+    /// </summary>
+    public async Task<Preview?> PreviewAsync(IReadOnlyList<string> inputs, Target target, PreviewRequest request, CancellationToken ct = default)
+    {
+        if (inputs.Count == 0) return null;
+        var (previewer, own) = Find(inputs, target);
+        if (previewer is null) return null;
+        using var ctx = new JobContext { Tools = Tools, Options = Options, Cancellation = ct };
+        try
+        {
+            return await previewer.PreviewAsync(inputs, own!.WithParameters(target.Parameters), request, ctx);
+        }
+        catch (Exception ex) when (ex is not (OperationCanceledException or ConversionException))
+        {
+            throw new ConversionException(Describe(ex), ex);
+        }
+    }
+
+    /// <summary>The previewer behind an entry and its own copy of the entry; per-file entries are looked up on the first input.</summary>
+    (IPreviewer? Previewer, Target? Own) Find(IReadOnlyList<string> inputs, Target target)
+    {
+        if (target.IsBatch)
+        {
+            foreach (var op in _batchOperations)
+                if (Safe(() => op.TargetsFor(inputs)).FirstOrDefault(t => t.Key == target.Key) is { } own)
+                    return (op as IPreviewer, own);
+            return (null, null);
+        }
+        var match = PerFileTargets(inputs[0]).FirstOrDefault(x => x.Target.Key == target.Key);
+        return (match.Converter as IPreviewer, match.Target);
     }
 
     IEnumerable<(Target Target, IConverter Converter)> PerFileTargets(string input)

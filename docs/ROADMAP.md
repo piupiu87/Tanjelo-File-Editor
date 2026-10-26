@@ -59,22 +59,22 @@ File actions (also for folders and mixed selections)
 - [x] Open in Terminal: Windows Terminal, falling back to PowerShell (S, *good first issue*)
 - [x] Move to a chosen folder (S)
 
-## v0.3: tools with options
+## v0.3.0: tools with options (released)
 
 A shared options dialog, then the tools that need it.
 
-- [ ] Options dialog framework: live preview where it helps, sensible defaults, remembers last settings (M)
-- [ ] Compress to a target size or percentage, optionally resizing (images, video, audio) (M)
-- [ ] View, edit or remove metadata: location, camera, author (images, audio, video, PDF) (M)
-- [ ] Crop images: aspect presets or exact pixels (M)
-- [ ] Crop video (M)
-- [ ] Add a background: colour, gradient or image; padding, rounded corners, shadow (M)
-- [ ] Collage: grid, row, column or featured layout (M)
-- [ ] Join videos: reorder clips, save one MP4 (M)
-- [ ] Save chosen video frames as full-resolution PNGs (M)
-- [ ] Split video at chosen points (M)
-- [ ] Audio visualizer: waveform or still image to MP4, in landscape, portrait or square (M)
-- [ ] Per-channel audio volume (M)
+- [x] Options dialog framework: live preview where it helps, sensible defaults, remembers last settings (M)
+- [x] Compress to a target size or percentage, optionally resizing (images, video, audio) (M)
+- [x] View, edit or remove metadata: location, camera, author (images, audio, video, PDF) (M)
+- [x] Crop images: aspect presets or exact pixels (M)
+- [x] Crop video (M)
+- [x] Add a background: colour, gradient or image; padding, rounded corners, shadow (M)
+- [x] Collage: grid, row, column or featured layout (M)
+- [x] Join videos: reorder clips, save one MP4 (M)
+- [x] Save chosen video frames as full-resolution PNGs (M)
+- [x] Split video at chosen points (M)
+- [x] Audio visualizer: waveform or still image to MP4, in landscape, portrait or square (M)
+- [x] Per-channel audio volume (M)
 
 ## v0.4: more formats and sharing
 

@@ -6,7 +6,34 @@ namespace Tanjelo.Core.Converters;
 /// <param name="Probed">False when ffprobe isn't available, so nothing else is known.</param>
 /// <param name="Channels">Channels in the first audio track; 0 when unknown.</param>
 /// <param name="SampleRate">Sample rate of the first audio track in Hz; 0 when unknown.</param>
-sealed record MediaInfo(bool Probed, string? Video, string? Audio, double Duration, int Channels = 0, int SampleRate = 0);
+sealed record MediaInfo(bool Probed, string? Video, string? Audio, double Duration, int Channels = 0, int SampleRate = 0)
+{
+    /// <summary>The picture's size as it plays, after any rotation the file asks for; 0 when unknown.</summary>
+    public int Width { get; init; }
+    public int Height { get; init; }
+
+    /// <summary>Whether the file carries a picture of its own, such as an album cover.</summary>
+    public bool CoverArt { get; init; }
+
+    /// <summary>The turn the file asks players to make, in degrees; 0 when there's none.</summary>
+    public int Rotation { get; init; }
+
+    /// <summary>Frames per second of the picture; 0 when unknown.</summary>
+    public double FrameRate { get; init; }
+
+    /// <summary>ffmpeg's name for how the picture's pixels are stored, such as "yuv420p".</summary>
+    public string? PixelFormat { get; init; }
+
+    /// <summary>The whole file's bit rate, and the first audio track's, in bits per second; 0 when unknown.</summary>
+    public long Bitrate { get; init; }
+    public long AudioBitrate { get; init; }
+
+    /// <summary>ffmpeg's name for the first audio track's channel layout, such as "stereo" or "5.1(side)".</summary>
+    public string? ChannelLayout { get; init; }
+
+    /// <summary>Tags on the file itself (title, artist, location…), as ffmpeg names them.</summary>
+    public IReadOnlyDictionary<string, string> Tags { get; init; } = new Dictionary<string, string>();
+}
 
 /// <summary>ffmpeg and ffprobe, shared by the media converter and the media tools.</summary>
 static class Ffmpeg
@@ -55,13 +82,18 @@ static class Ffmpeg
             return new MediaInfo(false, null, null, 0);
 
         var result = await ProcessRunner.RunAsync(tools.Ffprobe,
-            ["-v", "error", "-show_entries", "format=duration:stream=codec_type,codec_name,channels,sample_rate:stream_disposition=attached_pic", "-of", "json", input], ct);
+            ["-v", "error", "-show_entries",
+                "format=duration,bit_rate:format_tags:stream=codec_type,codec_name,width,height,channels,channel_layout,sample_rate,bit_rate," +
+                "r_frame_rate,pix_fmt:stream_side_data=rotation:stream_disposition=attached_pic", "-of", "json", input], ct);
         if (result.ExitCode != 0)
             throw new ConversionException($"ffmpeg can't read this file: {result.LastError}");
 
         using var json = JsonDocument.Parse(result.StdOut);
-        string? video = null, audio = null;
-        int channels = 0, sampleRate = 0;
+        string? video = null, audio = null, layout = null, pixels = null;
+        int channels = 0, sampleRate = 0, width = 0, height = 0, rotation = 0;
+        var cover = false;
+        long audioBitrate = 0;
+        double frameRate = 0;
         if (json.RootElement.TryGetProperty("streams", out var streams))
         {
             foreach (var stream in streams.EnumerateArray())
@@ -69,27 +101,73 @@ static class Ffmpeg
                 var type = stream.TryGetProperty("codec_type", out var t) ? t.GetString() : null;
                 var codec = stream.TryGetProperty("codec_name", out var c) ? c.GetString() : null;
                 var coverArt = stream.TryGetProperty("disposition", out var d) && d.TryGetProperty("attached_pic", out var a) && a.GetInt32() == 1;
-                if (type == "video" && !coverArt) video ??= codec;
+                cover |= type == "video" && coverArt;
+                if (type == "video" && !coverArt && video is null)
+                {
+                    video = codec;
+                    if (stream.TryGetProperty("width", out var w)) width = w.GetInt32();
+                    if (stream.TryGetProperty("height", out var h)) height = h.GetInt32();
+                    if (stream.TryGetProperty("pix_fmt", out var pf)) pixels = pf.GetString();
+                    if (stream.TryGetProperty("r_frame_rate", out var fr) && fr.GetString()?.Split('/') is [var num, var den]
+                        && double.TryParse(num, NumberStyles.Float, CultureInfo.InvariantCulture, out var n)
+                        && double.TryParse(den, NumberStyles.Float, CultureInfo.InvariantCulture, out var dd) && dd > 0)
+                        frameRate = n / dd;
+                    // Phones store portrait video sideways with a note to turn it; ffmpeg turns it as it decodes.
+                    if (stream.TryGetProperty("side_data_list", out var sides)
+                        && sides.EnumerateArray().FirstOrDefault(s => s.TryGetProperty("rotation", out _)) is { ValueKind: JsonValueKind.Object } side)
+                        rotation = (int)side.GetProperty("rotation").GetDouble();
+                    if (Math.Abs(rotation) % 180 == 90)
+                        (width, height) = (height, width);
+                }
                 if (type == "audio" && audio is null)
                 {
                     audio = codec;
                     if (stream.TryGetProperty("channels", out var ch)) channels = ch.GetInt32();
                     if (stream.TryGetProperty("sample_rate", out var sr)) int.TryParse(sr.GetString(), out sampleRate);
+                    if (stream.TryGetProperty("channel_layout", out var cl)) layout = cl.GetString();
+                    if (stream.TryGetProperty("bit_rate", out var br)) long.TryParse(br.GetString(), out audioBitrate);
                 }
             }
         }
-        var duration = 0.0;
-        if (json.RootElement.TryGetProperty("format", out var format) && format.TryGetProperty("duration", out var dur))
-            double.TryParse(dur.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out duration);
-        return new MediaInfo(true, video, audio, duration, channels, sampleRate);
+        double duration = 0;
+        long bitrate = 0;
+        var tags = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (json.RootElement.TryGetProperty("format", out var format))
+        {
+            if (format.TryGetProperty("duration", out var dur))
+                double.TryParse(dur.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out duration);
+            if (format.TryGetProperty("bit_rate", out var br))
+                long.TryParse(br.GetString(), out bitrate);
+            if (format.TryGetProperty("tags", out var list))
+                foreach (var tag in list.EnumerateObject())
+                    tags[tag.Name] = tag.Value.ToString();
+        }
+        return new MediaInfo(true, video, audio, duration, channels, sampleRate)
+        {
+            Width = width,
+            Height = height,
+            Rotation = rotation,
+            CoverArt = cover,
+            FrameRate = frameRate,
+            PixelFormat = pixels,
+            Bitrate = bitrate,
+            AudioBitrate = audioBitrate,
+            ChannelLayout = layout,
+            Tags = tags,
+        };
     }
 
     /// <summary>Runs <c>ffmpeg -i input [args] output</c>, reporting progress against <paramref name="duration"/> seconds of output.</summary>
     /// <param name="onLog">Receives ffmpeg's log lines; set <paramref name="logLevel"/> to "info" for analysis filters' results.</param>
-    public static async Task RunAsync(Toolbox tools, string input, string output, string[] args, double duration, IProgress<double> progress,
+    public static Task RunAsync(Toolbox tools, string input, string output, string[] args, double duration, IProgress<double> progress,
+        CancellationToken ct, string logLevel = "error", Action<string>? onLog = null) =>
+        RunRawAsync(tools, ["-i", input, .. args, output], duration, progress, ct, logLevel, onLog);
+
+    /// <summary>Runs ffmpeg with these arguments after the usual ones, for jobs with several inputs or options before the input.</summary>
+    public static async Task RunRawAsync(Toolbox tools, string[] args, double duration, IProgress<double> progress,
         CancellationToken ct, string logLevel = "error", Action<string>? onLog = null)
     {
-        string[] all = ["-hide_banner", "-nostdin", "-y", "-v", logLevel, "-progress", "pipe:1", "-nostats", "-i", input, .. args, output];
+        string[] all = ["-hide_banner", "-nostdin", "-y", "-v", logLevel, "-progress", "pipe:1", "-nostats", .. args];
         var result = await ProcessRunner.RunAsync(tools.Ffmpeg!, all, ct, line =>
         {
             if (duration > 0 && line.StartsWith("out_time_us=", StringComparison.Ordinal)
@@ -128,4 +206,26 @@ static class Ffmpeg
         }
         throw lastError ?? new ConversionException("ffmpeg had nothing to do.");
     }
+
+    /// <summary>
+    /// The frame at <paramref name="seconds"/> as a PNG, after <paramref name="filter"/> if given, and at most
+    /// <paramref name="maxSize"/> pixels on its long side (0 keeps the full size).
+    /// </summary>
+    public static async Task<byte[]> FrameAsync(Toolbox tools, string input, double seconds, int maxSize, CancellationToken ct, string? filter = null)
+    {
+        using var temp = OutputPaths.CreateTemp();
+        var output = Path.Combine(temp.Path, "frame.png");
+        string? fit = maxSize > 0 ? $"scale='min({maxSize},iw)':'min({maxSize},ih)':force_original_aspect_ratio=decrease" : null;
+        var filters = string.Join(',', new[] { filter, fit }.OfType<string>());
+        string[] vf = filters.Length > 0 ? ["-vf", filters] : [];
+        // Seeking before the input jumps to the nearest keyframe and then decodes up to the exact moment.
+        await RunRawAsync(tools, ["-ss", Time(seconds), "-i", input, "-map", "0:v:0", "-frames:v", "1", .. vf, "-update", "1", output],
+            0, new ActionProgress<double>(_ => { }), ct);
+        if (!File.Exists(output))
+            throw new ConversionException($"There's no picture at {OptionValues.FormatTime(seconds)}.");
+        return await File.ReadAllBytesAsync(output, ct);
+    }
+
+    /// <summary>Seconds as ffmpeg reads them.</summary>
+    public static string Time(double seconds) => Math.Max(0, seconds).ToString("0.###", CultureInfo.InvariantCulture);
 }

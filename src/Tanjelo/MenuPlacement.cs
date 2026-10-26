@@ -24,4 +24,12 @@ static class MenuPlacement
             : Math.Max(work.Top, Math.Min(pointer.Y + Gap, work.Bottom - height));
         return (x, y);
     }
+
+    /// <summary>For dialogs: centred across the pointer, a little above the middle, and inside the work area.</summary>
+    public static (int X, int Y) Centered(Native.POINT pointer, Native.RECT work, int width, int height) =>
+        Inside(work, pointer.X - width / 2, pointer.Y - height / 3, width, height);
+
+    /// <summary>The nearest top-left corner to (x, y) that keeps a window this size inside the work area, top-left first.</summary>
+    public static (int X, int Y) Inside(Native.RECT work, int x, int y, int width, int height) =>
+        (Math.Max(work.Left, Math.Min(x, work.Right - width)), Math.Max(work.Top, Math.Min(y, work.Bottom - height)));
 }
