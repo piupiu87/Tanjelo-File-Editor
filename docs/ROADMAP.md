@@ -76,7 +76,7 @@ A shared options dialog, then the tools that need it.
 - [x] Audio visualizer: waveform or still image to MP4, in landscape, portrait or square (M)
 - [x] Per-channel audio volume (M)
 
-## v0.4: more formats and sharing
+## v0.4.0: more formats and sharing (released)
 
 Documents
 - [x] PDF to TXT and Markdown, via PdfPig (Apache-2.0); scanned pages read with Windows' built-in OCR (M)

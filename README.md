@@ -22,6 +22,7 @@ The app isn't code-signed yet, so the first launch may show "Windows protected y
 | File Explorer or the desktop | Select files → **Ctrl+Shift+Space** → type to filter (`mp3`, `pdf`…) → **Enter**, or click |
 | Notification area | Click the Tanjelo icon to pick files; right-click for options |
 | "Send to" menu | Turn on *Show in "Send to" menu* in the tray menu, then right-click files → Send to → Tanjelo |
+| Float shelf | Drop files on the shelf at the right edge of the screen, drag them out later, or press the shortcut there to convert them |
 | Command line | `tanj convert webp *.png` (see below) |
 
 The menu has three tabs: **Convert**, **Tools** and **Actions**. Press **Tab** (or the shortcut again) to switch, or
@@ -208,9 +209,9 @@ Office sometimes stops on prompts that its "no alerts" setting doesn't cover. Ta
 
 ## Roadmap
 
-Next up: more formats and sharing, such as Markdown and EPUB through pandoc, PDF to text, HEIC output and the Windows
-Share sheet. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are welcome; open an
-issue first for anything big.
+Next up: editors, such as a photo editor with a live preview, annotations, redaction with local face and text
+detection, and frame-exact trimming. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are
+welcome; open an issue first for anything big, and see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
