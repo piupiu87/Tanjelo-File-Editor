@@ -88,7 +88,7 @@ internal static class MarkdownPage
     internal static string Page(string title, string body, string? printFolder)
     {
         var head = printFolder is null ? "" : $"""
-            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: file:; style-src 'unsafe-inline'; font-src data: file:">
+            {PrintPolicy}
             <base href="{WebUtility.HtmlEncode(new Uri(printFolder.TrimEnd('\\') + "\\").AbsoluteUri)}">
 
             """;
@@ -112,13 +112,24 @@ internal static class MarkdownPage
             """;
     }
 
-    /// <summary>The front matter's title, else the first heading, else the file's name.</summary>
-    internal static string Title(MarkdownDocument document, string source)
+    /// <summary>What a page printed offline may load: only what it holds, and files on this computer.</summary>
+    internal const string PrintPolicy = """<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: file:; style-src 'unsafe-inline'; font-src data: file:">""";
+
+    /// <summary>The title in the YAML front matter, if there is one.</summary>
+    internal static string? FrontMatterTitle(MarkdownDocument document)
     {
         if (document.Descendants<YamlFrontMatterBlock>().FirstOrDefault() is { } front)
             foreach (var line in front.Lines.ToString().Split('\n'))
                 if (line.StartsWith("title:", StringComparison.OrdinalIgnoreCase) && line[6..].Trim().Trim('"', '\'') is { Length: > 0 } title)
                     return title;
+        return null;
+    }
+
+    /// <summary>The front matter's title, else the first heading, else the file's name.</summary>
+    internal static string Title(MarkdownDocument document, string source)
+    {
+        if (FrontMatterTitle(document) is { } title)
+            return title;
         if (document.Descendants<HeadingBlock>().FirstOrDefault() is { } heading && Inlines(heading.Inline) is { Length: > 0 } text)
             return text;
         return Formats.BaseName(source);

@@ -18,6 +18,9 @@ public sealed class Toolbox
     /// <summary>The version of the WebView2 runtime (Edge's engine, part of Windows 11), which prints HTML to PDF.</summary>
     public string? WebView2 { get; init; }
 
+    /// <summary>pandoc.exe, for Word and EPUB documents. GPL-licensed, so only ever run as the program the user installed.</summary>
+    public string? Pandoc { get; init; }
+
     public static Toolbox Detect(string? ffmpegPath = null, string? sevenZipPath = null)
     {
         var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
@@ -38,6 +41,10 @@ public sealed class Toolbox
             Excel = Type.GetTypeFromProgID("Excel.Application") is not null,
             WindowsTerminal = FirstExisting([Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "WindowsApps", "wt.exe"), FindOnPath("wt.exe")]),
             WebView2 = Converters.HtmlPrinter.RuntimeVersion(),
+            // winget's MSI installs per user into %LOCALAPPDATA%\Pandoc; the machine-wide MSI into Program Files.
+            Pandoc = FirstExisting([FindOnPath("pandoc.exe"), .. WinGetPackages("JohnMacFarlane.Pandoc", "pandoc.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Pandoc", "pandoc.exe"),
+                Path.Combine(programFiles, "Pandoc", "pandoc.exe")]),
         };
     }
 

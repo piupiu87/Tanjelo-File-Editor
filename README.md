@@ -37,14 +37,16 @@ The shortcut is only grabbed while Explorer or the desktop is in front, so other
 | From | To | Engine |
 |---|---|---|
 | PNG, JPG, WebP, AVIF, HEIC, GIF, BMP, TIFF, ICO, PSD, TGA, SVG | PNG, JPG, WebP, AVIF, GIF, BMP, TIFF, ICO (16–256 px), PDF; several images → **One PDF** or **One PPTX** (a slide each, shaped like the first picture) | Magick.NET, Open XML SDK (built in) |
-| PDF | PNG / JPG (one per page), TXT and Markdown (the text in reading order, columns one after the other; Markdown keeps headings, bold, lists and paragraphs; scanned pages are read with Windows' own OCR), PPTX (a slide per page, the size of the pages, with each page's text in the speaker notes; no PowerPoint needed), DOCX (editable, via Word) | Windows PDF renderer and OCR, PdfPig, Open XML SDK (built in), Word |
+| PDF | PNG / JPG (one per page), TXT and Markdown (the text in reading order, columns one after the other; Markdown keeps headings, bold, lists and paragraphs; scanned pages are read with Windows' own OCR), PPTX (a slide per page, the size of the pages, with each page's text in the speaker notes; no PowerPoint needed), DOCX (editable, via Word), EPUB (the text and headings, via pandoc) | Windows PDF renderer and OCR, PdfPig, Open XML SDK (built in), Word, pandoc |
 | Video (MP4, MOV, MKV, WebM, AVI, WMV…) | MP4, MOV, MKV, WebM, AVI, WMV, animated GIF, and audio only as MP3, M4A, WAV, FLAC | ffmpeg; container-only changes are lossless re-wraps |
 | Audio (MP3, WAV, FLAC, M4A, OGG, Opus, WMA, AIFF) | MP3, M4A, WAV, FLAC, OGG, Opus, AIFF, WMA | ffmpeg |
-| Word, RTF, ODT, TXT | PDF, DOCX, DOC, RTF, ODT, TXT, HTML, PNG / JPG per page | Microsoft Word (or LibreOffice, without HTML and images) |
+| Word, RTF, ODT, TXT | PDF, DOCX, DOC, RTF, ODT, TXT, HTML, PNG / JPG per page; Markdown (pictures saved in a `name media` folder beside it) and EPUB via pandoc, DOC and RTF going through Word first (TXT: EPUB only) | Microsoft Word (or LibreOffice, without HTML and images), pandoc |
 | PowerPoint, ODP | PDF, PPTX, PPT, ODP, PNG / JPG per slide | Microsoft PowerPoint (or LibreOffice) |
 | Excel, ODS, CSV, TSV | PDF, XLSX, XLS, ODS, CSV, TSV | Microsoft Excel (or LibreOffice, except TSV) |
 | Subtitles (SRT, VTT) | SRT, VTT, TXT (just the words) | Built in |
-| Markdown (MD) | HTML (a styled page with the pictures from your computer embedded), PDF (A4, or Letter where that's used, printed offline: nothing is fetched from the web), TXT (the text without the markup). Tables, task lists and footnotes included | Markdig, WebView2 (built in) |
+| Markdown (MD) | HTML (a styled page with the pictures from your computer embedded), PDF (A4, or Letter where that's used, printed offline: nothing is fetched from the web), TXT (the text without the markup). Tables, task lists and footnotes included. DOCX and EPUB via pandoc | Markdig, WebView2 (built in), pandoc |
+| EPUB | DOCX, Markdown (pictures in a folder beside it), TXT, HTML (one page, pictures included) and PDF (printed offline like Markdown) | pandoc, WebView2 |
+| HTML | EPUB, titled from the page | pandoc |
 | ZIP, 7Z, RAR, TAR(.GZ/.BZ2/.XZ), ISO, CAB, GZ | Extract here, ZIP, 7Z, TAR.GZ, TAR | 7-Zip, Windows `tar`, .NET |
 | Any files or folders | Compress to ZIP or 7Z, pack into TAR; single files to GZIP (`notes.txt.gz`) | 7-Zip or .NET |
 
@@ -93,6 +95,9 @@ Actions work with the selected files and folders themselves:
   - **ffmpeg** for audio and video: `winget install Gyan.FFmpeg.Essentials`
   - **7-Zip** for .7z/.rar and faster zips (Windows' built-in `tar` covers the rest)
   - **Microsoft Office** or **LibreOffice** for documents
+  - **pandoc** for Word, EPUB and Markdown-to-DOCX conversions: `winget install JohnMacFarlane.Pandoc`. When it makes
+    a DOCX or an EPUB, pandoc downloads the pictures a Markdown or HTML file links to on the web, so they can go inside
+    the file (it never uploads anything); pictures on your computer are used as they are
   - The **WebView2 Runtime** (Edge's engine) prints Markdown to PDF. Windows 11 has it; on Windows 10:
     `winget install Microsoft.EdgeWebView2Runtime`. It runs with scripts off and every web address blocked, and keeps
     its cache in `%LOCALAPPDATA%\Tanjelo\WebView2`
@@ -153,8 +158,8 @@ dotnet publish src\Tanjelo -c Release
 dotnet publish src\tanj -c Release
 ```
 
-The tests generate their own fixture files. Tests that need ffmpeg, 7-Zip, Office or LibreOffice skip themselves when
-that tool isn't installed.
+The tests generate their own fixture files. Tests that need ffmpeg, 7-Zip, Office, LibreOffice, pandoc, the WebView2
+runtime or an OCR language skip themselves when that isn't installed.
 
 The published apps land in `src\<project>\bin\Release\net10.0-windows10.0.19041.0\win-x64\publish\`, with the license
 and third-party notices included. If your checkout path contains a comma, `dotnet publish -o <dir>` fails (MSBuild

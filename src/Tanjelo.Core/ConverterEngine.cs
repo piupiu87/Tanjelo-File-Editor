@@ -27,6 +27,7 @@ public sealed class ConverterEngine
                 new ImageConverter(),
                 new SubtitleConverter(),
                 new MarkdownConverter(tools),
+                new PandocConverter(tools),
                 new PdfConverter(),
                 new PdfTextConverter(),
                 new PdfSlidesConverter(),
@@ -232,7 +233,7 @@ public sealed class ConverterEngine
         FileKind.Image => Section.Image,
         FileKind.Video => Section.Video,
         FileKind.Audio => Section.Audio,
-        FileKind.Pdf or FileKind.WordDocument or FileKind.Presentation or FileKind.Spreadsheet or FileKind.Subtitle or FileKind.Markdown => Section.Document,
+        FileKind.Pdf or FileKind.WordDocument or FileKind.Presentation or FileKind.Spreadsheet or FileKind.Subtitle or FileKind.Markdown or FileKind.Ebook or FileKind.WebPage => Section.Document,
         _ => Section.Archive,
     };
 

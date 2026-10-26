@@ -109,6 +109,19 @@ public sealed class OfficeConverter(Toolbox tools) : IConverter
     }
 
     /// <summary>
+    /// Saves a document Word can open (DOC, RTF…) as a DOCX at <paramref name="output"/>, for tools that only read DOCX.
+    /// It goes through the batch's Word session, a temp copy and the watchdog, like every Word conversion.
+    /// </summary>
+    internal static async Task SaveAsDocxAsync(string input, string output, JobContext ctx)
+    {
+        var office = ctx.Session(() => new OfficeSession());
+        using var temp = OutputPaths.CreateTemp();
+        var copy = Path.Combine(temp.Path, Path.GetFileName(input));
+        File.Copy(Path.GetFullPath(input), copy);
+        await Guarded(office, ctx, () => [office.ConvertWord(copy, output, "docx")]);
+    }
+
+    /// <summary>
     /// Excel quotes every cell that contains a comma, even in tab-separated text, and most TSV readers would keep
     /// those quotes. This re-quotes only the cells that need it: ones holding a tab, a line break or a quote.
     /// </summary>

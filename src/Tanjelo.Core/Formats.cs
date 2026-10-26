@@ -1,6 +1,6 @@
 namespace Tanjelo.Core;
 
-public enum FileKind { Unknown, Folder, Image, Video, Audio, Pdf, WordDocument, Presentation, Spreadsheet, Archive, Subtitle, Markdown }
+public enum FileKind { Unknown, Folder, Image, Video, Audio, Pdf, WordDocument, Presentation, Spreadsheet, Archive, Subtitle, Markdown, Ebook, WebPage }
 
 public static class Formats
 {
@@ -12,6 +12,8 @@ public static class Formats
     public static readonly IReadOnlySet<string> Spreadsheets = Set("xls", "xlsx", "xlsm", "xlsb", "ods", "csv", "tsv");
     public static readonly IReadOnlySet<string> Subtitles = Set("srt", "vtt");
     public static readonly IReadOnlySet<string> Markdown = Set("md", "markdown");
+    public static readonly IReadOnlySet<string> Ebooks = Set("epub");
+    public static readonly IReadOnlySet<string> WebPages = Set("html", "htm");
     public static readonly IReadOnlySet<string> Archives = Set("zip", "7z", "rar", "tar", "tar.gz", "tar.bz2", "tar.xz", "gz", "bz2", "xz", "iso", "cab");
 
     // Suffix -> canonical extension, checked before the plain extension so "x.tar.gz" isn't read as "gz".
@@ -55,6 +57,7 @@ public static class Formats
         "oga" => "ogg",
         "mpeg" => "mpg",
         "markdown" => "md",
+        "htm" => "html",
         _ => ext,
     };
 
@@ -74,6 +77,8 @@ public static class Formats
         if (Archives.Contains(ext)) return FileKind.Archive;
         if (Subtitles.Contains(ext)) return FileKind.Subtitle;
         if (Markdown.Contains(ext)) return FileKind.Markdown;
+        if (Ebooks.Contains(ext)) return FileKind.Ebook;
+        if (WebPages.Contains(ext)) return FileKind.WebPage;
         return FileKind.Unknown;
     }
 

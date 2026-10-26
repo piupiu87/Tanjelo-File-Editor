@@ -57,6 +57,9 @@ internal sealed class PdfText
 
     public IReadOnlyList<IReadOnlyList<Part>> Pages { get; }
 
+    /// <summary>The text of the first heading, such as a title for an e-book.</summary>
+    public string? FirstHeading => Pages.SelectMany(p => p).FirstOrDefault(p => p.Kind == PartKind.Heading)?.Text;
+
     /// <summary>Pages without a text layer that were read with OCR.</summary>
     public int OcrPages { get; }
 

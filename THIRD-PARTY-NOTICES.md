@@ -27,6 +27,7 @@ Tanjelo starts these as separate programs that the user installs, and doesn't re
 | [FFmpeg](https://ffmpeg.org) | LGPL-2.1 or GPL-2.0+, depending on the build |
 | [7-Zip](https://www.7-zip.org) | LGPL-2.1, with the unRAR restriction for RAR code |
 | [LibreOffice](https://www.libreoffice.org) | MPL-2.0 |
+| [pandoc](https://pandoc.org) | GPL-2.0-or-later; run as the program the user installed, never bundled or linked |
 | Microsoft Office | Proprietary; controlled through its documented COM automation interface |
 | Windows `tar.exe` (libarchive) | Part of Windows |
 | [Windows Terminal](https://github.com/microsoft/terminal) | MIT; opened by "Open in Terminal" |

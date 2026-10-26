@@ -72,6 +72,7 @@ sealed class TrayIcon : IDisposable
             new Forms.ToolStripMenuItem(Status(tools.Ffmpeg is not null, "Audio and video: " + (tools.Ffmpeg is null ? "ffmpeg not found" : "ffmpeg"))) { Enabled = false },
             new Forms.ToolStripMenuItem(Status(office != "not found", "Office documents: " + office)) { Enabled = false },
             new Forms.ToolStripMenuItem(Status(true, "Archives: " + (tools.SevenZip is not null ? "7-Zip" : "Windows (zip, tar)"))) { Enabled = false },
+            new Forms.ToolStripMenuItem(Status(tools.Pandoc is not null, "Word and EPUB: " + (tools.Pandoc is null ? "pandoc not found" : "pandoc"))) { Enabled = false },
             new Forms.ToolStripMenuItem(Status(tools.WebView2 is not null, "Markdown to PDF: " + (tools.WebView2 is null ? "WebView2 not found" : "WebView2"))) { Enabled = false },
         ]);
     }
