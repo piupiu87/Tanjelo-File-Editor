@@ -88,7 +88,7 @@ Images
 - [x] HEIC output through Windows' own encoder, when the HEIF and HEVC extensions are installed (S)
 
 Sharing
-- [ ] Share through the Windows Share sheet, including Nearby Sharing (M)
+- [x] Share through the Windows Share sheet, including Nearby Sharing (M)
 - [ ] Float: an always-on-top shelf to park files, drag them out later, and convert them from there (M)
 
 ## v0.5: editors

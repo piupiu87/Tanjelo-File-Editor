@@ -23,10 +23,12 @@ public class FileActionsTests
         using var scratch = new Scratch();
         var file = scratch.Text("notes.txt", "x");
         var folder = scratch.Folder("photos");
-        string[] expected = ["copy-path", "copy-files", "open-terminal", "move-to"];
-
         foreach (var selection in new[] { [file], [folder], new[] { file, folder } })
         {
+            // The Share sheet takes files only.
+            string[] expected = selection is [var only] && only == file
+                ? ["copy-path", "copy-files", "open-terminal", "share", "move-to"]
+                : ["copy-path", "copy-files", "open-terminal", "move-to"];
             var actions = Env.Engine().GetMenu(selection).Targets.Where(t => t.Kind == TargetKind.Action).ToList();
             Assert.Equal(expected, actions.Select(t => t.Key));
             Assert.All(actions, a => Assert.Equal(Section.File, a.Section));

@@ -20,7 +20,8 @@ public sealed class ConverterEngine
     public Toolbox Tools { get; }
     public ConverterOptions Options { get; }
 
-    public ConverterEngine(Toolbox tools, ConverterOptions? options = null)
+    /// <param name="desktop">What the app does with windows (Share, Float); without it those actions say they need the app.</param>
+    public ConverterEngine(Toolbox tools, ConverterOptions? options = null, IDesktopActions? desktop = null)
         // Order matters: when two converters offer the same key for a file, the earlier one wins.
         : this(tools, options,
             [
@@ -56,6 +57,7 @@ public sealed class ConverterEngine
                 new CompressOperation(tools),
                 new ClipboardActions(new WindowsClipboard()),
                 new OpenTerminalAction(tools),
+                new DesktopActions(desktop),
             ])
     {
     }

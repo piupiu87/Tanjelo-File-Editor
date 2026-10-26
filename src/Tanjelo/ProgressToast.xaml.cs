@@ -84,7 +84,7 @@ public partial class ProgressToast : Window
             var first = failures[0];
             var what = inputCount == 1 ? Path.GetFileName(first.Input) : Count(inputCount, "item");
             var heading = failures.Count == inputCount
-                ? target.Kind == TargetKind.Convert ? $"Couldn't convert {what}" : $"{target.Label} didn't work on {what}"
+                ? target.Kind == TargetKind.Convert ? $"Couldn't convert {what}" : $"{target.Label.TrimEnd('…')} didn't work on {what}"
                 : $"{failures.Count} of {inputCount} failed";
             var detail = inputCount == 1 ? first.Message : $"{Path.GetFileName(first.Input)}: {first.Message}";
             var report = string.Join(Environment.NewLine, failures.Select(f => $"{f.Input}: {f.Message}"));

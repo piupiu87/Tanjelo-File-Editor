@@ -51,6 +51,7 @@ public partial class FormatMenuWindow : Window
             "save-frames" => "",                 // camera
             "visualize" => "",                   // waveform
             "channel-volume" => "",              // faders
+            "share" => "",                       // share
             _ => Target.Section switch
             {
                 Section.Image => "",             // picture

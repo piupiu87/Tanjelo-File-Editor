@@ -53,6 +53,9 @@ public sealed record Target(string Key, string Label, string Description, Sectio
     /// <summary>When set, the front end asks for a folder with this prompt and passes it as the "folder" parameter.</summary>
     public string? FolderPrompt { get; init; }
 
+    /// <summary>For actions that show their own window, like the Share sheet: no progress card, only an error if it fails.</summary>
+    public bool Quiet { get; init; }
+
     public string RunningText => Running ?? $"Converting to {Label}…";
     public string DoneText => Done ?? $"Converted to {Label}";
     public string ConfirmText => Confirm ?? Label.TrimEnd('…');

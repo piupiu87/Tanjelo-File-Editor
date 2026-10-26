@@ -86,7 +86,10 @@ Actions work with the selected files and folders themselves:
 | Copy path | Puts the full path of each item on the clipboard, one per line |
 | Copy | Puts the items on the clipboard, ready to paste into a folder, an email or a chat |
 | Open in Terminal | Opens Windows Terminal (or PowerShell) in each selected folder, or in the folder holding the selected files |
+| Share… | Opens the Windows Share sheet for the selected files, next to the pointer: email, apps, nearby PCs and phones. Nearby Sharing appears there when it's turned on in Windows' settings |
 | Move to… | Moves the selection into a folder you pick; names already taken there get " (2)" |
+
+Share needs the app; `tanj` lists it but says so when it's run.
 
 ## Requirements
 

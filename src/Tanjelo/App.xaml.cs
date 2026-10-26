@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Threading;
 using Tanjelo.Core;
+using Tanjelo.Core.Converters;
 using Microsoft.Win32;
 
 namespace Tanjelo;
@@ -23,6 +24,7 @@ public partial class App : Application
     Window? _menu; // the menu, or the options dialog that follows it
     readonly List<ProgressToast> _toasts = []; // newest first; stacked upward from the bottom-right corner
     bool _oneShot;
+    int _sharing; // Share sheets still using the files
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -95,7 +97,7 @@ public partial class App : Application
     {
         if (_engine is null || DateTime.UtcNow - _engineBuilt > TimeSpan.FromSeconds(30))
         {
-            _engine = new ConverterEngine(Toolbox.Detect(_settings.FfmpegPath, _settings.SevenZipPath), _settings.ToOptions());
+            _engine = new ConverterEngine(Toolbox.Detect(_settings.FfmpegPath, _settings.SevenZipPath), _settings.ToOptions(), new Desktop(this));
             _engineBuilt = DateTime.UtcNow;
             _tray?.SetTools(_engine.Tools);
         }
@@ -191,6 +193,14 @@ public partial class App : Application
 
     async Task ConvertAsync(ConverterEngine engine, IReadOnlyList<string> files, Target target)
     {
+        if (target.Quiet)
+        {
+            // Share shows its own window; a card appears only if something goes wrong.
+            var quiet = await Task.Run(() => engine.RunAsync(files, target));
+            foreach (var failure in quiet.Failures) Log.Write($"{target.Key}: {failure.Input}: {failure.Message}");
+            if (quiet.Failures.Count > 0) Toast().ShowResult(target, files, quiet);
+            return;
+        }
         var toast = Toast();
         using var cancel = new CancellationTokenSource();
         toast.CancelRequested += cancel.Cancel;
@@ -243,8 +253,29 @@ public partial class App : Application
 
     void ExitIfDone()
     {
-        if (_oneShot && _menu is null && _toasts.Count == 0)
+        // From "Send to", the app stays while a Share sheet is still using the files.
+        if (_oneShot && _menu is null && _toasts.Count == 0 && _sharing == 0)
             Shutdown();
+    }
+
+    async Task ShareAsync(IReadOnlyList<string> files)
+    {
+        _sharing++;
+        try
+        {
+            await ShareSheet.ShowAsync(files);
+        }
+        finally
+        {
+            _sharing--;
+            ExitIfDone();
+        }
+    }
+
+    /// <summary>Share for the engine, which runs it off the UI thread.</summary>
+    sealed class Desktop(App app) : IDesktopActions
+    {
+        public Task ShareAsync(IReadOnlyList<string> files) => app.Dispatcher.InvokeAsync(() => app.ShareAsync(files)).Task.Unwrap();
     }
 
     Settings LoadSettings(bool notify)
