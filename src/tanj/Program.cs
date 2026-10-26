@@ -38,6 +38,7 @@ switch (args[0])
         Console.WriteLine($"WebView2    {t.WebView2 ?? "-"}");
         Console.WriteLine($"pandoc      {t.Pandoc ?? "-"}");
         Console.WriteLine($"HEIC output {(t.Heic ? "Windows HEIF encoder" : "-")}");
+        Console.WriteLine($"OCR         {(t.Ocr ? "Windows OCR" : "-")}");
         return 0;
 
     case "targets" when args.Length > 1:

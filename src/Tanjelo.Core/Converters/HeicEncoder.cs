@@ -50,8 +50,7 @@ internal static class HeicEncoder
             image.Alpha(AlphaAction.Remove);
         }
 
-        var pixels = image.ToByteArray(MagickFormat.Bgra);
-        using var bitmap = SoftwareBitmap.CreateCopyFromBuffer(pixels.AsBuffer(), BitmapPixelFormat.Bgra8, (int)image.Width, (int)image.Height, BitmapAlphaMode.Ignore);
+        using var bitmap = Bitmap(image);
         using var encoded = new InMemoryRandomAccessStream();
         await EncodeAsync(bitmap, encoded, quality / 100.0, exif);
         encoded.Seek(0);
@@ -67,6 +66,13 @@ internal static class HeicEncoder
         if (exif is not null && Properties(exif) is { Count: > 0 } properties)
             await encoder.BitmapProperties.SetPropertiesAsync(properties);
         await encoder.FlushAsync();
+    }
+
+    /// <summary>An opaque picture as a Windows bitmap, 8-bit BGRA, for Windows' own encoders and OCR.</summary>
+    internal static SoftwareBitmap Bitmap(IMagickImage<byte> image)
+    {
+        var pixels = image.ToByteArray(MagickFormat.Bgra);
+        return SoftwareBitmap.CreateCopyFromBuffer(pixels.AsBuffer(), BitmapPixelFormat.Bgra8, (int)image.Width, (int)image.Height, BitmapAlphaMode.Ignore);
     }
 
     /// <summary>The date taken, the camera and the location, as Windows' photo properties.</summary>

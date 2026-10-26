@@ -302,10 +302,22 @@ internal sealed class PdfText
 
     static async Task<List<RawBlock>> OcrAsync(OcrEngine engine, Windows.Data.Pdf.PdfDocument document, int index)
     {
-        OcrResult result;
-        using (var bitmap = await PdfConverter.RenderPageAsync(document, index, OcrDpi, OcrEngine.MaxImageDimension))
-            result = await engine.RecognizeAsync(bitmap);
+        using var bitmap = await PdfConverter.RenderPageAsync(document, index, OcrDpi, OcrEngine.MaxImageDimension);
+        return Blocks(await engine.RecognizeAsync(bitmap));
+    }
 
+    /// <summary>The text in a picture, read with Windows' OCR, as paragraphs and lists; null when there's no OCR language.</summary>
+    /// <param name="bitmap">At most <see cref="OcrEngine.MaxImageDimension"/> pixels on its longer side.</param>
+    public static async Task<PdfText?> ReadPictureAsync(Windows.Graphics.Imaging.SoftwareBitmap bitmap)
+    {
+        if (CreateOcrEngine() is not { } engine) return null;
+        var blocks = Blocks(await engine.RecognizeAsync(bitmap));
+        return new PdfText(Classify([blocks]), blocks.Count > 0 ? 1 : 0, 0);
+    }
+
+    /// <summary>OCR'd lines grouped into blocks by the gaps between them.</summary>
+    static List<RawBlock> Blocks(OcrResult result)
+    {
         var lines = result.Lines
             .Where(l => l.Words.Count > 0)
             .Select(l =>

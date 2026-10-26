@@ -218,3 +218,47 @@ public class PdfTextTests
     public void Paragraphs_that_look_like_markdown_blocks_are_escaped(string paragraph, string escaped) =>
         Assert.Equal(escaped, PdfText.EscapeStart(paragraph));
 }
+
+public class PictureTextTests
+{
+    [Fact]
+    public void Pictures_offer_text_when_windows_has_an_ocr_language()
+    {
+        using var scratch = new Scratch();
+        var picture = scratch.Image("shot.png");
+
+        Assert.Equal(Env.Tools.Ocr, Env.Keys(Section.Document, picture).Contains("txt"));
+        Assert.DoesNotContain("txt", new ConverterEngine(new Toolbox { Ocr = false }).GetMenu([picture]).Targets.Select(t => t.Key));
+    }
+
+    [Theory]
+    [InlineData("screenshot.png")]
+    [InlineData("photo.jpg")]
+    public async Task The_text_in_a_picture_is_read_with_ocr(string name)
+    {
+        Assert.SkipUnless(Env.Tools.Ocr, "No OCR language is installed in Windows");
+        using var scratch = new Scratch();
+        var picture = scratch.TextPicture(name, 1400, 500, "Meeting moved to Thursday", "in the large room upstairs.", "", "Bring the printed agenda.");
+
+        var output = await Env.RunOne("txt", picture);
+
+        Assert.Equal(scratch.PathOf(Path.ChangeExtension(name, "txt")), output);
+        var text = File.ReadAllText(output);
+        Assert.Contains("Meeting moved to Thursday in the large room upstairs.", text);
+        Assert.Contains("Bring the printed agenda.", text);
+    }
+
+    [Fact]
+    public async Task A_picture_without_text_says_so()
+    {
+        Assert.SkipUnless(Env.Tools.Ocr, "No OCR language is installed in Windows");
+        using var scratch = new Scratch();
+        var picture = scratch.Image("plain.png", 400, 300);
+        var engine = Env.Engine();
+
+        var result = await engine.RunAsync([picture], Env.Offered(engine, "txt", [picture]), ct: TestContext.Current.CancellationToken);
+
+        Assert.Equal("No text was found in this picture.", Assert.Single(result.Failures).Message);
+        Assert.Equal(["plain.png"], scratch.Files());
+    }
+}

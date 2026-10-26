@@ -181,20 +181,34 @@ sealed class Scratch : IDisposable
     public string ScannedPdf(string name, params string[] lines)
     {
         var path = PathOf(name);
-        using var bitmap = new Bitmap(1700, 2200); // a page at 200 dpi
+        using var image = new MagickImage(TextPicture(lines, 1700, 2200)) { Density = new Density(200, 200, DensityUnit.PixelsPerInch) }; // a page at 200 dpi
+        image.Write(path, MagickFormat.Pdf);
+        return path;
+    }
+
+    /// <summary>A picture of text, such as a screenshot, saved in the format the extension names.</summary>
+    public string TextPicture(string name, int width, int height, params string[] lines)
+    {
+        var path = PathOf(name);
+        using var image = new MagickImage(TextPicture(lines, width, height));
+        image.Write(path);
+        return path;
+    }
+
+    static byte[] TextPicture(string[] lines, int width, int height)
+    {
+        using var bitmap = new Bitmap(width, height);
         using (var g = Graphics.FromImage(bitmap))
         using (var font = new Font("Arial", 42, GraphicsUnit.Pixel))
         {
             g.Clear(Color.White);
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
             for (var i = 0; i < lines.Length; i++)
-                g.DrawString(lines[i], font, Brushes.Black, 160, 200 + i * 64);
+                g.DrawString(lines[i], font, Brushes.Black, width / 10f, height / 11f + i * 64);
         }
         using var stream = new MemoryStream();
         bitmap.Save(stream, ImageFormat.Png);
-        using var image = new MagickImage(stream.ToArray()) { Density = new Density(200, 200, DensityUnit.PixelsPerInch) };
-        image.Write(path, MagickFormat.Pdf);
-        return path;
+        return stream.ToArray();
     }
 
     public string Text(string name, string content)

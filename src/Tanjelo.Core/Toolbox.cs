@@ -24,6 +24,9 @@ public sealed class Toolbox
     /// <summary>Whether Windows can write HEIC, which takes the HEIF and HEVC extensions from the Microsoft Store.</summary>
     public bool Heic { get; init; }
 
+    /// <summary>Whether Windows has an OCR language, to read the text in pictures and scans.</summary>
+    public bool Ocr { get; init; }
+
     public static Toolbox Detect(string? ffmpegPath = null, string? sevenZipPath = null)
     {
         var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
@@ -49,6 +52,7 @@ public sealed class Toolbox
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Pandoc", "pandoc.exe"),
                 Path.Combine(programFiles, "Pandoc", "pandoc.exe")]),
             Heic = Converters.HeicEncoder.Available,
+            Ocr = Converters.PdfText.CanOcr,
         };
     }
 

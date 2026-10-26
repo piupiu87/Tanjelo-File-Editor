@@ -26,6 +26,7 @@ public sealed class ConverterEngine
         : this(tools, options,
             [
                 new ImageConverter(tools),
+                new PictureTextConverter(tools),
                 new SubtitleConverter(),
                 new MarkdownConverter(tools),
                 new PandocConverter(tools),
