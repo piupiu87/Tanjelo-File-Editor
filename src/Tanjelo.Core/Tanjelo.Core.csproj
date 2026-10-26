@@ -23,6 +23,8 @@
     <PackageReference Include="Magick.NET-Q8-x64" Version="15.0.0" GeneratePathProperty="true" />
     <!-- Pre-1.0, so pinned exactly. Reads the text of PDFs, in reading order. -->
     <PackageReference Include="PdfPig" Version="[0.1.16]" />
+    <!-- Writes PowerPoint files directly, so PDF to PPTX works without Office. -->
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.5.1" />
     <!-- 6.2.x is the last MIT release. PDFsharp 6.5.0 and later are AGPL-3.0 (or commercial), which Tanjelo can't ship. -->
     <PackageReference Include="PDFsharp" Version="6.2.4" />
   </ItemGroup>

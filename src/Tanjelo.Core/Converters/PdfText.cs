@@ -87,7 +87,8 @@ internal sealed class PdfText
         }
     }
 
-    public static async Task<PdfText> ReadAsync(string path, JobContext ctx, IProgress<double> progress)
+    /// <param name="ocr">Whether to read pages without a text layer with OCR, which takes about a second a page.</param>
+    public static async Task<PdfText> ReadAsync(string path, JobContext ctx, IProgress<double> progress, bool ocr = true)
     {
         var pages = new List<List<RawBlock>>();
         var scanned = new List<int>();
@@ -116,7 +117,7 @@ internal sealed class PdfText
         }, ctx.Cancellation);
 
         int ocrPages = 0, unreadPages = 0;
-        if (scanned.Count > 0)
+        if (scanned.Count > 0 && ocr)
         {
             var engine = CreateOcrEngine();
             if (engine is null)
@@ -141,10 +142,16 @@ internal sealed class PdfText
         }
         progress.Report(1);
 
-        var text = new PdfText(Classify(pages), ocrPages, unreadPages);
-        if (text.Pages.All(p => p.Count == 0))
-            throw new ConversionException(unreadPages > 0 ? "This PDF has no text layer, and no OCR language is installed to read it. " + NoOcrHint[(NoOcrHint.IndexOf('.') + 2)..] : "This PDF has no text in it.");
-        return text;
+        return new PdfText(Classify(pages), ocrPages, unreadPages);
+    }
+
+    /// <summary>Fails when nothing was read, saying why.</summary>
+    public void EnsureText()
+    {
+        if (Pages.All(p => p.Count == 0))
+            throw new ConversionException(UnreadPages > 0
+                ? "This PDF has no text layer, and no OCR language is installed to read it. " + NoOcrHint[(NoOcrHint.IndexOf('.') + 2)..]
+                : "This PDF has no text in it.");
     }
 
     public void AddNotes(JobContext ctx)
@@ -485,7 +492,7 @@ internal sealed class PdfText
     public string ToMarkdown(bool pageBreaks) => Write(Flow(pageBreaks), markdown: true, "\n");
 
     /// <summary>One page's text, as plain text, such as for a slide's speaker notes.</summary>
-    public string PageText(int index) => Write([.. Pages[index]], markdown: false, "\r\n");
+    public string PageText(int index) => Write([.. Pages[index]], markdown: false, "\r\n").TrimEnd();
 
     static string Write(IReadOnlyList<Part?> parts, bool markdown, string newline)
     {

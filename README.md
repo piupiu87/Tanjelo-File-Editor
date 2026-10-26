@@ -36,8 +36,8 @@ The shortcut is only grabbed while Explorer or the desktop is in front, so other
 
 | From | To | Engine |
 |---|---|---|
-| PNG, JPG, WebP, AVIF, HEIC, GIF, BMP, TIFF, ICO, PSD, TGA, SVG | PNG, JPG, WebP, AVIF, GIF, BMP, TIFF, ICO (16–256 px), PDF; several images → **One PDF** | Magick.NET (built in) |
-| PDF | PNG / JPG (one per page), TXT and Markdown (the text in reading order, columns one after the other; Markdown keeps headings, bold, lists and paragraphs; scanned pages are read with Windows' own OCR), DOCX (editable, via Word) | Windows PDF renderer and OCR, PdfPig (built in), Word |
+| PNG, JPG, WebP, AVIF, HEIC, GIF, BMP, TIFF, ICO, PSD, TGA, SVG | PNG, JPG, WebP, AVIF, GIF, BMP, TIFF, ICO (16–256 px), PDF; several images → **One PDF** or **One PPTX** (a slide each, shaped like the first picture) | Magick.NET, Open XML SDK (built in) |
+| PDF | PNG / JPG (one per page), TXT and Markdown (the text in reading order, columns one after the other; Markdown keeps headings, bold, lists and paragraphs; scanned pages are read with Windows' own OCR), PPTX (a slide per page, the size of the pages, with each page's text in the speaker notes; no PowerPoint needed), DOCX (editable, via Word) | Windows PDF renderer and OCR, PdfPig, Open XML SDK (built in), Word |
 | Video (MP4, MOV, MKV, WebM, AVI, WMV…) | MP4, MOV, MKV, WebM, AVI, WMV, animated GIF, and audio only as MP3, M4A, WAV, FLAC | ffmpeg; container-only changes are lossless re-wraps |
 | Audio (MP3, WAV, FLAC, M4A, OGG, Opus, WMA, AIFF) | MP3, M4A, WAV, FLAC, OGG, Opus, AIFF, WMA | ffmpeg |
 | Word, RTF, ODT, TXT | PDF, DOCX, DOC, RTF, ODT, TXT, HTML, PNG / JPG per page | Microsoft Word (or LibreOffice, without HTML and images) |

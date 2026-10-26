@@ -28,6 +28,7 @@ public sealed class ConverterEngine
                 new SubtitleConverter(),
                 new PdfConverter(),
                 new PdfTextConverter(),
+                new PdfSlidesConverter(),
                 new SplitPdfTool(),
                 new OfficeConverter(tools),
                 new LibreOfficeConverter(tools),
@@ -46,6 +47,7 @@ public sealed class ConverterEngine
             ],
             [
                 new CombinePdfOperation(),
+                new CombinePptxOperation(),
                 new CollageOperation(),
                 new JoinVideosOperation(tools),
                 new MergePdfOperation(),

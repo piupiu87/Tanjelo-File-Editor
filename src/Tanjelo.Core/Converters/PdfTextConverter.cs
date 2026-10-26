@@ -25,6 +25,7 @@ public sealed class PdfTextConverter : IConverter
             throw new ConversionException($"'page-breaks' must be true or false, not '{target.Parameter("page-breaks")}'.");
 
         var text = await PdfText.ReadAsync(input, ctx, ctx.Progress);
+        text.EnsureText();
         var content = target.Key == "md" ? text.ToMarkdown(pageBreaks) : text.ToPlainText(pageBreaks);
         var output = OutputPaths.Beside(input, target.Key);
         await File.WriteAllTextAsync(output, content, new UTF8Encoding(false), ctx.Cancellation);
