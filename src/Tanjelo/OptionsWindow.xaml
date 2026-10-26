@@ -48,10 +48,12 @@
                                 <Canvas x:Name="BoxLayer" Background="Transparent" ClipToBounds="True" Visibility="Collapsed" />
                             </Grid>
                         </Border>
+                        <!-- Both lie over the picture, so they mustn't take clicks meant for the box being dragged. An empty
+                             text block still fills a line across the middle. -->
                         <TextBlock x:Name="PreviewMessage" Margin="24" FontSize="12.5" TextWrapping="Wrap" TextAlignment="Center"
-                                   VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" />
+                                   VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" IsHitTestVisible="False" />
                         <ProgressBar x:Name="PreviewBusy" Style="{StaticResource ThinProgress}" IsIndeterminate="True" Height="3"
-                                     VerticalAlignment="Bottom" Margin="10,0,10,6" Visibility="Collapsed" />
+                                     VerticalAlignment="Bottom" Margin="10,0,10,6" Visibility="Collapsed" IsHitTestVisible="False" />
                     </Grid>
                 </Border>
                 <ItemsControl x:Name="FactList" Margin="2,10,2,0" Grid.IsSharedSizeScope="True" Focusable="False">
