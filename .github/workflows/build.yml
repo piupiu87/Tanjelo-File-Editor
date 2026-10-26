@@ -17,9 +17,9 @@ jobs:
       run:
         shell: pwsh
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
 
@@ -27,6 +27,11 @@ jobs:
       - name: Install ffmpeg
         continue-on-error: true
         run: choco install ffmpeg --no-progress -y
+
+      # Optional too: the Word, EPUB and Markdown-to-DOCX tests need pandoc and skip without it.
+      - name: Install pandoc
+        continue-on-error: true
+        run: choco install pandoc --no-progress -y
 
       - name: Test
         # Fixtures are generated at test time; Office and LibreOffice tests skip themselves on the runner.
@@ -68,7 +73,7 @@ jobs:
             if (-not (Test-Path $file)) { throw "missing $file" }
           }
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Tanjelo-win-x64
           path: artifacts/Tanjelo
@@ -80,7 +85,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: Tanjelo-win-x64
           path: Tanjelo
