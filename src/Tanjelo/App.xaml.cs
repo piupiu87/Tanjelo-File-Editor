@@ -417,6 +417,8 @@ public partial class App : Application
         _settingsWatcher?.Dispose();
         _singleInstance?.Dispose();
         base.OnExit(e);
+        // Settings, tool choices and the shelf are saved as they change, so the rest of the shutdown can be skipped.
+        ExitGuard.EndNow(e.ApplicationExitCode);
     }
 }
 
