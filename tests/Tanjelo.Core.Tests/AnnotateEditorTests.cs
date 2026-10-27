@@ -31,6 +31,67 @@ public class AnnotateEditorTests
         Assert.True(Math.Abs(expected.X - actual.X) <= within && Math.Abs(expected.Y - actual.Y) <= within, $"expected about {expected}, got {actual}");
 
     [Fact]
+    public async Task Pen_and_highlighter_go_straight_while_Shift_is_held_and_tools_show_their_keys()
+    {
+        using var scratch = new Scratch();
+        var photo = scratch.Photo("photo.png", 1200, 800);
+        await Ui.Run(async () =>
+        {
+            var target = Env.Offered(Env.Engine(), "annotate", [photo]);
+            var editor = new AnnotateEditor(photo, target);
+            var window = new EditorWindow(photo, target, editor);
+            var host = Ui.Host(window, 1200, 800);
+            await window.LoadAsync();
+            await Ui.Settle();
+            Ui.Layout(host);
+            var canvas = editor.Canvas;
+            void Stroke(params (double X, double Y, bool Shift)[] path)
+            {
+                canvas.PointerDown(canvas.View.ToCanvas(new Point(path[0].X, path[0].Y)), MouseButton.Left, ModifierKeys.None);
+                foreach (var (x, y, shift) in path.Skip(1))
+                    canvas.PointerMove(canvas.View.ToCanvas(new Point(x, y)), shift ? ModifierKeys.Shift : ModifierKeys.None);
+                canvas.PointerUp(canvas.View.ToCanvas(new Point(path[^1].X, path[^1].Y)));
+            }
+
+            // Shift all the way: a wobbly drag is one straight line, drawn level as it's within a few degrees of it.
+            editor.Use(Tool.Pen);
+            Stroke((100, 300, false), (150, 310, true), (200, 295, true), (300, 320, true), (500, 330, true));
+            var level = editor.Marks[^1];
+            Assert.Equal(2, level.Points.Length);
+            Close(new Point(100, 300), level.Points[0]);
+            Close(new Point(500, 300), level.Points[1]);
+
+            // A steeper line keeps its own angle.
+            editor.Use(Tool.Highlighter);
+            Stroke((100, 500, false), (250, 586, true), (400, 673, true));
+            var slanted = editor.Marks[^1];
+            Assert.Equal(MarkKind.Highlighter, slanted.Kind);
+            Assert.Equal(2, slanted.Points.Length);
+            Close(new Point(400, 673), slanted.Points[1]);
+
+            // Shift part of the way: freehand, then straight from where Shift went down, then freehand again.
+            editor.Use(Tool.Pen);
+            Stroke((600, 100, false), (620, 110, false), (640, 90, false), (700, 95, true), (900, 105, true), (950, 150, false));
+            var mixed = editor.Marks[^1];
+            Point[] expected = [new(600, 100), new(620, 110), new(640, 90), new(900, 90), new(950, 150)];
+            Assert.Equal(expected.Length, mixed.Points.Length);
+            foreach (var (point, at) in expected.Zip(mixed.Points)) Close(point, at);
+
+            // Each tool's button shows its key.
+            var keys = ((System.Windows.Controls.WrapPanel)editor.Toolbar).Children.OfType<RadioButton>()
+                .Select(b => ((TextBlock)((StackPanel)b.Content).Children[1]).Text);
+            Assert.Equal(["V", "A", "L", "R", "E", "T", "N", "M", "P", "H"], keys);
+            Assert.Contains("hold Shift for a straight line", window.StatusText.Text);
+
+            Ui.Layout(host);
+            Ui.Render(host, "annotate-straight-light");
+            Ui.UseTheme("dark", host);
+            await Ui.Settle();
+            Ui.Render(host, "annotate-straight-dark");
+        });
+    }
+
+    [Fact]
     public async Task Marks_are_drawn_picked_moved_restyled_and_typed()
     {
         using var scratch = new Scratch();

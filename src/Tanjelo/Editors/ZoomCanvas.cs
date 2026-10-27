@@ -11,7 +11,8 @@ interface ICanvasTool
     /// <param name="clicks">2 for a double-click.</param>
     void Down(Point at, ModifierKeys modifiers, int clicks);
 
-    void Move(Point at);
+    /// <param name="modifiers">The keys held now, which can change during a drag, such as Shift for a straight line.</param>
+    void Move(Point at, ModifierKeys modifiers);
 
     void Up(Point at);
 
@@ -139,7 +140,8 @@ sealed class ZoomCanvas : Grid
         }
     }
 
-    internal void PointerMove(Point at)
+    /// <param name="modifiers">The keys held; the keyboard's own when not given.</param>
+    internal void PointerMove(Point at, ModifierKeys? modifiers = null)
     {
         if (_panFrom is { } from)
         {
@@ -149,7 +151,7 @@ sealed class ZoomCanvas : Grid
         }
         else if (_toolDown)
         {
-            Tool?.Move(View.ToPicture(at));
+            Tool?.Move(View.ToPicture(at), modifiers ?? Keyboard.Modifiers);
         }
         else if (!_space && HasPicture)
         {

@@ -40,8 +40,8 @@ sealed class AnnotateEditor : Editor<ImmutableList<Mark>>, ICanvasTool
         (Tool.Text, "", "Text", Key.T, "Click where the text starts and type; Enter finishes"),
         (Tool.Callout, "", "Callout", Key.N, "Click to place the next number"),
         (Tool.Magnifier, "", "Magnifier", Key.M, "Click what to enlarge; pull the ring's handle to resize it"),
-        (Tool.Pen, "", "Pen", Key.P, "Draw freehand"),
-        (Tool.Highlighter, "", "Highlighter", Key.H, "Draw over what to highlight"),
+        (Tool.Pen, "", "Pen", Key.P, "Draw freehand; hold Shift for a straight line"),
+        (Tool.Highlighter, "", "Highlighter", Key.H, "Draw over what to highlight; hold Shift to keep it straight"),
     ];
 
     static readonly string[] Colours = ["#E5383B", "#F97A3D", "#FFD400", "#2E8540", "#3A7BD5", "#1B1B1B", "#FFFFFF"];
@@ -75,6 +75,11 @@ sealed class AnnotateEditor : Editor<ImmutableList<Mark>>, ICanvasTool
     BoxDrag? _boxDrag;
     bool _committed;
 
+    // A pen or highlighter stroke: the points drawn freehand, and while Shift is held, the straight part on the end.
+    readonly List<Point> _stroke = [];
+    Point? _straightFrom;
+    Point _straightTo;
+
     // Text being typed: the box, and the mark it edits (or null for a new one).
     TextBox? _typing;
     int? _typingFor;
@@ -98,6 +103,9 @@ sealed class AnnotateEditor : Editor<ImmutableList<Mark>>, ICanvasTool
             var content = new StackPanel { Orientation = Orientation.Horizontal };
             content.Children.Add(tool == Tool.Callout ? CalloutIcon() : Panels.Themed(
                 new TextBlock { Text = glyph, FontSize = 14, VerticalAlignment = VerticalAlignment.Center }, TextBlock.FontFamilyProperty, "IconFont"));
+            // The tool's key, shown on its button.
+            content.Children.Add(Panels.Themed(new TextBlock { Text = key.ToString(), FontSize = 11, Margin = new Thickness(6, 1, 0, 0), VerticalAlignment = VerticalAlignment.Center },
+                TextBlock.ForegroundProperty, "TextTertiary"));
             var button = Panels.Themed(new RadioButton
             {
                 Content = content,
@@ -145,8 +153,19 @@ sealed class AnnotateEditor : Editor<ImmutableList<Mark>>, ICanvasTool
         _sizeRow = sizeRow;
         _panel.Children.Add(sizeRow);
         _panel.Children.Add(Panels.Hint("Changes go to the selected mark, and to the ones you draw next.", 14));
-        _panel.Children.Add(Panels.Hint("Every mark stays editable until you save: pick it with Select (V), move it, pull its handles, " +
-            "or press Delete. Double-click text to change it. The arrows nudge the selected mark.", 10));
+        _panel.Children.Add(Panels.Hint("Marks stay editable until you save: pick one with Select to move it or pull its handles.", 6));
+        _panel.Children.Add(Panels.Heading("Keys", 20));
+        _panel.Children.Add(Panels.Keys(
+        [
+            ("Shift", "Lines at 45°, squares and circles; straight pen and highlighter strokes"),
+            ("Delete", "Remove the selected mark"),
+            ("Arrows", "Nudge it a pixel; with Shift, 10"),
+            ("Esc", "Let go of it, or stop typing"),
+            ("Double-click", "Change a text"),
+            ("Ctrl+Z, Ctrl+Y", "Undo, redo"),
+            ("Space", "Hold and drag to look around"),
+            ("Ctrl+0, Ctrl+1", "Fit, every pixel"),
+        ]));
     }
 
     static FrameworkElement CalloutIcon()
@@ -334,20 +353,23 @@ sealed class AnnotateEditor : Editor<ImmutableList<Mark>>, ICanvasTool
                 return;
             default:
                 _grab = Grab.Draw;
+                _stroke.Clear();
+                _stroke.Add(at);
+                _straightFrom = null;
                 return;
         }
     }
 
-    public void Move(Point at)
+    public void Move(Point at, ModifierKeys modifiers)
     {
         if (_grab == Grab.None || !Started) return;
-        var shift = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
+        var shift = modifiers.HasFlag(ModifierKeys.Shift);
         if (_grab == Grab.Draw)
         {
             if (!_committed && (at - _from).Length * _canvas.View.Scale < 3) return;
             var kind = (MarkKind)Enum.Parse(typeof(MarkKind), _tool.ToString());
             var mark = kind is MarkKind.Pen or MarkKind.Highlighter
-                ? (_committed ? State[^1] with { Points = State[^1].Points.Add(MarkPoint.From(at)) } : New(kind, [_from, at]))
+                ? New(kind, Stroke(at, shift))
                 : New(kind, [_from, Constrained(kind, _from, at, shift)]);
             if (_committed)
             {
@@ -407,6 +429,38 @@ sealed class AnnotateEditor : Editor<ImmutableList<Mark>>, ICanvasTool
         Width = kind == MarkKind.Magnifier ? Math.Max(2, Math.Round(3 * _unit)) : kind == MarkKind.Highlighter ? LineWidth * 4 : LineWidth,
         Size = kind switch { MarkKind.Text => TextSize, MarkKind.Callout => CalloutSize, MarkKind.Magnifier => MagnifierSize, _ => 48 },
     };
+
+    /// <summary>
+    /// A pen or highlighter stroke with the pointer now at <paramref name="at"/>. While Shift is held it runs straight
+    /// from where the pointer was as Shift went down; letting go carries on freehand from the straight part's end.
+    /// </summary>
+    List<Point> Stroke(Point at, bool shift)
+    {
+        if (shift)
+        {
+            _straightFrom ??= _stroke[^1];
+            _straightTo = Straight(_straightFrom.Value, at);
+            return [.. _stroke, _straightTo];
+        }
+        if (_straightFrom is not null)
+        {
+            _stroke.Add(_straightTo);
+            _straightFrom = null;
+        }
+        _stroke.Add(at);
+        return [.. _stroke];
+    }
+
+    /// <summary>A straight line in any direction, drawn onto level, upright or 45° when it's within a few degrees of one.</summary>
+    static Point Straight(Point from, Point to)
+    {
+        var along = to - from;
+        var angle = Math.Atan2(along.Y, along.X);
+        var nearest = Math.Round(angle / (Math.PI / 4)) * (Math.PI / 4);
+        if (Math.Abs(angle - nearest) > Math.PI / 30) return to;
+        var direction = new Vector(Math.Cos(nearest), Math.Sin(nearest));
+        return from + direction * (along * direction);
+    }
 
     static Mark BoxTo(Mark mark, Rect box) => mark with { Points = [MarkPoint.From(box.TopLeft), MarkPoint.From(box.BottomRight)] };
 

@@ -270,7 +270,7 @@ sealed class RedactEditor : Editor<RedactState>, ICanvasTool
         RaiseUpdated();
     }
 
-    public void Move(Point at)
+    public void Move(Point at, ModifierKeys modifiers)
     {
         if (_drag is null) return;
         var rect = _drag.To(at);

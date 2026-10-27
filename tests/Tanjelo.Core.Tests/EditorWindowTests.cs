@@ -54,7 +54,7 @@ public class EditorWindowTests
         }
 
         public void Down(Point at, ModifierKeys modifiers, int clicks) => Commit(State.Add(at));
-        public void Move(Point at) { }
+        public void Move(Point at, ModifierKeys modifiers) { }
         public void Up(Point at) { }
         public Cursor? CursorAt(Point at) => Cursors.Cross;
     }

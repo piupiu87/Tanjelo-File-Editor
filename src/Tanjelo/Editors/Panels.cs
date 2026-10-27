@@ -112,6 +112,40 @@ static class Panels
         return (panel, Show);
     }
 
+    /// <summary>Keys and what they do, each key drawn as a small key cap: "Shift" beside "Lines at 45°".</summary>
+    public static FrameworkElement Keys(IReadOnlyList<(string Keys, string Does)> rows)
+    {
+        var grid = new Grid();
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition());
+        for (var i = 0; i < rows.Count; i++)
+        {
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            var caps = new WrapPanel { Margin = new Thickness(0, 0, 10, 6), VerticalAlignment = VerticalAlignment.Top };
+            foreach (var key in rows[i].Keys.Split(", "))
+            {
+                var cap = Themed(new Border
+                {
+                    CornerRadius = new CornerRadius(4),
+                    BorderThickness = new Thickness(1, 1, 1, 2),
+                    Padding = new Thickness(5, 0, 5, 1),
+                    Margin = new Thickness(0, 0, 4, 0),
+                    Child = new TextBlock { Text = key, FontSize = 11.5 },
+                }, Border.BackgroundProperty, "Subtle");
+                cap.SetResourceReference(Border.BorderBrushProperty, "FieldBorder");
+                caps.Children.Add(cap);
+            }
+            var does = Themed(new TextBlock { Text = rows[i].Does, FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 1, 0, 6) },
+                TextBlock.ForegroundProperty, "TextSecondary");
+            Grid.SetRow(caps, i);
+            Grid.SetRow(does, i);
+            Grid.SetColumn(does, 1);
+            grid.Children.Add(caps);
+            grid.Children.Add(does);
+        }
+        return grid;
+    }
+
     public static T Themed<T>(T element, DependencyProperty property, string key) where T : FrameworkElement
     {
         element.SetResourceReference(property, key);
