@@ -8,6 +8,7 @@ using Point = System.Windows.Point;
 namespace Tanjelo.Core.Tests;
 
 /// <summary>The timeline the audio and video editors share: times, frames, sound, pictures, playback and the window.</summary>
+[Collection("Windows player")]
 public class TimelineTests
 {
     /// <summary>A timeline editor with nothing of its own, to try the timeline with.</summary>
@@ -104,7 +105,7 @@ public class TimelineTests
         Assert.Equal(900, frames.Nearest(30.02));
         Assert.Equal(frames.Start(899), frames.Snap(30.0), 9);
         Assert.Equal(frames.End, frames.Snap(59.99999));
-        Assert.Equal((frames.Start(10) + frames.Start(11)) / 2, frames.Middle(10), 9);
+        Assert.Equal(frames.Start(10) + (frames.Start(11) - frames.Start(10)) / 4, frames.Inside(10), 9);
         Assert.True(frames.Estimated);
     }
 
@@ -163,7 +164,7 @@ public class TimelineTests
             using var stills = new StillsPreview(media, () => frames);
             foreach (var n in new[] { 0, 1, 31, 100, frames.Count - 1 })
             {
-                await stills.ShowAsync(frames.Middle(n));
+                await stills.ShowAsync(frames.Inside(n));
                 Assert.Equal(n, await Showing(stills, clip, n));
             }
         });
@@ -179,13 +180,13 @@ public class TimelineTests
         var frames = await media.LoadFramesAsync(null, TestContext.Current.CancellationToken);
         await Ui.Run(async () =>
         {
-            using var player = await FramePlayer.OpenAsync(clip, true, frames.Middle(0), TestContext.Current.CancellationToken);
+            using var player = await FramePlayer.OpenAsync(clip, true, frames.Inside(0), TestContext.Current.CancellationToken);
             if (player is null) Assert.Skip("Windows' player can't play video on this PC");
             Assert.Equal(0, await Showing(player, clip, 0));
-            // Back and forth by one frame, and jumps, each a seek to the middle of the frame.
+            // Back and forth by one frame, and jumps, each a seek a quarter of the way into the frame.
             foreach (var n in new[] { 1, 2, 1, 45, 46, 45, 100, 0 })
             {
-                await player.ShowAsync(frames.Middle(n));
+                await player.ShowAsync(frames.Inside(n));
                 Assert.Equal(n, await Showing(player, clip, n));
             }
         });

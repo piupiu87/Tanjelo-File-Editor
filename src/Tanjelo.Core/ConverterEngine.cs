@@ -45,6 +45,7 @@ public sealed class ConverterEngine
                 new CropImageTool(),
                 new CropVideoTool(tools),
                 new VideoMomentsTool(tools),
+                new TrimTool(tools),
                 new VisualizerTool(tools),
                 new ChannelVolumeTool(tools),
                 new BackgroundTool(),

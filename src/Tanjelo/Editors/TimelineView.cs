@@ -32,7 +32,8 @@ interface ITimelineTool
 /// <summary>
 /// A timeline for audio and video: times along the top, thumbnails, the shape of the sound, rows for the editor's own
 /// marks and the playhead. The wheel zooms around the pointer and Shift+wheel scrolls; clicking or dragging on the
-/// times or the pictures moves the playhead. Everything is drawn in one pass, so long files stay quick.
+/// times moves the playhead there, as does a press anywhere the editor has nothing. All of it is drawn in one pass,
+/// so long files stay quick.
 /// </summary>
 sealed class TimelineView : FrameworkElement
 {
@@ -281,7 +282,7 @@ sealed class TimelineView : FrameworkElement
             }
             return;
         }
-        if (point.Lane is not (TimelineLane.Ruler or TimelineLane.Pictures) && Tool?.Down(point, modifiers) == true)
+        if (point.Lane != TimelineLane.Ruler && Tool?.Down(point, modifiers) == true)
         {
             _drag = Drag.Tool;
             return;
@@ -307,7 +308,7 @@ sealed class TimelineView : FrameworkElement
                 Keep();
                 break;
             default:
-                Cursor = point.Lane is TimelineLane.Ruler or TimelineLane.Pictures ? Cursors.IBeam
+                Cursor = point.Lane == TimelineLane.Ruler ? Cursors.IBeam
                     : point.Lane == TimelineLane.Overview ? Cursors.SizeWE
                     : Tool?.CursorAt(point) ?? Cursors.IBeam;
                 break;

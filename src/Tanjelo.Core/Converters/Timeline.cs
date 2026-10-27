@@ -53,8 +53,11 @@ public sealed class FrameIndex
     /// <summary>When a frame stops showing, which is when the next one starts.</summary>
     public double Stop(int frame) => frame + 1 < Count ? _starts[Math.Max(0, frame + 1)] : End;
 
-    /// <summary>Halfway through a frame's time on screen: seeking there shows that frame whatever the rounding.</summary>
-    public double Middle(int frame) => (Start(frame) + Stop(frame)) / 2;
+    /// <summary>
+    /// A quarter of the way into a frame's time on screen: where to seek a player to show that frame, whether it shows
+    /// the frame on screen at a time or the frame that starts nearest to it. Halfway would be a tie for the second.
+    /// </summary>
+    public double Inside(int frame) => Start(frame) + (Stop(frame) - Start(frame)) / 4;
 
     /// <summary>The frame on screen at a time: the last one to start at or before it.</summary>
     public int At(double seconds)
@@ -134,15 +137,16 @@ public sealed class FrameIndex
 
     /// <summary>
     /// Lists the frames by reading the picture's packets, which is quick (about 6,000 a second) as nothing is decoded.
-    /// With <paramref name="from"/> and <paramref name="to"/>, only the frames around that stretch are read, numbered
-    /// from the first one read: enough to find exact cuts in a long file.
+    /// With <paramref name="windows"/>, only the frames in and around those stretches are read: enough to find exact
+    /// cuts in a long file. Their times are right, but frame numbers then count from the first one read.
     /// </summary>
-    internal static async Task<FrameIndex> LoadAsync(Toolbox tools, string path, MediaInfo media, (double From, double To)? window,
+    internal static async Task<FrameIndex> LoadAsync(Toolbox tools, string path, MediaInfo media, IReadOnlyList<(double From, double To)>? windows,
         IProgress<double>? progress, CancellationToken ct)
     {
         var lines = new List<string>();
-        string[] interval = window is var (from, to)
-            ? ["-read_intervals", string.Create(CultureInfo.InvariantCulture, $"{Math.Max(0, from + media.StartTime):0.######}%{to + media.StartTime:0.######}")]
+        string[] interval = windows is { Count: > 0 }
+            ? ["-read_intervals", string.Join(',', windows.Select(w =>
+                string.Create(CultureInfo.InvariantCulture, $"{Math.Max(0, w.From + media.StartTime):0.######}%{w.To + media.StartTime:0.######}")))]
             : [];
         var length = Math.Max(media.Duration, 0.001);
         await Ffmpeg.PipeAsync(tools.Ffprobe!, ["-v", "error", "-select_streams", "V:0", .. interval,

@@ -31,7 +31,7 @@ just type: `mute` finds the Mute tool from any tab.
 Tools whose names end in "…" need a few settings first, so they open a small options dialog: it starts from the
 settings you used last time, shows a live preview where that helps, and runs on **Enter** (**Esc** cancels).
 
-Editors (Edit photo, Annotate, Redact, Organize pages) open in a window of their own for one file; see
+Editors (Edit photo, Annotate, Redact, Organize pages, Trim) open in a window of their own for one file; see
 [Editors](#tools-and-actions) below.
 
 The shortcut is only grabbed while Explorer or the desktop is in front, so other apps keep their own Ctrl+Shift+Space.
@@ -86,7 +86,15 @@ settings as `--name=value`; `tanj options <key> <files>` lists them.
 Editors open in a window of their own, for work done by hand. They're on the Tools tab when one file is selected, and
 work from "Send to" too. Pictures fit the window: the wheel zooms around the pointer, Space+drag (or the middle button)
 pans, Ctrl+0 fits and Ctrl+1 shows every pixel. Undo and redo with Ctrl+Z and Ctrl+Y. Save (Ctrl+S) writes a copy
-beside the original; Cancel asks first when something changed. Every edit can also be made with `tanj`:
+beside the original; Cancel asks first when something changed. Every edit can also be made with `tanj`.
+
+The audio and video editors share a timeline. The picture plays in Windows' own player, with its sound, over
+thumbnails, the shape of the sound, keyframe marks (▲) and a playhead that always rests on a real frame: times show as
+`0:01:02.345` with the frame number, and a typed time goes to the nearest frame. Space plays and pauses; J, K and L
+play back, pause and play (again for faster); ← and → move a frame, Shift+← and Shift+→ a second; Home and End go to
+the ends. The wheel zooms the timeline around the pointer and Shift+wheel scrolls it. A file Windows can't play
+(MPEG-2, ProRes, AIFF, or HEVC without its extension) shows exact stills from ffmpeg straight away and then plays from
+a small copy made in the background, deleted when the window closes; what's saved is always made from the original.
 
 | Editor | Works on | What you do | With `tanj` | Engine |
 |---|---|---|---|---|
@@ -94,6 +102,7 @@ beside the original; Cancel asks first when something changed. Every edit can al
 | Redact… (`redact`) | Images | Draw boxes over anything to hide, or have Windows find the faces and the words (its own face detection and OCR, on this PC); every box can be moved, resized or removed before saving. Each is hidden for good, as a solid colour (the safest), big pixels or a strong blur, and what you see is exactly what's saved. The copy also loses the EXIF thumbnail (a small copy from before), the maker note, the location, XMP and IPTC; the camera, the date and the colour profile stay. Saved as `photo-redacted.jpg` | `--boxes="x,y,w,h;…"`, `--faces`, `--text`, `--style=solid` (or `pixelate`, `blur`), `--colour=#000000` | Magick.NET, Windows face detection and OCR |
 | Annotate… (`annotate`) | Images | Arrows, lines, rectangles, ellipses, text, numbered callouts (1, 2, 3… in the order they're made), a magnifier (a 2× loupe) and a freehand pen and highlighter, each in a colour and a line width; text and numbers in three sizes. A new callout or magnifier starts as big as the last one was made. Marks stay editable until saving: pick one to move it, pull its handles, restyle or delete it, double-click text to change it. Each tool shows its key on its button (V select, A arrow, L line, R rectangle, E ellipse, T text, N callout, M magnifier, P pen, H highlighter), and the panel lists the rest. Shift keeps lines to 45° and boxes square, and draws the pen and highlighter straight from where it went down, catching level, upright and 45° when the line is close to them. The marks are drawn at full size the way the editor shows them; the rest of the picture and its metadata stay as they were. Saved as `photo-annotated.jpg` | `--spec=marks.json` or the JSON itself: `{"marks": [{"type": "arrow", "points": [[10, 10], [200, 120]], "colour": "#E5383B", "width": 8}]}`; `tanj options annotate` lists every type | WPF, Magick.NET |
 | Edit photo… (`adjust`) | Images (not GIF or SVG) | Sliders for light (exposure, contrast, highlights, shadows, whites, blacks), colour (temperature, tint, vibrance, saturation), detail (sharpness, clarity, noise reduction) and effects (dehaze, grain, vignette) over a live preview of a screen-sized copy. Hold `\` or Original to compare, double-click a slider to put it back to 0, Reset all, or Auto for a starting point. Light, colour and the vignette are worked out in one floating-point pass, so gradients don't band; the copy keeps its metadata and colour profile. Saved as `photo-edited.jpg` | `--exposure=0.3` (stops, −3 to 3) and `--contrast`, `--highlights`, `--shadows`, `--whites`, `--blacks`, `--temperature`, `--tint`, `--vibrance`, `--saturation`, `--clarity`, `--vignette` (−100 to 100), `--sharpness`, `--noise`, `--dehaze`, `--grain` (0 to 100) | Built in, Magick.NET |
+| Trim… (`trim`) | Video | Drag the start and end handles on the timeline, press I and O at the playhead, or type the times; each cut goes to the nearest frame. When both cuts fall on keyframes (*Snap to keyframes* keeps dragged handles there) the copy is made without re-encoding, which is quick and loses nothing; otherwise the part kept is re-encoded so each cut lands on its exact frame, and the panel says which it will be. The sound stays in step, and a phone video's turn and the file's tags are kept. Saved as `clip-trimmed.mp4` | `--range=0:30.033-1:00` (`1:00-` keeps the rest), `--mode=auto`, or `exact` to re-encode anyway, or `lossless` to widen the cuts to the keyframes around them | ffmpeg, Windows' media player |
 
 Actions work with the selected files and folders themselves:
 
@@ -187,6 +196,7 @@ tanj convert organize-pdf --pages="3,1-2,2r90" report.pdf
 tanj convert redact --faces --style=pixelate team.jpg
 tanj convert annotate --spec=marks.json screenshot.png
 tanj convert adjust --exposure=0.3 --clarity=20 --vibrance=25 photo.jpg
+tanj convert trim --range=0:30.033-1:00 clip.mp4
 ```
 
 When a conversion has something to add, such as how many scanned pages were read with OCR, `tanj` prints it on a

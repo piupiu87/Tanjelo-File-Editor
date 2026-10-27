@@ -49,7 +49,7 @@ interface IMediaPreview : IDisposable
 /// Plays a file with Windows' own media player in frame-server mode: the graphics card decodes, the sound plays in
 /// step, and each frame is copied into a WPF bitmap instead of a window of the player's own. Seeking waits for the
 /// player to say the seek is done and then takes the next frame it hands over, which is the exact one. Stepping is
-/// done by seeking to the middle of the next or previous frame, since the player's own step back jumps a 24th of a second.
+/// done by seeking into the next or previous frame (see FrameIndex.Inside), since the player's own step back jumps a 24th of a second.
 /// </summary>
 sealed class FramePlayer : IMediaPreview
 {
@@ -72,7 +72,17 @@ sealed class FramePlayer : IMediaPreview
     double _shown;
 
     // A seek under way: done once the player says so, then the next frame it hands over is the one.
-    TaskCompletionSource? _seeked, _framed;
+    TaskCompletionSource? _seeked;
+
+    /// <summary>How long without a new frame before the one showing after a seek counts as the one, in milliseconds.</summary>
+    const int Quiet = 100;
+
+    /// <summary>How long to wait for a frame after a seek before seeking again, in milliseconds.</summary>
+    const int NoFrame = 400;
+
+    // Frames handed over while a seek is waiting for them.
+    readonly SemaphoreSlim _handedOver = new(0);
+    volatile bool _waiting;
     double? _wanted;
 
     FramePlayer(bool video)
@@ -101,7 +111,7 @@ sealed class FramePlayer : IMediaPreview
     /// Opens a file in Windows' player and shows its first moment; null when Windows can't play it here, such as
     /// MPEG-2, ProRes or AIFF, HEVC without its extension, or a PC whose graphics can't copy frames.
     /// </summary>
-    /// <param name="start">Where to show first: the middle of the first frame, since the very first one handed over is blank.</param>
+    /// <param name="start">Where to show first: inside the first frame, since the very first one handed over is blank.</param>
     public static async Task<FramePlayer?> OpenAsync(string path, bool video, double start, CancellationToken ct)
     {
         var player = new FramePlayer(video);
@@ -201,17 +211,55 @@ sealed class FramePlayer : IMediaPreview
 
     async Task SeekAndCopyAsync(double seconds)
     {
-        var session = _player.PlaybackSession;
+        var copying = _video && !Playing && Interlocked.CompareExchange(ref _copying, 1, 0) == 0;
+        try
+        {
+            while (_handedOver.Wait(0)) { }
+            _waiting = copying;
+            _shown = seconds;
+            await SeekAsync(seconds);
+            if (!copying) return;
+            // Each frame handed over since the seek began is shown, until none has come for a moment: on a busy PC the
+            // first can be the frame from before the seek, and the right one follows. While paused, no more come.
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            var shown = false;
+            for (var again = 0; !_disposed && clock.ElapsedMilliseconds < 3000;)
+            {
+                if (!await _handedOver.WaitAsync(shown ? Quiet : NoFrame))
+                {
+                    // Now and then the player calls a seek done without handing over a frame, leaving the old one
+                    // showing. Going somewhere else first and then back makes it hand over the right one.
+                    if (shown || ++again > 2) break;
+                    await SeekAsync(seconds >= 0.1 ? seconds - 0.05 : seconds + 0.05);
+                    while (_handedOver.Wait(0)) { }
+                    await SeekAsync(seconds);
+                    continue;
+                }
+                while (_handedOver.Wait(0)) { }
+                if (await GrabAsync())
+                {
+                    shown = true;
+                    await PresentAsync();
+                }
+                // Someone wants another moment already, as while dragging the playhead: no need to wait for this one.
+                if (_wanted is not null) break;
+            }
+            if (!shown && await GrabAsync()) await PresentAsync();
+        }
+        finally
+        {
+            _waiting = false;
+            if (copying) Volatile.Write(ref _copying, 0);
+        }
+    }
+
+    /// <summary>Sets the player's position and waits for it to say the seek is done.</summary>
+    async Task SeekAsync(double seconds)
+    {
         var seeked = _seeked = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        session.Position = TimeSpan.FromSeconds(Math.Max(0, seconds));
-        _shown = seconds;
+        _player.PlaybackSession.Position = TimeSpan.FromSeconds(Math.Max(0, seconds));
         if (await Task.WhenAny(seeked.Task, Task.Delay(3000)) != seeked.Task) Log.Write("Windows' player didn't finish a seek in 3 seconds.");
         _seeked = null;
-        if (!_video || Playing) return;
-        // The frame handed over after the seek is done is the one at the new position.
-        var framed = _framed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        if (await Task.WhenAny(framed.Task, Task.Delay(1500)) != framed.Task) return;
-        await CopyAsync();
     }
 
     public void Play(double rate = 1)
@@ -235,36 +283,21 @@ sealed class FramePlayer : IMediaPreview
     void OnFrame()
     {
         if (_disposed) return;
-        if (_framed is { } framed && _seeked is null)
+        if (_waiting)
         {
-            _framed = null;
-            framed.TrySetResult();
+            _handedOver.Release();
             return;
         }
         if (Playing) _ = CopyAsync();
     }
 
-    /// <summary>Copies the player's current frame into the picture: on the graphics card first, then to memory, then to the bitmap.</summary>
+    /// <summary>Copies the frame playing into the picture, skipping it if the last one is still being copied.</summary>
     async Task CopyAsync()
     {
-        if (_gpu is null || _cpu is null || Interlocked.CompareExchange(ref _copying, 1, 0) != 0) return;
+        if (Interlocked.CompareExchange(ref _copying, 1, 0) != 0) return;
         try
         {
-            if (_disposed) return;
-            _player.CopyFrameToVideoSurface(_gpu.Direct3DSurface);
-            await _gpu.CopyToAsync(_cpu);
-            _cpu.SoftwareBitmap.CopyToBuffer(_pixels.AsBuffer());
-            _shownFrame = true;
-            await _dispatcher.InvokeAsync(() =>
-            {
-                if (_disposed || _picture is null) return;
-                _picture.WritePixels(new Int32Rect(0, 0, _width, _height), _pixels, _width * 4, 0);
-                PictureChanged?.Invoke();
-            });
-        }
-        catch (Exception ex) when (ex is COMException or InvalidOperationException or ObjectDisposedException)
-        {
-            // A frame that couldn't be copied is skipped; the next one will do.
+            if (await GrabAsync()) await PresentAsync();
         }
         finally
         {
@@ -272,13 +305,39 @@ sealed class FramePlayer : IMediaPreview
         }
     }
 
+    /// <summary>Copies the player's current frame into memory: on the graphics card first, then out of it.</summary>
+    async Task<bool> GrabAsync()
+    {
+        if (_gpu is null || _cpu is null || _disposed) return false;
+        try
+        {
+            _player.CopyFrameToVideoSurface(_gpu.Direct3DSurface);
+            await _gpu.CopyToAsync(_cpu);
+            _cpu.SoftwareBitmap.CopyToBuffer(_pixels.AsBuffer());
+            _shownFrame = true;
+            return true;
+        }
+        catch (Exception ex) when (ex is COMException or InvalidOperationException or ObjectDisposedException)
+        {
+            // A frame that couldn't be copied is skipped; the next one will do.
+            return false;
+        }
+    }
+
+    /// <summary>Puts the copied frame in the picture, on the window's thread.</summary>
+    async Task PresentAsync() => await _dispatcher.InvokeAsync(() =>
+    {
+        if (_disposed || _picture is null) return;
+        _picture.WritePixels(new Int32Rect(0, 0, _width, _height), _pixels, _width * 4, 0);
+        PictureChanged?.Invoke();
+    });
+
     public void Dispose()
     {
         if (_disposed) return;
         _disposed = true;
         Playing = false;
         _seeked?.TrySetResult();
-        _framed?.TrySetResult();
         try
         {
             _player.Pause();

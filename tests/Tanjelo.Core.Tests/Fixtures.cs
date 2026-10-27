@@ -248,7 +248,8 @@ sealed class Scratch : IDisposable
         var d = seconds.ToString(CultureInfo.InvariantCulture);
         string[] inputs = ["-f", "lavfi", "-i", $"testsrc2=size={size}:rate={rate}:duration={d}," +
             "drawtext=fontfile='C\\:/Windows/Fonts/arial.ttf':text='%{n}':fontsize=h/3:fontcolor=white:box=1:boxcolor=black:boxborderw=6:x=8:y=8"];
-        if (audio) inputs = [.. inputs, "-f", "lavfi", "-i", $"sine=frequency=440:sample_rate=48000:duration={d}"];
+        // The sound beeps for a tenth of a second at every whole second, so its place against the frames can be measured.
+        if (audio) inputs = [.. inputs, "-f", "lavfi", "-i", $"aevalsrc='if(lt(mod(t,1),0.1),0.5*sin(2*PI*1000*t),0)':s=48000:d={d}"];
         string[] codec = encode.Length > 0 ? encode : ["-c:v", "libx264", "-pix_fmt", "yuv420p", "-g", "25", "-c:a", "aac"];
         return Ffmpeg(name, [.. inputs, .. codec, "-shortest"]);
     }
@@ -356,6 +357,45 @@ static class Inspect
         for (var i = 0; i < a.Length; i++)
             if (i % 4 != 3) sum += Math.Abs(a[i] - b[i]);
         return sum / (a.Length * 0.75);
+    }
+
+    /// <summary>When each burst of sound after a silence starts, such as the beeps of a numbered video, in seconds.</summary>
+    public static List<double> Beeps(string path)
+    {
+        var result = ProcessRunner.RunAsync(Env.Tools.Ffmpeg!,
+            ["-hide_banner", "-nostdin", "-nostats", "-v", "info", "-i", path, "-map", "0:a:0", "-af", "silencedetect=noise=-30dB:d=0.05", "-f", "null", "-"],
+            CancellationToken.None).GetAwaiter().GetResult();
+        return System.Text.RegularExpressions.Regex.Matches(result.StdErr, @"silence_end: (-?[\d.]+)")
+            .Select(m => double.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture)).ToList();
+    }
+
+    /// <summary>When the picture starts, after any sound before it, as players show it.</summary>
+    public static double PictureStart(string path) => double.Parse(Probe(path, "-select_streams", "V:0", "-show_entries", "stream=start_time"), CultureInfo.InvariantCulture);
+
+    /// <summary>The sizes of a video's picture packets in the order they're stored, from the one at <paramref name="from"/> seconds.</summary>
+    public static List<int> PacketSizes(string path, double from = 0, int count = 12)
+    {
+        var lines = Probe(path, "-select_streams", "V:0", "-show_entries", "packet=pts_time,size").Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(l => l.Split(',')).Select(f => (Time: double.Parse(f[0], CultureInfo.InvariantCulture), Size: int.Parse(f[1], CultureInfo.InvariantCulture))).ToList();
+        var at = lines.FindIndex(p => Math.Abs(p.Time - from) < 0.002);
+        Assert.True(at >= 0, $"{path} has no packet at {from}");
+        return lines.Skip(at).Take(count).Select(p => p.Size).ToList();
+    }
+
+    /// <summary>The picture's size as players show it, after any turn the file asks for.</summary>
+    public static (int Width, int Height) Shown(string path)
+    {
+        var fields = Probe(path, "-select_streams", "V:0", "-show_entries", "stream=width,height:stream_side_data=rotation").Split(',', '\n');
+        var (width, height) = (int.Parse(fields[0], CultureInfo.InvariantCulture), int.Parse(fields[1], CultureInfo.InvariantCulture));
+        var turned = fields.Length > 2 && int.TryParse(fields[2].Trim(), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var rotation) && Math.Abs(rotation) % 180 == 90;
+        return turned ? (height, width) : (width, height);
+    }
+
+    static string Probe(string path, params string[] args)
+    {
+        var result = ProcessRunner.RunAsync(Env.Tools.Ffprobe!, ["-v", "error", .. args, "-of", "csv=p=0", path], CancellationToken.None).GetAwaiter().GetResult();
+        Assert.True(result.ExitCode == 0, $"ffprobe can't read {path}: {result.LastError}");
+        return result.StdOut.Trim();
     }
 
     /// <summary>How many frames a video's picture has, counted from its packets.</summary>

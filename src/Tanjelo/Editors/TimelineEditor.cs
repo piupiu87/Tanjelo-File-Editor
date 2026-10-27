@@ -11,6 +11,19 @@ using Tanjelo.Core.Converters;
 
 namespace Tanjelo.Editors;
 
+/// <summary>What every timeline editor has, whatever its state: for the tests, which drive them all the same way.</summary>
+interface ITimelineEditor
+{
+    Task Loaded { get; }
+    TimelineView View { get; }
+    IMediaPreview? Preview { get; }
+    double Playhead { get; }
+    int Frame { get; }
+    TextBox TimeBox { get; }
+    Task Seek();
+    bool Press(Key key, ModifierKeys modifiers = ModifierKeys.None, bool repeat = false);
+}
+
 /// <summary>
 /// The base of the audio and video editors: the picture over a transport bar and a timeline. The file plays in
 /// Windows' own player; when Windows can't play it, stills from ffmpeg show at once and a small copy is made to play
@@ -18,7 +31,7 @@ namespace Tanjelo.Editors;
 /// thumbnails and the shape of the sound arrive as they're read. Editors draw their marks on the timeline and keep
 /// their settings beside it; the keys are the same in all of them.
 /// </summary>
-abstract class TimelineEditor<T> : Editor<T>, ITimelineTool
+abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
 {
     /// <summary>How far ←/→ move in sound without frames, and with Shift in anything.</summary>
     const double SoundStep = 0.01, LongStep = 1;
@@ -150,12 +163,13 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool
     protected virtual string EditorStatus => "";
 
     /// <summary>What's showing and playing; for the tests.</summary>
-    internal IMediaPreview? Preview => _preview;
+    public IMediaPreview? Preview => _preview;
 
     /// <summary>Completes once the frames, the sound's shape, the thumbnails and any preview copy are all in.</summary>
-    internal Task Loaded => _loaded.Task;
+    public Task Loaded => _loaded.Task;
 
-    internal TextBox TimeBox => _time;
+    public TextBox TimeBox => _time;
+    public TimelineView View => Timeline;
     internal string Where => _where.Text;
 
     /// <summary>The state to start from, once the file is open.</summary>
@@ -172,7 +186,7 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool
         Timeline.Frames = _frames;
         Timeline.Duration = _media.Duration;
 
-        var start = _frames?.Middle(0) ?? 0;
+        var start = _frames?.Inside(0) ?? 0;
         var player = await FramePlayer.OpenAsync(File, Video, start, ct);
         var needsCopy = player is null;
         Use(player ?? (IMediaPreview)new StillsPreview(_media, () => _frames ?? _media.EstimatedFrames));
@@ -263,7 +277,7 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool
                 Progress("Making a copy to play", 0);
                 var copy = await media.PreviewCopyAsync(_temp.Path, new ActionProgress<double>(f => Progress("Making a copy to play", f)), ct);
                 Progress("Making a copy to play", 1);
-                var opened = await Dispatcher.InvokeAsync(() => FramePlayer.OpenAsync(copy, Video, _frames?.Middle(Frame) ?? _playhead, ct)).Task.Unwrap();
+                var opened = await Dispatcher.InvokeAsync(() => FramePlayer.OpenAsync(copy, Video, _frames?.Inside(Frame) ?? _playhead, ct)).Task.Unwrap();
                 if (opened is null) return;
                 Dispatch(() =>
                 {
@@ -335,7 +349,7 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool
     }
 
     /// <summary>Shows the playhead's moment; the returned task completes when it's showing.</summary>
-    internal Task Seek() => _preview?.ShowAsync(_frames is { } frames ? frames.Middle(frames.At(_playhead)) : _playhead) ?? Task.CompletedTask;
+    public Task Seek() => _preview?.ShowAsync(_frames is { } frames ? frames.Inside(frames.At(_playhead)) : _playhead) ?? Task.CompletedTask;
 
     /// <summary>On or back by a frame (a hundredth of a second in sound), or by a second.</summary>
     public void Step(int by, bool bySecond)
@@ -466,7 +480,7 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool
         _media is not null && Keyboard.FocusedElement is not TextBox && Press(e.Key == Key.System ? e.SystemKey : e.Key, Keyboard.Modifiers, e.IsRepeat);
 
     /// <summary>A key pressed with these modifiers, as <see cref="OnKey"/> passes it on; true when used.</summary>
-    internal bool Press(Key key, ModifierKeys modifiers = ModifierKeys.None, bool repeat = false)
+    public bool Press(Key key, ModifierKeys modifiers = ModifierKeys.None, bool repeat = false)
     {
         if (_media is null || OnTimelineKey(key, modifiers, repeat)) return _media is not null;
         if (modifiers.HasFlag(ModifierKeys.Control) || modifiers.HasFlag(ModifierKeys.Alt)) return false;
