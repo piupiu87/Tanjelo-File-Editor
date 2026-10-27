@@ -50,6 +50,7 @@ public sealed class ConverterEngine
                 new BackgroundTool(),
                 new RedactTool(),
                 new AnnotateTool(),
+                new AdjustTool(),
                 new ArchiveConverter(tools),
                 new MoveToFolderAction(),
             ],

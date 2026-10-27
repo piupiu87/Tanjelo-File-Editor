@@ -56,6 +56,7 @@ public partial class FormatMenuWindow : Window
             "organize-pdf" => "",            // pages on a shelf
             "redact" => "",                  // eye, struck through
             "annotate" => "",                // pencil
+            "adjust" => "",                  // brightness
             _ => Target.Section switch
             {
                 Section.Image => "",             // picture
