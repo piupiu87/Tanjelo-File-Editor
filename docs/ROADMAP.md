@@ -98,7 +98,7 @@ A shared editor window first, then the editors that use it.
 - [x] Editor window: zoom and pan, undo, save beside the original; every edit can also be applied with `tanj` (M)
 - [x] Organize PDF pages in a thumbnail grid: reorder, rotate, duplicate, delete; bookmarks kept (L)
 - [x] Redact photos, with local face and text detection; redactions are burned in and revealing metadata removed (L)
-- [ ] Annotate photos: arrows, shapes, text, numbered callouts, magnifier, freehand (L)
+- [x] Annotate photos: arrows, shapes, text, numbered callouts, magnifier, freehand (L)
 - [ ] Photo editor with live preview: light, colour, detail, dehaze, grain, noise reduction (L)
 
 ## v0.6: audio and video editors

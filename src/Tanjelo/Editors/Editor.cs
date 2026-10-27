@@ -15,6 +15,7 @@ abstract class Editor
     {
         EditorKind.OrganizePdf => new PageEditor(file, target),
         EditorKind.Redact => new RedactEditor(file, target),
+        EditorKind.Annotate => new AnnotateEditor(file, target),
         _ => throw new NotSupportedException($"There's no editor for {target.Key} yet."),
     };
 

@@ -42,6 +42,9 @@ sealed class ZoomCanvas : Grid
     /// <summary>Drawn over everything in canvas units, such as handles. It doesn't take the pointer.</summary>
     public Canvas Overlay { get; } = new() { IsHitTestVisible = false };
 
+    /// <summary>Controls over the picture that take the pointer, such as a box for typing text; empty space lets clicks through.</summary>
+    public Canvas Controls { get; } = new();
+
     public ICanvasTool? Tool { get; set; }
 
     /// <summary>The zoom or the picture's place changed, so whatever is drawn on <see cref="Overlay"/> needs moving.</summary>
@@ -60,6 +63,7 @@ sealed class ZoomCanvas : Grid
         holder.Children.Add(_content);
         Children.Add(holder);
         Children.Add(Overlay);
+        Children.Add(Controls);
         SizeChanged += (_, _) =>
         {
             if (!HasPicture) return;

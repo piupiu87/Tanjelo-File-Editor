@@ -49,6 +49,7 @@ public sealed class ConverterEngine
                 new ChannelVolumeTool(tools),
                 new BackgroundTool(),
                 new RedactTool(),
+                new AnnotateTool(),
                 new ArchiveConverter(tools),
                 new MoveToFolderAction(),
             ],
