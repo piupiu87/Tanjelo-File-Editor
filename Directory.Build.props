@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <!-- One version for the app, tanj and the engine. Tagged CI builds override it from the tag (v1.2.3 -> 1.2.3). -->
-    <Version>0.4.0</Version>
+    <Version>0.5.0</Version>
   </PropertyGroup>
 
 </Project>

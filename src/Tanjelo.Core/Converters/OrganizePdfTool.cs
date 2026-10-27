@@ -83,7 +83,7 @@ public static partial class PageList
 /// </summary>
 public sealed class OrganizePdfTool : IConverter
 {
-    static readonly Target Entry = new Target("organize-pdf", "Organize pages…", "Reorder, rotate, copy or delete pages", Section.Document)
+    static readonly Target Entry = new Target("organize-pdf", "Organize pages…", "Reorder, turn or delete", Section.Document)
     {
         Kind = TargetKind.Tool,
         Running = "Saving the pages…",

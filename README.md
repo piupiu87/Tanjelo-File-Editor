@@ -31,6 +31,9 @@ just type: `mute` finds the Mute tool from any tab.
 Tools whose names end in "…" need a few settings first, so they open a small options dialog: it starts from the
 settings you used last time, shows a live preview where that helps, and runs on **Enter** (**Esc** cancels).
 
+Editors (Edit photo, Annotate, Redact, Organize pages) open in a window of their own for one file; see
+[Editors](#tools-and-actions) below.
+
 The shortcut is only grabbed while Explorer or the desktop is in front, so other apps keep their own Ctrl+Shift+Space.
 
 ## What converts to what
@@ -212,9 +215,9 @@ Pushing a tag such as `v0.1.0` makes the GitHub Actions workflow build, test, sm
 | Project | What's in it |
 |---|---|
 | `src/Tanjelo.Core` | Formats, the conversion engine, and one converter per engine (`Converters/`) |
-| `src/Tanjelo` | WPF tray app: hotkey, Explorer selection, the format menu, options dialogs, progress cards |
+| `src/Tanjelo` | WPF tray app: hotkey, Explorer selection, the format menu, options dialogs, the editors (`Editors/`), progress cards |
 | `src/tanj` | Command-line front end |
-| `tests/Tanjelo.Core.Tests` | xUnit tests for the engine and every converter |
+| `tests/Tanjelo.Core.Tests` | xUnit tests for the engine and every converter, and the editors' windows, rendered and driven off-screen |
 
 ## Notes on Office automation
 
@@ -226,8 +229,8 @@ Office sometimes stops on prompts that its "no alerts" setting doesn't cover. Ta
 
 ## Roadmap
 
-Next up: editors, such as a photo editor with a live preview, annotations, redaction with local face and text
-detection, and frame-exact trimming. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are
+Next up: audio and video editors on a shared timeline: frame-exact trimming, trimming audio on a waveform, bleeps,
+and redacting areas of a video. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are
 welcome; open an issue first for anything big, and see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License

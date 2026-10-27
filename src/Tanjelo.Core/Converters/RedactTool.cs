@@ -216,7 +216,7 @@ public static class Redaction
 /// </summary>
 public sealed class RedactTool : IConverter
 {
-    static readonly Target Entry = new Target("redact", "Redact…", "Hide faces, text or areas for good", Section.Image)
+    static readonly Target Entry = new Target("redact", "Redact…", "Faces, text or any area", Section.Image)
     {
         Kind = TargetKind.Tool,
         Running = "Redacting…",

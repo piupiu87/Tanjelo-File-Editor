@@ -91,7 +91,7 @@ Sharing
 - [x] Share through the Windows Share sheet, including Nearby Sharing (M)
 - [x] Float: an always-on-top shelf to park files, drag them out later, and convert them from there (M)
 
-## v0.5: picture and PDF editors
+## v0.5.0: picture and PDF editors (released)
 
 A shared editor window first, then the editors that use it.
 

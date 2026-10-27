@@ -373,7 +373,7 @@ public sealed class AdjustTool : IConverter
     static Option Slider(string name, string label, double min = -100, double max = 100, string? hint = null) =>
         new(name, label, OptionKind.Number, "0") { Min = min, Max = max, Slider = true, Remember = false, Hint = hint };
 
-    static readonly Target Entry = new Target("adjust", "Edit photo…", "Light, colour, detail and effects", Section.Image)
+    static readonly Target Entry = new Target("adjust", "Edit photo…", "Light, colour and detail", Section.Image)
     {
         Kind = TargetKind.Tool,
         Running = "Developing…",

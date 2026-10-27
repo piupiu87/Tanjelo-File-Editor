@@ -363,7 +363,7 @@ public sealed class AnnotateTool : IConverter
 {
     static readonly Lazy<StaWorker> Painter = new(() => new StaWorker("Tanjelo marks"));
 
-    static readonly Target Entry = new Target("annotate", "Annotate…", "Arrows, shapes, text and callouts", Section.Image)
+    static readonly Target Entry = new Target("annotate", "Annotate…", "Arrows, shapes and text", Section.Image)
     {
         Kind = TargetKind.Tool,
         Running = "Annotating…",
