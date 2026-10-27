@@ -91,16 +91,24 @@ Sharing
 - [x] Share through the Windows Share sheet, including Nearby Sharing (M)
 - [x] Float: an always-on-top shelf to park files, drag them out later, and convert them from there (M)
 
-## v0.5: editors
+## v0.5: picture and PDF editors
 
-- [ ] Photo editor with live preview: light, colour, detail, dehaze, grain, noise reduction (L)
+A shared editor window first, then the editors that use it.
+
+- [ ] Editor window: zoom and pan, undo, save beside the original; every edit can also be applied with `tanj` (M)
+- [ ] Organize PDF pages in a thumbnail grid: reorder, rotate, duplicate, delete; bookmarks kept (L)
+- [ ] Redact photos, with local face and text detection; redactions are burned in and revealing metadata removed (L)
 - [ ] Annotate photos: arrows, shapes, text, numbered callouts, magnifier, freehand (L)
-- [ ] Redact photos, with local face and text detection (Windows.Media.FaceAnalysis, Windows.Media.Ocr) (L)
+- [ ] Photo editor with live preview: light, colour, detail, dehaze, grain, noise reduction (L)
+
+## v0.6: audio and video editors
+
+A shared timeline first: frame-accurate scrubbing, thumbnails and a waveform.
+
 - [ ] Trim video frame by frame, with exact timecodes (L)
 - [ ] Trim audio on a waveform (L)
 - [ ] Bleep sections of audio (L)
 - [ ] Redact areas of a video, each with its own time range (L)
-- [ ] Organize PDF pages in a thumbnail grid: reorder, rotate, duplicate, delete (L)
 
 ## v1.0: ready for everyone
 
