@@ -192,7 +192,7 @@ public partial class EditorWindow : Window
         }
         var ctrl = Keyboard.Modifiers.HasFlag(ModifierKeys.Control);
         var typing = Keyboard.FocusedElement is TextBox;
-        // The editor goes first, so a text box it's showing can take Escape, Enter and Ctrl+Z itself.
+        // The editor goes first; a text box being typed in keeps Escape and Ctrl+Z for itself.
         if (_loaded && _editor.OnKey(e))
         {
             e.Handled = true;
@@ -201,7 +201,7 @@ public partial class EditorWindow : Window
         var canvas = _editor.Canvas;
         switch (e.Key)
         {
-            case Key.Escape:
+            case Key.Escape when !typing:
                 Cancel();
                 break;
             case Key.S when ctrl:
