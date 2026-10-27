@@ -129,7 +129,7 @@ public sealed class MetadataTool(Toolbox tools) : IConverter, IPreviewer
     }
 
     /// <summary>Tags in which phones and cameras record where a video was made.</summary>
-    static readonly string[] LocationTags = ["location", "location-eng", "com.apple.quicktime.location.ISO6709", "com.android.capture.location"];
+    internal static readonly string[] LocationTags = ["location", "location-eng", "com.apple.quicktime.location.ISO6709", "com.android.capture.location"];
 
     /// <summary>A stream copy with changed tags; if some odd stream (a timecode, say) won't copy, just picture, sound and subtitles.</summary>
     static IEnumerable<string[]> MediaPlans(string key, MetadataEdit edit)

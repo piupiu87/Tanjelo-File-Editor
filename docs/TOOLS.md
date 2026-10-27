@@ -15,7 +15,7 @@ Each tool has a key for `tanj` (shown in brackets below), and its settings are p
   [Channel volume](#channel-volume-channel-volume)
 - [Editors](#editors): [the timeline](#audio-and-video-editors-share-a-timeline),
   [Organize pages](#organize-pages-organize-pdf), [Redact](#redact-redact), [Annotate](#annotate-annotate),
-  [Edit photo](#edit-photo-adjust), [Trim](#trim-trim), [Bleep](#bleep-bleep)
+  [Edit photo](#edit-photo-adjust), [Trim](#trim-trim), [Bleep](#bleep-bleep), [Redact video](#redact-video-redact)
 - [Actions](#actions)
 - [Float shelf](#float-shelf)
 
@@ -282,6 +282,30 @@ silence. Saved as `talk-bleeped.mp4`.
 ```
 tanj convert bleep --ranges="0:10-0:12, 0:20-0:21.5" talk.mp4
 tanj convert bleep --ranges=1:02-1:03.5 --sound=silence interview.mp3
+```
+
+### Redact video… (`redact`)
+
+*Video · ffmpeg, Windows' face detection and tracking*
+
+Draw boxes on the picture. Each is hidden from the frame it's drawn on to the end, and has a bar under the timeline:
+drag its ends, or press I and O, to set when it starts and stops. Saved as `clip-redacted.mp4`.
+
+- Find faces adds a box over each face on the frame showing. Follow face moves the selected box with its face through
+  its stretch, and ends it where the face is lost. Both use Windows' own face detection and tracking, on this PC.
+- Hidden as for photos: a solid colour (the safest), big pixels or a strong blur. While paused, each box shows exactly
+  what's saved.
+- A box moved or resized by hand stays where it's put. Tab selects the next box, Delete removes one.
+- The picture is re-encoded and the sound copied. The copy loses its location, cover pictures, subtitles and data
+  tracks such as a camera's GPS log.
+
+**With `tanj`:** `--spec=boxes.json` or the JSON itself: `{"boxes": [{"x": 10, "y": 20, "width": 100, "height": 80,
+"from": 1.5, "to": 3}]}`, in pixels and seconds (without `"to"` it runs to the end, and `"track": [{"at": 1.5, "x": …,
+"y": …, "width": …, "height": …}, …]` moves it in straight lines between places); `--style=solid` (or `pixelate`,
+`blur`), `--colour=#000000`.
+
+```
+tanj convert redact --spec=boxes.json --style=blur clip.mp4
 ```
 
 ## Actions

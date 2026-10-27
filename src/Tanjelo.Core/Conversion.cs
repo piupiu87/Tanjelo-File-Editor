@@ -17,7 +17,7 @@ public enum TargetKind
 }
 
 /// <summary>The editors the app has, for tools that set their parameters by hand (see <see cref="Target.Editor"/>).</summary>
-public enum EditorKind { OrganizePdf, Redact, Annotate, Photo, Trim, Bleep }
+public enum EditorKind { OrganizePdf, Redact, Annotate, Photo, Trim, Bleep, RedactVideo }
 
 /// <summary>
 /// One entry in the format menu. <see cref="Key"/> names the output ("png", "mp4", "extract") and is

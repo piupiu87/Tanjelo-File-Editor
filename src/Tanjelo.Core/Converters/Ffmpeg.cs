@@ -86,10 +86,11 @@ static class Ffmpeg
 
     /// <summary>Encoder settings for re-encoding video (and its sound) into a container.</summary>
     /// <param name="filter">Video filters to run first, such as a speed change.</param>
-    public static string[] VideoEncoder(string key, string? filter = null)
+    /// <param name="graph">Whether the picture comes from a filter graph of the caller's, which then makes it even itself.</param>
+    public static string[] VideoEncoder(string key, string? filter = null, bool graph = false)
     {
         string Filters(bool even) => string.Join(',', new[] { filter, even ? EvenSize : null }.OfType<string>());
-        string[] Vf(bool even) => Filters(even) is { Length: > 0 } f ? ["-vf", f] : [];
+        string[] Vf(bool even) => !graph && Filters(even) is { Length: > 0 } f ? ["-vf", f] : [];
         return key switch
         {
             "mp4" or "m4v" or "mov" or "mkv" => ["-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p", .. Vf(even: true),

@@ -51,6 +51,7 @@ public sealed class ConverterEngine
                 new ChannelVolumeTool(tools),
                 new BackgroundTool(),
                 new RedactTool(),
+                new VideoRedactTool(tools),
                 new AnnotateTool(),
                 new AdjustTool(),
                 new ArchiveConverter(tools),
