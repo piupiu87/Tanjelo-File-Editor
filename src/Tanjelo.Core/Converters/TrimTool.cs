@@ -3,9 +3,10 @@ using System.Globalization;
 namespace Tanjelo.Core.Converters;
 
 /// <summary>
-/// Keeps one stretch of a video, cut to the frame. When both cuts fall on keyframes the streams are copied, which is
-/// instant and loses nothing; otherwise the kept part is re-encoded so each cut lands on the exact frame. A "smart cut"
-/// that re-encodes only around the cuts is left out on purpose: it breaks too easily with some encoders and players.
+/// Keeps one stretch of a video or a sound file. Video is cut to the frame: when both cuts fall on keyframes the
+/// streams are copied, which is instant and loses nothing; otherwise the kept part is re-encoded so each cut lands on
+/// the exact frame. A "smart cut" that re-encodes only around the cuts is left out on purpose: it breaks too easily
+/// with some encoders and players. Sound is cut to the sample.
 /// </summary>
 public sealed class TrimTool(Toolbox tools) : IConverter
 {
@@ -31,18 +32,69 @@ public sealed class TrimTool(Toolbox tools) : IConverter
         Editor = EditorKind.Trim,
     }.WithOptions(Range, new Option("mode", "Cut", OptionKind.Choice, "auto") { Choices = Modes });
 
+    static readonly Target AudioEntry = new Target("trim", "Trim…", "On the sound's shape", Section.Audio)
+    {
+        Kind = TargetKind.Tool,
+        Running = "Trimming…",
+        Done = "Trimmed",
+        Confirm = "Save",
+        Editor = EditorKind.Trim,
+    }.WithOptions(Range with { Hint = "From and to, such as 0:30.5-1:00, to the millisecond; leave out the end to keep the rest." });
+
     public IEnumerable<Target> TargetsFor(string input)
     {
         if (tools.Ffmpeg is null || tools.Ffprobe is null) return [];
-        return Formats.Videos.Contains(Formats.Key(input)) ? [VideoEntry] : [];
+        var key = Formats.Key(input);
+        return Formats.Videos.Contains(key) ? [VideoEntry] : Formats.Audio.Contains(key) ? [AudioEntry] : [];
     }
 
     public async Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx)
     {
         var media = await Ffmpeg.ProbeAsync(tools, input, ctx.Cancellation);
-        if (media.Video is null || media.Duration <= 0)
-            throw new ConversionException("Couldn't find a picture and a length in this video.");
+        if (media.Duration <= 0) throw new ConversionException("Couldn't tell how long this file is.");
+        if (Formats.Audio.Contains(Formats.Key(input))) return [await TrimAudioAsync(input, media, target, ctx)];
+        if (media.Video is null) throw new ConversionException("Couldn't find a picture in this video.");
         return [await TrimVideoAsync(input, media, target, ctx)];
+    }
+
+    /// <summary>
+    /// Keeps one stretch of the sound, cut to the sample. WAV, FLAC and AIFF stay lossless; lossy formats are re-encoded
+    /// at the bitrate they had. Tags and cover art come along.
+    /// </summary>
+    async Task<string> TrimAudioAsync(string input, MediaInfo media, Target target, JobContext ctx)
+    {
+        var (from, to) = target.TimeRange("range");
+        var end = Math.Min(to ?? media.Duration, media.Duration);
+        if (from >= media.Duration - 0.0005)
+            throw new ConversionException($"{OptionValues.FormatTime(from)} is past the end of this file, which is {OptionValues.FormatTime(media.Duration)} long.");
+        if (from <= 0.0005 && end >= media.Duration - 0.0005)
+            throw new ConversionException("That keeps all of it, so there's nothing to trim.");
+
+        var rate = media.SampleRate > 0 ? media.SampleRate : 48000;
+        // Seeking a second or so ahead spares decoding everything before; the samples are then counted from there.
+        var seek = Math.Max(0, Math.Floor(from) - 1);
+        long first = (long)Math.Round(from * rate), skip = first - (long)Math.Round(seek * rate), keep = (long)Math.Round(end * rate) - first;
+        var cut = string.Create(CultureInfo.InvariantCulture, $"atrim=start_sample={skip}:end_sample={skip + keep},asetpts=PTS-STARTPTS");
+        var key = Formats.Key(input);
+        var output = OutputPaths.Suffixed(input, "trimmed");
+        string[] sound = ["-map", "0:a:0", "-af", cut, .. Ffmpeg.KeepSound(key, media), "-map_metadata", "0", .. key == "mp3" ? new[] { "-id3v2_version", "3" } : []];
+        // Cover art, where the format keeps it as a picture of its own; without it if that doesn't work.
+        string[] cover = key is "mp3" or "m4a" or "flac" && media.CoverArt ? ["-map", "0:v:0", "-c:v", "copy", "-disposition:v:0", "attached_pic"] : [];
+        ConversionException? failed = null;
+        foreach (var plan in cover.Length > 0 ? new[] { [.. sound, .. cover], sound } : [sound])
+        {
+            try
+            {
+                await Ffmpeg.RunRawAsync(tools, ["-ss", Seconds(seek), "-i", input, .. plan, output], end - from, ctx.Progress, ctx.Cancellation);
+                return output;
+            }
+            catch (ConversionException ex)
+            {
+                failed = ex;
+                OutputPaths.TryDelete(output);
+            }
+        }
+        throw failed!;
     }
 
     /// <summary>The cuts, moved to frames: where the first frame kept starts and where the part ends.</summary>

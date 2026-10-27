@@ -58,6 +58,29 @@ static class Ffmpeg
         _ => throw new ConversionException($"Can't write .{key} audio."),
     };
 
+    /// <summary>
+    /// Encoder settings that keep a file's sound as it was, for tools that have to re-encode it: lossless stays
+    /// lossless, with the same sample format, and lossy keeps its bitrate.
+    /// </summary>
+    public static string[] KeepSound(string key, MediaInfo media)
+    {
+        var bitrate = media.AudioBitrate > 0 ? media.AudioBitrate : media.Bitrate;
+        string[] Rate(string codec, long fallback) =>
+            ["-c:a", codec, "-b:a", string.Create(CultureInfo.InvariantCulture, $"{Math.Max(32, (int)Math.Round((bitrate > 0 ? bitrate : fallback) / 1000.0))}k")];
+        return key switch
+        {
+            "wav" => ["-c:a", media.Audio is { } wav && wav.StartsWith("pcm_", StringComparison.Ordinal) ? wav : "pcm_s16le"],
+            "aiff" => ["-c:a", media.Audio is { } aiff && aiff.StartsWith("pcm_", StringComparison.Ordinal) ? aiff : "pcm_s16be"],
+            "flac" => ["-c:a", "flac"],
+            "mp3" => Rate("libmp3lame", 192_000),
+            "m4a" or "aac" => Rate("aac", 192_000),
+            "ogg" => Rate("libvorbis", 160_000),
+            "opus" => Rate("libopus", 128_000),
+            "wma" => Rate("wmav2", 192_000),
+            _ => AudioEncoder(key),
+        };
+    }
+
     /// <summary>Containers <see cref="VideoEncoder"/> can write; anything else is re-encoded to MP4.</summary>
     public static bool CanEncodeVideo(string key) => key is "mp4" or "m4v" or "mov" or "mkv" or "webm" or "avi" or "wmv";
 

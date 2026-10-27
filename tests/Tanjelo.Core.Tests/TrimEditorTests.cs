@@ -37,6 +37,48 @@ public class TrimEditorTests
     static double FrameTime(int n) => n * 1001 / 30000.0;
 
     [Fact]
+    public async Task Sound_is_trimmed_on_its_shape_to_the_millisecond()
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        // Two seconds of tone between seconds of silence, so the shape shows where to cut.
+        var song = scratch.Tone("song.wav", seconds: 2, channels: 2, filter: "adelay=1000|1000,apad=pad_dur=1");
+        await Ui.Run(async () =>
+        {
+            var (window, editor, host) = await Open(song, "trim", (file, target) => new TrimEditor(file, target, Env.Tools));
+            try
+            {
+                var view = editor.View;
+                Assert.False(view.ShowPictures);
+                Assert.Null(editor.Lossless);                 // no frames, so nothing to say about keyframes
+                Drag(view, 0, 0.9874);
+                Assert.Equal(0.987, editor.Current.Start, 6);
+                Drag(view, editor.Current.End, 3.25);
+                Assert.Equal(3.25, editor.Current.End, 6);
+                Assert.Equal("Keeps 0:00:02.263", editor.Kept);
+                Ui.Render(host, "trim-sound-light");
+                Ui.UseTheme("dark", host);
+                await Ui.Settle();
+                Ui.Render(host, "trim-sound-dark");
+                Ui.UseTheme("light", host);
+
+                TimelineTests.Enter(editor.TimeBox, "1.5");
+                editor.Press(Key.O);
+                Assert.Equal(1.5, editor.Current.End, 6);    // in sound, the part ends at the playhead
+                editor.Press(Key.Home);
+                editor.Press(Key.I);
+                Assert.Equal(0, editor.Current.Start);
+                Assert.Equal("-0:01.5", editor.Result().Parameters["range"]);
+                Assert.False(editor.Result().Parameters.ContainsKey("mode"));
+            }
+            finally
+            {
+                editor.Close();
+            }
+        });
+    }
+
+    [Fact]
     public async Task Handles_keys_and_typed_times_set_the_part_kept()
     {
         Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);

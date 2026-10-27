@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Tanjelo.Core.Tests;
 
 /// <summary>Trimming video to the frame: re-encoded where it must be, copied where both cuts are on keyframes.</summary>
@@ -146,5 +148,76 @@ public class TrimTests
 
         Assert.Equal(message, Assert.Single(result.Failures).Message);
         Assert.Equal(["clip.mp4"], scratch.Files());
+    }
+}
+
+/// <summary>Trimming sound: to the sample in lossless formats, at the same bitrate in lossy ones, with tags and cover art.</summary>
+public class TrimAudioTests
+{
+    /// <summary>Silence with one loud sample at <paramref name="click"/>, so where a cut lands can be read to the sample.</summary>
+    static string Click(Scratch scratch, string name, int click, double seconds = 5, params string[] encode) =>
+        scratch.Ffmpeg(name, ["-f", "lavfi", "-i", $"aevalsrc='if(eq(n,{click}),0.9,0)':s=44100:d={seconds.ToString(CultureInfo.InvariantCulture)}", .. encode]);
+
+    /// <summary>A file's sound as 16-bit mono samples.</summary>
+    static short[] Samples(string path)
+    {
+        using var temp = new Scratch();
+        var raw = temp.Ffmpeg("sound.raw", ["-i", path, "-map", "0:a:0", "-ac", "1", "-f", "s16le", "-acodec", "pcm_s16le"]);
+        var bytes = File.ReadAllBytes(raw);
+        var samples = new short[bytes.Length / 2];
+        Buffer.BlockCopy(bytes, 0, samples, 0, samples.Length * 2);
+        return samples;
+    }
+
+    static int Loudest(short[] samples) => Array.IndexOf(samples, samples.MaxBy(s => Math.Abs((int)s)));
+
+    static async Task<string> Trim(string input, string range)
+    {
+        var engine = Env.Engine();
+        var target = Env.Offered(engine, "trim", [input]);
+        Assert.Equal(Section.Audio, target.Section);
+        Assert.DoesNotContain("mode", target.Parameters.Keys);
+        var result = await engine.RunAsync([input], target.WithParameters(new Dictionary<string, string> { ["range"] = range }), ct: TestContext.Current.CancellationToken);
+        Assert.True(result.Failures.Count == 0, string.Join("; ", result.Failures.Select(f => f.Message)));
+        return Assert.Single(result.Outputs);
+    }
+
+    [Theory]
+    [InlineData("tone.wav", "0.5-1.25", 30000, 22050, 33075)]          // from the start: 0.5 s is sample 22,050
+    [InlineData("tone.wav", "2.5-3", 120000, 110250, 22050)]           // further in, after a seek
+    [InlineData("tone.flac", "0:02.5-0:03", 120000, 110250, 22050)]
+    public async Task Lossless_sound_is_cut_to_the_sample(string name, string range, int click, int first, int length)
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        var input = Click(scratch, name, click);
+
+        var output = await Trim(input, range);
+
+        Assert.Equal(Formats.Key(input), Formats.Key(output));
+        var samples = Samples(output);
+        Assert.Equal(length, samples.Length);
+        Assert.Equal(click - first, Loudest(samples));
+    }
+
+    [Theory]
+    [InlineData("song.mp3", "-c:a", "libmp3lame", "-b:a", "192k", "-id3v2_version", "3")]
+    [InlineData("song.m4a", "-c:a", "aac", "-b:a", "128k")]
+    public async Task Lossy_sound_keeps_its_bitrate_tags_and_cover(string name, params string[] encode)
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        var cover = scratch.Image("cover.png", 64, 64);
+        var input = scratch.Ffmpeg(name, ["-f", "lavfi", "-i", "sine=frequency=440:sample_rate=44100:duration=6", "-i", cover,
+            "-map", "0:a", "-map", "1:v", "-c:v", "png", "-disposition:v:0", "attached_pic", .. encode, "-metadata", "title=Song", "-metadata", "artist=Band"]);
+
+        var output = await Trim(input, "1-4.5");
+
+        var before = Inspect.Bitrate(input);
+        var after = Inspect.Bitrate(output);
+        Assert.True(Math.Abs(after - before) <= before * 0.12, $"{after} bps, the original had {before}");
+        Assert.InRange(Inspect.Media(output).Duration, 3.45, 3.6);
+        Assert.Equal(("Song", "Band"), (Inspect.Tag(output, "title"), Inspect.Tag(output, "artist")));
+        Assert.Contains(Inspect.Media(output).Streams, s => s.Type == "video");     // the cover
     }
 }

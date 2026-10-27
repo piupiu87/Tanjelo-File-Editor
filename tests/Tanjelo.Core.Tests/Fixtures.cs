@@ -369,6 +369,14 @@ static class Inspect
             .Select(m => double.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture)).ToList();
     }
 
+    /// <summary>The first sound track's bitrate in bits a second, or the whole file's when the track doesn't say.</summary>
+    public static long Bitrate(string path)
+    {
+        var stream = Probe(path, "-select_streams", "a:0", "-show_entries", "stream=bit_rate").Trim(',');
+        return long.TryParse(stream, NumberStyles.None, CultureInfo.InvariantCulture, out var rate) ? rate
+            : long.Parse(Probe(path, "-show_entries", "format=bit_rate").Trim(','), CultureInfo.InvariantCulture);
+    }
+
     /// <summary>When the picture starts, after any sound before it, as players show it.</summary>
     public static double PictureStart(string path) => double.Parse(Probe(path, "-select_streams", "V:0", "-show_entries", "stream=start_time"), CultureInfo.InvariantCulture);
 
