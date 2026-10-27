@@ -234,6 +234,37 @@
             </Setter>
         </Style>
 
+        <!-- For settings that go either way from 0, such as contrast: no fill, a mark at the middle, the thumb filled when it's off 0. -->
+        <Style x:Key="CentredSlider" TargetType="Slider" BasedOn="{StaticResource ThinSlider}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid Height="22" Background="Transparent">
+                            <Border Height="4" CornerRadius="2" Background="{DynamicResource Track}" VerticalAlignment="Center" />
+                            <Border Width="2" Height="10" CornerRadius="1" Background="{DynamicResource TextTertiary}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Track x:Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="Slider.DecreaseLarge" Style="{StaticResource SliderPart}" Background="Transparent" />
+                                </Track.DecreaseRepeatButton>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="Slider.IncreaseLarge" Style="{StaticResource SliderPart}" Background="Transparent" />
+                                </Track.IncreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Ellipse Width="14" Height="14" Fill="{DynamicResource AccentButton}" Stroke="{DynamicResource Surface}" StrokeThickness="2" />
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Slim scrollbar: a rounded thumb on an invisible track, no arrow buttons. -->
         <Style TargetType="ScrollBar">
             <Setter Property="Width" Value="10" />

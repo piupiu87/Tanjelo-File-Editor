@@ -33,9 +33,9 @@ ffmpeg and pandoc; Office tests skip there.
 | Project | What's in it |
 |---|---|
 | `src/Tanjelo.Core` | Formats (`Formats.cs`), the engine (`ConverterEngine.cs`), optional tools (`Toolbox.cs`) and one converter per engine in `Converters/` |
-| `src/Tanjelo` | The WPF tray app: hotkey, Explorer selection, the menu, options dialogs, progress cards, the Share sheet and the Float shelf |
+| `src/Tanjelo` | The WPF tray app: hotkey, Explorer selection, the menu, options dialogs, the editors (`Editors/`), progress cards, the Share sheet and the Float shelf |
 | `src/tanj` | The command-line front end |
-| `tests/Tanjelo.Core.Tests` | xUnit tests for the engine, every converter, and the app's pure helpers |
+| `tests/Tanjelo.Core.Tests` | xUnit tests for the engine, every converter, the app's pure helpers, and the editors' windows (`Ui.cs` renders them off-screen) |
 
 ## Adding a conversion or a tool
 
@@ -50,6 +50,10 @@ ffmpeg and pandoc; Office tests skip there.
 5. Tools that need settings declare them with `Target.WithOptions`; the app then shows the options dialog and `tanj`
    takes them as `--name=value`.
 6. Register the class in `ConverterEngine`. When two converters offer the same key for a file, the earlier one wins.
+   Work done by hand, such as drawing on a photo, gets an editor: set `Target.Editor`, and add an `Editor<T>` in
+   `src/Tanjelo/Editors/` whose `Result` fills in the same parameters `tanj` takes, so the engine does the saving. Its
+   tests build the window with `Ui.Host`, drive it through the methods the mouse reaches (such as
+   `ZoomCanvas.PointerDown`), and save renders in light and dark to `%TEMP%	anjelo-testsenders`.
 7. Add tests next to the others, using `Scratch` for fixture files and `Env.Run` to go through the engine the way the
    app does. Skip with `Assert.SkipUnless` when an optional tool is missing.
 8. Update the tables in [README.md](README.md), and [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for any new library.

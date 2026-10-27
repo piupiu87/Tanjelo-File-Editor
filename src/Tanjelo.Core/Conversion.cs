@@ -16,6 +16,9 @@ public enum TargetKind
     Action,
 }
 
+/// <summary>The editors the app has, for tools that set their parameters by hand (see <see cref="Target.Editor"/>).</summary>
+public enum EditorKind { OrganizePdf, Redact, Annotate, Photo }
+
 /// <summary>
 /// One entry in the format menu. <see cref="Key"/> names the output ("png", "mp4", "extract") and is
 /// what multi-file selections are intersected on, so different converters can serve the same key.
@@ -55,6 +58,12 @@ public sealed record Target(string Key, string Label, string Description, Sectio
 
     /// <summary>For actions that show their own window, like the Share sheet: no progress card, only an error if it fails.</summary>
     public bool Quiet { get; init; }
+
+    /// <summary>
+    /// For tools worked by hand, such as putting pages in order or drawing on a photo: the app opens this editor
+    /// instead of the options dialog, and saving fills in the parameters. tanj takes the same parameters as settings.
+    /// </summary>
+    public EditorKind? Editor { get; init; }
 
     public string RunningText => Running ?? $"Converting to {Label}…";
     public string DoneText => Done ?? $"Converted to {Label}";

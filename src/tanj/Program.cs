@@ -105,6 +105,8 @@ switch (args[0])
         foreach (var option in options)
         {
             var (name, value) = option.IndexOf('=') is var eq and > 2 ? (option[2..eq], option[(eq + 1)..]) : (option[2..], "");
+            // A switch on its own, such as --faces, turns it on.
+            if (!option.Contains('=') && target.Options.Any(o => o.Name == name && o.Kind == OptionKind.Toggle)) value = "true";
             if (!target.Parameters.ContainsKey(name))
             {
                 var known = target.Parameters.Count == 0 ? "it has no settings" : "it takes " + string.Join(", ", target.Parameters.Keys.Select(k => "--" + k));

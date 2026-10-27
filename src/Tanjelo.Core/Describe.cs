@@ -19,6 +19,9 @@ public static class Describe
 
     public static string Pixels(int width, int height) => $"{width} × {height}";
 
+    /// <summary>"1 page", "12 pages".</summary>
+    public static string Count(int count, string thing) => count == 1 ? $"1 {thing}" : $"{count} {thing}s";
+
     public static string Rate(double bitsPerSecond) => string.Format(CultureInfo.InvariantCulture, "{0:N0} kbps", bitsPerSecond / 1000);
 
     /// <summary>"52.3676° N, 4.9041° E".</summary>

@@ -287,7 +287,7 @@ internal sealed class PdfText
 
     // ---- OCR
 
-    static OcrEngine? CreateOcrEngine()
+    internal static OcrEngine? CreateOcrEngine()
     {
         try
         {

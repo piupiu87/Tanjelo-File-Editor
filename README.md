@@ -31,6 +31,9 @@ just type: `mute` finds the Mute tool from any tab.
 Tools whose names end in "…" need a few settings first, so they open a small options dialog: it starts from the
 settings you used last time, shows a live preview where that helps, and runs on **Enter** (**Esc** cancels).
 
+Editors (Edit photo, Annotate, Redact, Organize pages) open in a window of their own for one file; see
+[Editors](#tools-and-actions) below.
+
 The shortcut is only grabbed while Explorer or the desktop is in front, so other apps keep their own Ctrl+Shift+Space.
 
 ## What converts to what
@@ -79,6 +82,18 @@ settings as `--name=value`; `tanj options <key> <files>` lists them.
 | Split at… (`split-video-at`) | Video | Moments picked the same way, each starting a new part (`clip-part1.mp4`…); the preview lists the parts. Cut losslessly when keyframes fall on the moments, otherwise re-encoded so every cut is exact | ffmpeg |
 | Make a video… (`visualize`) | Audio | A moving waveform (in a colour you pick) or a still picture, landscape, portrait or square at full HD, on a background colour; the picture can be any file or the audio's own cover art, and the video can cover just part of the sound. Saved as `song-video.mp4` | ffmpeg |
 | Channel volume… (`channel-volume`) | Audio, video | Left and right from 0% (silent) to 400%; in surround sound every left-side and right-side channel follows its side and the centre and bass stay. The preview draws each channel after the change. A video's picture is copied and only its sound re-encoded | ffmpeg |
+
+Editors open in a window of their own, for work done by hand. They're on the Tools tab when one file is selected, and
+work from "Send to" too. Pictures fit the window: the wheel zooms around the pointer, Space+drag (or the middle button)
+pans, Ctrl+0 fits and Ctrl+1 shows every pixel. Undo and redo with Ctrl+Z and Ctrl+Y. Save (Ctrl+S) writes a copy
+beside the original; Cancel asks first when something changed. Every edit can also be made with `tanj`:
+
+| Editor | Works on | What you do | With `tanj` | Engine |
+|---|---|---|---|---|
+| Organize pages… (`organize-pdf`) | PDF | The pages as thumbnails: drag them into a new order (Ctrl and Shift pick several), turn them, copy and delete them, add the pages of other PDFs, and save everything or only the selected pages. Bookmarks are kept, each opening its page's first copy; those for deleted pages go. A PDF's form fields and links between pages don't survive, and the window says so before saving. Saved as `report-organized.pdf` | `--pages="3,1-2,5r90,1"`: ranges run either way, r90, r180 and r270 turn a page clockwise, a page listed twice is copied and one left out is deleted; `--with=other.pdf` adds pages written b1, b2… | PDFsharp, Windows PDF renderer |
+| Redact… (`redact`) | Images | Draw boxes over anything to hide, or have Windows find the faces and the words (its own face detection and OCR, on this PC); every box can be moved, resized or removed before saving. Each is hidden for good, as a solid colour (the safest), big pixels or a strong blur, and what you see is exactly what's saved. The copy also loses the EXIF thumbnail (a small copy from before), the maker note, the location, XMP and IPTC; the camera, the date and the colour profile stay. Saved as `photo-redacted.jpg` | `--boxes="x,y,w,h;…"`, `--faces`, `--text`, `--style=solid` (or `pixelate`, `blur`), `--colour=#000000` | Magick.NET, Windows face detection and OCR |
+| Annotate… (`annotate`) | Images | Arrows, lines, rectangles, ellipses, text, numbered callouts (1, 2, 3… in the order they're made), a magnifier (a 2× loupe) and a freehand pen and highlighter, each in a colour and a line width; text and numbers in three sizes. A new callout or magnifier starts as big as the last one was made. Marks stay editable until saving: pick one to move it, pull its handles, restyle or delete it, double-click text to change it. Each tool shows its key on its button (V select, A arrow, L line, R rectangle, E ellipse, T text, N callout, M magnifier, P pen, H highlighter), and the panel lists the rest. Shift keeps lines to 45° and boxes square, and draws the pen and highlighter straight from where it went down, catching level, upright and 45° when the line is close to them. The marks are drawn at full size the way the editor shows them; the rest of the picture and its metadata stay as they were. Saved as `photo-annotated.jpg` | `--spec=marks.json` or the JSON itself: `{"marks": [{"type": "arrow", "points": [[10, 10], [200, 120]], "colour": "#E5383B", "width": 8}]}`; `tanj options annotate` lists every type | WPF, Magick.NET |
+| Edit photo… (`adjust`) | Images (not GIF or SVG) | Sliders for light (exposure, contrast, highlights, shadows, whites, blacks), colour (temperature, tint, vibrance, saturation), detail (sharpness, clarity, noise reduction) and effects (dehaze, grain, vignette) over a live preview of a screen-sized copy. Hold `\` or Original to compare, double-click a slider to put it back to 0, Reset all, or Auto for a starting point. Light, colour and the vignette are worked out in one floating-point pass, so gradients don't band; the copy keeps its metadata and colour profile. Saved as `photo-edited.jpg` | `--exposure=0.3` (stops, −3 to 3) and `--contrast`, `--highlights`, `--shadows`, `--whites`, `--blacks`, `--temperature`, `--tint`, `--vibrance`, `--saturation`, `--clarity`, `--vignette` (−100 to 100), `--sharpness`, `--noise`, `--dehaze`, `--grain` (0 to 100) | Built in, Magick.NET |
 
 Actions work with the selected files and folders themselves:
 
@@ -155,7 +170,8 @@ tanj options <key> <files...>       # the settings a tool takes, with their defa
 tanj convert <key> <files...>       # e.g. tanj convert mp3 talk.mp4, tanj convert mute talk.mp4
 ```
 
-Some tools take settings, shown in brackets by `tanj targets`. Override them with `--name=value`. Tools that open
+Some tools take settings, shown in brackets by `tanj targets`. Override them with `--name=value`; a setting that is on
+or off can be turned on with its name alone, as in `--faces`. Tools that open
 an options dialog in the app take the same settings here, starting from their defaults (not the dialog's last values):
 
 ```
@@ -167,6 +183,10 @@ tanj convert crop --aspect=16:9 --position=top photo.jpg
 tanj convert save-frames --times=0:05,1:12.5 clip.mp4
 tanj convert join-videos --order=2,1 intro.mp4 talk.mp4
 tanj convert md --page-breaks=true report.pdf     # a --- line between pages
+tanj convert organize-pdf --pages="3,1-2,2r90" report.pdf
+tanj convert redact --faces --style=pixelate team.jpg
+tanj convert annotate --spec=marks.json screenshot.png
+tanj convert adjust --exposure=0.3 --clarity=20 --vibrance=25 photo.jpg
 ```
 
 When a conversion has something to add, such as how many scanned pages were read with OCR, `tanj` prints it on a
@@ -195,9 +215,9 @@ Pushing a tag such as `v0.1.0` makes the GitHub Actions workflow build, test, sm
 | Project | What's in it |
 |---|---|
 | `src/Tanjelo.Core` | Formats, the conversion engine, and one converter per engine (`Converters/`) |
-| `src/Tanjelo` | WPF tray app: hotkey, Explorer selection, the format menu, options dialogs, progress cards |
+| `src/Tanjelo` | WPF tray app: hotkey, Explorer selection, the format menu, options dialogs, the editors (`Editors/`), progress cards |
 | `src/tanj` | Command-line front end |
-| `tests/Tanjelo.Core.Tests` | xUnit tests for the engine and every converter |
+| `tests/Tanjelo.Core.Tests` | xUnit tests for the engine and every converter, and the editors' windows, rendered and driven off-screen |
 
 ## Notes on Office automation
 
@@ -209,8 +229,8 @@ Office sometimes stops on prompts that its "no alerts" setting doesn't cover. Ta
 
 ## Roadmap
 
-Next up: editors, such as a photo editor with a live preview, annotations, redaction with local face and text
-detection, and frame-exact trimming. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are
+Next up: audio and video editors on a shared timeline: frame-exact trimming, trimming audio on a waveform, bleeps,
+and redacting areas of a video. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are
 welcome; open an issue first for anything big, and see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
