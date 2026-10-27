@@ -53,7 +53,10 @@ ffmpeg and pandoc; Office tests skip there.
    Work done by hand, such as drawing on a photo, gets an editor: set `Target.Editor`, and add an `Editor<T>` in
    `src/Tanjelo/Editors/` whose `Result` fills in the same parameters `tanj` takes, so the engine does the saving. Its
    tests build the window with `Ui.Host`, drive it through the methods the mouse reaches (such as
-   `ZoomCanvas.PointerDown`), and save renders in light and dark to `%TEMP%\tanjelo-tests\renders`.
+   `ZoomCanvas.PointerDown`), and save renders in light and dark to `%TEMP%\tanjelo-tests\renders`. Audio and video
+   editors derive from `TimelineEditor<T>`, which brings the player, the timeline and the keys; their tests check
+   frames by number with `Scratch.Numbered` and `Inspect.WhichFrame`, and go in the `Windows player` collection,
+   which runs on its own.
 7. Add tests next to the others, using `Scratch` for fixture files and `Env.Run` to go through the engine the way the
    app does. Skip with `Assert.SkipUnless` when an optional tool is missing.
 8. Describe it in [docs/FORMATS.md](docs/FORMATS.md) or [docs/TOOLS.md](docs/TOOLS.md), add it to the short tables in

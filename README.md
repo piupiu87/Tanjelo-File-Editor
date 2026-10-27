@@ -235,8 +235,8 @@ release.
 
 ## Roadmap
 
-Next up: audio and video editors on a shared timeline: frame-exact trimming, trimming audio on a waveform, bleeps,
-and redacting areas of a video. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are
+Next up: v1.0, ready for everyone: code signing, an installer and a winget package, a settings window, and an
+accessibility pass. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are
 welcome; open an issue first for anything big, and see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License

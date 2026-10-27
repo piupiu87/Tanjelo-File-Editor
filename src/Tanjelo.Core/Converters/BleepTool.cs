@@ -14,7 +14,7 @@ public sealed class BleepTool(Toolbox tools) : IConverter
     /// <summary>How loud the tone is, from 0 to 1: about −13 dB, plainly a bleep without being harsh.</summary>
     const double ToneLevel = 0.3;
 
-    static Target Entry(Section section) => new Target("bleep", "Bleep…", "Tone or silence over parts of the sound", section)
+    static Target Entry(Section section) => new Target("bleep", "Bleep…", "Tone or silence over parts", section)
     {
         Kind = TargetKind.Tool,
         Running = "Bleeping…",

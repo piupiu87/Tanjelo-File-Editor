@@ -89,7 +89,7 @@ public static class VideoBoxSpec
 /// </summary>
 public sealed class VideoRedactTool(Toolbox tools) : IConverter
 {
-    static readonly Target Entry = new Target("redact", "Redact…", "Areas, each for a stretch of time", Section.Video)
+    static readonly Target Entry = new Target("redact", "Redact…", "Areas for stretches of time", Section.Video)
     {
         Kind = TargetKind.Tool,
         Running = "Redacting…",
