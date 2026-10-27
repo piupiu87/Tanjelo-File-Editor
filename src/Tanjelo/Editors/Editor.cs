@@ -14,6 +14,7 @@ abstract class Editor
     public static Editor For(ConverterEngine engine, string file, Target target) => target.Editor switch
     {
         EditorKind.OrganizePdf => new PageEditor(file, target),
+        EditorKind.Redact => new RedactEditor(file, target),
         _ => throw new NotSupportedException($"There's no editor for {target.Key} yet."),
     };
 
@@ -74,6 +75,9 @@ abstract class Editor<T> : Editor
 
     protected T State => History.Current;
 
+    /// <summary>Whether the editor has loaded and has a state.</summary>
+    protected bool Started => _history is not null;
+
     public override bool CanUndo => _history?.CanUndo == true;
     public override bool CanRedo => _history?.CanRedo == true;
     public override bool Changed => _history?.Changed == true;
@@ -99,6 +103,13 @@ abstract class Editor<T> : Editor
     {
         History.Amend(state);
         Show(state);
+        RaiseUpdated();
+    }
+
+    /// <summary>Takes back the step a gesture started, when it came to nothing.</summary>
+    protected void Retract()
+    {
+        Show(History.Discard());
         RaiseUpdated();
     }
 

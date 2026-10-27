@@ -88,6 +88,7 @@ beside the original; Cancel asks first when something changed. Every edit can al
 | Editor | Works on | What you do | With `tanj` | Engine |
 |---|---|---|---|---|
 | Organize pages… (`organize-pdf`) | PDF | The pages as thumbnails: drag them into a new order (Ctrl and Shift pick several), turn them, copy and delete them, add the pages of other PDFs, and save everything or only the selected pages. Bookmarks are kept, each opening its page's first copy; those for deleted pages go. A PDF's form fields and links between pages don't survive, and the window says so before saving. Saved as `report-organized.pdf` | `--pages="3,1-2,5r90,1"`: ranges run either way, r90, r180 and r270 turn a page clockwise, a page listed twice is copied and one left out is deleted; `--with=other.pdf` adds pages written b1, b2… | PDFsharp, Windows PDF renderer |
+| Redact… (`redact`) | Images | Draw boxes over anything to hide, or have Windows find the faces and the words (its own face detection and OCR, on this PC); every box can be moved, resized or removed before saving. Each is hidden for good, as a solid colour (the safest), big pixels or a strong blur, and what you see is exactly what's saved. The copy also loses the EXIF thumbnail (a small copy from before), the maker note, the location, XMP and IPTC; the camera, the date and the colour profile stay. Saved as `photo-redacted.jpg` | `--boxes="x,y,w,h;…"`, `--faces`, `--text`, `--style=solid` (or `pixelate`, `blur`), `--colour=#000000` | Magick.NET, Windows face detection and OCR |
 
 Actions work with the selected files and folders themselves:
 
@@ -164,7 +165,8 @@ tanj options <key> <files...>       # the settings a tool takes, with their defa
 tanj convert <key> <files...>       # e.g. tanj convert mp3 talk.mp4, tanj convert mute talk.mp4
 ```
 
-Some tools take settings, shown in brackets by `tanj targets`. Override them with `--name=value`. Tools that open
+Some tools take settings, shown in brackets by `tanj targets`. Override them with `--name=value`; a setting that is on
+or off can be turned on with its name alone, as in `--faces`. Tools that open
 an options dialog in the app take the same settings here, starting from their defaults (not the dialog's last values):
 
 ```
@@ -177,6 +179,7 @@ tanj convert save-frames --times=0:05,1:12.5 clip.mp4
 tanj convert join-videos --order=2,1 intro.mp4 talk.mp4
 tanj convert md --page-breaks=true report.pdf     # a --- line between pages
 tanj convert organize-pdf --pages="3,1-2,2r90" report.pdf
+tanj convert redact --faces --style=pixelate team.jpg
 ```
 
 When a conversion has something to add, such as how many scanned pages were read with OCR, `tanj` prints it on a

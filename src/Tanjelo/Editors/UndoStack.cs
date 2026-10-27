@@ -45,6 +45,15 @@ sealed class UndoStack<T>
         _states.RemoveRange(_at + 1, _states.Count - _at - 1);
     }
 
+    /// <summary>Takes back the last step as if it never happened, such as a box drawn too small to keep; there's nothing to redo.</summary>
+    public T Discard()
+    {
+        if (!CanUndo) return Current;
+        _states.RemoveRange(_at, _states.Count - _at);
+        _at--;
+        return Current;
+    }
+
     public T Undo()
     {
         if (CanUndo) _at--;
