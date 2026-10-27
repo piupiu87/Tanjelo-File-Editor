@@ -53,10 +53,11 @@ ffmpeg and pandoc; Office tests skip there.
    Work done by hand, such as drawing on a photo, gets an editor: set `Target.Editor`, and add an `Editor<T>` in
    `src/Tanjelo/Editors/` whose `Result` fills in the same parameters `tanj` takes, so the engine does the saving. Its
    tests build the window with `Ui.Host`, drive it through the methods the mouse reaches (such as
-   `ZoomCanvas.PointerDown`), and save renders in light and dark to `%TEMP%	anjelo-testsenders`.
+   `ZoomCanvas.PointerDown`), and save renders in light and dark to `%TEMP%\tanjelo-tests\renders`.
 7. Add tests next to the others, using `Scratch` for fixture files and `Env.Run` to go through the engine the way the
    app does. Skip with `Assert.SkipUnless` when an optional tool is missing.
-8. Update the tables in [README.md](README.md), and [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for any new library.
+8. Describe it in [docs/FORMATS.md](docs/FORMATS.md) or [docs/TOOLS.md](docs/TOOLS.md), add it to the short tables in
+   [README.md](README.md), and list any new library in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 ## Ground rules
 
