@@ -100,6 +100,9 @@ sealed class FramePlayer : IMediaPreview
     }
 
     public BitmapSource? Picture => _picture;
+
+    /// <summary>The file playing.</summary>
+    public string? Source { get; private set; }
     public bool CanPlay => true;
     public bool Playing { get; private set; }
     public double Position => Playing ? _player.PlaybackSession.Position.TotalSeconds : _shown;
@@ -155,6 +158,7 @@ sealed class FramePlayer : IMediaPreview
         {
             var file = await StorageFile.GetFileFromPathAsync(Path.GetFullPath(path)).AsTask(ct);
             _player.Source = MediaSource.CreateFromStorageFile(file);
+            Source = path;
             if (!await opened.Task.WaitAsync(TimeSpan.FromSeconds(10), ct)) return false;
         }
         finally

@@ -273,9 +273,8 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
         if (needsCopy)
             tasks.Add(Task.Run(async () =>
             {
-                _temp ??= OutputPaths.CreateTemp();
                 Progress("Making a copy to play", 0);
-                var copy = await media.PreviewCopyAsync(_temp.Path, new ActionProgress<double>(f => Progress("Making a copy to play", f)), ct);
+                var copy = await media.PreviewCopyAsync(TempFolder,new ActionProgress<double>(f => Progress("Making a copy to play", f)), ct);
                 Progress("Making a copy to play", 1);
                 var opened = await Dispatcher.InvokeAsync(() => FramePlayer.OpenAsync(copy, Video, _frames?.Inside(Frame) ?? _playhead, ct)).Task.Unwrap();
                 if (opened is null) return;
@@ -287,6 +286,7 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
                         return;
                     }
                     PlaysCopy = true;
+                    _copy = copy;
                     Use(opened);
                     if (opened.Picture is { } picture) _canvas.Replace(picture);
                     Seek();
@@ -317,6 +317,20 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
 
     /// <summary>Whether the file plays from a small copy made by ffmpeg, because Windows can't play the file itself.</summary>
     internal bool PlaysCopy { get; private set; }
+
+    /// <summary>The file the player has: the original, or the copy made when Windows can't play it.</summary>
+    protected string PlayingFrom => _copy ?? File;
+
+    string? _copy;
+
+    /// <summary>A folder for files made while the window is open, such as a copy to play; deleted when it closes.</summary>
+    protected string TempFolder
+    {
+        get
+        {
+            lock (_closing) return (_temp ??= OutputPaths.CreateTemp()).Path;
+        }
+    }
 
     Dispatcher Dispatcher => _main.Dispatcher;
 

@@ -15,7 +15,7 @@ Each tool has a key for `tanj` (shown in brackets below), and its settings are p
   [Channel volume](#channel-volume-channel-volume)
 - [Editors](#editors): [the timeline](#audio-and-video-editors-share-a-timeline),
   [Organize pages](#organize-pages-organize-pdf), [Redact](#redact-redact), [Annotate](#annotate-annotate),
-  [Edit photo](#edit-photo-adjust), [Trim](#trim-trim)
+  [Edit photo](#edit-photo-adjust), [Trim](#trim-trim), [Bleep](#bleep-bleep)
 - [Actions](#actions)
 - [Float shelf](#float-shelf)
 
@@ -261,6 +261,27 @@ Drag the start and end handles on the timeline, press I and O at the playhead, o
 ```
 tanj convert trim --range=0:30.033-1:00 clip.mp4
 tanj convert trim --range=1:05.5- --mode=lossless clip.mp4
+```
+
+### Bleep… (`bleep`)
+
+*Audio, video · ffmpeg, Windows' media player*
+
+Drag on the shape of the sound to mark a stretch, then move it or pull its ends. Each stretch is covered with a tone or
+silence. Saved as `talk-bleeped.mp4`.
+
+- I and O set the selected stretch's ends at the playhead, or mark a second's stretch when none is selected; Delete
+  removes one. Stretches that overlap become one.
+- The tone is 1 kHz, or any pitch from 200 Hz to 4 kHz. Bleeps start and stop within about a millisecond and a half of
+  their times; everywhere else the sound is left exactly as it was.
+- After each change the sound is made again in the background, so what plays has the bleeps in.
+- A video's picture is copied, not re-encoded; only its sound is.
+
+**With `tanj`:** `--ranges="0:10-0:12, 0:20-0:21.5"`, `--sound=tone` (or `silence`), `--pitch=1000`.
+
+```
+tanj convert bleep --ranges="0:10-0:12, 0:20-0:21.5" talk.mp4
+tanj convert bleep --ranges=1:02-1:03.5 --sound=silence interview.mp3
 ```
 
 ## Actions

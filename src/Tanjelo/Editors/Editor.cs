@@ -18,6 +18,7 @@ abstract class Editor
         EditorKind.Annotate => new AnnotateEditor(file, target),
         EditorKind.Photo => new PhotoEditor(file, target),
         EditorKind.Trim => new TrimEditor(file, target, engine.Tools),
+        EditorKind.Bleep => new BleepEditor(file, target, engine.Tools),
         _ => throw new NotSupportedException($"There's no editor for {target.Key} yet."),
     };
 

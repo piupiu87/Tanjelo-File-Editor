@@ -23,7 +23,7 @@ independent project, not affiliated with Tangerine.
 - **Tools** do one job on a copy: compress to a size, crop, mute, change the speed, even out the volume, split or merge
   PDFs, join videos, save frames, remove the location and other metadata, and more.
 - **Editors** open a window for work by hand: organize PDF pages, redact faces and text in photos, annotate
-  screenshots, edit photos with live sliders, and trim video and audio on a timeline.
+  screenshots, edit photos with live sliders, and trim and bleep video and audio on a timeline.
 - **Actions** work on the files themselves: copy their paths, open a terminal there, share them, move them, or park
   them on the **Float shelf** and drag them out later.
 - **`tanj`**, the command-line tool, does all of it from scripts.
@@ -113,6 +113,7 @@ silence from its ends; split a PDF into pages, or merge several.
 | Annotate… | Images | Add arrows, shapes, text, numbered callouts, a magnifier, and pen and highlighter strokes |
 | Edit photo… | Images | Adjust light, colour, detail and effects with sliders over a live preview |
 | Trim… | Video, audio | Cut video to the exact frame, without re-encoding when the cuts fall on keyframes, and sound to the sample |
+| Bleep… | Audio, video | Cover stretches of the sound with a tone or silence; a video's picture is copied as it is |
 
 **Actions** work with the files and folders themselves: Copy path, Copy, Open in Terminal, Share…, Float (the shelf)
 and Move to….
@@ -185,6 +186,7 @@ tanj convert redact --faces --style=pixelate team.jpg
 tanj convert annotate --spec=marks.json screenshot.png
 tanj convert adjust --exposure=0.3 --clarity=20 --vibrance=25 photo.jpg
 tanj convert trim --range=0:30.033-1:00 clip.mp4
+tanj convert bleep --ranges="0:10-0:12, 0:20-0:21.5" talk.mp4
 ```
 
 When a conversion has something to add, such as how many scanned pages were read with OCR, `tanj` prints it on a
