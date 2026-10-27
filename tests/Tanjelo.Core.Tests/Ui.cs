@@ -24,7 +24,7 @@ static class Ui
         var ready = new TaskCompletionSource<Dispatcher>();
         var thread = new Thread(() =>
         {
-            var app = new App();
+            var app = WithoutStartup();
             app.InitializeComponent();
             Theme.Preference = "light";
             Theme.Apply(app.Resources);
@@ -38,6 +38,23 @@ static class Ui
         thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
         return ready.Task.Result;
+    }
+
+    /// <summary>
+    /// The app, for its styles and brushes, without its startup. WPF queues Startup as an Application is made and raises
+    /// it once the dispatcher runs; the app's own would go into tray mode, with an icon, the global shortcut and a "ready"
+    /// notification, or open a menu for any file named on the command line.
+    /// </summary>
+    static App WithoutStartup()
+    {
+        var queued = new List<DispatcherOperation>();
+        DispatcherHookEventHandler collect = (_, e) => queued.Add(e.Operation);
+        var dispatcher = Dispatcher.CurrentDispatcher;
+        dispatcher.Hooks.OperationPosted += collect;
+        var app = new App();
+        dispatcher.Hooks.OperationPosted -= collect;
+        foreach (var operation in queued) operation.Abort();
+        return app;
     }
 
     /// <summary>Runs <paramref name="work"/> on the UI thread, one test at a time, since they share the theme.</summary>

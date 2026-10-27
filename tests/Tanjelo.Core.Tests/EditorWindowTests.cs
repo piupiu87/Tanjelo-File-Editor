@@ -120,6 +120,20 @@ public class EditorWindowTests
     }
 
     [Fact]
+    public async Task The_tests_have_the_apps_resources_without_starting_it()
+    {
+        await Ui.Run(async () =>
+        {
+            await Ui.Settle();
+            // Started, it would be in the notification area with the global shortcut, or showing a menu.
+            var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            Assert.Null(typeof(App).GetField("_tray", flags)!.GetValue(System.Windows.Application.Current));
+            Assert.Null(typeof(App).GetField("_menu", flags)!.GetValue(System.Windows.Application.Current));
+            Assert.NotNull(System.Windows.Application.Current.TryFindResource("PrimaryButton"));
+        });
+    }
+
+    [Fact]
     public async Task Cancel_asks_only_when_something_changed_and_Save_hands_back_the_edits()
     {
         using var scratch = new Scratch();
