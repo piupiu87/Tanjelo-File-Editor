@@ -28,6 +28,8 @@ static class Ui
             app.InitializeComponent();
             Theme.Preference = "light";
             Theme.Apply(app.Resources);
+            // Players in the tests never make a sound.
+            Tanjelo.Editors.FramePlayer.Muted = true;
             ready.SetResult(Dispatcher.CurrentDispatcher);
             Dispatcher.Run();
         })

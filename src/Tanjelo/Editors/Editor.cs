@@ -59,6 +59,9 @@ abstract class Editor
     /// <summary>A key pressed while the window is active; true when the editor used it.</summary>
     public virtual bool OnKey(KeyEventArgs e) => false;
 
+    /// <summary>The window closed: let go of players and delete temporary files.</summary>
+    public virtual void Close() { }
+
     /// <summary>A key let go, such as the one held to see the original.</summary>
     public virtual bool OnKeyUp(KeyEventArgs e) => false;
 
