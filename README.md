@@ -80,6 +80,15 @@ settings as `--name=value`; `tanj options <key> <files>` lists them.
 | Make a video… (`visualize`) | Audio | A moving waveform (in a colour you pick) or a still picture, landscape, portrait or square at full HD, on a background colour; the picture can be any file or the audio's own cover art, and the video can cover just part of the sound. Saved as `song-video.mp4` | ffmpeg |
 | Channel volume… (`channel-volume`) | Audio, video | Left and right from 0% (silent) to 400%; in surround sound every left-side and right-side channel follows its side and the centre and bass stay. The preview draws each channel after the change. A video's picture is copied and only its sound re-encoded | ffmpeg |
 
+Editors open in a window of their own, for work done by hand. They're on the Tools tab when one file is selected, and
+work from "Send to" too. Pictures fit the window: the wheel zooms around the pointer, Space+drag (or the middle button)
+pans, Ctrl+0 fits and Ctrl+1 shows every pixel. Undo and redo with Ctrl+Z and Ctrl+Y. Save (Ctrl+S) writes a copy
+beside the original; Cancel asks first when something changed. Every edit can also be made with `tanj`:
+
+| Editor | Works on | What you do | With `tanj` | Engine |
+|---|---|---|---|---|
+| Organize pages… (`organize-pdf`) | PDF | The pages as thumbnails: drag them into a new order (Ctrl and Shift pick several), turn them, copy and delete them, add the pages of other PDFs, and save everything or only the selected pages. Bookmarks are kept, each opening its page's first copy; those for deleted pages go. A PDF's form fields and links between pages don't survive, and the window says so before saving. Saved as `report-organized.pdf` | `--pages="3,1-2,5r90,1"`: ranges run either way, r90, r180 and r270 turn a page clockwise, a page listed twice is copied and one left out is deleted; `--with=other.pdf` adds pages written b1, b2… | PDFsharp, Windows PDF renderer |
+
 Actions work with the selected files and folders themselves:
 
 | Action | What it does |
@@ -167,6 +176,7 @@ tanj convert crop --aspect=16:9 --position=top photo.jpg
 tanj convert save-frames --times=0:05,1:12.5 clip.mp4
 tanj convert join-videos --order=2,1 intro.mp4 talk.mp4
 tanj convert md --page-breaks=true report.pdf     # a --- line between pages
+tanj convert organize-pdf --pages="3,1-2,2r90" report.pdf
 ```
 
 When a conversion has something to add, such as how many scanned pages were read with OCR, `tanj` prints it on a

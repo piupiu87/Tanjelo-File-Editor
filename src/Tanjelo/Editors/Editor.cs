@@ -13,6 +13,7 @@ abstract class Editor
     /// <summary>The editor for a tool entry that names one (<see cref="Target.Editor"/>).</summary>
     public static Editor For(ConverterEngine engine, string file, Target target) => target.Editor switch
     {
+        EditorKind.OrganizePdf => new PageEditor(file, target),
         _ => throw new NotSupportedException($"There's no editor for {target.Key} yet."),
     };
 
