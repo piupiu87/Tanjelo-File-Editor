@@ -165,17 +165,23 @@ public partial class App : Application
     {
         try
         {
-            _menu?.Close();
+            // A new menu replaces one still open, but not an editor, which may hold unsaved work.
+            if (_menu is not Editors.EditorWindow) _menu?.Close();
             var engine = Engine();
             (System.Windows.Input.ModifierKeys, System.Windows.Input.Key)? hotkey =
                 Settings.TryParseHotkey(_settings.Hotkey, out var modifiers, out var key) ? (modifiers, key) : null;
-            var menu = new FormatMenuWindow(files, engine.GetMenu(files), hotkey);
+            var model = engine.GetMenu(files);
+            // Editors work on one file at a time; tanj can still apply the same edits to several.
+            if (files.Count > 1) model = model with { Targets = model.Targets.Where(t => t.Editor is null).ToList() };
+            var menu = new FormatMenuWindow(files, model, hotkey);
             _menu = menu;
             var target = await menu.PickAsync();
             if (_menu == menu) _menu = null;
+            if (target?.Editor is not null)
+                target = await EditAsync(engine, files[0], target);
             if (target?.FolderPrompt is not null)
                 target = AskForFolder(target);
-            if (target is { Options.Count: > 0 })
+            if (target is { Options.Count: > 0, Editor: null })
                 target = await AskForOptionsAsync(engine, files, target);
             if (target is not null)
                 await ConvertAsync(engine, files, target);
@@ -218,6 +224,16 @@ public partial class App : Application
         if (_menu == dialog) _menu = null;
         if (chosen is not null) memory.Store(chosen);
         return chosen;
+    }
+
+    /// <summary>For editors: opens the file in one and returns the entry with the edits filled in, or null if canceled.</summary>
+    async Task<Target?> EditAsync(ConverterEngine engine, string file, Target target)
+    {
+        var window = new Editors.EditorWindow(file, target, Editors.Editor.For(engine, file, target));
+        _menu = window;
+        var edited = await window.EditAsync();
+        if (_menu == window) _menu = null;
+        return edited;
     }
 
     async Task ConvertAsync(ConverterEngine engine, IReadOnlyList<string> files, Target target)

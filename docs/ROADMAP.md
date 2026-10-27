@@ -95,7 +95,7 @@ Sharing
 
 A shared editor window first, then the editors that use it.
 
-- [ ] Editor window: zoom and pan, undo, save beside the original; every edit can also be applied with `tanj` (M)
+- [x] Editor window: zoom and pan, undo, save beside the original; every edit can also be applied with `tanj` (M)
 - [ ] Organize PDF pages in a thumbnail grid: reorder, rotate, duplicate, delete; bookmarks kept (L)
 - [ ] Redact photos, with local face and text detection; redactions are burned in and revealing metadata removed (L)
 - [ ] Annotate photos: arrows, shapes, text, numbered callouts, magnifier, freehand (L)
