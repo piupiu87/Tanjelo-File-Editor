@@ -65,6 +65,7 @@ sealed class AnnotateEditor : Editor<ImmutableList<Mark>>, ICanvasTool
     Colour _colour;
     double _width = 2, _size = 1.6; // shares of the picture's unit
     double _unit = 1;               // a thousandth of the picture's longer side, at least a pixel
+    readonly Dictionary<MarkKind, double> _lastSize = []; // the size callouts and magnifiers were last given, for the next one
     int? _selected;
 
     // A gesture on the canvas.
@@ -135,6 +136,7 @@ sealed class AnnotateEditor : Editor<ImmutableList<Mark>>, ICanvasTool
         var (sizes, showSize) = Panels.Chips(Sizes, "1.6", value =>
         {
             _size = double.Parse(value, System.Globalization.CultureInfo.InvariantCulture);
+            _lastSize[MarkKind.Callout] = CalloutSize;
             Restyle(m => m.Kind switch
             {
                 MarkKind.Text => m with { Size = TextSize },
@@ -395,6 +397,7 @@ sealed class AnnotateEditor : Editor<ImmutableList<Mark>>, ICanvasTool
             _ => _before,
         };
         if (next == State[s]) return;
+        if (_grab == Grab.Size && next.Kind is MarkKind.Callout or MarkKind.Magnifier) _lastSize[next.Kind] = next.Size;
         if (_committed) Amend(State.SetItem(s, next));
         else Commit(State.SetItem(s, next));
         _committed = true;
@@ -427,7 +430,13 @@ sealed class AnnotateEditor : Editor<ImmutableList<Mark>>, ICanvasTool
         Points = [.. points.Select(MarkPoint.From)],
         Colour = _colour.ToString(),
         Width = kind == MarkKind.Magnifier ? Math.Max(2, Math.Round(3 * _unit)) : kind == MarkKind.Highlighter ? LineWidth * 4 : LineWidth,
-        Size = kind switch { MarkKind.Text => TextSize, MarkKind.Callout => CalloutSize, MarkKind.Magnifier => MagnifierSize, _ => 48 },
+        Size = kind switch
+        {
+            MarkKind.Text => TextSize,
+            // A new callout or magnifier is as big as the last one was made.
+            MarkKind.Callout or MarkKind.Magnifier => _lastSize.GetValueOrDefault(kind, kind == MarkKind.Callout ? CalloutSize : MagnifierSize),
+            _ => 48,
+        },
     };
 
     /// <summary>

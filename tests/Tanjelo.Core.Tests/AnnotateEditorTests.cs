@@ -92,6 +92,63 @@ public class AnnotateEditorTests
     }
 
     [Fact]
+    public async Task New_callouts_and_magnifiers_are_as_big_as_the_last_one()
+    {
+        using var scratch = new Scratch();
+        var photo = scratch.Photo("photo.png", 1200, 800);
+        await Ui.Run(async () =>
+        {
+            var target = Env.Offered(Env.Engine(), "annotate", [photo]);
+            var editor = new AnnotateEditor(photo, target);
+            var window = new EditorWindow(photo, target, editor);
+            var host = Ui.Host(window, 1200, 800);
+            await window.LoadAsync();
+            await Ui.Settle();
+            Ui.Layout(host);
+            var canvas = editor.Canvas;
+
+            // A magnifier pulled bigger by its handle; the next one starts that big.
+            editor.Use(Tool.Magnifier);
+            Click(canvas, new Point(300, 300));
+            var first = editor.Marks[^1].Size;
+            editor.Use(Tool.Select);
+            Click(canvas, new Point(300, 300));
+            Drag(canvas, new Point(300 + first / 2, 300), new Point(300 + first / 2 + 60, 300));
+            var pulled = editor.Marks[^1].Size;
+            Assert.Equal(first + 120, pulled, 0);
+            editor.Use(Tool.Magnifier);
+            Click(canvas, new Point(900, 500));
+            Assert.Equal(pulled, editor.Marks[^1].Size);
+
+            // The same for callouts, kept apart from magnifiers.
+            editor.Use(Tool.Callout);
+            Click(canvas, new Point(600, 120));
+            var callout = editor.Marks[^1].Size;
+            Assert.NotEqual(pulled, callout);
+            editor.Use(Tool.Select);
+            Click(canvas, new Point(600, 120));
+            Drag(canvas, new Point(600 + callout / 2, 120), new Point(600 + callout / 2 - 10, 120));
+            var smaller = editor.Marks[^1].Size;
+            Assert.True(smaller < callout);
+            editor.Use(Tool.Callout);
+            Click(canvas, new Point(700, 120));
+            Assert.Equal(smaller, editor.Marks[^1].Size);
+            Click(canvas, new Point(800, 120));
+            Assert.Equal(smaller, editor.Marks[^1].Size);
+
+            // Picking a size for text and numbers with nothing selected sets the next callout's size.
+            editor.Use(Tool.Select);
+            Click(canvas, new Point(50, 750));                                   // nothing there
+            var sizes = (WrapPanel)((StackPanel)((StackPanel)editor.Panel).Children[4]).Children[1];
+            ((RadioButton)sizes.Children[2]).IsChecked = true;                  // Large
+            editor.Use(Tool.Callout);
+            Click(canvas, new Point(900, 120));
+            Assert.True(editor.Marks[^1].Size > callout, "a large callout");
+            Assert.Equal(pulled, editor.Marks.First(m => m.Kind == MarkKind.Magnifier && m.Start.X > 800).Size);
+        });
+    }
+
+    [Fact]
     public async Task Marks_are_drawn_picked_moved_restyled_and_typed()
     {
         using var scratch = new Scratch();
