@@ -58,7 +58,7 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
         CanvasPart.ViewChanged += DrawFrames;
 
         _faces = Panels.Button("", "Find faces", "Add a box over each face on the frame showing, found on this PC", () => _ = FindFacesAsync());
-        _follow = Panels.Button("", "Follow face", "Move the selected box with its face through its stretch, using Windows' face tracker", () => _ = FollowAsync());
+        _follow = Panels.Button("", "Follow face", "Move the selected box with its face through its stretch, found again on this PC", () => _ = FollowAsync());
         _faces.IsEnabled = Redaction.CanFindFaces;
         _follow.IsEnabled = false;
         if (!_faces.IsEnabled) _faces.ToolTip = "Windows can't look for faces on this PC";

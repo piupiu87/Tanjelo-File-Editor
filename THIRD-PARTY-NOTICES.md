@@ -14,7 +14,7 @@ Tanjelo's own code is MIT-licensed (see [LICENSE](LICENSE)). It builds on the co
 | [Markdig](https://github.com/xoofx/markdig) 1.5.0 (`Markdig.dll`) | BSD-2-Clause, © Alexandre Mutel | Reads Markdown for Markdown → HTML, PDF and TXT. Licence in `licenses/Markdig-LICENSE.txt`. |
 | [WebView2 SDK](https://www.nuget.org/packages/Microsoft.Web.WebView2) 1.0.4314.35 (`Microsoft.Web.WebView2.*.dll`, `WebView2Loader.dll`) | BSD-3-Clause-style licence, © Microsoft Corporation | Drives the WebView2 runtime that is part of Windows, to print pages to PDF. Licence in `licenses/WebView2-LICENSE.txt`. |
 | [Microsoft.Extensions.Logging.Abstractions](https://github.com/dotnet/runtime), Microsoft.Extensions.DependencyInjection.Abstractions and (next to `tanj.exe`) System.Security.Cryptography.Pkcs | MIT, © .NET Foundation | Required by PDFsharp |
-| [YuNet](https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet) face detection model (`face_detection_yunet_2026may.onnx`, inside `Tanjelo.Core.dll`) | MIT, © 2020 Shiqi Yu | Finds faces for Redact, run by Windows' own machine learning. From OpenCV Zoo; trained on the WIDER FACE dataset. Licence in `licenses/YuNet-LICENSE.txt`. |
+| [YuNet](https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet) face detection model (`face_detection_yunet_2026may.onnx`, inside `Tanjelo.Core.dll`) | MIT, © 2020 Shiqi Yu | Finds faces for Redact, and follows them in video, run by Windows' own machine learning. From OpenCV Zoo; trained on the WIDER FACE dataset. Licence in `licenses/YuNet-LICENSE.txt`. |
 | Microsoft Windows SDK projections for .NET (`Microsoft.Windows.SDK.NET.dll`, `WinRT.Runtime.dll`) | [Windows SDK license terms](https://aka.ms/WinSDKLicenseURL) | Used for what's built into Windows: the PDF renderer, OCR, machine learning, face detection, the HEIF encoder and the Share sheet |
 
 The .NET runtime isn't bundled; users install the [.NET Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) (MIT).
@@ -36,6 +36,6 @@ Tanjelo starts these as separate programs that the user installs, and doesn't re
 | Microsoft Edge WebView2 Runtime | Part of Windows 11 (Microsoft software licence terms); prints Markdown, EPUBs and web pages to PDF |
 | HEIF Image Extensions and HEVC Video Extensions | Microsoft Store apps (Microsoft software licence terms); Windows' HEIF encoder uses them for HEIC output |
 | Windows OCR (`Windows.Media.Ocr`) and its language packs | Part of Windows; reads scanned PDF pages and pictures |
-| Windows Machine Learning (`Windows.AI.MachineLearning`) | Part of Windows; runs YuNet to find faces (on Windows 11) |
+| Windows Machine Learning (`Windows.AI.MachineLearning`) | Part of Windows; runs YuNet to find and follow faces (on Windows 11) |
 
 If you redistribute a build that bundles any of these (for example FFmpeg next to the app), that build takes on their license obligations too.

@@ -216,4 +216,52 @@ public class VideoRedactTests
         Assert.InRange(moved, 120, 220);               // about 180 pixels in 3 seconds
         Assert.InRange(track[^1].Y - track[0].Y, -20, 20);
     }
+
+    /// <summary>A photo from Fixtures this wide, sliding right across a grey picture 60 pixels a second for 4 seconds, and its first frame.</summary>
+    static async Task<(string Walk, MagickImage First)> Slide(Scratch scratch, string photo, int width, string size)
+    {
+        var walk = scratch.Ffmpeg(photo + ".mp4", ["-f", "lavfi", "-i", $"color=c=gray:s={size}:r=25:d=4", "-loop", "1", "-i", Path.Combine(AppContext.BaseDirectory, "Fixtures", photo),
+            "-filter_complex", $"[1:v]scale={width}:-2[p];[0:v][p]overlay=x='20+60*t':y=40:shortest=1", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-t", "4"]);
+        return (walk, new MagickImage(await Task.Run(() => Ffmpeg.FrameAsync(Env.Tools, walk, 0, 0, TestContext.Current.CancellationToken))));
+    }
+
+    [Theory]
+    [InlineData("side-on-faces.jpg")]
+    [InlineData("masked-faces.jpg")]
+    public async Task Faces_turned_aside_or_masked_are_followed(string photo)
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        Assert.SkipUnless(YuNet.IsAvailable, "Windows can't run the face finder on this PC (it needs Windows 11)");
+        using var scratch = new Scratch();
+        var (walk, first) = await Slide(scratch, photo, 900, "1280x720");
+        using var _ = first;
+        var faces = await Redaction.FindFacesAsync(first);
+        Assert.Equal(2, faces.Count);
+        // Windows' own face tracker lost each of these at once.
+        foreach (var face in faces)
+        {
+            var track = await FaceFollow.TrackAsync(Env.Tools, walk, face, 0, 4, new ActionProgress<double>(_ => { }), TestContext.Current.CancellationToken);
+            Assert.True(track[^1].At > 3.8, $"the face at {face} was lost at {track[^1].At:0.00} s");
+            Assert.InRange(track[^1].X - track[0].X, 200, 275);   // about 236 pixels by then
+            Assert.InRange(track[^1].Y - track[0].Y, -12, 12);
+        }
+    }
+
+    [Fact]
+    public async Task A_face_in_a_crowd_is_followed_not_its_neighbours()
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        Assert.SkipUnless(YuNet.IsAvailable, "Windows can't run the face finder on this PC (it needs Windows 11)");
+        using var scratch = new Scratch();
+        // Rows of faces 16 to 32 pixels across, the nearest about 40 pixels apart.
+        var (walk, first) = await Slide(scratch, "group-photo.jpg", 1600, "1920x1080");
+        using var _ = first;
+        var faces = await Redaction.FindFacesAsync(first);
+        Assert.True(faces.Count >= 50, $"{faces.Count} faces found");
+        var face = faces.MinBy(f => Math.Abs(f.X + f.Width / 2 - 820) + Math.Abs(f.Y + f.Height / 2 - 200));
+        var track = await FaceFollow.TrackAsync(Env.Tools, walk, face, 0, 4, new ActionProgress<double>(_ => { }), TestContext.Current.CancellationToken);
+        Assert.True(track[^1].At > 3.8, $"the face at {face} was lost at {track[^1].At:0.00} s");
+        Assert.InRange(track[^1].X - track[0].X, 215, 257);       // about 236 pixels: not a neighbour's face
+        Assert.InRange(track[^1].Y - track[0].Y, -8, 8);
+    }
 }

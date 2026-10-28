@@ -372,20 +372,26 @@ public sealed class VideoRedactTool(Toolbox tools) : IConverter
 }
 
 /// <summary>
-/// Follows a face through a stretch of video with Windows' own face tracker, on this PC, so a box can move with it.
+/// Follows a face through a stretch of video, on this PC, so a box can move with it: by finding the faces in each frame
+/// looked at with YuNet, or on Windows 10, which can't run YuNet, with Windows' own face tracker.
 /// </summary>
 public static class FaceFollow
 {
     /// <summary>Frames a second looked at: enough to keep up with a face, and quick.</summary>
     const int Rate = 15;
 
-    /// <summary>The widest picture looked at; faces are found well at this size.</summary>
+    /// <summary>How big YuNet is shown the face, in pixels across: well inside the 10 to 300 it finds, as the face moves nearer or away.</summary>
+    const int FaceSize = 64;
+
+    /// <summary>The widest picture Windows' tracker looks at; it finds faces well at this size.</summary>
     const int Widest = 640;
 
     /// <summary>How long a face can go missing, in seconds, before it counts as gone and the box stops there.</summary>
     const double Lost = 0.5;
 
-    public static bool CanFollow
+    public static bool CanFollow => YuNet.IsAvailable || WindowsFollows;
+
+    static bool WindowsFollows
     {
         get
         {
@@ -393,6 +399,12 @@ public static class FaceFollow
             catch (Exception ex) when (ex is not OutOfMemoryException) { return false; }
         }
     }
+
+    /// <summary>The smallest square YuNet looks at around a face, in pixels of the frames it's given.</summary>
+    const int Around = 256;
+
+    /// <summary>The faces in one frame looked at, in the video's own pixels, given the frame's pixels and number and where the face was last.</summary>
+    delegate Task<IEnumerable<RedactBox>> FacesIn(byte[] pixels, int number, RedactBox last);
 
     /// <summary>
     /// Where the face in <paramref name="start"/> (a box as <see cref="Redaction.FindFacesAsync"/> makes them, around a
@@ -404,48 +416,80 @@ public static class FaceFollow
     {
         if (!CanFollow) throw new ConversionException("Windows can't follow faces on this PC.");
         var media = await Ffmpeg.ProbeAsync(tools, input, ct);
-        var scale = Math.Min(1, (double)Widest / Math.Max(1, media.Width));
-        int width = Math.Max(2, (int)Math.Round(media.Width * scale / 2) * 2), height = Math.Max(2, (int)Math.Round(media.Height * scale / 2) * 2);
-        var (sx, sy) = ((double)media.Width / width, (double)media.Height / height);
-        var tracker = await FaceTracker.CreateAsync();
+        if (YuNet.IsAvailable)
+        {
+            // Frames sized for the face: a small one in a crowd is looked at enlarged, a close-up smaller and quicker.
+            var (width, height) = Size(media, Math.Clamp(media.Width * FaceSize / (double)Math.Max(1, start.Width), Math.Min(320, media.Width), Math.Min(1920, 2 * media.Width)));
+            var (sx, sy) = ((float)media.Width / width, (float)media.Height / height);
+            using var finder = new YuNet.Finder();
+            return await FollowAsync(tools, input, start, from, to, width, height, "bgr24", width * height * 3, (pixels, _, last) =>
+            {
+                // Only around where the face was last, as it can't have gone far: a small square is quick to look at.
+                var side = Math.Max(Around, 6 * Math.Max(last.Width / sx, last.Height / sy));
+                var (cx, cy) = ((last.X + last.Width / 2.0) / sx, (last.Y + last.Height / 2.0) / sy);
+                var area = new RedactBox((int)(cx - side / 2), (int)(cy - side / 2), (int)side, (int)side).Within(width, height) ?? new RedactBox(0, 0, width, height);
+                return Task.FromResult(finder.Look(pixels, width, height, area).Select(f => f.Scaled(sx, sy).Box()));
+            }, progress, ct);
+        }
 
+        var (w, h) = Size(media, Math.Min(Widest, media.Width));
+        var (tx, ty) = ((double)media.Width / w, (double)media.Height / h);
+        var tracker = await FaceTracker.CreateAsync();
+        // The tracker takes grey pictures on some PCs and only NV12 on others; ffmpeg makes whichever it takes.
+        var gray = FaceTracker.GetSupportedBitmapPixelFormats().Contains(BitmapPixelFormat.Gray8);
+        var (format, ffmpegFormat, size) = gray ? (BitmapPixelFormat.Gray8, "gray", w * h) : (BitmapPixelFormat.Nv12, "nv12", w * h * 3 / 2);
+        return await FollowAsync(tools, input, start, from, to, w, h, ffmpegFormat, size, async (pixels, n, _) =>
+        {
+            using var bitmap = SoftwareBitmap.CreateCopyFromBuffer(pixels.AsBuffer(), format, w, h);
+            using var frame = Windows.Media.VideoFrame.CreateWithSoftwareBitmap(bitmap);
+            // The tracker follows faces through time, so each frame says when it is.
+            frame.RelativeTime = frame.SystemRelativeTime = TimeSpan.FromSeconds((double)n / Rate);
+            frame.Duration = TimeSpan.FromSeconds(1.0 / Rate);
+            try
+            {
+                var faces = await tracker.ProcessNextFrameAsync(frame);
+                return faces.Select(f => new RedactBox((int)Math.Round(f.FaceBox.X * tx), (int)Math.Round(f.FaceBox.Y * ty),
+                    (int)Math.Round(f.FaceBox.Width * tx), (int)Math.Round(f.FaceBox.Height * ty)).Grown(0.2, 0.4, 0.25)).ToList();
+            }
+            catch (System.Runtime.InteropServices.COMException ex)
+            {
+                throw new ConversionException($"Windows' face tracker couldn't look at the video (0x{ex.HResult:X8}).", ex);
+            }
+        }, progress, ct);
+    }
+
+    /// <summary>The video's frames this wide, both sides even.</summary>
+    static (int Width, int Height) Size(MediaInfo media, double width)
+    {
+        var scale = width / Math.Max(1, media.Width);
+        return (Math.Max(2, (int)Math.Round(media.Width * scale / 2) * 2), Math.Max(2, (int)Math.Round(media.Height * scale / 2) * 2));
+    }
+
+    static async Task<IReadOnlyList<BoxAt>> FollowAsync(Toolbox tools, string input, RedactBox start, double from, double to,
+        int width, int height, string format, int size, FacesIn facesIn, IProgress<double> progress, CancellationToken ct)
+    {
         var track = new List<BoxAt> { new(from, start.X, start.Y, start.Width, start.Height) };
         var last = start;
         var lastSeen = from;
         var length = Math.Max(0.001, to - from);
-        // The tracker takes grey pictures on some PCs and only NV12 on others; ffmpeg makes whichever it takes.
-        var gray = FaceTracker.GetSupportedBitmapPixelFormats().Contains(BitmapPixelFormat.Gray8);
-        var (format, ffmpegFormat, size) = gray ? (BitmapPixelFormat.Gray8, "gray", width * height) : (BitmapPixelFormat.Nv12, "nv12", width * height * 3 / 2);
         using var stop = CancellationTokenSource.CreateLinkedTokenSource(ct);
         try
         {
             await Ffmpeg.PipeAsync(tools.Ffmpeg!, ["-hide_banner", "-nostdin", "-v", "error", "-ss", Seconds(from), "-i", input, "-t", Seconds(length),
-                "-map", "0:V:0", "-vf", $"fps={Rate},scale={width}:{height},format={ffmpegFormat}", "-f", "rawvideo", "-"], async stream =>
+                "-map", "0:V:0", "-vf", $"fps={Rate},scale={width}:{height},format={format}", "-f", "rawvideo", "-"], async stream =>
                 {
                     var pixels = new byte[size];
                     for (var n = 0; await Ffmpeg.FillAsync(stream, pixels, stop.Token); n++)
                     {
                         var at = from + (double)n / Rate;
-                        using var bitmap = SoftwareBitmap.CreateCopyFromBuffer(pixels.AsBuffer(), format, width, height);
-                        using var frame = Windows.Media.VideoFrame.CreateWithSoftwareBitmap(bitmap);
-                        // The tracker follows faces through time, so each frame says when it is.
-                        frame.RelativeTime = frame.SystemRelativeTime = TimeSpan.FromSeconds((double)n / Rate);
-                        frame.Duration = TimeSpan.FromSeconds(1.0 / Rate);
-                        IList<DetectedFace> faces;
-                        try
-                        {
-                            faces = await tracker.ProcessNextFrameAsync(frame);
-                        }
-                        catch (System.Runtime.InteropServices.COMException ex)
-                        {
-                            throw new ConversionException($"Windows' face tracker couldn't look at the video (0x{ex.HResult:X8}).", ex);
-                        }
-                        // The face nearest where it was last, if it isn't too far: a face can't cross the picture in a frame.
+                        var faces = await facesIn(pixels, n, last);
+                        // The face nearest where it was last, if it isn't too far and, once found, is about the size it was:
+                        // a face can't cross the picture or double in a frame, so a neighbour's face isn't taken for it.
+                        // (A box drawn by hand can be any size around the face.)
+                        var found = track.Count > 1;
                         var nearest = faces
-                            .Select(f => new RedactBox((int)Math.Round(f.FaceBox.X * sx), (int)Math.Round(f.FaceBox.Y * sy),
-                                (int)Math.Round(f.FaceBox.Width * sx), (int)Math.Round(f.FaceBox.Height * sy)).Grown(0.2, 0.4, 0.25))
                             .Select(b => (Box: b, Off: Distance(b, last)))
-                            .Where(c => c.Off < Math.Max(last.Width, last.Height))
+                            .Where(c => c.Off < Math.Max(last.Width, last.Height) && (!found || (c.Box.Width < 2 * last.Width && 2 * c.Box.Width > last.Width)))
                             .OrderBy(c => c.Off)
                             .Select(c => (RedactBox?)c.Box)
                             .FirstOrDefault();
