@@ -138,17 +138,8 @@ public sealed class BleepTool(Toolbox tools) : IConverter
         return [output];
     }
 
-    /// <summary>
-    /// A copy for the editor to play while it's open: the picture copied from <paramref name="source"/> (the file playing,
-    /// which may be a smaller copy of the original) and the sound bleeped, as AAC. About a second for two minutes.
-    /// </summary>
-    public static async Task<string> PreviewAsync(Toolbox tools, string source, IReadOnlyList<Bleep> bleeps, string folder, CancellationToken ct)
-    {
-        var media = await Ffmpeg.ProbeAsync(tools, source, ct);
-        var output = Path.Combine(folder, "bleeped-" + Guid.NewGuid().ToString("N")[..8] + (media.Video is not null ? ".mp4" : ".m4a"));
-        await RenderAsync(tools, source, media, bleeps, output, ["-c:a", "aac", "-b:a", "192k"], new ActionProgress<double>(_ => { }), ct);
-        return output;
-    }
+    /// <summary>The tone's level in each channel, as ffmpeg's mix gives it: full in mono, and 3 dB down in each of two or more.</summary>
+    internal static double ToneIn(int channels) => channels == 1 ? ToneLevel : ToneLevel / Math.Sqrt(2);
 
     /// <summary>
     /// The sound muted inside every stretch, mixed with one tone per pitch that sounds only inside its own stretches.
@@ -211,5 +202,113 @@ public sealed class BleepTool(Toolbox tools) : IConverter
             "wmv" => ["-c:a", "wmav2", "-b:a", kbps],
             _ => ["-c:a", "aac", "-b:a", kbps],
         };
+    }
+}
+
+/// <summary>
+/// The sound of a file as plain 16-bit samples, for an editor to hear bleeps before saving: decoded once, then each set
+/// of bleeps is written into a copy of it in moments, sample-exact, instead of having ffmpeg make the whole sound again.
+/// </summary>
+public sealed class BleepSound
+{
+    readonly string _wave;
+    readonly long _data;
+    readonly long _length;
+    int _made;
+
+    BleepSound(string wave, long data, long length, int rate, int channels)
+    {
+        _wave = wave;
+        _data = data;
+        _length = length;
+        Rate = rate;
+        Channels = channels;
+    }
+
+    public int Rate { get; }
+    public int Channels { get; }
+
+    /// <summary>Decodes the first sound track into a WAV in <paramref name="folder"/>: about half a second for five minutes.</summary>
+    public static async Task<BleepSound> DecodeAsync(Toolbox tools, string input, string folder, CancellationToken ct)
+    {
+        var wave = Path.Combine(folder, "sound.wav");
+        await Ffmpeg.RunAsync(tools, input, wave, ["-map", "0:a:0", "-vn", "-c:a", "pcm_s16le", "-rf64", "auto"], 0, new ActionProgress<double>(_ => { }), ct);
+        return Read(wave);
+    }
+
+    /// <summary>Finds the samples in a 16-bit WAV that ffmpeg wrote: where they start, how many bytes, at what rate.</summary>
+    internal static BleepSound Read(string wave)
+    {
+        using var file = File.OpenRead(wave);
+        using var reader = new BinaryReader(file);
+        var riff = new string(reader.ReadChars(4));
+        if (riff is not ("RIFF" or "RF64")) throw new ConversionException("Couldn't read the sound ffmpeg made.");
+        reader.ReadUInt32();
+        reader.ReadChars(4);
+        int rate = 0, channels = 0;
+        long big = -1;
+        while (file.Position + 8 <= file.Length)
+        {
+            var id = new string(reader.ReadChars(4));
+            long size = reader.ReadUInt32();
+            var next = file.Position + size + (size & 1);
+            switch (id)
+            {
+                case "ds64":
+                    reader.ReadUInt64();
+                    big = (long)reader.ReadUInt64();
+                    break;
+                case "fmt ":
+                    reader.ReadUInt16();
+                    channels = reader.ReadUInt16();
+                    rate = (int)reader.ReadUInt32();
+                    break;
+                case "data":
+                    var length = big >= 0 && size == uint.MaxValue ? big : size;
+                    if (rate <= 0 || channels <= 0) throw new ConversionException("Couldn't read the sound ffmpeg made.");
+                    return new BleepSound(wave, file.Position, Math.Min(length, file.Length - file.Position), rate, channels);
+            }
+            file.Position = next;
+        }
+        throw new ConversionException("Couldn't read the sound ffmpeg made.");
+    }
+
+    /// <summary>
+    /// A copy of the sound with these bleeps in, as the saved file will have them (a tone at its level, or silence), as a
+    /// new WAV beside the decoded one. The copy is the only work that grows with the length: a second or so for an hour.
+    /// </summary>
+    public string Write(IReadOnlyList<Bleep> bleeps)
+    {
+        var made = Path.Combine(Path.GetDirectoryName(_wave)!, $"bleeped-{Interlocked.Increment(ref _made)}.wav");
+        File.Copy(_wave, made, overwrite: true);
+        using var file = new FileStream(made, FileMode.Open, FileAccess.Write, FileShare.Read);
+        var frame = 2 * Channels;
+        var frames = _length / frame;
+        var level = BleepTool.ToneIn(Channels) * short.MaxValue;
+        var buffer = new byte[frame * 4096];
+        foreach (var bleep in bleeps)
+        {
+            long first = Math.Clamp((long)Math.Round(bleep.Start * Rate), 0, frames), last = Math.Clamp((long)Math.Round(bleep.End * Rate), 0, frames);
+            file.Position = _data + first * frame;
+            for (var at = first; at < last;)
+            {
+                var count = (int)Math.Min(4096, last - at);
+                Array.Clear(buffer);
+                if (bleep.Tone)
+                {
+                    // The same tone as the saved file: one wave from the start of the sound, heard where the stretches are.
+                    var step = 2 * Math.PI * bleep.Pitch / Rate;
+                    for (var i = 0; i < count; i++)
+                    {
+                        var sample = (short)Math.Round(level * Math.Sin(step * (at + i)));
+                        for (var c = 0; c < Math.Min(2, Channels); c++)
+                            BitConverter.TryWriteBytes(buffer.AsSpan(i * frame + c * 2, 2), sample);
+                    }
+                }
+                file.Write(buffer, 0, count * frame);
+                at += count;
+            }
+        }
+        return made;
     }
 }

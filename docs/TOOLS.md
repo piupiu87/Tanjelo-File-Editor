@@ -273,8 +273,10 @@ Silence. Saved as `talk-bleeped.mp4`.
 
 - Click a stretch (on the timeline or in the list) to see and change what covers it: Tone or Silence, and the pitch,
   from 200 Hz to 4 kHz. With none selected, the same controls set what new stretches get.
-- **Hear it** (H) plays the selected stretch with a second either side. After each change the sound is made again in the
-  background, so whatever plays has the bleeps in; the panel says when it's ready.
+- **Hear it** (H) plays the selected stretch with a second either side, and whatever plays has the bleeps in. The
+  sound is decoded once as the window opens (about half a second for five minutes); after that each change is ready
+  to hear in moments, however long the file. A video's picture plays from the file itself, with the bleeped sound in
+  step beside it.
 - I and O set the selected stretch's ends at the playhead, or mark a second's stretch when none is selected; Tab selects
   the next one and Delete removes it. A stretch drawn over another covered the same way joins it; over one covered
   differently, it takes that part.

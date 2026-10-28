@@ -136,6 +136,72 @@ public class BleepEditorTests
     }
 
     [Fact]
+    public async Task A_change_is_ready_to_hear_in_moments_even_in_a_long_file()
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        var talk = scratch.Tone("talk.m4a", seconds: 600, channels: 2);   // ten minutes
+        await Ui.Run(async () =>
+        {
+            var (_, editor, _) = await TrimEditorTests.Open(talk, "bleep", (file, target) => new BleepEditor(file, target, Env.Tools));
+            try
+            {
+                TrimEditorTests.Drag(editor.View, 100, 130);
+                await editor.SoundReady;                               // the first waits for the sound to be decoded
+                var clock = System.Diagnostics.Stopwatch.StartNew();
+                editor.SetSound(tone: false);
+                await editor.SoundReady;
+                // Making the whole sound again with ffmpeg took about 8 seconds for ten minutes.
+                Assert.True(clock.Elapsed < TimeSpan.FromSeconds(2), $"ready after {clock.Elapsed.TotalSeconds:0.0} s");
+                Assert.StartsWith("Ready", editor.Hearing);
+            }
+            finally
+            {
+                editor.Close();
+            }
+        });
+    }
+
+    [Fact]
+    public async Task A_videos_bleeped_sound_plays_beside_the_picture_in_step()
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        var clip = scratch.Numbered("talk.mp4", seconds: 6);
+        await Ui.Run(async () =>
+        {
+            var (_, editor, _) = await TrimEditorTests.Open(clip, "bleep", (file, target) => new BleepEditor(file, target, Env.Tools));
+            try
+            {
+                if (editor.Preview is not FramePlayer player) { Assert.Skip("Windows' player can't play video on this PC"); return; }
+                TrimEditorTests.Drag(editor.View, 0.95, 1.2);
+                await editor.SoundReady;
+                var sound = Assert.IsType<SoundPlayer>(editor.Sound);
+                Assert.True(player.SoundOff);                          // the picture's own sound is off
+                editor.Press(Key.Home);
+                editor.Press(Key.Space);
+                await Task.Delay(2500);
+                Assert.True(sound.Playing);
+                var gap = sound.Position - player.Position;
+                Assert.True(Math.Abs(gap) < 0.1, $"the sound is {gap:0.000} s from the picture");
+                editor.Press(Key.Space);
+                Assert.False(sound.Playing);
+
+                // With no stretches left, the video's own sound plays again.
+                editor.Press(Key.Tab);
+                editor.Press(Key.Delete);
+                await editor.SoundReady;
+                Assert.Null(editor.Sound);
+                Assert.False(player.SoundOff);
+            }
+            finally
+            {
+                editor.Close();
+            }
+        });
+    }
+
+    [Fact]
     public async Task A_video_is_bleeped_on_its_own_timeline()
     {
         Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);

@@ -66,6 +66,30 @@ public class BleepTests
     }
 
     [Fact]
+    public async Task The_sound_to_hear_first_has_the_bleeps_written_in_as_the_saved_file_has_them()
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        var song = scratch.Tone("song.mp3", seconds: 4, channels: 2);
+        var bleeps = new[] { new Bleep(1.0, 1.5, Pitch: 2000), new Bleep(2.0, 2.5, Tone: false) };
+
+        var sound = await BleepSound.DecodeAsync(Env.Tools, song, scratch.Dir, TestContext.Current.CancellationToken);
+        var heard = sound.Write(bleeps);
+        var (saved, _) = await BleepOk(song, BleepTool.FormatBleeps(bleeps));
+
+        Assert.Equal((44100, 2), (sound.Rate, sound.Channels));
+        var (decoded, written) = (Samples(scratch.PathOf("sound.wav")), Samples(heard));
+        Assert.Equal(decoded.Length, written.Length);
+        int Sample(double seconds) => (int)Math.Round(seconds * 44100) * 2;
+        // Outside the stretches, every sample as decoded; inside, the tone or nothing at all.
+        Assert.True(decoded.AsSpan(0, Sample(1.0)).SequenceEqual(written.AsSpan(0, Sample(1.0))));
+        Assert.True(decoded.AsSpan(Sample(1.5), Sample(2.0) - Sample(1.5)).SequenceEqual(written.AsSpan(Sample(1.5), Sample(2.0) - Sample(1.5))));
+        Assert.All(written[Sample(2.0)..Sample(2.5)], s => Assert.Equal(0, s));
+        // The tone as loud as in the saved file, within a decibel.
+        Assert.InRange(Level(heard, 1.05, 1.45, 2000) - Level(saved, 1.05, 1.45, 2000), -1, 1);
+    }
+
+    [Fact]
     public async Task Each_stretch_gets_its_own_cover()
     {
         Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);

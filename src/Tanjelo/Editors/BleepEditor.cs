@@ -254,31 +254,48 @@ sealed class BleepEditor : TimelineEditor<BleepState>
 
     // ---- What plays
 
-    /// <summary>Makes the sound again with the bleeps in, a moment after the last change, and plays it from the same place.</summary>
+    /// <summary>
+    /// Puts the bleeps into the sound that plays, a moment after the last change. The file's sound is decoded once, in
+    /// the background as the window opens; after that each change only writes a copy of it with the bleeps in, which
+    /// takes moments, and plays that from the same place.
+    /// </summary>
     async Task UpdateSoundAsync()
     {
         var version = ++_version;
         if (_updated.Task.IsCompleted) _updated = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var done = _updated;
-        await Task.Delay(300);
+        if (Preview is FramePlayer) _decoded ??= DecodeAsync();
+        await Task.Delay(150);
         if (version != _version) return;
         try
         {
-            if (Preview is not FramePlayer)
+            if (Preview is not FramePlayer || _decoded is null)
             {
                 _hearing.Text = State.Bleeps.Count == 0 ? "" :
                     "Windows can't play this file here, so the bleeps can't be heard before saving. They're saved all the same.";
                 return;
             }
             var bleeps = State.Bleeps;
-            _hearing.Text = bleeps.Count == 0 ? "" : "Getting the bleeps ready to play…";
-            var source = PlayingFrom;
-            var folder = TempFolder;
-            // With no stretches, the file itself plays again.
-            var made = bleeps.Count == 0 ? source : await Task.Run(() => BleepTool.PreviewAsync(_tools, source, bleeps, folder, CancellationToken.None));
+            if (bleeps.Count == 0)
+            {
+                _hearing.Text = "";
+                await UseSoundAsync(null);
+                return;
+            }
+            if (!_decoded.IsCompleted) _hearing.Text = "Getting the sound ready to bleep…";
+            var sound = await _decoded;
             if (version != _version) return;
-            var swapped = await SwapAsync(made);
-            _hearing.Text = bleeps.Count == 0 ? "" : swapped
+            var made = await Task.Run(() => sound.Write(bleeps));
+            if (version != _version)
+            {
+                OutputPaths.TryDelete(made);
+                return;
+            }
+            var playing = await UseSoundAsync(made);
+            // The one before is let go of now; the window's folder goes when it closes anyway.
+            if (_made is { } before) _ = Task.Delay(1000).ContinueWith(_ => OutputPaths.TryDelete(before), TaskScheduler.Default);
+            _made = made;
+            _hearing.Text = playing
                 ? "Ready: what plays has the bleeps in. Press Hear it, or play from anywhere."
                 : "Couldn't play the sound with the bleeps in. They're saved all the same.";
         }
@@ -291,6 +308,18 @@ sealed class BleepEditor : TimelineEditor<BleepState>
         {
             if (version == _version) done.TrySetResult();
         }
+    }
+
+    /// <summary>The file's sound as plain samples, decoded once, from the original (what's saved is made from it too).</summary>
+    Task<BleepSound>? _decoded;
+
+    /// <summary>The sound with the bleeps in that plays now.</summary>
+    string? _made;
+
+    Task<BleepSound> DecodeAsync()
+    {
+        var (file, folder, closing) = (File, TempFolder, Closing);
+        return Task.Run(() => BleepSound.DecodeAsync(_tools, file, folder, closing), closing);
     }
 
     /// <summary>Plays the selected stretch with a second either side, once the sound with the bleeps in is ready.</summary>

@@ -101,6 +101,17 @@ sealed class FramePlayer : IMediaPreview
 
     public BitmapSource? Picture => _picture;
 
+    /// <summary>Whether the file's own sound is off, as while another sound plays in step with the picture.</summary>
+    public bool SoundOff
+    {
+        get;
+        set
+        {
+            field = value;
+            _player.IsMuted = value || Muted;
+        }
+    }
+
     /// <summary>The file playing.</summary>
     public string? Source { get; private set; }
     public bool CanPlay => true;
@@ -351,6 +362,102 @@ sealed class FramePlayer : IMediaPreview
         _player.Dispose();
         _gpu?.Dispose();
         _cpu?.Dispose();
+    }
+}
+
+/// <summary>
+/// A sound file played in step with a video's picture, in place of the video's own sound, such as the sound with
+/// bleeps in: Windows' player again, following the picture's clock. The two clocks don't drift apart, but starting takes
+/// the player a moment, which it learns and starts that far ahead next time; a gap of more than 45 ms is closed by
+/// starting again from the picture's place. (Playing a little faster to catch up would stall it for a quarter second.)
+/// </summary>
+sealed class SoundPlayer : IDisposable
+{
+    readonly MediaPlayer _player = new() { AutoPlay = false, IsMuted = FramePlayer.Muted };
+    readonly System.Diagnostics.Stopwatch _clock = System.Diagnostics.Stopwatch.StartNew();
+    long _jumped = -10_000;
+    double _rate = 1;
+
+    // How far behind the player is once it has started, learned from the last start.
+    double _lead;
+    bool _learning;
+
+    public bool Playing { get; private set; }
+
+    public double Position => _player.PlaybackSession.Position.TotalSeconds;
+
+    /// <summary>Opens a sound file; null when Windows can't play it.</summary>
+    public static async Task<SoundPlayer?> OpenAsync(string path, CancellationToken ct)
+    {
+        var sound = new SoundPlayer();
+        var opened = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        sound._player.MediaOpened += (_, _) => opened.TrySetResult(true);
+        sound._player.MediaFailed += (_, e) =>
+        {
+            Log.Write($"Windows' player couldn't play the sound: {e.Error} {e.ErrorMessage}");
+            opened.TrySetResult(false);
+        };
+        try
+        {
+            var file = await StorageFile.GetFileFromPathAsync(Path.GetFullPath(path)).AsTask(ct);
+            sound._player.Source = MediaSource.CreateFromStorageFile(file);
+            if (await opened.Task.WaitAsync(TimeSpan.FromSeconds(10), ct)) return sound;
+        }
+        catch (Exception ex) when (ex is COMException or FileNotFoundException or UnauthorizedAccessException or TimeoutException)
+        {
+            Log.Write($"Windows' player couldn't open {Path.GetFileName(path)}: {ex.Message}");
+        }
+        sound.Dispose();
+        ct.ThrowIfCancellationRequested();
+        return null;
+    }
+
+    /// <summary>Plays from a time at a rate, as the picture starts or jumps while playing.</summary>
+    public void Play(double at, double rate)
+    {
+        _rate = rate;
+        _player.PlaybackSession.Position = TimeSpan.FromSeconds(Math.Max(0, at + _lead * rate));
+        _player.PlaybackSession.PlaybackRate = rate;
+        _jumped = _clock.ElapsedMilliseconds;
+        _learning = true;
+        _player.Play();
+        Playing = true;
+    }
+
+    public void Pause()
+    {
+        if (!Playing) return;
+        _player.Pause();
+        Playing = false;
+    }
+
+    /// <summary>Keeps up with the picture, which is at <paramref name="picture"/> seconds now.</summary>
+    public void Follow(double picture)
+    {
+        if (!Playing) return;
+        var ahead = Position - picture;
+        var since = _clock.ElapsedMilliseconds - _jumped;
+        // Once it has been going a moment after a start, how far behind it fell is how far ahead to start next time.
+        if (_learning && since > 400)
+        {
+            _learning = false;
+            _lead = Math.Clamp(_lead - ahead, 0, 0.5);
+        }
+        // Changing the rate to catch up stalls the player for a quarter of a second, so a gap is closed by starting
+        // again, and not straight away, as a seek takes a moment to show in the position.
+        if (Math.Abs(ahead) > 0.045 && since > 1500) Play(picture, _rate);
+    }
+
+    public void Dispose()
+    {
+        Playing = false;
+        try
+        {
+            _player.Pause();
+            _player.Source = null;
+        }
+        catch (COMException) { }
+        _player.Dispose();
     }
 }
 

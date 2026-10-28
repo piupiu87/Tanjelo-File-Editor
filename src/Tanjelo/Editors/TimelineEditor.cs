@@ -217,6 +217,7 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
         {
             if (preview != _preview) return;
             _ticker.Stop();
+            _sound?.Pause();
             _playhead = _frames is { } frames ? frames.Start(frames.Count - 1) : Duration;
             ShowTime();
         };
@@ -321,6 +322,9 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
     /// <summary>The file the player has: the original, or the copy made when Windows can't play it.</summary>
     protected string PlayingFrom => _copy ?? File;
 
+    /// <summary>Cancelled as the window closes, for work in the background that should stop then.</summary>
+    protected CancellationToken Closing => _closing.Token;
+
     string? _copy;
 
     /// <summary>A folder for files made while the window is open, such as a copy to play; deleted when it closes.</summary>
@@ -359,6 +363,7 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
         _playhead = _frames is { } frames ? frames.Start(frames.At(seconds)) : Math.Clamp(Math.Round(seconds, 3), 0, Duration);
         Timeline.Reveal(_playhead);
         Seek();
+        if (_preview?.Playing == true) _sound?.Play(_playhead, _rate);
         ShowTime();
         PlayheadMoved();
     }
@@ -421,18 +426,35 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
     double? _stopAt;
 
     /// <summary>
-    /// Plays another file of the same length in place of the one playing, such as the same file with new sound, from the
-    /// same moment and playing on if it was. False when nothing plays here, as with stills.
+    /// Plays a sound file of the same length in place of the file's own sound, such as the sound with bleeps in; null
+    /// goes back to the file's own. Sound on its own is swapped in the player; a video's picture goes on playing from
+    /// its own file, muted, with the sound beside it in step. False when nothing plays here, as with stills.
     /// </summary>
-    protected async Task<bool> SwapAsync(string path)
+    protected async Task<bool> UseSoundAsync(string? path)
     {
         if (_preview is not FramePlayer player) return false;
-        var swapped = await player.SwapAsync(path, _closing.Token);
-        // The player paused for the swap, which stopped the playhead following it.
-        if (player.Playing) _ticker.Start();
-        ShowPlaying();
-        return swapped;
+        if (!Video)
+        {
+            var swapped = await player.SwapAsync(path ?? PlayingFrom, _closing.Token);
+            // The player paused for the swap, which stopped the playhead following it.
+            if (player.Playing) _ticker.Start();
+            ShowPlaying();
+            return swapped;
+        }
+        var sound = path is null ? null : await SoundPlayer.OpenAsync(path, _closing.Token);
+        if (path is not null && sound is null) return false;
+        _sound?.Dispose();
+        _sound = sound;
+        player.SoundOff = sound is not null;
+        if (player.Playing) sound?.Play(player.Position, _rate);
+        return true;
     }
+
+    /// <summary>A sound playing in place of the video's own, from <see cref="UseSoundAsync"/>.</summary>
+    SoundPlayer? _sound;
+
+    /// <summary>The sound playing in place of the video's own; for the tests.</summary>
+    internal SoundPlayer? Sound => _sound;
 
     protected void Play(double rate)
     {
@@ -443,6 +465,7 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
         if (_frames is { } frames ? frames.At(_playhead) >= frames.Count - 1 : _playhead >= Duration - 0.01) MoveTo(0);
         _rate = rate;
         preview.Play(rate);
+        _sound?.Play(preview.Position, rate);
         _ticker.Start();
         ShowPlaying();
     }
@@ -457,6 +480,7 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
             return;
         }
         preview.Pause();
+        _sound?.Pause();
         _ticker.Stop();
         // Rest on the frame playback stopped at.
         _playhead = _frames is { } frames ? frames.Start(frames.At(preview.Position)) : preview.Position;
@@ -486,6 +510,7 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
             Pause();
             return;
         }
+        _sound?.Follow(preview.Position);
         Timeline.Reveal(_playhead);
         ShowTime();
         PlayheadMoved();
@@ -501,6 +526,7 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
         if (_preview.Playing)
         {
             _preview.Pause();
+            _sound?.Pause();
             _ticker.Stop();
         }
         _reversing = true;
@@ -598,6 +624,8 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
         _closing.Cancel();
         _ticker.Stop();
         _reversing = false;
+        _sound?.Dispose();
+        _sound = null;
         _preview?.Dispose();
         _preview = null;
         // The player lets go of a copy a moment after it's closed.
