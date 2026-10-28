@@ -46,7 +46,7 @@ public class TimelineTests
         return await Task.Run(() => Inspect.WhichFrame(pixels, width, height, video, new[] { expected - 1, expected, expected + 1 }.Where(n => n >= 0)));
     }
 
-    static byte[] Pixels(BitmapSource bitmap)
+    internal static byte[] Pixels(BitmapSource bitmap)
     {
         var converted = new FormatConvertedBitmap(bitmap, System.Windows.Media.PixelFormats.Bgra32, null, 0);
         var pixels = new byte[bitmap.PixelWidth * bitmap.PixelHeight * 4];

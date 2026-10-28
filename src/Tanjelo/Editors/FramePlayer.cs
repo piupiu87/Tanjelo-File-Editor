@@ -25,6 +25,9 @@ interface IMediaPreview : IDisposable
     /// <summary>The picture now showing, at most <see cref="FramePlayer.LargestSide"/> pixels wide; null for sound.</summary>
     BitmapSource? Picture { get; }
 
+    /// <summary>The moment <see cref="Picture"/> is of, which while playing is a little behind <see cref="Position"/>.</summary>
+    double PictureAt { get; }
+
     bool CanPlay { get; }
     bool Playing { get; }
 
@@ -69,7 +72,7 @@ sealed class FramePlayer : IMediaPreview
     int _width, _height;
     int _copying;
     bool _disposed;
-    double _shown;
+    double _shown, _grabbedAt;
 
     // A seek under way: done once the player says so, then the next frame it hands over is the one.
     TaskCompletionSource? _seeked;
@@ -100,6 +103,8 @@ sealed class FramePlayer : IMediaPreview
     }
 
     public BitmapSource? Picture => _picture;
+
+    public double PictureAt { get; private set; }
 
     /// <summary>Whether the file's own sound is off, as while another sound plays in step with the picture.</summary>
     public bool SoundOff
@@ -326,9 +331,12 @@ sealed class FramePlayer : IMediaPreview
         if (_gpu is null || _cpu is null || _disposed) return false;
         try
         {
+            // Where the player is as it hands the frame over: inside that frame, or the moment a seek went to.
+            var at = _player.PlaybackSession.Position.TotalSeconds;
             _player.CopyFrameToVideoSurface(_gpu.Direct3DSurface);
             await _gpu.CopyToAsync(_cpu);
             _cpu.SoftwareBitmap.CopyToBuffer(_pixels.AsBuffer());
+            _grabbedAt = at;
             _shownFrame = true;
             return true;
         }
@@ -344,6 +352,7 @@ sealed class FramePlayer : IMediaPreview
     {
         if (_disposed || _picture is null) return;
         _picture.WritePixels(new Int32Rect(0, 0, _width, _height), _pixels, _width * 4, 0);
+        PictureAt = _grabbedAt;
         PictureChanged?.Invoke();
     });
 
@@ -473,6 +482,7 @@ sealed class StillsPreview(TimelineMedia media, Func<FrameIndex> frames) : IMedi
     double _shown = -1;
 
     public BitmapSource? Picture { get; private set; }
+    public double PictureAt { get; private set; }
     public bool CanPlay => false;
     public bool Playing => false;
     public double Position => Math.Max(0, _shown);
@@ -510,6 +520,7 @@ sealed class StillsPreview(TimelineMedia media, Func<FrameIndex> frames) : IMedi
                 bitmap.EndInit();
                 bitmap.Freeze();
                 Picture = bitmap;
+                PictureAt = at;
                 PictureChanged?.Invoke();
             }
         }

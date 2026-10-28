@@ -183,19 +183,134 @@ public sealed class VideoRedactTool(Toolbox tools) : IConverter
         return graph.ToString();
     }
 
-    /// <summary>What goes over a box of this size, as the photo redaction makes it.</summary>
-    static string Cover(string style, Colour colour, int w, int h)
+    /// <summary>
+    /// Makes a pixelated or blurred cover in place from the part of a frame under a box, as <see cref="Cover"/>'s
+    /// filters make it, and quickly enough for the editor to make one for every frame as it plays.
+    /// <paramref name="pixels"/> holds that part as 32-bit BGR, <paramref name="width"/> by <paramref name="height"/>,
+    /// which can be smaller than the box is in the video (<paramref name="boxWidth"/> by <paramref name="boxHeight"/>),
+    /// as the editor's picture is.
+    /// </summary>
+    public static void PreviewCover(byte[] pixels, int width, int height, int boxWidth, int boxHeight, string style)
+    {
+        if (style is not ("pixelate" or "blur")) return;
+        var (w, h, sigma) = Smaller(style, boxWidth, boxHeight);
+        var small = Shrink(pixels, width, height, w, h);
+        if (style == "pixelate")
+        {
+            // Each block the average of its pixels (scale, flags=area), drawn flat (flags=neighbor).
+            for (var y = 0; y < height; y++)
+                for (var x = 0; x < width; x++)
+                    Put(pixels, (y * width + x) * 4, small, ((2 * y + 1) * h / (2 * height) * w + (2 * x + 1) * w / (2 * width)) * 3);
+            return;
+        }
+        // Blurred on the smaller copy, its edges carried on outwards (fillborders, gblur twice), then brought back to
+        // size smoothly (flags=bilinear).
+        Blur(small, w, h, sigma);
+        Blur(small, w, h, sigma);
+        var mix = new double[3];
+        for (var y = 0; y < height; y++)
+        {
+            var sy = Math.Clamp((y + 0.5) * h / height - 0.5, 0, h - 1);
+            var (y0, fy) = ((int)sy, sy - (int)sy);
+            var y1 = Math.Min(h - 1, y0 + 1);
+            for (var x = 0; x < width; x++)
+            {
+                var sx = Math.Clamp((x + 0.5) * w / width - 0.5, 0, w - 1);
+                var (x0, fx) = ((int)sx, sx - (int)sx);
+                var x1 = Math.Min(w - 1, x0 + 1);
+                for (var c = 0; c < 3; c++)
+                    mix[c] = (small[(y0 * w + x0) * 3 + c] * (1 - fx) + small[(y0 * w + x1) * 3 + c] * fx) * (1 - fy)
+                        + (small[(y1 * w + x0) * 3 + c] * (1 - fx) + small[(y1 * w + x1) * 3 + c] * fx) * fy;
+                Put(pixels, (y * width + x) * 4, mix, 0);
+            }
+        }
+    }
+
+    static void Put(byte[] pixels, int at, double[] colour, int from)
+    {
+        for (var c = 0; c < 3; c++) pixels[at + c] = (byte)Math.Clamp(Math.Round(colour[from + c]), 0, 255);
+        pixels[at + 3] = 255;
+    }
+
+    /// <summary>A picture made smaller by averaging, three channels to a pixel; a pixel of the small one with none of the picture's centres in it takes the nearest.</summary>
+    static double[] Shrink(byte[] pixels, int width, int height, int w, int h)
+    {
+        var sums = new double[w * h * 3];
+        var counts = new int[w * h];
+        for (var y = 0; y < height; y++)
+            for (var x = 0; x < width; x++)
+            {
+                var to = (2 * y + 1) * h / (2 * height) * w + (2 * x + 1) * w / (2 * width);
+                for (var c = 0; c < 3; c++) sums[to * 3 + c] += pixels[(y * width + x) * 4 + c];
+                counts[to]++;
+            }
+        for (var i = 0; i < counts.Length; i++)
+        {
+            if (counts[i] == 0)
+            {
+                var (x, y) = ((2 * (i % w) + 1) * width / (2 * w), (2 * (i / w) + 1) * height / (2 * h));
+                for (var c = 0; c < 3; c++) sums[i * 3 + c] = pixels[(y * width + x) * 4 + c];
+                continue;
+            }
+            for (var c = 0; c < 3; c++) sums[i * 3 + c] /= counts[i];
+        }
+        return sums;
+    }
+
+    /// <summary>A Gaussian blur of a small picture of three channels, across and then down, its edges carried on outwards.</summary>
+    static void Blur(double[] small, int w, int h, double sigma)
+    {
+        var radius = (int)Math.Ceiling(sigma * 3);
+        var weights = Enumerable.Range(-radius, 2 * radius + 1).Select(d => Math.Exp(-d * d / (2 * sigma * sigma))).ToArray();
+        var total = weights.Sum();
+        var line = new double[Math.Max(w, h) * 3];
+        foreach (var (count, length, step, along) in new[] { (h, w, 3, w * 3), (w, h, w * 3, 3) })
+            for (var i = 0; i < count; i++)
+            {
+                var start = i * along;
+                for (var j = 0; j < length; j++)
+                    for (var c = 0; c < 3; c++)
+                    {
+                        double sum = 0;
+                        for (var d = -radius; d <= radius; d++)
+                            sum += weights[d + radius] * small[start + Math.Clamp(j + d, 0, length - 1) * step + c];
+                        line[j * 3 + c] = sum / total;
+                    }
+                for (var j = 0; j < length; j++)
+                    for (var c = 0; c < 3; c++) small[start + j * step + c] = line[j * 3 + c];
+            }
+    }
+
+    /// <summary>
+    /// The smaller copy a cover for a box of this size is made from: for pixelating, a pixel for each block; for
+    /// blurring, a copy small enough to blur strongly in a moment, and the blur on it.
+    /// </summary>
+    static (int Width, int Height, double Sigma) Smaller(string style, int w, int h)
     {
         var block = Redaction.Block(new RedactBox(0, 0, w, h));
+        if (style == "pixelate") return (Math.Max(1, (int)Math.Ceiling(w / (double)block)), Math.Max(1, (int)Math.Ceiling(h / (double)block)), 0);
+        var sigma = block * 1.5;
+        var shrink = Math.Max(1, sigma / 3);
+        // Even, so the border added for the blur lines up with 4:2:0 colour.
+        return (Math.Max(2, 2 * (int)Math.Round(w / shrink / 2)), Math.Max(2, 2 * (int)Math.Round(h / shrink / 2)), sigma / shrink);
+    }
+
+    /// <summary>What goes over a box of this size, as the photo redaction makes it.</summary>
+    internal static string Cover(string style, Colour colour, int w, int h)
+    {
+        var (sw, sh, sigma) = Smaller(style, w, h);
         switch (style)
         {
             case "pixelate":
-                return $"scale={Math.Max(1, (int)Math.Ceiling(w / (double)block))}:{Math.Max(1, (int)Math.Ceiling(h / (double)block))}:flags=area,scale={w}:{h}:flags=neighbor";
+                return $"scale={sw}:{sh}:flags=area,scale={w}:{h}:flags=neighbor";
             case "blur":
-                var sigma = block * 1.5;
-                var shrink = Math.Max(1, sigma / 3);
+                // gblur goes wrong on a picture smaller than its reach, leaving dark bands and the wrong colours, so the
+                // copy is given a border of its edge pixels to blur into, and cut out of it again afterwards.
+                var border = 2 * (int)Math.Ceiling(sigma * 3.3);
                 return string.Create(CultureInfo.InvariantCulture,
-                    $"scale={Math.Max(2, (int)Math.Round(w / shrink))}:{Math.Max(2, (int)Math.Round(h / shrink))}:flags=area,gblur=sigma={sigma / shrink:0.###}:steps=3,gblur=sigma={sigma / shrink:0.###}:steps=3,scale={w}:{h}:flags=bilinear");
+                    $"scale={sw}:{sh}:flags=area,pad={sw + 2 * border}:{sh + 2 * border}:{border}:{border}," +
+                    $"fillborders=left={border}:right={border}:top={border}:bottom={border}:mode=smear," +
+                    $"gblur=sigma={sigma:0.###}:steps=3,gblur=sigma={sigma:0.###}:steps=3,crop={sw}:{sh}:{border}:{border},scale={w}:{h}:flags=bilinear");
             default:
                 // Opaque even when the colour isn't: a see-through cover would show what's under it.
                 return $"drawbox=x=0:y=0:w=iw:h=ih:color=0x{colour.R:X2}{colour.G:X2}{colour.B:X2}@1:t=fill";

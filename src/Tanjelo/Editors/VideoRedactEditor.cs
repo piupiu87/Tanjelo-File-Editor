@@ -18,7 +18,8 @@ sealed record VideoRedactState(ImmutableList<VideoBox> Boxes, string Style, Colo
 /// Redact video: draw boxes on the picture, each hidden from the frame it was drawn on to the end, and narrow each one's
 /// stretch on its own bar under the timeline (drag its ends, or press I and O). Find faces adds a box over each face
 /// on the frame showing; Follow face moves the selected box with its face through its stretch, ending it where the
-/// face is lost. While paused, each box shows exactly what the saved copy will have there.
+/// face is lost. Each box is drawn for the frame in the picture, playing or paused, hidden as the saved copy will have
+/// it there.
 /// </summary>
 sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
 {
@@ -34,7 +35,6 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
     readonly Button _faces, _follow;
     readonly StackPanel _colourRow = new();
     readonly CancellationTokenSource _closing = new();
-    readonly Dictionary<(int Frame, VideoBox Box, string Style, Colour Colour), ImageSource> _covers = [];
     Action<string> _showStyle = _ => { };
     Action<Colour> _showColour = _ => { };
     int? _selected;
@@ -130,71 +130,54 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
         Timeline.InvalidateVisual();
     }
 
-    protected override void PlayheadMoved() => DrawCovers();
+    // What's drawn follows the picture, not the playhead: while playing, the playhead moves on with the clock a moment
+    // before each frame is copied out and shows, and boxes moved with it would be a frame ahead of what they cover.
     protected override void PictureShown() => DrawCovers();
 
     // ---- What shows on the picture
 
     /// <summary>
-    /// The boxes hidden at the playhead, in the picture's own pixels: while paused, exactly what the copy will have there,
-    /// made from the frame showing; while playing, a plain cover, as working it out for every frame would be too slow.
+    /// The boxes hidden on the frame showing, in the picture's own pixels, each as the copy will have it: pixelated or
+    /// blurred ones made from that frame, anew for every frame as it plays.
     /// </summary>
     void DrawCovers()
     {
         if (!Started) return;
         var world = CanvasPart.World;
         world.Children.Clear();
-        var now = Playhead;
-        MagickImage? frame = null;
-        try
+        var now = Showing;
+        foreach (var box in State.Boxes.Where(b => b.Covers(now + 1e-6)))
         {
-            foreach (var box in State.Boxes.Where(b => b.Covers(now + 1e-6)))
-            {
-                var area = box.At(now).Within(Media.Width, Media.Height);
-                if (area is not { } a) continue;
-                UIElement cover;
-                if (State.Style == "solid" || Playing || Preview?.Picture is null)
-                {
-                    var colour = State.Style == "solid" ? Color.FromRgb(State.Colour.R, State.Colour.G, State.Colour.B) : Color.FromArgb(200, 120, 120, 120);
-                    cover = new Shapes.Rectangle { Width = a.Width, Height = a.Height, Fill = new SolidColorBrush(colour) };
-                }
-                else
-                {
-                    var key = (Frame, box, State.Style, default(Colour));
-                    if (!_covers.TryGetValue(key, out var made))
-                    {
-                        frame ??= ShownFrame();
-                        if (_covers.Count > 200) _covers.Clear();
-                        using var part = Redaction.Cover(frame, a, State.Style, State.Colour);
-                        made = _covers[key] = Panels.Bitmap(part);
-                    }
-                    cover = new Image { Source = made, Width = a.Width, Height = a.Height, Stretch = Stretch.Fill };
-                }
-                System.Windows.Controls.Canvas.SetLeft(cover, a.X);
-                System.Windows.Controls.Canvas.SetTop(cover, a.Y);
-                world.Children.Add(cover);
-            }
-        }
-        finally
-        {
-            frame?.Dispose();
+            if (box.At(now).Within(Media.Width, Media.Height) is not { } area) continue;
+            var cover = Cover(area);
+            System.Windows.Controls.Canvas.SetLeft(cover, area.X);
+            System.Windows.Controls.Canvas.SetTop(cover, area.Y);
+            world.Children.Add(cover);
         }
         DrawFrames();
     }
 
-    /// <summary>The frame showing, at the picture's full size, for working out covers.</summary>
-    MagickImage ShownFrame()
+    /// <summary>What goes over an area of the frame showing: the colour, or the frame's own pixels there pixelated or blurred.</summary>
+    FrameworkElement Cover(RedactBox area)
     {
-        var picture = Preview!.Picture!;
-        var converted = new FormatConvertedBitmap(picture, PixelFormats.Bgra32, null, 0);
-        var pixels = new byte[picture.PixelWidth * picture.PixelHeight * 4];
-        converted.CopyPixels(pixels, picture.PixelWidth * 4, 0);
-        var image = new MagickImage();
-        image.ReadPixels(pixels, new PixelReadSettings((uint)picture.PixelWidth, (uint)picture.PixelHeight, StorageType.Char, PixelMapping.BGRA));
-        image.Alpha(AlphaAction.Off);
-        if (picture.PixelWidth != Media.Width || picture.PixelHeight != Media.Height)
-            image.Resize(new MagickGeometry((uint)Media.Width, (uint)Media.Height) { IgnoreAspectRatio = true });
-        return image;
+        if (State.Style == "solid" || Preview?.Picture is not { } picture)
+        {
+            var colour = State.Style == "solid" ? Color.FromRgb(State.Colour.R, State.Colour.G, State.Colour.B) : Color.FromRgb(120, 120, 120);
+            return new Shapes.Rectangle { Width = area.Width, Height = area.Height, Fill = new SolidColorBrush(colour) };
+        }
+        // The area in the picture, which can be a smaller copy of the frame.
+        var (sx, sy) = (picture.PixelWidth / (double)Media.Width, picture.PixelHeight / (double)Media.Height);
+        int left = (int)Math.Floor(area.X * sx), top = (int)Math.Floor(area.Y * sy);
+        int width = Math.Max(1, Math.Min(picture.PixelWidth, (int)Math.Ceiling((area.X + area.Width) * sx)) - left);
+        int height = Math.Max(1, Math.Min(picture.PixelHeight, (int)Math.Ceiling((area.Y + area.Height) * sy)) - top);
+        var source = picture.Format == PixelFormats.Bgr32 || picture.Format == PixelFormats.Bgra32 || picture.Format == PixelFormats.Pbgra32
+            ? picture : new FormatConvertedBitmap(picture, PixelFormats.Bgr32, null, 0);
+        var pixels = new byte[width * height * 4];
+        source.CopyPixels(new Int32Rect(left, top, width, height), pixels, width * 4, 0);
+        VideoRedactTool.PreviewCover(pixels, width, height, area.Width, area.Height, State.Style);
+        var made = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgr32, null, pixels, width * 4);
+        made.Freeze();
+        return new Image { Source = made, Width = area.Width, Height = area.Height, Stretch = Stretch.Fill };
     }
 
     /// <summary>The boxes' outlines, in screen units so they stay thin at any zoom; the selected one has handles, and is dashed when it isn't hidden now.</summary>
@@ -203,7 +186,7 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
         var overlay = CanvasPart.Overlay;
         overlay.Children.Clear();
         if (!Started) return;
-        var now = Playhead;
+        var now = Showing;
         for (var i = 0; i < State.Boxes.Count; i++)
         {
             var box = State.Boxes[i];
@@ -253,11 +236,11 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
     /// <summary>The box showing at a point, the selected one first since it's drawn over the rest, then the last drawn.</summary>
     int? BoxAt(Point at)
     {
-        var now = Playhead + 1e-6;
-        if (_selected is { } s && State.Boxes[s].Covers(now)
-            && BoxDrag.Hit(at, ToRect(State.Boxes[s].At(Playhead)), Tolerance, cornersOnly: false) != BoxDrag.Edges.None) return s;
+        var now = Showing;
+        if (_selected is { } s && State.Boxes[s].Covers(now + 1e-6)
+            && BoxDrag.Hit(at, ToRect(State.Boxes[s].At(now)), Tolerance, cornersOnly: false) != BoxDrag.Edges.None) return s;
         for (var i = State.Boxes.Count - 1; i >= 0; i--)
-            if (State.Boxes[i].Covers(now) && ToRect(State.Boxes[i].At(Playhead)).Contains(at)) return i;
+            if (State.Boxes[i].Covers(now + 1e-6) && ToRect(State.Boxes[i].At(now)).Contains(at)) return i;
         return null;
     }
 
@@ -270,7 +253,7 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
         {
             Select(index);
             _dragging = index;
-            _drag = BoxDrag.Start(at, ToRect(State.Boxes[index].At(Playhead)), Bounds, null, Tolerance);
+            _drag = BoxDrag.Start(at, ToRect(State.Boxes[index].At(Showing)), Bounds, null, Tolerance);
         }
         else
         {
@@ -323,9 +306,9 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
     public Cursor? CursorAt(Point at)
     {
         if (!Started) return null;
-        if (_selected is { } s && State.Boxes[s].Covers(Playhead + 1e-6))
+        if (_selected is { } s && State.Boxes[s].Covers(Showing + 1e-6))
         {
-            switch (BoxDrag.Hit(at, ToRect(State.Boxes[s].At(Playhead)), Tolerance, cornersOnly: false))
+            switch (BoxDrag.Hit(at, ToRect(State.Boxes[s].At(Showing)), Tolerance, cornersOnly: false))
             {
                 case BoxDrag.Edges.Left | BoxDrag.Edges.Top or BoxDrag.Edges.Right | BoxDrag.Edges.Bottom: return Cursors.SizeNWSE;
                 case BoxDrag.Edges.Right | BoxDrag.Edges.Top or BoxDrag.Edges.Left | BoxDrag.Edges.Bottom: return Cursors.SizeNESW;

@@ -140,6 +140,13 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
     /// <summary>The frame the playhead is on; 0 for sound.</summary>
     public int Frame => _frames?.At(_playhead) ?? 0;
 
+    /// <summary>
+    /// The start of the frame in the picture now, for what's drawn on it. While playing it's a moment behind the
+    /// playhead, which follows the clock, as each frame takes a moment to copy out; after a seek it catches up once the
+    /// new frame shows.
+    /// </summary>
+    protected double Showing => _frames is { } frames && _preview is { } preview ? frames.Start(frames.At(preview.PictureAt)) : _playhead;
+
     public override FrameworkElement Main => _main;
     public override ZoomCanvas? Canvas => Video ? _canvas : null;
 

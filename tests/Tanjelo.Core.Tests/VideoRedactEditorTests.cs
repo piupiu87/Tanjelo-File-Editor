@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
 using Tanjelo.Core.Converters;
 using Tanjelo.Editors;
 using Point = System.Windows.Point;
@@ -39,8 +40,9 @@ public class VideoRedactEditorTests
                 Assert.Single(canvas.World.Children);                  // hidden on this frame
                 Assert.Equal("1 area · one selected", window.StatusText.Text);
 
-                // Before its start it isn't hidden.
+                // Before its start it isn't hidden, once that frame shows.
                 editor.Press(Key.Home);
+                await editor.Seek();
                 Assert.Empty(canvas.World.Children);
 
                 // Its bar's end, dragged to 2 s: hidden up to frame 49.
@@ -81,6 +83,89 @@ public class VideoRedactEditorTests
                 editor.Press(Key.Delete);
                 Assert.Empty(editor.Current.Boxes);
                 Assert.False(window.SaveButton.IsEnabled);
+            }
+            finally
+            {
+                editor.Close();
+            }
+        });
+    }
+
+    /// <summary>Every frame of a video, as ffmpeg decodes it, in BGRA.</summary>
+    static List<byte[]> AllFrames(string video, int width, int height)
+    {
+        using var temp = new Scratch();
+        var raw = File.ReadAllBytes(temp.Ffmpeg("all.bgra", ["-i", video, "-map", "0:V:0", "-fps_mode", "passthrough", "-f", "rawvideo", "-pix_fmt", "bgra"]));
+        var size = width * height * 4;
+        return Enumerable.Range(0, raw.Length / size).Select(i => raw.AsSpan(i * size, size).ToArray()).ToList();
+    }
+
+    /// <summary>A part of a BGRA picture.</summary>
+    static byte[] Crop(byte[] pixels, int width, System.Windows.Int32Rect area)
+    {
+        var part = new byte[area.Width * area.Height * 4];
+        for (var y = 0; y < area.Height; y++)
+            Array.Copy(pixels, ((area.Y + y) * width + area.X) * 4, part, y * area.Width * 4, area.Width * 4);
+        return part;
+    }
+
+    [Fact]
+    public async Task While_playing_each_box_is_drawn_on_the_frame_showing_and_made_from_it()
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        var clip = scratch.Numbered("clip.mp4", seconds: 3);       // 25 frames a second, 320 by 240
+        await Ui.Run(async () =>
+        {
+            var (_, editor, _) = await TrimEditorTests.Open(clip, "redact", (file, target) => new VideoRedactEditor(file, target, Env.Tools));
+            try
+            {
+                if (editor.Preview is not FramePlayer player) { Assert.Skip("Windows' player can't play video on this PC"); return; }
+                var canvas = editor.Canvas!;
+                TimelineTests.Enter(editor.TimeBox, "1");
+                await editor.Seek();
+                Drag(canvas, new Point(100, 60), new Point(260, 200));  // hidden from frame 25 on
+                editor.Restyle("pixelate");
+                TimelineTests.Enter(editor.TimeBox, "0.4");
+                await editor.Seek();
+
+                // Each picture as it shows, with the cover drawn on it; and whether the cover changed before the next.
+                System.Windows.UIElement? Cover() => canvas.World.Children.Count > 0 ? canvas.World.Children[0] : null;
+                var shown = new List<(byte[] Pixels, System.Windows.UIElement? Cover)>();
+                var between = 0;
+                void Picture() => shown.Add((TimelineTests.Pixels(player.Picture!), Cover()));
+                void Rendering(object? sender, EventArgs e)
+                {
+                    if (shown.Count > 0 && !ReferenceEquals(shown[^1].Cover, Cover())) between++;
+                }
+                player.PictureChanged += Picture;
+                System.Windows.Media.CompositionTarget.Rendering += Rendering;
+                editor.Press(Key.Space);
+                await Task.Delay(1200);
+                player.PictureChanged -= Picture;
+                System.Windows.Media.CompositionTarget.Rendering -= Rendering;
+                editor.Press(Key.Space);
+
+                // The clock moves on a moment before each frame shows; the boxes wait for the frame.
+                Assert.Equal(0, between);
+                Assert.True(shown.Count > 15, $"only {shown.Count} pictures showed");
+                var frames = await Task.Run(() => AllFrames(clip, 320, 240));
+                var area = new System.Windows.Int32Rect(100, 60, 160, 140);
+                var covered = 0;
+                foreach (var (pixels, cover) in shown)
+                {
+                    var n = Enumerable.Range(5, 45).MinBy(i => Inspect.Difference(pixels, frames[i]));
+                    Assert.True(n >= 25 == cover is not null, $"frame {n} is {(cover is null ? "not " : "")}covered");
+                    if (cover is null) continue;
+                    // Pixelated from that frame, as the saved copy is, not shown as a plain stand-in while playing.
+                    var made = Assert.IsType<System.Windows.Controls.Image>(cover).Source as BitmapSource;
+                    var blocks = TimelineTests.Pixels(made!);
+                    var expected = Crop(frames[n], 320, area);
+                    VideoRedactTool.PreviewCover(expected, area.Width, area.Height, area.Width, area.Height, "pixelate");
+                    Assert.True(Inspect.Difference(blocks, expected) < 4, $"the blocks on frame {n} differ by {Inspect.Difference(blocks, expected):0.0}");
+                    covered++;
+                }
+                Assert.True(covered > 5, $"only {covered} covered pictures showed");
             }
             finally
             {

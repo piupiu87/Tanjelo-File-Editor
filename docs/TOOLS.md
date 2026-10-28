@@ -300,8 +300,8 @@ drag its ends, or press I and O, to set when it starts and stops. Saved as `clip
 
 - Find faces adds a box over each face on the frame showing. Follow face moves the selected box with its face through
   its stretch, and ends it where the face is lost. Both use Windows' own face detection and tracking, on this PC.
-- Hidden as for photos: a solid colour (the safest), big pixels or a strong blur. While paused, each box shows exactly
-  what's saved.
+- Hidden as for photos: a solid colour (the safest), big pixels or a strong blur. Playing or paused, each box shows
+  what's saved on the frame showing, its pixels or blur made from that frame.
 - A box moved or resized by hand stays where it's put. Tab selects the next box, Delete removes one.
 - The picture is re-encoded and the sound copied. The copy loses its location, cover pictures, subtitles and data
   tracks such as a camera's GPS log.

@@ -89,6 +89,46 @@ public class VideoRedactTests
         Assert.True(Differs(clip, output, 10, new RedactBox(170, 110, 150, 130)) < 6, "the rest should look the same");
     }
 
+    [Theory]
+    [InlineData("pixelate", 160, 140)]
+    [InlineData("blur", 160, 140)]
+    [InlineData("pixelate", 38, 90)]
+    [InlineData("blur", 38, 90)]
+    public void The_editor_makes_each_cover_as_the_saved_copys_filters_do(string style, int width, int height)
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        using var scratch = new Scratch();
+        var clip = scratch.Numbered("clip.mp4", seconds: 1, audio: false);
+        // The part under a box, as is and covered with the saved copy's filters; in full colour, where the saved copy
+        // has its colour at half size (4:2:0), which blends each block's colour a little with its neighbours'.
+        string Crop(string name, string then) => scratch.Ffmpeg(name, ["-i", clip, "-vf", $"select=eq(n\\,10),format=gbrp,crop={width}:{height}:20:30{then},format=bgra",
+            "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "bgra"]);
+        var part = File.ReadAllBytes(Crop("part.bgra", ""));
+        var saved = File.ReadAllBytes(Crop("saved.bgra", "," + VideoRedactTool.Cover(style, new Colour(0, 0, 0), width, height)));
+        // A blur's edges come out a little apart, as ffmpeg's resizing places the small copy's pixels a little differently.
+        var near = style == "blur" ? 8 : 3;
+
+        // At the video's size, and from a picture half the size, as the editor's can be a smaller copy.
+        var made = (byte[])part.Clone();
+        VideoRedactTool.PreviewCover(made, width, height, width, height, style);
+        Assert.True(Inspect.Difference(made, saved) < near, $"the cover differs by {Inspect.Difference(made, saved):0.0}");
+        var (w, h) = (width / 2, height / 2);
+        var half = new byte[w * h * 4];
+        for (var y = 0; y < h; y++)
+            for (var x = 0; x < w; x++)
+                for (var c = 0; c < 4; c++)
+                    half[(y * w + x) * 4 + c] = (byte)((part[(2 * y * width + 2 * x) * 4 + c] + part[(2 * y * width + 2 * x + 1) * 4 + c]
+                        + part[((2 * y + 1) * width + 2 * x) * 4 + c] + part[((2 * y + 1) * width + 2 * x + 1) * 4 + c] + 2) / 4);
+        VideoRedactTool.PreviewCover(half, w, h, width, height, style);
+        var shrunk = new byte[w * h * 4];
+        for (var y = 0; y < h; y++)
+            for (var x = 0; x < w; x++)
+                for (var c = 0; c < 4; c++)
+                    shrunk[(y * w + x) * 4 + c] = saved[((2 * y) * width + 2 * x) * 4 + c];
+        // Blocks' edges fall on the smaller picture's own pixels, a pixel from where they are in the video.
+        Assert.True(Inspect.Difference(half, shrunk) < near + 7, $"the cover from a smaller picture differs by {Inspect.Difference(half, shrunk):0.0}");
+    }
+
     [Fact]
     public async Task A_box_with_a_track_moves_along_it()
     {
