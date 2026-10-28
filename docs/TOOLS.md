@@ -180,10 +180,12 @@ tanj convert organize-pdf --pages="3,1-2,2r90" report.pdf
 
 ### Redact… (`redact`)
 
-*Images · Magick.NET, Windows' face detection and OCR*
+*Images · Magick.NET, YuNet run by Windows' machine learning, Windows' OCR*
 
-Draw boxes over anything to hide, or have Windows find the faces and the words (its own face detection and OCR, on this
-PC). Every box can be moved, resized or removed before saving. Each is hidden for good, as a solid colour (the
+Draw boxes over anything to hide, or have the faces and the words found, on this PC. Faces are found by YuNet, a small
+face finder that Windows' own machine learning runs: side-on, tilted, dim and masked faces too, and crowds down to faces
+about 20 pixels across. On Windows 10, which can't run it, Windows' own face detection looks instead, and finds only
+upright faces facing the camera. Words are read by Windows' OCR. Every box can be moved, resized or removed before saving. Each is hidden for good, as a solid colour (the
 safest), big pixels or a strong blur, and what you see is exactly what's saved. Saved as `photo-redacted.jpg`.
 
 The copy also loses the EXIF thumbnail (a small copy from before), the maker note, the location, XMP and IPTC; the
@@ -293,13 +295,13 @@ tanj convert bleep --ranges="1:02-1:03.5 silence, 1:10-1:11 tone 800" interview.
 
 ### Redact video… (`redact`)
 
-*Video · ffmpeg, Windows' face detection and tracking*
+*Video · ffmpeg, YuNet, Windows' face tracking*
 
 Draw boxes on the picture. Each is hidden from the frame it's drawn on to the end, and has a bar under the timeline:
 drag its ends, or press I and O, to set when it starts and stops. Saved as `clip-redacted.mp4`.
 
-- Find faces adds a box over each face on the frame showing. Follow face moves the selected box with its face through
-  its stretch, and ends it where the face is lost. Both use Windows' own face detection and tracking, on this PC.
+- Find faces adds a box over each face on the frame showing, found as in photos. Follow face moves the selected box
+  with its face through its stretch, and ends it where the face is lost, with Windows' own face tracking. Both on this PC.
 - Hidden as for photos: a solid colour (the safest), big pixels or a strong blur. Playing or paused, each box shows
   what's saved on the frame showing, its pixels or blur made from that frame.
 - A box moved or resized by hand stays where it's put. Tab selects the next box, Delete removes one.

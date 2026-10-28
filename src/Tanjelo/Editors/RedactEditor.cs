@@ -51,7 +51,7 @@ sealed class RedactEditor : Editor<RedactState>, ICanvasTool
         _canvas.Tool = this;
         _canvas.ViewChanged += DrawFrames;
 
-        _faces = Panels.Button("", "Find faces", "Add a box over each face Windows finds, on this PC", () => _ = FindAsync(faces: true));
+        _faces = Panels.Button("", "Find faces", "Add a box over each face found, on this PC", () => _ = FindAsync(faces: true));
         _text = Panels.Button("", "Find text", "Add a box over each word Windows' OCR reads, on this PC", () => _ = FindAsync(faces: false));
         _faces.IsEnabled = Redaction.CanFindFaces;
         _text.IsEnabled = Env.Ocr;
