@@ -138,32 +138,46 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
 
     /// <summary>
     /// The boxes hidden on the frame showing, in the picture's own pixels, each as the copy will have it: pixelated or
-    /// blurred ones made from that frame, anew for every frame as it plays.
+    /// blurred ones made from that frame, anew for every frame as it plays. The covers are changed where they are, not
+    /// taken off and put on again: with new ones for every frame, Windows now and then showed a frame of the picture
+    /// with no cover on it, about once every half a minute of playing.
     /// </summary>
     void DrawCovers()
     {
         if (!Started) return;
-        var world = CanvasPart.World;
-        world.Children.Clear();
+        var covers = CanvasPart.World.Children;
         var now = Showing;
-        foreach (var box in State.Boxes.Where(b => b.Covers(now + 1e-6)))
+        var areas = State.Boxes.Where(b => b.Covers(now + 1e-6)).Select(b => b.At(now).Within(Media.Width, Media.Height)).OfType<RedactBox>().ToList();
+        while (covers.Count > areas.Count) covers.RemoveAt(covers.Count - 1);
+        for (var i = 0; i < areas.Count; i++)
         {
-            if (box.At(now).Within(Media.Width, Media.Height) is not { } area) continue;
-            var cover = Cover(area);
+            var area = areas[i];
+            var cover = Cover(i < covers.Count ? covers[i] : null, area);
+            if (i == covers.Count) covers.Add(cover);
+            else if (covers[i] != cover)
+            {
+                covers.RemoveAt(i);
+                covers.Insert(i, cover);
+            }
+            (cover.Width, cover.Height) = (area.Width, area.Height);
             System.Windows.Controls.Canvas.SetLeft(cover, area.X);
             System.Windows.Controls.Canvas.SetTop(cover, area.Y);
-            world.Children.Add(cover);
         }
         DrawFrames();
     }
 
-    /// <summary>What goes over an area of the frame showing: the colour, or the frame's own pixels there pixelated or blurred.</summary>
-    FrameworkElement Cover(RedactBox area)
+    /// <summary>
+    /// What goes over an area of the frame showing, made in <paramref name="old"/> when that's of the right kind: the
+    /// colour, or the frame's own pixels there pixelated or blurred, written into the cover's picture as the frame is.
+    /// </summary>
+    FrameworkElement Cover(UIElement? old, RedactBox area)
     {
         if (State.Style == "solid" || Preview?.Picture is not { } picture)
         {
             var colour = State.Style == "solid" ? Color.FromRgb(State.Colour.R, State.Colour.G, State.Colour.B) : Color.FromRgb(120, 120, 120);
-            return new Shapes.Rectangle { Width = area.Width, Height = area.Height, Fill = new SolidColorBrush(colour) };
+            var rectangle = old as Shapes.Rectangle ?? new Shapes.Rectangle();
+            if (rectangle.Fill is not SolidColorBrush brush || brush.Color != colour) rectangle.Fill = new SolidColorBrush(colour);
+            return rectangle;
         }
         // The area in the picture, which can be a smaller copy of the frame.
         var (sx, sy) = (picture.PixelWidth / (double)Media.Width, picture.PixelHeight / (double)Media.Height);
@@ -175,26 +189,35 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
         var pixels = new byte[width * height * 4];
         source.CopyPixels(new Int32Rect(left, top, width, height), pixels, width * 4, 0);
         VideoRedactTool.PreviewCover(pixels, width, height, area.Width, area.Height, State.Style);
-        var made = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgr32, null, pixels, width * 4);
-        made.Freeze();
-        return new Image { Source = made, Width = area.Width, Height = area.Height, Stretch = Stretch.Fill };
+        var image = old as Image ?? new Image { Stretch = Stretch.Fill };
+        if (image.Source is not WriteableBitmap made || made.PixelWidth != width || made.PixelHeight != height)
+            image.Source = made = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgr32, null);
+        made.WritePixels(new Int32Rect(0, 0, width, height), pixels, width * 4, 0);
+        return image;
     }
+
+    /// <summary>The outlines last drawn: a frame that moves none of them leaves them as they are, as with the covers.</summary>
+    List<(Rect Rect, bool Selected, bool Active)> _framed = [];
 
     /// <summary>The boxes' outlines, in screen units so they stay thin at any zoom; the selected one has handles, and is dashed when it isn't hidden now.</summary>
     void DrawFrames()
     {
-        var overlay = CanvasPart.Overlay;
-        overlay.Children.Clear();
-        if (!Started) return;
+        var framed = new List<(Rect Rect, bool Selected, bool Active)>();
         var now = Showing;
-        for (var i = 0; i < State.Boxes.Count; i++)
+        for (var i = 0; Started && i < State.Boxes.Count; i++)
         {
             var box = State.Boxes[i];
-            var active = box.Covers(now + 1e-6);
-            var selected = i == _selected;
+            var (active, selected) = (box.Covers(now + 1e-6), i == _selected);
             if (!active && !selected) continue;
             var at = box.At(now);
-            var rect = CanvasPart.View.ToCanvas(new Rect(at.X, at.Y, at.Width, at.Height));
+            framed.Add((CanvasPart.View.ToCanvas(new Rect(at.X, at.Y, at.Width, at.Height)), selected, active));
+        }
+        if (framed.SequenceEqual(_framed)) return;
+        _framed = framed;
+        var overlay = CanvasPart.Overlay;
+        overlay.Children.Clear();
+        foreach (var (rect, selected, active) in framed)
+        {
             AddFrame(rect, Color.FromArgb(150, 0, 0, 0), 3.5, null);
             AddFrame(rect, selected ? Colors.White : Color.FromArgb(220, 255, 255, 255), 1.5, selected && active ? null : new DoubleCollection { 4, 3 });
             if (!selected || !active) continue;

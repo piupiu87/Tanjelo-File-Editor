@@ -129,14 +129,16 @@ public class VideoRedactEditorTests
                 TimelineTests.Enter(editor.TimeBox, "0.4");
                 await editor.Seek();
 
-                // Each picture as it shows, with the cover drawn on it; and whether the cover changed before the next.
+                // Each picture as it shows, with the cover on it and what's in the cover; and whether there's a cover
+                // or not changes before the next picture.
                 System.Windows.UIElement? Cover() => canvas.World.Children.Count > 0 ? canvas.World.Children[0] : null;
-                var shown = new List<(byte[] Pixels, System.Windows.UIElement? Cover)>();
+                var shown = new List<(byte[] Pixels, System.Windows.UIElement? Cover, byte[]? Blocks)>();
                 var between = 0;
-                void Picture() => shown.Add((TimelineTests.Pixels(player.Picture!), Cover()));
+                void Picture() => shown.Add((TimelineTests.Pixels(player.Picture!), Cover(),
+                    Cover() is System.Windows.Controls.Image { Source: BitmapSource made } ? TimelineTests.Pixels(made) : null));
                 void Rendering(object? sender, EventArgs e)
                 {
-                    if (shown.Count > 0 && !ReferenceEquals(shown[^1].Cover, Cover())) between++;
+                    if (shown.Count > 0 && shown[^1].Cover is null != Cover() is null) between++;
                 }
                 player.PictureChanged += Picture;
                 System.Windows.Media.CompositionTarget.Rendering += Rendering;
@@ -152,20 +154,21 @@ public class VideoRedactEditorTests
                 var frames = await Task.Run(() => AllFrames(clip, 320, 240));
                 var area = new System.Windows.Int32Rect(100, 60, 160, 140);
                 var covered = 0;
-                foreach (var (pixels, cover) in shown)
+                foreach (var (pixels, cover, blocks) in shown)
                 {
                     var n = Enumerable.Range(5, 45).MinBy(i => Inspect.Difference(pixels, frames[i]));
                     Assert.True(n >= 25 == cover is not null, $"frame {n} is {(cover is null ? "not " : "")}covered");
                     if (cover is null) continue;
                     // Pixelated from that frame, as the saved copy is, not shown as a plain stand-in while playing.
-                    var made = Assert.IsType<System.Windows.Controls.Image>(cover).Source as BitmapSource;
-                    var blocks = TimelineTests.Pixels(made!);
                     var expected = Crop(frames[n], 320, area);
                     VideoRedactTool.PreviewCover(expected, area.Width, area.Height, area.Width, area.Height, "pixelate");
+                    Assert.NotNull(blocks);
                     Assert.True(Inspect.Difference(blocks, expected) < 4, $"the blocks on frame {n} differ by {Inspect.Difference(blocks, expected):0.0}");
                     covered++;
                 }
                 Assert.True(covered > 5, $"only {covered} covered pictures showed");
+                // The same cover throughout, changed in place: one put on anew for every frame sometimes didn't show.
+                Assert.Single(shown.Where(s => s.Cover is not null).Select(s => s.Cover).Distinct());
             }
             finally
             {
