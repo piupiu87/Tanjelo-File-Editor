@@ -267,21 +267,26 @@ tanj convert trim --range=1:05.5- --mode=lossless clip.mp4
 
 *Audio, video · ffmpeg, Windows' media player*
 
-Drag on the shape of the sound to mark a stretch, then move it or pull its ends. Each stretch is covered with a tone or
-silence. Saved as `talk-bleeped.mp4`.
+Drag on the shape of the sound to mark a stretch, then move it or pull its ends. Each stretch is covered with a tone of
+its own pitch or with silence, and the timeline shows it that way: a wave marked with its pitch, or a flat line marked
+Silence. Saved as `talk-bleeped.mp4`.
 
-- I and O set the selected stretch's ends at the playhead, or mark a second's stretch when none is selected; Delete
-  removes one. Stretches that overlap become one.
-- The tone is 1 kHz, or any pitch from 200 Hz to 4 kHz. Bleeps start and stop within about a millisecond and a half of
-  their times; everywhere else the sound is left exactly as it was.
-- After each change the sound is made again in the background, so what plays has the bleeps in.
-- A video's picture is copied, not re-encoded; only its sound is.
+- Click a stretch (on the timeline or in the list) to see and change what covers it: Tone or Silence, and the pitch,
+  from 200 Hz to 4 kHz. With none selected, the same controls set what new stretches get.
+- **Hear it** (H) plays the selected stretch with a second either side. After each change the sound is made again in the
+  background, so whatever plays has the bleeps in; the panel says when it's ready.
+- I and O set the selected stretch's ends at the playhead, or mark a second's stretch when none is selected; Tab selects
+  the next one and Delete removes it. A stretch drawn over another covered the same way joins it; over one covered
+  differently, it takes that part.
+- Bleeps start and stop within about a millisecond and a half of their times; everywhere else the sound is left exactly
+  as it was. A video's picture is copied, not re-encoded; only its sound is.
 
-**With `tanj`:** `--ranges="0:10-0:12, 0:20-0:21.5"`, `--sound=tone` (or `silence`), `--pitch=1000`.
+**With `tanj`:** `--ranges="0:10-0:12, 0:20-0:21.5"`, each stretch taking `--sound=tone` (or `silence`) and
+`--pitch=1000` unless it says its own: `0:10-0:12 silence`, `0:20-0:21.5 tone 800`.
 
 ```
 tanj convert bleep --ranges="0:10-0:12, 0:20-0:21.5" talk.mp4
-tanj convert bleep --ranges=1:02-1:03.5 --sound=silence interview.mp3
+tanj convert bleep --ranges="1:02-1:03.5 silence, 1:10-1:11 tone 800" interview.mp3
 ```
 
 ### Redact video… (`redact`)

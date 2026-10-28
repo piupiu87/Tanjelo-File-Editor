@@ -355,6 +355,7 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
     {
         if (_media is null) return;
         _reversing = false;
+        _stopAt = null;
         _playhead = _frames is { } frames ? frames.Start(frames.At(seconds)) : Math.Clamp(Math.Round(seconds, 3), 0, Duration);
         Timeline.Reveal(_playhead);
         Seek();
@@ -405,10 +406,39 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
         else Play(1);
     }
 
+    /// <summary>Plays from one time to another, then pauses there, as to hear a part again; false when nothing can play.</summary>
+    protected bool PlayBetween(double from, double to)
+    {
+        if (_preview is not { CanPlay: true }) return false;
+        Pause();
+        MoveTo(Math.Max(0, from));
+        Play(1);
+        _stopAt = Math.Min(Duration, to);
+        return true;
+    }
+
+    /// <summary>Where playback started by <see cref="PlayBetween"/> pauses.</summary>
+    double? _stopAt;
+
+    /// <summary>
+    /// Plays another file of the same length in place of the one playing, such as the same file with new sound, from the
+    /// same moment and playing on if it was. False when nothing plays here, as with stills.
+    /// </summary>
+    protected async Task<bool> SwapAsync(string path)
+    {
+        if (_preview is not FramePlayer player) return false;
+        var swapped = await player.SwapAsync(path, _closing.Token);
+        // The player paused for the swap, which stopped the playhead following it.
+        if (player.Playing) _ticker.Start();
+        ShowPlaying();
+        return swapped;
+    }
+
     protected void Play(double rate)
     {
         if (_preview is not { CanPlay: true } preview) return;
         _reversing = false;
+        _stopAt = null;
         // From the start again once at the end.
         if (_frames is { } frames ? frames.At(_playhead) >= frames.Count - 1 : _playhead >= Duration - 0.01) MoveTo(0);
         _rate = rate;
@@ -420,6 +450,7 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
     protected void Pause()
     {
         _reversing = false;
+        _stopAt = null;
         if (_preview is not { Playing: true } preview)
         {
             ShowPlaying();
@@ -450,6 +481,11 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
             return;
         }
         _playhead = _frames is { } frames ? frames.Start(frames.At(preview.Position)) : Math.Min(Duration, preview.Position);
+        if (_stopAt is { } stop && preview.Position >= stop)
+        {
+            Pause();
+            return;
+        }
         Timeline.Reveal(_playhead);
         ShowTime();
         PlayheadMoved();

@@ -113,7 +113,7 @@ silence from its ends; split a PDF into pages, or merge several.
 | Annotate… | Images | Add arrows, shapes, text, numbered callouts, a magnifier, and pen and highlighter strokes |
 | Edit photo… | Images | Adjust light, colour, detail and effects with sliders over a live preview |
 | Trim… | Video, audio | Cut video to the exact frame, without re-encoding when the cuts fall on keyframes, and sound to the sample |
-| Bleep… | Audio, video | Cover stretches of the sound with a tone or silence; a video's picture is copied as it is |
+| Bleep… | Audio, video | Cover stretches of the sound, each with a tone of its own pitch or silence, and hear them before saving |
 | Redact… | Video | Hide areas for stretches of time, found faces too, with boxes that can follow a face |
 
 **Actions** work with the files and folders themselves: Copy path, Copy, Open in Terminal, Share…, Float (the shelf)
