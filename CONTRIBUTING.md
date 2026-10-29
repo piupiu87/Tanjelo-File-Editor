@@ -36,6 +36,13 @@ ffmpeg and pandoc; Office tests skip there.
 | `src/Tanjelo` | The WPF tray app: hotkey, Explorer selection, the menu, options dialogs, the editors (`Editors/`), progress cards, the Share sheet, the Float shelf and the settings window |
 | `src/tanj` | The command-line front end |
 | `tests/Tanjelo.Core.Tests` | xUnit tests for the engine, every converter, the app's pure helpers, and the editors' windows (`Ui.cs` renders them off-screen) |
+| `winget/` | The winget manifests, filled in for each release by the workflow |
+
+`dotnet publish` puts the .NET runtime in with each app (`SelfContained` when publishing), and leaves out PDFsharp's
+Windows Phone font subset, which isn't open source (`Directory.Build.targets`). The installer is made on CI with
+Velopack's `vpk pack` from the published folder; `Program.Main` runs Velopack's install and uninstall hooks
+(`Installation.cs`) before the app. To try the installer, push a branch and download the `Tanjelo-release` artifact:
+installing it here changes your user's PATH, Start menu and Apps list.
 
 ## Adding a conversion or a tool
 

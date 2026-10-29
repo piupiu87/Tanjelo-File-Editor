@@ -10,7 +10,12 @@
     <UseWindowsForms>true</UseWindowsForms>
     <PlatformTarget>x64</PlatformTarget>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <!-- Published with the .NET runtime inside, so there's nothing to install first; built and tested with the SDK's. -->
     <SelfContained>false</SelfContained>
+    <SelfContained Condition="'$(_IsPublishing)' == 'true'">true</SelfContained>
+    <!-- Program.Main runs the installer's hooks before the app. -->
+    <StartupObject>Tanjelo.Program</StartupObject>
+    <AssemblyTitle>Tanjelo</AssemblyTitle>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <!-- WFO0003 wants WinForms' own DPI setting; this is a WPF app (WinForms only supplies the tray icon), so the manifest is correct. -->
@@ -36,6 +41,11 @@
   <ItemGroup>
     <None Include="..\..\LICENSE" Link="LICENSE.txt" Visible="false" CopyToPublishDirectory="PreserveNewest" />
     <None Include="..\..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" Visible="false" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The installer and its hooks (MIT). -->
+    <PackageReference Include="Velopack" Version="1.2.161" />
   </ItemGroup>
 
   <ItemGroup>

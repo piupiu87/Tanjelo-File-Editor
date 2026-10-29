@@ -30,9 +30,15 @@ independent project, not affiliated with Tangerine.
 
 ## Download
 
-Get the latest `Tanjelo-<version>-win-x64.zip` from the [Releases page](../../releases/latest), unzip it anywhere, and
-run `Tanjelo.exe`. It needs the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) (Windows
-offers to install it if it's missing).
+From the [Releases page](../../releases/latest):
+
+- **`Tanjelo-<version>-Setup.exe`** installs Tanjelo for you alone, with no administrator needed: a Start menu entry,
+  `tanj` on your PATH, and an uninstaller in Settings → Apps (which keeps your settings, in case you come back). Once
+  it's listed on winget, `winget install Tanjelo` does the same.
+- **`Tanjelo-<version>-win-x64.zip`** is the same, to unzip anywhere and run `Tanjelo.exe` from, for a USB stick or
+  a PC where you'd rather not install.
+
+Both carry the .NET runtime inside, so there's nothing else to install first.
 
 The app isn't code-signed yet, so the first launch may show "Windows protected your PC". Choose
 **More info → Run anyway**. See the [code signing policy](#code-signing-policy).
@@ -128,7 +134,7 @@ and Move to….
 
 ## Requirements
 
-- Windows 10 or 11 (x64) with the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
+- Windows 10 (version 2004 or later) or 11, x64. Nothing else is needed: the .NET runtime comes with Tanjelo.
   Redact finds and follows faces best on Windows 11; Windows 10 can't run its face finder, so there Windows' own face
   detection finds only upright faces facing the camera.
 - Optional programs, found automatically. Formats that need a missing one just don't appear, and Settings and the
@@ -265,13 +271,14 @@ The tests generate their own fixture files. Tests that need ffmpeg, 7-Zip, Offic
 runtime or an OCR language skip themselves when that isn't installed. [CONTRIBUTING.md](CONTRIBUTING.md) covers running
 one test class and adding a converter.
 
-The published apps land in `src\<project>\bin\Release\net10.0-windows10.0.19041.0\win-x64\publish\`, with the licence
-and third-party notices included. If your checkout path contains a comma, `dotnet publish -o <dir>` fails (MSBuild
+The published apps land in `src\<project>\bin\Release\net10.0-windows10.0.19041.0\win-x64\publish\`, with the .NET
+runtime, the licence and the third-party notices included; the releases copy both into one folder. If your checkout path contains a comma, `dotnet publish -o <dir>` fails (MSBuild
 reads commas as separators), so publish to the default folder and copy from there. `tools\make-icon.ps1` regenerates
 the app icon.
 
-Pushing a tag such as `v0.1.0` makes the GitHub Actions workflow build, test, smoke-test, and attach a zip to a new
-release.
+Pushing a tag such as `v1.0.0` makes the GitHub Actions workflow build, test and smoke-test; make the zip, the
+installer (with [Velopack](https://velopack.io)'s `vpk pack`) and the winget manifests (from `winget/`); install, use and
+uninstall the installer on a fresh runner with its own .NET hidden; and attach them all to a new release.
 
 | Project | What's in it |
 |---|---|
