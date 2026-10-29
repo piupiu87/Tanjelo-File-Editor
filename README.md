@@ -56,6 +56,10 @@ open in a window of their own for one file.
 
 The shortcut is only grabbed while Explorer or the desktop is in front, so other apps keep their own Ctrl+Shift+Space.
 
+Everything works from the keyboard, with a focus ring showing where Tab has got to, and with a screen reader such as
+Narrator, which reads out the menu's entries as the arrows move and each result as it appears. With a Windows contrast
+theme on, Tanjelo uses that theme's colours.
+
 ## What converts to what
 
 | From | To | Needs |

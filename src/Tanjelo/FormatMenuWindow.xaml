@@ -13,15 +13,19 @@
         <Style x:Key="EntryStyle" TargetType="ListBoxItem">
             <Setter Property="Padding" Value="0" />
             <Setter Property="Margin" Value="0,1" />
+            <!-- The keys stay in the search box; the arrows move the selection -->
+            <Setter Property="Focusable" Value="False" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
             <!-- ListBoxItem defaults to the system text colour, which is black even in dark mode. -->
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
             <EventSetter Event="MouseEnter" Handler="OnEntryHover" />
+            <Setter Property="AutomationProperties.Name" Value="{Binding Label}" />
+            <Setter Property="AutomationProperties.HelpText" Value="{Binding Description}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
                         <Grid>
-                            <Border x:Name="Back" CornerRadius="5" Background="Transparent" />
+                            <Border x:Name="Back" CornerRadius="5" Background="Transparent" BorderThickness="1.5" BorderBrush="Transparent" />
                             <Border x:Name="Pill" Width="3" Height="16" CornerRadius="1.5" HorizontalAlignment="Left"
                                     Background="{DynamicResource Accent}" Visibility="Hidden" />
                             <ContentPresenter />
@@ -30,6 +34,7 @@
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter TargetName="Back" Property="Background" Value="{DynamicResource Selected}" />
                                 <Setter TargetName="Pill" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="Back" Property="BorderBrush" Value="{DynamicResource SelectedBorder}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -46,7 +51,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="Back" CornerRadius="5" Margin="2,0" Padding="0,5" Background="Transparent">
+                        <Border x:Name="Back" CornerRadius="5" Margin="2,0" Padding="0,3.5" Background="Transparent" BorderThickness="1.5" BorderBrush="Transparent">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
@@ -56,6 +61,7 @@
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="Back" Property="Background" Value="{DynamicResource Selected}" />
                                 <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+                                <Setter TargetName="Back" Property="BorderBrush" Value="{DynamicResource SelectedBorder}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Foreground" Value="{DynamicResource TextTertiary}" />
@@ -114,7 +120,8 @@
                            VerticalAlignment="Center" Foreground="{DynamicResource TextTertiary}" />
                 <TextBox x:Name="Search" Padding="29,6,8,6" BorderThickness="0" Background="Transparent"
                          Foreground="{DynamicResource TextPrimary}" CaretBrush="{DynamicResource TextPrimary}"
-                         FontFamily="{StaticResource UiFont}" FontSize="13" />
+                         FontFamily="{StaticResource UiFont}" FontSize="13"
+                         AutomationProperties.HelpText="Type to filter. Up and Down choose, Tab switches between Convert, Tools and Actions, and Enter runs it." />
                 <TextBlock x:Name="Placeholder" Text="Convert to…" Margin="31,0,0,0" VerticalAlignment="Center"
                            IsHitTestVisible="False" Foreground="{DynamicResource TextTertiary}" />
             </Grid>
@@ -162,7 +169,7 @@
         <!-- Empty state and notes about missing tools -->
         <StackPanel Grid.Row="4" Margin="10,2,10,4">
             <TextBlock x:Name="EmptyText" Visibility="Collapsed" Margin="0,4,0,6" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap" />
-            <ItemsControl x:Name="HintList">
+            <ItemsControl x:Name="HintList" Focusable="False" AutomationProperties.Name="What to install for more">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Grid Margin="0,6,0,0">
@@ -177,6 +184,8 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
+            <!-- Read out by screen readers as the selection moves, since the keys stay in the search box -->
+            <TextBlock x:Name="Spoken" Height="1" Opacity="0" IsHitTestVisible="False" AutomationProperties.LiveSetting="Polite" />
         </StackPanel>
     </Grid>
 </Window>

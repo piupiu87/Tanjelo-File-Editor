@@ -39,6 +39,7 @@ public partial class ProgressToast : Window
     {
         Heading.Text = target.RunningText;
         Detail.Text = count == 1 ? "" : $"{count} items";
+        Speech.Announce(Card, Detail.Text.Length > 0 ? $"{Heading.Text} {Detail.Text}" : Heading.Text);
         SetButtons(primary: null, secondary: ("Cancel", () => CancelRequested?.Invoke()));
     }
 
@@ -112,6 +113,7 @@ public partial class ProgressToast : Window
         Heading.Text = heading;
         Detail.Text = detail;
         Bar.Visibility = Visibility.Collapsed;
+        Speech.Announce(Card, $"{heading}. {detail}");
         (Badge.Fill, Glyph.Foreground, Glyph.Text) = mood switch
         {
             Mood.Success => (Brush("SuccessSoft"), Brush("Success"), ""),

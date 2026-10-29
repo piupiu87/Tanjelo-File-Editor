@@ -30,8 +30,8 @@ sealed class TrimEditor : TimelineEditor<TrimState>
 
     public TrimEditor(string file, Target target, Toolbox tools) : base(file, target, tools)
     {
-        _from = Field("Where the part kept starts; Enter to set it");
-        _to = Field("Where the part kept ends; Enter to set it");
+        _from = Field("Start", "Where the part kept starts; Enter to set it");
+        _to = Field("End", "Where the part kept ends; Enter to set it");
         _panel.Children.Add(Panels.Heading("Keep"));
         _panel.Children.Add(Row("From", _from, Panels.Button("", "Start here", "Start at the playhead (I)", () => SetStart(Playhead))));
         _panel.Children.Add(Row("To", _to, Panels.Button("", "End here", Video ? "End after the frame at the playhead (O)" : "End at the playhead (O)", SetEndHere)));
@@ -56,9 +56,11 @@ sealed class TrimEditor : TimelineEditor<TrimState>
         AddToTransport(_kept);
     }
 
-    TextBox Field(string tip)
+    TextBox Field(string name, string tip)
     {
         var box = Panels.Themed(new TextBox { Width = 112, ToolTip = tip, VerticalContentAlignment = VerticalAlignment.Center }, FrameworkElement.StyleProperty, "FieldBox");
+        System.Windows.Automation.AutomationProperties.SetName(box, name);
+        System.Windows.Automation.AutomationProperties.SetHelpText(box, tip);
         box.KeyDown += (_, e) =>
         {
             if (e.Key == Key.Enter) Typed(box);

@@ -73,6 +73,7 @@ sealed class BleepEditor : TimelineEditor<BleepState>
             IsSnapToTickEnabled = true,
             TickFrequency = 50,
         }, FrameworkElement.StyleProperty, "ThinSlider");
+        System.Windows.Automation.AutomationProperties.SetName(_pitch, "Pitch");
         _pitchValue = Panels.Themed(new TextBlock { FontSize = 12, HorizontalAlignment = HorizontalAlignment.Right }, TextBlock.ForegroundProperty, "TextSecondary");
         var top = new Grid();
         top.Children.Add(new TextBlock { Text = "Pitch", FontSize = 12.5 });
@@ -103,7 +104,10 @@ sealed class BleepEditor : TimelineEditor<BleepState>
         [
             ("H", "Hear the selected stretch"),
             ("I, O", "Start or end the selected stretch at the playhead, or mark a new one"),
+            ("Insert, N", "Mark a second from the playhead"),
             ("Tab", "Select the next stretch"),
+            ("Alt, ←, →", "Move it a frame; with Shift, a second"),
+            ("Ctrl, ←, →", "Move its end"),
             ("Delete", "Remove the selected stretch"),
             .. TimelineKeys(),
         ]));
@@ -132,7 +136,7 @@ sealed class BleepEditor : TimelineEditor<BleepState>
     public override bool Changed => base.Changed && State.Bleeps.Count > 0;
 
     protected override string EditorStatus => !Started ? "" :
-        (State.Bleeps.Count == 1 ? "1 stretch" : $"{State.Bleeps.Count} stretches") + (_selected is not null ? " · one selected" : "");
+        (State.Bleeps.Count == 1 ? "1 stretch" : $"{State.Bleeps.Count} stretches") + Panels.Which(_selected, State.Bleeps.Count);
 
     public override Target Result()
     {
@@ -463,8 +467,18 @@ sealed class BleepEditor : TimelineEditor<BleepState>
                 Select(null);
                 return true;
             case Key.Tab when State.Bleeps.Count > 0:
+                // Past the last stretch (or the first) none is selected and Tab moves on to the next control.
                 var by = modifiers.HasFlag(ModifierKeys.Shift) ? -1 : 1;
-                Select(((_selected ?? (by > 0 ? -1 : 0)) + by + State.Bleeps.Count) % State.Bleeps.Count);
+                var next = _selected is { } current ? current + by : by > 0 ? 0 : State.Bleeps.Count - 1;
+                Select(next >= 0 && next < State.Bleeps.Count ? next : null);
+                return _selected is not null;
+            case Key.Insert or Key.N when modifiers == ModifierKeys.None:
+                Select(null);
+                SetEnd(true, Math.Round(Playhead, 3));
+                return true;
+            case Key.Left or Key.Right when _selected is { } s && (modifiers.HasFlag(ModifierKeys.Alt) || modifiers.HasFlag(ModifierKeys.Control)):
+                // Plain arrows move the playhead, so a stretch moves with Alt and the arrows, and its end with Ctrl.
+                Shift(s, key == Key.Left ? -1 : 1, modifiers.HasFlag(ModifierKeys.Shift), endOnly: modifiers.HasFlag(ModifierKeys.Control), repeat);
                 return true;
             case Key.H when modifiers == ModifierKeys.None && _selected is not null:
                 _ = HearAsync();
@@ -475,6 +489,22 @@ sealed class BleepEditor : TimelineEditor<BleepState>
             default:
                 return false;
         }
+    }
+
+    /// <summary>Moves a stretch, or only its end, by a frame (a hundredth of a second in sound) or by a second, from the keyboard.</summary>
+    internal void Shift(int index, int direction, bool bySecond, bool endOnly, bool repeat = false)
+    {
+        var bleep = State.Bleeps[index];
+        var step = bySecond ? 1 : Frames is { } frames ? frames.Stop(frames.At(bleep.Start)) - frames.Start(frames.At(bleep.Start)) : 0.01;
+        var by = direction * step;
+        var moved = endOnly
+            ? bleep with { End = Math.Clamp(SnapCut(bleep.End + by), bleep.Start + Shortest, Duration) }
+            : bleep with { Start = SnapCut(Math.Clamp(bleep.Start + by, 0, Duration - (bleep.End - bleep.Start))), End = SnapCut(Math.Clamp(bleep.End + by, bleep.End - bleep.Start, Duration)) };
+        if (moved == bleep) return;
+        var (settled, kept) = Settle(State.Bleeps.SetItem(index, moved), index);
+        _selected = kept;
+        if (repeat) Amend(State with { Bleeps = settled });
+        else Commit(State with { Bleeps = settled });
     }
 
     /// <summary>Starts or ends the selected stretch at a time; with none selected, marks a second's stretch from or to there.</summary>

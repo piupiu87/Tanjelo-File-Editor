@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Data;
 using Run = System.Windows.Documents.Run;
@@ -115,6 +116,7 @@ public partial class FormatMenuWindow : Window
             var best = MenuSearch.BestTab(_entries.Select(e => (e.Target.Kind, Score(e))), _tab.Kind, _tabs.Select(t => t.Kind).ToList());
             ShowTab(_tabs.FirstOrDefault(t => t.Kind == best) ?? _tab, refresh: true);
         };
+        List.SelectionChanged += (_, _) => SpeakSelection();
         PreviewKeyDown += OnKey;
         Deactivated += (_, _) => Finish(null);
         Closed += (_, _) => _picked.TrySetResult(null);
@@ -186,6 +188,8 @@ public partial class FormatMenuWindow : Window
         _tab = tab;
         tab.Button.IsChecked = true;
         Placeholder.Text = tab.Placeholder;
+        AutomationProperties.SetName(Search, tab.Placeholder.TrimEnd('…'));
+        AutomationProperties.SetName(List, tab.Title);
         _view.Refresh();
 
         foreach (var t in _tabs)
@@ -196,12 +200,14 @@ public partial class FormatMenuWindow : Window
             if (count > 0)
                 header.Inlines.Add(new Run("  " + count) { FontSize = 11.5, Foreground = (Brush)FindResource("TextTertiary") });
             t.Button.Content = header;
+            AutomationProperties.SetName(t.Button, count > 0 ? $"{t.Title}, {count}" : t.Title);
             t.Button.IsEnabled = count > 0 || t == tab;
         }
 
         var empty = List.Items.Count == 0;
         EmptyText.Text = Search.Text.Trim().Length > 0 ? $"Nothing matches “{Search.Text.Trim()}”." : tab.Empty;
         EmptyText.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
+        if (empty) Speech.Announce(Spoken, EmptyText.Text);
         SelectFirst();
     }
 
@@ -238,21 +244,25 @@ public partial class FormatMenuWindow : Window
 
     void OnKey(object sender, KeyEventArgs e)
     {
-        var key = e.Key == Key.System ? e.SystemKey : e.Key;
-        if (_hotkey is { } hotkey && key == hotkey.Key && Keyboard.Modifiers == hotkey.Modifiers)
+        if (Press(e.Key == Key.System ? e.SystemKey : e.Key, Keyboard.Modifiers)) e.Handled = true;
+    }
+
+    /// <summary>A key going down with these modifiers held; returns whether the menu used it.</summary>
+    internal bool Press(Key key, ModifierKeys modifiers)
+    {
+        if (_hotkey is { } hotkey && key == hotkey.Key && modifiers == hotkey.Modifiers)
         {
             CycleTabs(1);
-            e.Handled = true;
-            return;
+            return true;
         }
 
-        switch (e.Key)
+        switch (key)
         {
             case Key.Escape:
                 Finish(null);
                 break;
             case Key.Tab:
-                CycleTabs(Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? -1 : 1);
+                CycleTabs(modifiers.HasFlag(ModifierKeys.Shift) ? -1 : 1);
                 break;
             case Key.Down:
                 Move(1);
@@ -261,15 +271,22 @@ public partial class FormatMenuWindow : Window
                 Move(-1);
                 break;
             case Key.PageDown or Key.PageUp:
-                Move(e.Key == Key.PageDown ? 5 : -5);
+                Move(key == Key.PageDown ? 5 : -5);
                 break;
             case Key.Enter:
                 if (List.SelectedItem is Entry entry) Finish(entry.Target);
                 break;
             default:
-                return;
+                return false;
         }
-        e.Handled = true;
+        return true;
+    }
+
+    /// <summary>Has screen readers say the selected entry, which the keys move while they stay in the search box.</summary>
+    void SpeakSelection()
+    {
+        if (List.SelectedItem is not Entry entry) return;
+        Speech.Announce(Spoken, $"{entry.Label}, {entry.Description}, {List.SelectedIndex + 1} of {List.Items.Count}");
     }
 
     void OnEntryHover(object sender, MouseEventArgs e) => ((ListBoxItem)sender).IsSelected = true;

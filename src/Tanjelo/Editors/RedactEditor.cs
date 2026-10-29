@@ -80,6 +80,7 @@ sealed class RedactEditor : Editor<RedactState>, ICanvasTool
         _panel.Children.Add(Panels.Heading("Areas", 20));
         _panel.Children.Add(Panels.Hint("Drag on the picture to draw a box. Drag a box to move it or its edges to resize it; Delete removes the selected one, and the arrows nudge it.", 0));
         _panel.Children.Add(_count);
+        _panel.Children.Add(Panels.Keys(RedactKeys));
         _panel.Children.Add(Panels.Hint("The copy also loses its location, its XMP and the small preview cameras keep in EXIF.", 14));
     }
 
@@ -89,11 +90,22 @@ sealed class RedactEditor : Editor<RedactState>, ICanvasTool
         public static readonly bool Ocr = Redaction.CanFindText;
     }
 
+    static readonly (string Keys, string Does)[] RedactKeys =
+    [
+        ("Insert, N", "Add a box in the middle"),
+        ("Tab", "Select the next box"),
+        ("Arrows", "Move it a pixel; with Shift, 10"),
+        ("Ctrl, Arrows", "Make it bigger or smaller"),
+        ("Delete", "Remove the selected box"),
+    ];
+
+    public override (string Name, string Keys) Spoken => ("Picture", string.Join(". ", RedactKeys.Select(k => $"{k.Keys}: {k.Does}")));
+
     public override FrameworkElement Main => _canvas;
     public override FrameworkElement Panel => _panel;
     public override ZoomCanvas Canvas => _canvas;
     public override string Summary => _picture is null ? "" : Describe.Pixels((int)_picture.Width, (int)_picture.Height);
-    public override string Status => _picture is null ? "" : Describe.Count(State.Boxes.Count, "area") + (_selected is not null ? " · one selected" : "");
+    public override string Status => _picture is null ? "" : Describe.Count(State.Boxes.Count, "area") + Panels.Which(_selected, State.Boxes.Count);
 
     internal RedactState Current => State;
     internal int? Selected => _selected;
@@ -325,11 +337,12 @@ sealed class RedactEditor : Editor<RedactState>, ICanvasTool
         return BoxAt(at) is not null ? Cursors.SizeAll : Cursors.Cross;
     }
 
-    public override bool OnKey(KeyEventArgs e)
+    public override bool Press(Key key, ModifierKeys modifiers = ModifierKeys.None, bool repeat = false)
     {
         if (_picture is null || Keyboard.FocusedElement is TextBox) return false;
-        var step = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? 10 : 1;
-        switch (e.Key)
+        var step = modifiers.HasFlag(ModifierKeys.Shift) ? 10 : 1;
+        var (dx, dy) = key switch { Key.Left => (-step, 0), Key.Right => (step, 0), Key.Up => (0, -step), Key.Down => (0, step), _ => (0, 0) };
+        switch (key)
         {
             case Key.Delete or Key.Back when _selected is not null:
                 RemoveSelected();
@@ -339,18 +352,54 @@ sealed class RedactEditor : Editor<RedactState>, ICanvasTool
                 DrawFrames();
                 RaiseUpdated();
                 return true;
+            case Key.Insert or Key.N when (modifiers & ~ModifierKeys.Shift) == ModifierKeys.None:
+                AddBox();
+                return true;
             case Key.Tab when State.Boxes.Count > 0:
-                var by = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? -1 : 1;
-                _selected = ((_selected ?? (by > 0 ? -1 : 0)) + by + State.Boxes.Count) % State.Boxes.Count;
-                DrawFrames();
-                RaiseUpdated();
+                return Cycle(modifiers.HasFlag(ModifierKeys.Shift) ? -1 : 1);
+            case Key.Left or Key.Right or Key.Up or Key.Down when _selected is { } s && modifiers.HasFlag(ModifierKeys.Control):
+                Resize(s, dx, dy, repeat);
                 return true;
             case Key.Left or Key.Right or Key.Up or Key.Down when _selected is { } s:
-                Nudge(s, e.Key switch { Key.Left => -step, Key.Right => step, _ => 0 }, e.Key switch { Key.Up => -step, Key.Down => step, _ => 0 }, e.IsRepeat);
+                Nudge(s, dx, dy, repeat);
                 return true;
             default:
                 return false;
         }
+    }
+
+    /// <summary>Selects the next or previous box; past the last (or first) it selects none and lets Tab move on.</summary>
+    bool Cycle(int by)
+    {
+        var next = _selected is { } s ? s + by : by > 0 ? 0 : State.Boxes.Count - 1;
+        _selected = next >= 0 && next < State.Boxes.Count ? next : null;
+        DrawFrames();
+        RaiseUpdated();
+        return _selected is not null;
+    }
+
+    /// <summary>A box in the middle of the picture, a quarter of its size, for the keyboard (Insert or N); selected, to move and size.</summary>
+    internal void AddBox()
+    {
+        var (width, height) = ((int)_picture!.Width, (int)_picture.Height);
+        var box = new RedactBox(width * 3 / 8, height * 3 / 8, Math.Max(1, width / 4), Math.Max(1, height / 4));
+        _selected = State.Boxes.Count;
+        Commit(State with { Boxes = State.Boxes.Add(box) });
+    }
+
+    /// <summary>Makes a box wider or narrower, taller or shorter, from its top-left corner; held keys make one undo step.</summary>
+    internal void Resize(int index, int dw, int dh, bool repeat = false)
+    {
+        var box = State.Boxes[index];
+        var sized = box with
+        {
+            Width = Math.Clamp(box.Width + dw, 1, Math.Max(1, (int)_picture!.Width - box.X)),
+            Height = Math.Clamp(box.Height + dh, 1, Math.Max(1, (int)_picture.Height - box.Y)),
+        };
+        if (sized == box) return;
+        var next = State with { Boxes = State.Boxes.SetItem(index, sized) };
+        if (repeat) Amend(next);
+        else Commit(next);
     }
 
     internal void RemoveSelected()

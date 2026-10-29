@@ -56,7 +56,7 @@
                                      VerticalAlignment="Bottom" Margin="10,0,10,6" Visibility="Collapsed" IsHitTestVisible="False" />
                     </Grid>
                 </Border>
-                <ItemsControl x:Name="FactList" Margin="2,10,2,0" Grid.IsSharedSizeScope="True" Focusable="False">
+                <ItemsControl x:Name="FactList" Margin="2,10,2,0" Grid.IsSharedSizeScope="True" Focusable="False" AutomationProperties.Name="About the file">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Grid Margin="0,0,0,3">

@@ -107,6 +107,8 @@ sealed class PhotoEditor : Editor<PhotoSettings>
             Focusable = true,
             ToolTip = option.Hint,
         }, FrameworkElement.StyleProperty, option.Min < 0 ? "CentredSlider" : "ThinSlider");
+        System.Windows.Automation.AutomationProperties.SetName(slider, option.Label);
+        if (option.Hint is { } hint) System.Windows.Automation.AutomationProperties.SetHelpText(slider, hint);
         var value = Panels.Themed(new TextBlock { FontSize = 12, HorizontalAlignment = HorizontalAlignment.Right, Text = Format(option.Name, 0) },
             TextBlock.ForegroundProperty, "TextSecondary");
         var label = new TextBlock { Text = option.Label, FontSize = 12.5 };

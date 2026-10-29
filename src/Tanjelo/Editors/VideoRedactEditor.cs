@@ -85,7 +85,16 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
         _panel.Children.Add(Panels.Hint("Drag on the picture to draw a box, hidden from this frame to the end. Each box has a bar under the timeline: drag its ends to set when it starts and stops.", 0));
         _panel.Children.Add(_count);
         _panel.Children.Add(Panels.Heading("Keys", 20));
-        _panel.Children.Add(Panels.Keys([("I, O", "Start the selected box here, or end it after this frame"), ("Delete", "Remove the selected box"), ("Tab", "Select the next box"), .. TimelineKeys()]));
+        _panel.Children.Add(Panels.Keys(
+        [
+            ("Insert, N", "Add a box in the middle, from here on"),
+            ("I, O", "Start the selected box here, or end it after this frame"),
+            ("Tab", "Select the next box"),
+            ("Alt, Arrows", "Move it a pixel; with Shift, 10"),
+            ("Ctrl, Arrows", "Make it bigger or smaller"),
+            ("Delete", "Remove the selected box"),
+            .. TimelineKeys(),
+        ]));
         _panel.Children.Add(Panels.Hint("The copy is re-encoded, and loses its location, cover pictures, subtitles and data tracks such as GPS logs.", 14));
     }
 
@@ -106,7 +115,7 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
     /// <summary>With no boxes there's nothing to save, whatever the style.</summary>
     public override bool Changed => base.Changed && State.Boxes.Count > 0;
 
-    protected override string EditorStatus => !Started ? "" : Describe.Count(State.Boxes.Count, "area") + (_selected is not null ? " · one selected" : "");
+    protected override string EditorStatus => !Started ? "" : Describe.Count(State.Boxes.Count, "area") + Panels.Which(_selected, State.Boxes.Count);
 
     public override Target Result()
     {
@@ -445,8 +454,19 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
                 Select(null);
                 return true;
             case Key.Tab when State.Boxes.Count > 0:
+                // Past the last box (or the first) none is selected and Tab moves on to the next control.
                 var by = modifiers.HasFlag(ModifierKeys.Shift) ? -1 : 1;
-                Select(((_selected ?? (by > 0 ? -1 : 0)) + by + State.Boxes.Count) % State.Boxes.Count);
+                var next = _selected is { } current ? current + by : by > 0 ? 0 : State.Boxes.Count - 1;
+                Select(next >= 0 && next < State.Boxes.Count ? next : null);
+                return _selected is not null;
+            case Key.Insert or Key.N when (modifiers & ~ModifierKeys.Shift) == ModifierKeys.None:
+                AddBox();
+                return true;
+            case Key.Left or Key.Right or Key.Up or Key.Down when _selected is { } s && (modifiers.HasFlag(ModifierKeys.Alt) || modifiers.HasFlag(ModifierKeys.Control)):
+                // Plain arrows step through the frames, so a box moves with Alt and the arrows and is sized with Ctrl.
+                var step = modifiers.HasFlag(ModifierKeys.Shift) ? 10 : 1;
+                var (dx, dy) = key switch { Key.Left => (-step, 0), Key.Right => (step, 0), Key.Up => (0, -step), _ => (0, step) };
+                Reshape(s, dx, dy, resize: modifiers.HasFlag(ModifierKeys.Control), repeat);
                 return true;
             case Key.I when _selected is { } s && modifiers == ModifierKeys.None:
                 var box = State.Boxes[s];
@@ -460,6 +480,29 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
             default:
                 return false;
         }
+    }
+
+    /// <summary>A box in the middle of the frame, a quarter of its size, from the playhead to the end, for the keyboard (Insert or N).</summary>
+    internal void AddBox()
+    {
+        var (width, height) = (Media.Width, Media.Height);
+        Commit(State with { Boxes = State.Boxes.Add(new VideoBox(width * 3 / 8, height * 3 / 8, Math.Max(1, width / 4), Math.Max(1, height / 4), Playhead)) });
+        Select(State.Boxes.Count - 1);
+    }
+
+    /// <summary>Moves a box, or sizes it from its top-left corner, keeping it on the picture; a box that followed a face stops following.</summary>
+    internal void Reshape(int index, int dx, int dy, bool resize, bool repeat = false)
+    {
+        var box = State.Boxes[index];
+        var at = box.At(Playhead);
+        var (width, height) = (Media.Width, Media.Height);
+        var changed = resize
+            ? box with { X = at.X, Y = at.Y, Width = Math.Clamp(at.Width + dx, 1, Math.Max(1, width - at.X)), Height = Math.Clamp(at.Height + dy, 1, Math.Max(1, height - at.Y)), Track = null }
+            : box with { X = Math.Clamp(at.X + dx, 0, Math.Max(0, width - at.Width)), Y = Math.Clamp(at.Y + dy, 0, Math.Max(0, height - at.Height)), Width = at.Width, Height = at.Height, Track = null };
+        if (changed == box) return;
+        var next = State with { Boxes = State.Boxes.SetItem(index, changed) };
+        if (repeat) Amend(next);
+        else Commit(next);
     }
 
     // ---- Finding and following faces

@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Tanjelo" Width="360" SizeToContent="Height"
         Style="{StaticResource PopupWindow}" ShowActivated="False">
-    <Grid Margin="16,14,10,14">
+    <Grid x:Name="Card" Margin="16,14,10,14">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition />

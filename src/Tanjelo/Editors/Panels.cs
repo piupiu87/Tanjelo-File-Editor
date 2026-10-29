@@ -41,6 +41,8 @@ static class Panels
         }
         content.Children.Add(new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center });
         var button = Themed(new Button { Content = content, ToolTip = tip, Margin = new Thickness(0, 0, 6, 0) }, FrameworkElement.StyleProperty, "SubtleButton");
+        System.Windows.Automation.AutomationProperties.SetName(button, text);
+        System.Windows.Automation.AutomationProperties.SetHelpText(button, tip);
         button.Click += (_, _) => click();
         return button;
     }
@@ -70,11 +72,12 @@ static class Panels
         });
     }
 
-    /// <summary>A row of colour dots, the chosen one ringed; the returned action moves the ring.</summary>
+    /// <summary>A row of colour dots, the chosen one ringed; the returned action moves the ring without calling <paramref name="picked"/>.</summary>
     public static (Panel Panel, Action<Colour> Show) Swatches(IReadOnlyList<string> colours, Colour selected, Action<Colour> picked, double size = 22)
     {
         var panel = new WrapPanel();
-        var rings = new List<(Colour Colour, Border Ring)>();
+        var swatches = new List<(Colour Colour, RadioButton Swatch)>();
+        var group = "swatches-" + Guid.NewGuid().ToString("N");
         foreach (var hex in colours)
         {
             Colour.TryParse(hex, out var colour);
@@ -87,30 +90,37 @@ static class Panels
                 Background = new SolidColorBrush(Color.FromRgb(colour.R, colour.G, colour.B)),
             };
             dot.SetResourceReference(Border.BorderBrushProperty, "FieldBorder");
-            var ring = new Border
-            {
-                Padding = new Thickness(2),
-                Margin = new Thickness(0, 0, 4, 4),
-                CornerRadius = new CornerRadius(size / 2 + 3),
-                BorderThickness = new Thickness(2),
-                Child = dot,
-                Cursor = Cursors.Hand,
-                ToolTip = hex,
-                Background = Brushes.Transparent,
-            };
-            ring.MouseLeftButtonUp += (_, _) => picked(colour);
-            panel.Children.Add(ring);
-            rings.Add((colour, ring));
+            var swatch = Themed(new RadioButton { Content = dot, GroupName = group, ToolTip = ColourName(hex) }, FrameworkElement.StyleProperty, "Swatch");
+            System.Windows.Automation.AutomationProperties.SetName(swatch, ColourName(hex));
+            // Click, not Checked: picking the colour already ringed still applies it, such as to a newly selected mark.
+            swatch.Click += (_, _) => picked(colour);
+            panel.Children.Add(swatch);
+            swatches.Add((colour, swatch));
         }
         void Show(Colour chosen)
         {
-            foreach (var (colour, ring) in rings)
-                if (colour == chosen) ring.SetResourceReference(Border.BorderBrushProperty, "Accent");
-                else ring.BorderBrush = Brushes.Transparent;
+            foreach (var (colour, swatch) in swatches) swatch.IsChecked = colour == chosen;
         }
         Show(selected);
         return (panel, Show);
     }
+
+    /// <summary>What a screen reader calls one of the editors' colours; anything else by its code.</summary>
+    public static string ColourName(string hex) => hex.ToUpperInvariant() switch
+    {
+        "#E5383B" => "Red",
+        "#F97A3D" => "Orange",
+        "#C2410C" => "Dark orange",
+        "#FFD400" => "Yellow",
+        "#2E8540" => "Green",
+        "#3A7BD5" => "Blue",
+        "#000000" or "#1B1B1B" => "Black",
+        "#2B2B2B" => "Dark grey",
+        "#5F5F5F" => "Grey",
+        "#F3EFEA" => "Off-white",
+        "#FFFFFF" => "White",
+        _ => hex,
+    };
 
     /// <summary>Keys and what they do, each key drawn as a small key cap: "Shift" beside "Lines at 45°".</summary>
     public static FrameworkElement Keys(IReadOnlyList<(string Keys, string Does)> rows)
@@ -145,6 +155,10 @@ static class Panels
         }
         return grid;
     }
+
+    /// <summary>" · one selected", or " · 2 of 3 selected" when there are several, so a screen reader hears which one Tab picked.</summary>
+    public static string Which(int? selected, int count) =>
+        selected is not { } s ? "" : count == 1 ? " · one selected" : $" · {s + 1} of {count} selected";
 
     public static T Themed<T>(T element, DependencyProperty property, string key) where T : FrameworkElement
     {

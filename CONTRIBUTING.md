@@ -56,7 +56,8 @@ ffmpeg and pandoc; Office tests skip there.
    `ZoomCanvas.PointerDown`), and save renders in light and dark to `%TEMP%\tanjelo-tests\renders`. Audio and video
    editors derive from `TimelineEditor<T>`, which brings the player, the timeline and the keys; their tests check
    frames by number with `Scratch.Numbered` and `Inspect.WhichFrame`, and go in the `Windows player` collection,
-   which runs on its own.
+   which runs on its own. Every window is also checked with `A11y.Check` (each control named and reached by Tab) and
+   rendered in a contrast theme with `AccessibilityTests.RenderInContrast`.
 7. Add tests next to the others, using `Scratch` for fixture files and `Env.Run` to go through the engine the way the
    app does. Skip with `Assert.SkipUnless` when an optional tool is missing.
 8. Describe it in [docs/FORMATS.md](docs/FORMATS.md) or [docs/TOOLS.md](docs/TOOLS.md), add it to the short tables in
@@ -68,6 +69,9 @@ ffmpeg and pandoc; Office tests skip there.
   exception is the opt-in update check (`UpdateCheck.cs`), which asks GitHub for the latest version number and nothing
   else, and the README's Privacy section must keep saying so.
 - **Originals are never touched.** Results are new files beside the original.
+- **Accessible.** Every control has a name a screen reader can read (an icon button takes its tooltip), Tab reaches it,
+  and colours come from the theme's brushes (`Theme.cs`), so Windows' contrast themes work. Editors can do from the
+  keyboard what they do with the mouse.
 - **Licences.** Anything shipped inside the app must be MIT, BSD, Apache-2.0, or LGPL as a separate DLL. GPL tools,
   like pandoc, are only ever run as programs the user installed. Pin pre-1.0 packages to an exact version.
 - **Style.** Match the code around you: its naming, its idioms and how much it comments. Comments say why, in plain

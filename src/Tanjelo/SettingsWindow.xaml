@@ -69,7 +69,7 @@
             </StackPanel>
             <Button x:Name="CloseButton" Grid.Column="2" Style="{StaticResource IconButton}" Content="&#xE711;" Padding="10"
                     VerticalAlignment="Center" WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="Close (Esc)"
-                    AutomationProperties.Name="Close" Focusable="True" IsTabStop="False" />
+                    AutomationProperties.Name="Close" />
         </Grid>
 
         <ScrollViewer x:Name="Scroller" Grid.Row="1" VerticalScrollBarVisibility="Auto" Focusable="False" Padding="0,0,6,0">
@@ -88,7 +88,7 @@
                     <local:ShortcutBox x:Name="ShelfShortcut" Style="{StaticResource FieldBox}" Width="220" Optional="True" Tag="None"
                                        AutomationProperties.LabeledBy="{Binding ElementName=ShelfShortcutLabel}"
                                        AutomationProperties.HelpText="Click here and press the keys for the new shortcut; Backspace removes it" />
-                    <Button x:Name="ClearShelfShortcut" Style="{StaticResource SubtleButton}" Content="Remove" Margin="8,0,0,0" Focusable="True"
+                    <Button x:Name="ClearShelfShortcut" Style="{StaticResource SubtleButton}" Content="Remove" Margin="8,0,0,0"
                             AutomationProperties.Name="Remove the shelf shortcut" />
                 </StackPanel>
                 <TextBlock x:Name="ShelfShortcutHint" Style="{StaticResource Hint}" Text="Works everywhere. Off unless you set one." />
@@ -133,25 +133,35 @@
                 <TextBlock Style="{StaticResource Hint}" Margin="0,-4,0,10"
                            Text="Installed separately and found automatically. Formats that need a missing one stay out of the menu." />
                 <TextBlock x:Name="FfmpegLabel" Text="ffmpeg, for audio and video" Style="{StaticResource Label}" />
-                <DockPanel>
-                    <Button x:Name="FfmpegBrowse" DockPanel.Dock="Right" Style="{StaticResource SubtleButton}" Content="Browse…" Margin="8,0,0,0"
-                            Focusable="True" AutomationProperties.Name="Choose ffmpeg.exe" />
+                <!-- The box before its button, so Tab reaches them in reading order -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
                     <TextBox x:Name="FfmpegPath" Style="{StaticResource FieldBox}" Tag="Found automatically"
                              AutomationProperties.LabeledBy="{Binding ElementName=FfmpegLabel}" />
-                </DockPanel>
+                    <Button x:Name="FfmpegBrowse" Grid.Column="1" Style="{StaticResource SubtleButton}" Content="Browse…" Margin="8,0,0,0"
+                            AutomationProperties.Name="Choose ffmpeg.exe" />
+                </Grid>
                 <TextBlock x:Name="FfmpegStatus" Style="{StaticResource Hint}" />
 
                 <TextBlock x:Name="SevenZipLabel" Text="7-Zip, for 7Z and RAR archives" Style="{StaticResource Label}" Margin="0,14,0,6" />
-                <DockPanel>
-                    <Button x:Name="SevenZipBrowse" DockPanel.Dock="Right" Style="{StaticResource SubtleButton}" Content="Browse…" Margin="8,0,0,0"
-                            Focusable="True" AutomationProperties.Name="Choose 7z.exe" />
+                <!-- The box before its button, so Tab reaches them in reading order -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
                     <TextBox x:Name="SevenZipPath" Style="{StaticResource FieldBox}" Tag="Found automatically"
                              AutomationProperties.LabeledBy="{Binding ElementName=SevenZipLabel}" />
-                </DockPanel>
+                    <Button x:Name="SevenZipBrowse" Grid.Column="1" Style="{StaticResource SubtleButton}" Content="Browse…" Margin="8,0,0,0"
+                            AutomationProperties.Name="Choose 7z.exe" />
+                </Grid>
                 <TextBlock x:Name="SevenZipStatus" Style="{StaticResource Hint}" />
 
                 <TextBlock Text="The others" Style="{StaticResource Label}" Margin="0,14,0,6" />
-                <ItemsControl x:Name="OtherTools" Focusable="False" Grid.IsSharedSizeScope="True">
+                <ItemsControl x:Name="OtherTools" Focusable="False" Grid.IsSharedSizeScope="True" AutomationProperties.Name="Other optional programs">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Grid Margin="0,0,0,4" AutomationProperties.Name="{Binding Spoken}">
@@ -203,8 +213,8 @@
             <TextBlock x:Name="FileNote" FontSize="12" Foreground="{DynamicResource TextTertiary}" VerticalAlignment="Center"
                        TextTrimming="CharacterEllipsis" Margin="0,0,200,0" Text="Kept in settings.json, which you can also edit by hand" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button x:Name="OpenFileButton" Style="{StaticResource SubtleButton}" Content="Open settings file" Focusable="True" />
-                <Button x:Name="DoneButton" Style="{StaticResource PrimaryButton}" Content="Done" Focusable="True" />
+                <Button x:Name="OpenFileButton" Style="{StaticResource SubtleButton}" Content="Open settings file" />
+                <Button x:Name="DoneButton" Style="{StaticResource PrimaryButton}" Content="Done" />
             </StackPanel>
         </Grid>
     </Grid>

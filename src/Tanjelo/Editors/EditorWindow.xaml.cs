@@ -1,5 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Automation;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -47,6 +49,11 @@ public partial class EditorWindow : Window
             ActualButton.Click += (_, _) => canvas.ZoomTo(1);
         }
         editor.Updated += Refresh;
+        if (editor.Canvas is { } named)
+        {
+            AutomationProperties.SetName(named, editor.Spoken.Name);
+            AutomationProperties.SetHelpText(named, editor.Spoken.Keys);
+        }
 
         UndoButton.Click += (_, _) => editor.Undo();
         RedoButton.Click += (_, _) => editor.Redo();
@@ -68,7 +75,8 @@ public partial class EditorWindow : Window
             // Closing from the taskbar or Alt+F4 asks first too, like Cancel.
             if (_done) return;
             e.Cancel = true;
-            Cancel();
+            // After this close is called off: closing again from inside it isn't allowed.
+            Dispatcher.BeginInvoke(Cancel);
         };
         Closed += (_, _) =>
         {
@@ -131,7 +139,13 @@ public partial class EditorWindow : Window
         UndoButton.IsEnabled = _loaded && _editor.CanUndo;
         RedoButton.IsEnabled = _loaded && _editor.CanRedo;
         SaveButton.IsEnabled = _loaded && _editor.Changed;
-        StatusText.Text = _loaded ? _editor.Status : "";
+        var status = _loaded ? _editor.Status : "";
+        if (status != StatusText.Text)
+        {
+            StatusText.Text = status;
+            // Read out, so a screen reader hears what a key just selected or changed on the picture.
+            if (status.Length > 0) Speech.Announce(StatusText, status);
+        }
         NoticeText.Text = _loaded ? _editor.Notice ?? "" : "";
         NoticeBar.Visibility = NoticeText.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         ShowZoom();
@@ -193,6 +207,10 @@ public partial class EditorWindow : Window
         }
         var ctrl = Keyboard.Modifiers.HasFlag(ModifierKeys.Control);
         var typing = Keyboard.FocusedElement is TextBox;
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+        // A focused button, slider or list takes its own keys, such as Space to press the button. Tab goes through an
+        // editor's boxes or stretches only on the picture or the timeline; anywhere else it moves between controls.
+        if (FocusWants(key) || key == Key.Tab && !OnStage) return;
         // The editor goes first; a text box being typed in keeps Escape and Ctrl+Z for itself.
         if (_loaded && _editor.OnKey(e))
         {
@@ -235,6 +253,17 @@ public partial class EditorWindow : Window
         }
         e.Handled = true;
     }
+
+    static bool FocusWants(Key key) => Keyboard.FocusedElement switch
+    {
+        ButtonBase => key is Key.Space or Key.Enter,
+        Slider => key is Key.Left or Key.Right or Key.Up or Key.Down or Key.Home or Key.End or Key.PageUp or Key.PageDown,
+        ListBox or ListBoxItem => key is Key.Left or Key.Right or Key.Up or Key.Down or Key.Home or Key.End or Key.PageUp or Key.PageDown or Key.Space,
+        _ => false,
+    };
+
+    /// <summary>Whether the keys are on the editor's picture or timeline, rather than on one of its controls.</summary>
+    bool OnStage => Keyboard.FocusedElement is null || Keyboard.FocusedElement == this || Keyboard.FocusedElement is ZoomCanvas or TimelineView;
 
     // Opened on the monitor with the pointer, most of its work area, centred: placed in physical pixels while still
     // invisible, so WPF lays it out at that monitor's DPI.

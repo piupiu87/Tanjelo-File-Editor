@@ -51,7 +51,8 @@ sealed class TimelineView : FrameworkElement
 
     public TimelineView()
     {
-        Focusable = false;
+        // Reached by Tab, so the keys can go through an editor's stretches or boxes from here.
+        Focusable = true;
         ClipToBounds = true;
         foreach (var (property, key) in new[] { (LaneProperty, "Field"), (EdgeProperty, "FieldBorder"), (TextProperty, "TextSecondary"),
             (FaintProperty, "TextTertiary"), (AccentProperty, "Accent"), (SoftProperty, "AccentSoft") })
@@ -331,6 +332,7 @@ sealed class TimelineView : FrameworkElement
     protected override void OnMouseDown(MouseButtonEventArgs e)
     {
         if (e.ChangedButton != MouseButton.Left) return;
+        Focus();
         PointerDown(e.GetPosition(this), Keyboard.Modifiers);
         if (_drag != Drag.None) CaptureMouse();
         e.Handled = true;

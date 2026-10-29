@@ -4,13 +4,35 @@ using Microsoft.Win32;
 
 namespace Tanjelo;
 
-/// <summary>Follows the Windows light/dark app setting by swapping the brushes the XAML binds to dynamically.</summary>
+/// <summary>
+/// Follows the Windows light/dark app setting by swapping the brushes the XAML binds to dynamically. With a Windows
+/// contrast theme on, the brushes take that theme's colours instead of Tanjelo's own.
+/// </summary>
 static class Theme
 {
     /// <summary>"system" (follow Windows), "light" or "dark", from settings.</summary>
     public static string Preference { get; set; } = "system";
 
-    public static bool IsDark => Preference.ToLowerInvariant() switch
+    /// <summary>The colours of a Windows contrast theme, as Windows names them.</summary>
+    public sealed record Contrast(Color Window, Color WindowText, Color Highlight, Color HighlightText, Color ButtonFace, Color ButtonText, Color GrayText)
+    {
+        public bool IsDark => 0.2126 * Window.R + 0.7152 * Window.G + 0.0722 * Window.B < 128;
+
+        public static Contrast FromWindows() => new(SystemColors.WindowColor, SystemColors.WindowTextColor, SystemColors.HighlightColor,
+            SystemColors.HighlightTextColor, SystemColors.ControlColor, SystemColors.ControlTextColor, SystemColors.GrayTextColor);
+
+        /// <summary>Windows 11's Aquatic and Desert contrast themes, for the tests, which can't switch Windows' own.</summary>
+        public static readonly Contrast Aquatic = new(Hex("#202020"), Hex("#FFFFFF"), Hex("#8EE3F0"), Hex("#263B50"), Hex("#202020"), Hex("#FFFFFF"), Hex("#A6A6A6"));
+        public static readonly Contrast Desert = new(Hex("#FFFAEF"), Hex("#3D3D3D"), Hex("#903909"), Hex("#FFF5E3"), Hex("#FFFAEF"), Hex("#3D3D3D"), Hex("#676767"));
+    }
+
+    /// <summary>A contrast theme to use whatever Windows says; for the tests.</summary>
+    public static Contrast? ContrastOverride { get; set; }
+
+    /// <summary>The contrast theme in use, or null when there's none.</summary>
+    public static Contrast? CurrentContrast => ContrastOverride ?? (SystemParameters.HighContrast ? Contrast.FromWindows() : null);
+
+    public static bool IsDark => CurrentContrast is { } contrast ? contrast.IsDark : Preference.ToLowerInvariant() switch
     {
         "dark" => true,
         "light" => false,
@@ -40,16 +62,41 @@ static class Theme
         ["SuccessSoft"] = ("#E3F4E6", "#1F3A25"),
         ["Danger"] = ("#C42B1C", "#FF8A80"),
         ["DangerSoft"] = ("#FBE5E3", "#44221F"),
+        ["FocusRing"] = ("#1B1B1B", "#F3F3F3"),
+        // Only the contrast themes outline buttons and selected items; Tanjelo's own themes show them by colour.
+        ["ButtonBorder"] = ("#00000000", "#00000000"),
+        ["SelectedBorder"] = ("#00000000", "#00000000"),
+    };
+
+    /// <summary>
+    /// The same brushes in a contrast theme: text in the theme's text colour on its window colour, the accent in its
+    /// highlight colour, and outlines where Tanjelo's own themes use a shade. Selected items keep the window colour behind
+    /// them and are outlined in the highlight colour, so text on them never needs a second colour.
+    /// </summary>
+    static Color InContrast(string name, Contrast c) => name switch
+    {
+        "Surface" or "Hover" or "Selected" or "AccentSoft" or "Field" or "SuccessSoft" or "DangerSoft" => c.Window,
+        "TextPrimary" or "TextSecondary" or "TextTertiary" or "Success" or "Danger" or "FieldBorder" => c.WindowText,
+        "Accent" or "AccentButton" or "AccentButtonHover" or "FocusRing" or "SelectedBorder" => c.Highlight,
+        "OnAccent" => c.HighlightText,
+        "Subtle" or "SubtleHover" => c.ButtonFace,
+        "ButtonBorder" => c.ButtonText,
+        "Track" => c.GrayText,
+        _ => c.WindowText,
     };
 
     public static void Apply(ResourceDictionary resources)
     {
+        var contrast = CurrentContrast;
         var dark = IsDark;
         foreach (var (name, (light, darkColor)) in Palette)
         {
-            var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(dark ? darkColor : light));
+            var colour = contrast is not null ? InContrast(name, contrast) : Hex(dark ? darkColor : light);
+            var brush = new SolidColorBrush(colour);
             brush.Freeze();
             resources[name] = brush;
         }
     }
+
+    static Color Hex(string hex) => (Color)ColorConverter.ConvertFromString(hex);
 }

@@ -67,6 +67,9 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
         Timeline.ShowPictures = Video;
         Timeline.SoundFills = !Video;
         Timeline.Scrubbed += t => MoveTo(t);
+        System.Windows.Automation.AutomationProperties.SetName(Timeline, "Timeline");
+        System.Windows.Automation.AutomationProperties.SetHelpText(Timeline,
+            "Space plays or pauses, the arrows step through it, and Tab selects the next stretch or box. The keys are listed beside it.");
 
         _play = Panels.Button("\uE768", "Play", "Play or pause (Space)", TogglePlay);
         _play.Margin = new Thickness(0, 0, 4, 0);
@@ -80,6 +83,8 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
             VerticalContentAlignment = VerticalAlignment.Center,
             ToolTip = "Type a time and press Enter to go there, such as 1:02.5",
         }, FrameworkElement.StyleProperty, "FieldBox");
+        System.Windows.Automation.AutomationProperties.SetName(_time, "Time");
+        System.Windows.Automation.AutomationProperties.SetHelpText(_time, "Type a time and press Enter to go there, such as 1:02.5");
         _time.KeyDown += (_, e) =>
         {
             if (e.Key == Key.Enter) GoToTyped();
@@ -148,6 +153,7 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
     protected double Showing => _frames is { } frames && _preview is { } preview ? frames.Start(frames.At(preview.PictureAt)) : _playhead;
 
     public override FrameworkElement Main => _main;
+    public override (string Name, string Keys) Spoken => ("Picture", "Space plays or pauses, and the arrows step a frame. The keys are listed beside it.");
     public override ZoomCanvas? Canvas => Video ? _canvas : null;
 
     /// <summary>Controls of the editor's own at the right of the transport bar, such as the length kept.</summary>
@@ -563,7 +569,7 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
         _media is not null && Keyboard.FocusedElement is not TextBox && Press(e.Key == Key.System ? e.SystemKey : e.Key, Keyboard.Modifiers, e.IsRepeat);
 
     /// <summary>A key pressed with these modifiers, as <see cref="OnKey"/> passes it on; true when used.</summary>
-    public bool Press(Key key, ModifierKeys modifiers = ModifierKeys.None, bool repeat = false)
+    public override bool Press(Key key, ModifierKeys modifiers = ModifierKeys.None, bool repeat = false)
     {
         if (_media is null || OnTimelineKey(key, modifiers, repeat)) return _media is not null;
         if (modifiers.HasFlag(ModifierKeys.Control) || modifiers.HasFlag(ModifierKeys.Alt)) return false;

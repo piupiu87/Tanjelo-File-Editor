@@ -14,6 +14,8 @@ namespace Tanjelo;
 /// </summary>
 public partial class App : Application
 {
+    static App() => KeyboardFocus.Install();
+
     Settings _settings = new();
     ConverterEngine? _engine;
     DateTime _engineBuilt;
@@ -42,7 +44,9 @@ public partial class App : Application
         Theme.Apply(Resources);
         SystemEvents.UserPreferenceChanged += (_, args) =>
         {
-            if (args.Category == UserPreferenceCategory.General) Dispatcher.BeginInvoke(() => Theme.Apply(Resources));
+            // General is the light/dark app setting; Accessibility and Color, a contrast theme going on or off.
+            if (args.Category is UserPreferenceCategory.General or UserPreferenceCategory.Accessibility or UserPreferenceCategory.Color)
+                Dispatcher.BeginInvoke(() => Theme.Apply(Resources));
         };
 
         _shelf = Shelf.Load(FloatWindow.FilePath);

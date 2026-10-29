@@ -260,6 +260,8 @@ sealed class PageEditor : Editor<ImmutableList<PageItem>>
         content.Children.Add(icon);
         content.Children.Add(new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center });
         var button = new Button { Content = content, ToolTip = tip, Margin = new Thickness(0, 0, 6, 0), IsEnabled = always };
+        System.Windows.Automation.AutomationProperties.SetName(button, text);
+        System.Windows.Automation.AutomationProperties.SetHelpText(button, tip);
         button.SetResourceReference(FrameworkElement.StyleProperty, "SubtleButton");
         button.Click += (_, _) => click();
         _toolbar.Children.Add(button);

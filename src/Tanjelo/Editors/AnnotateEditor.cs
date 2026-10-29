@@ -115,6 +115,8 @@ sealed class AnnotateEditor : Editor<ImmutableList<Mark>>, ICanvasTool
                 IsChecked = tool == _tool,
                 Margin = new Thickness(0, 0, 4, 4),
             }, FrameworkElement.StyleProperty, "Chip");
+            System.Windows.Automation.AutomationProperties.SetName(button, name);
+            System.Windows.Automation.AutomationProperties.SetHelpText(button, $"Key {key}. {hint}");
             button.Checked += (_, _) => Use(tool);
             _toolButtons[tool] = button;
             _toolbar.Children.Add(button);
@@ -160,8 +162,11 @@ sealed class AnnotateEditor : Editor<ImmutableList<Mark>>, ICanvasTool
         _panel.Children.Add(Panels.Keys(
         [
             ("Shift", "Lines at 45°, squares and circles; straight pen and highlighter strokes"),
+            ("Insert, Enter", "Add a mark with the tool in use, in the middle"),
+            ("Tab", "Select the next mark"),
             ("Delete", "Remove the selected mark"),
             ("Arrows", "Nudge it a pixel; with Shift, 10"),
+            ("Ctrl, Arrows", "Make it bigger or smaller"),
             ("Esc", "Let go of it, or stop typing"),
             ("Double-click", "Change a text"),
             ("Ctrl+Z, Ctrl+Y", "Undo, redo"),
@@ -177,6 +182,9 @@ sealed class AnnotateEditor : Editor<ImmutableList<Mark>>, ICanvasTool
         return circle;
     }
 
+    public override (string Name, string Keys) Spoken => ("Picture",
+        "Letters choose a tool, such as A for an arrow. Insert adds a mark in the middle, Tab selects the next, the arrows move it and Ctrl with the arrows sizes it.");
+
     public override FrameworkElement Main => _canvas;
     public override FrameworkElement Toolbar => _toolbar;
     public override FrameworkElement Panel => _panel;
@@ -184,7 +192,7 @@ sealed class AnnotateEditor : Editor<ImmutableList<Mark>>, ICanvasTool
     public override string Summary => _layer.PictureSize.Width > 0 ? Describe.Pixels((int)_layer.PictureSize.Width, (int)_layer.PictureSize.Height) : "";
 
     public override string Status => !Started ? "" :
-        Describe.Count(State.Count, "mark") + " · " + Tools.First(t => t.Tool == _tool).Hint;
+        Describe.Count(State.Count, "mark") + Panels.Which(_selected, State.Count) + " · " + Tools.First(t => t.Tool == _tool).Hint;
 
     internal ImmutableList<Mark> Marks => State;
     internal int? Selected => _selected;
@@ -581,17 +589,17 @@ sealed class AnnotateEditor : Editor<ImmutableList<Mark>>, ICanvasTool
         RaiseUpdated();
     }
 
-    public override bool OnKey(KeyEventArgs e)
+    public override bool Press(Key key, ModifierKeys modifiers = ModifierKeys.None, bool repeat = false)
     {
         if (!Started || _typing is not null || Keyboard.FocusedElement is TextBox) return false;
-        var modifiers = Keyboard.Modifiers;
-        if (modifiers == ModifierKeys.None && Tools.FirstOrDefault(t => t.Key == e.Key) is { Name: not null } shortcut)
+        if (modifiers == ModifierKeys.None && Tools.FirstOrDefault(t => t.Key == key) is { Name: not null } shortcut)
         {
             Use(shortcut.Tool);
             return true;
         }
         var step = modifiers.HasFlag(ModifierKeys.Shift) ? 10 : 1;
-        switch (e.Key)
+        var by = key switch { Key.Left => new Vector(-step, 0), Key.Right => new Vector(step, 0), Key.Up => new Vector(0, -step), _ => new Vector(0, step) };
+        switch (key)
         {
             case Key.Delete or Key.Back when _selected is not null:
                 DeleteSelected();
@@ -601,14 +609,89 @@ sealed class AnnotateEditor : Editor<ImmutableList<Mark>>, ICanvasTool
                 DrawSelection();
                 RaiseUpdated();
                 return true;
+            case Key.Insert or Key.Enter when modifiers == ModifierKeys.None:
+                AddInMiddle();
+                return true;
+            case Key.Tab when State.Count > 0:
+                return Cycle(modifiers.HasFlag(ModifierKeys.Shift) ? -1 : 1);
+            case Key.Left or Key.Right or Key.Up or Key.Down when _selected is { } s && modifiers.HasFlag(ModifierKeys.Control):
+                Change(s, Resized(State[s], by), repeat);
+                return true;
             case Key.Left or Key.Right or Key.Up or Key.Down when _selected is { } s:
-                var by = e.Key switch { Key.Left => new Vector(-step, 0), Key.Right => new Vector(step, 0), Key.Up => new Vector(0, -step), _ => new Vector(0, step) };
-                if (e.IsRepeat) Amend(State.SetItem(s, State[s].Moved(by)));
-                else Commit(State.SetItem(s, State[s].Moved(by)));
+                Change(s, State[s].Moved(by), repeat);
                 return true;
             default:
                 return false;
         }
+    }
+
+    void Change(int index, Mark changed, bool repeat)
+    {
+        if (changed == State[index]) return;
+        if (repeat) Amend(State.SetItem(index, changed));
+        else Commit(State.SetItem(index, changed));
+    }
+
+    /// <summary>
+    /// A mark made bigger (→ or ↓) or smaller (← or ↑) from the keyboard: the far end of a line or arrow, or the
+    /// far corner of a shape, moves; text, callouts and magnifiers change size; pen strokes grow from where they start.
+    /// </summary>
+    static Mark Resized(Mark mark, Vector by)
+    {
+        var grow = by.X + by.Y;
+        switch (mark.Kind)
+        {
+            case MarkKind.Text or MarkKind.Callout or MarkKind.Magnifier:
+                return mark with { Size = Math.Max(mark.Kind == MarkKind.Text ? 6 : 12, mark.Size + grow) };
+            case MarkKind.Pen or MarkKind.Highlighter:
+                var length = Math.Max(1, mark.Points.Max(p => (p.ToPoint() - mark.Start).Length));
+                var scale = Math.Max(0.05, 1 + grow / length);
+                return mark with { Points = [.. mark.Points.Select(p => MarkPoint.From(mark.Start + (p.ToPoint() - mark.Start) * scale))] };
+            default:
+                return mark with { Points = [mark.Points[0], MarkPoint.From(mark.End + by)] };
+        }
+    }
+
+    /// <summary>Selects the next or previous mark; past the last (or first) it selects none and lets Tab move on.</summary>
+    bool Cycle(int by)
+    {
+        var next = _selected is { } s ? s + by : by > 0 ? 0 : State.Count - 1;
+        _selected = next >= 0 && next < State.Count ? next : null;
+        if (_selected is { } picked) Reflect(State[picked]);
+        DrawSelection();
+        RaiseUpdated();
+        return _selected is not null;
+    }
+
+    /// <summary>
+    /// A mark of the tool in use in the middle of the picture, as a click or a drag there would make, for the keyboard
+    /// (Insert or Enter); it's selected, to move with the arrows and size with Ctrl and the arrows. Text opens for typing.
+    /// </summary>
+    internal void AddInMiddle()
+    {
+        var size = _layer.PictureSize;
+        var middle = new Point(size.Width / 2, size.Height / 2);
+        var reach = new Vector(Math.Min(size.Width, size.Height) / 6, Math.Min(size.Width, size.Height) / 10);
+        Mark mark;
+        switch (_tool)
+        {
+            case Tool.Select:
+                return;
+            case Tool.Text:
+                BeginText(middle, null);
+                return;
+            case Tool.Callout or Tool.Magnifier:
+                mark = New(_tool == Tool.Callout ? MarkKind.Callout : MarkKind.Magnifier, [middle]);
+                break;
+            case Tool.Pen or Tool.Highlighter:
+                mark = New(_tool == Tool.Pen ? MarkKind.Pen : MarkKind.Highlighter, [middle - new Vector(reach.X, 0), middle + new Vector(reach.X, 0)]);
+                break;
+            default:
+                mark = New((MarkKind)Enum.Parse(typeof(MarkKind), _tool.ToString()), [middle - reach, middle + reach]);
+                break;
+        }
+        _selected = State.Count;
+        Commit(State.Add(mark));
     }
 
     internal void DeleteSelected()
