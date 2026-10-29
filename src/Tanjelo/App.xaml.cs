@@ -22,6 +22,9 @@ public partial class App : Application
     Mutex? _singleInstance;
     FileSystemWatcher? _settingsWatcher;
     SettingsWindow? _settingsWindow;
+    UpdateCheck? _updates;
+    DispatcherTimer? _updateTimer;
+    bool _checkingUpdates;
     Window? _menu; // the menu, or the options dialog that follows it
     readonly List<ProgressToast> _toasts = []; // newest first; stacked upward from the bottom-right corner
     bool _oneShot;
@@ -83,6 +86,7 @@ public partial class App : Application
         _hotkey.Conflict += () => _tray.Notify("Shortcut unavailable", $"Another app is already using {_settings.Hotkey}. Choose a different one in Settings.");
         ApplyHotkey();
         WatchSettings();
+        StartUpdateChecks();
 
         if (showWelcome)
             _tray.Notify("Tanjelo is ready", $"Select files in File Explorer and press {_settings.Hotkey}.");
@@ -396,6 +400,12 @@ public partial class App : Application
             else ApplyHotkey();
         };
         window.OpenFileClicked += OpenSettingsFile;
+        window.PageClicked += OpenPage;
+        if (_updates is not null)
+        {
+            var (text, link) = _updates.Describe();
+            window.ShowUpdate(text, link);
+        }
         window.Closed += (_, _) => _settingsWindow = null;
         _settingsWindow = window;
         window.Show();
@@ -430,6 +440,58 @@ public partial class App : Application
         }
         if (_tray is not null && (before.Hotkey != _settings.Hotkey || before.FloatHotkey != _settings.FloatHotkey))
             ApplyHotkey();
+        if (_settings.CheckForUpdates && !before.CheckForUpdates)
+            _ = CheckForUpdatesAsync();
+    }
+
+    // ---- Update check (off unless turned on in Settings)
+
+    void StartUpdateChecks()
+    {
+        _updates = new UpdateCheck(new System.Net.Http.SocketsHttpHandler(), UpdateCheck.DefaultStatePath,
+            typeof(App).Assembly.GetName().Version ?? new Version(0, 0, 0), () => DateTimeOffset.Now);
+        // A minute after starting, so a sign-in isn't slowed and the network is up; then every hour, asking at most once a day.
+        _updateTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(1) };
+        _updateTimer.Tick += (_, _) =>
+        {
+            _updateTimer.Interval = TimeSpan.FromHours(1);
+            _ = CheckForUpdatesAsync();
+        };
+        _updateTimer.Start();
+    }
+
+    async Task CheckForUpdatesAsync()
+    {
+        if (_updates is not { } updates || _checkingUpdates || !_settings.CheckForUpdates || !updates.Due) return;
+        _checkingUpdates = true;
+        try
+        {
+            _settingsWindow?.ShowUpdate("Checking…", null);
+            await updates.RunIfDueAsync(_settings.CheckForUpdates);
+            var (text, link) = updates.Describe();
+            _settingsWindow?.ShowUpdate(text, link);
+            if (updates.ShouldAnnounce)
+            {
+                updates.MarkAnnounced();
+                _tray?.Notify($"Tanjelo {updates.Newer} is out", "Click to see what's new on its release page.", () => OpenPage(updates.Page));
+            }
+        }
+        finally
+        {
+            _checkingUpdates = false;
+        }
+    }
+
+    static void OpenPage(string url)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        }
+        catch (Win32Exception ex)
+        {
+            Log.Write($"{url}: {ex.Message}");
+        }
     }
 
     void OpenSettingsFile()
@@ -484,6 +546,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _updateTimer?.Stop();
         _hotkey?.Dispose();
         _tray?.Dispose();
         _settingsWatcher?.Dispose();

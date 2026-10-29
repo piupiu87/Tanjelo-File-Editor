@@ -26,6 +26,7 @@ public partial class SettingsWindow : Window
     readonly Func<string?, string?, Toolbox> _detect;
     readonly DispatcherTimer _pathDelay = new() { Interval = TimeSpan.FromMilliseconds(400) };
     int _detecting;
+    string? _updatePage;
     bool _filling; // while the controls are being set from the settings, so their events don't change them back
 
     /// <summary>Raised when a shortcut box starts and stops listening for keys, so the app can let go of its own meanwhile.</summary>
@@ -33,6 +34,9 @@ public partial class SettingsWindow : Window
 
     /// <summary>Raised by "Open settings file".</summary>
     internal event Action? OpenFileClicked;
+
+    /// <summary>Raised with a web page to open, such as a new version's release page.</summary>
+    internal event Action<string>? PageClicked;
 
     /// <param name="apply">Takes each changed copy of the settings: the app applies it and saves it.</param>
     /// <param name="windows">The settings Windows keeps: Start with Windows and "Send to".</param>
@@ -77,6 +81,11 @@ public partial class SettingsWindow : Window
 
         StartupCheck.Click += (_, _) => ChangeWindows(() => _windows.StartsWithWindows = StartupCheck.IsChecked == true);
         SendToCheck.Click += (_, _) => ChangeWindows(() => _windows.InSendToMenu = SendToCheck.IsChecked == true);
+        CheckUpdatesBox.Click += (_, _) => Change(s => s.CheckForUpdates = CheckUpdatesBox.IsChecked == true);
+        UpdateLink.Click += (_, _) =>
+        {
+            if (_updatePage is { } page) PageClicked?.Invoke(page);
+        };
 
         OpenFileButton.Click += (_, _) => OpenFileClicked?.Invoke();
         DoneButton.Click += (_, _) => Close();
@@ -91,6 +100,7 @@ public partial class SettingsWindow : Window
         ContentRendered += (_, _) => MenuShortcut.Focus();
 
         Show(_settings);
+        ShowUpdate("", null);
         _ = FindToolsAsync();
     }
 
@@ -112,6 +122,7 @@ public partial class SettingsWindow : Window
             WebpSlider.Value = Math.Clamp(settings.WebpQuality, 1, 100);
             HeicSlider.Value = Math.Clamp(settings.HeicQuality, 1, 100);
             DpiSlider.Value = Math.Clamp(settings.PdfRenderDpi, 72, 600);
+            CheckUpdatesBox.IsChecked = settings.CheckForUpdates;
             if (Blank(FfmpegPath.Text) != Blank(settings.FfmpegPath)) FfmpegPath.Text = settings.FfmpegPath ?? "";
             if (Blank(SevenZipPath.Text) != Blank(settings.SevenZipPath)) SevenZipPath.Text = settings.SevenZipPath ?? "";
             ShowWindowsSettings();
@@ -180,6 +191,21 @@ public partial class SettingsWindow : Window
             if (menu) s.Hotkey = shortcut!;
             else s.FloatHotkey = shortcut;
         });
+    }
+
+    /// <summary>What the update check found, with the page its link opens when there's a new version; empty text hides the line.</summary>
+    internal void ShowUpdate(string text, string? page)
+    {
+        _updatePage = page;
+        // The link is an inline, which can't be hidden, so it's taken out of the line when there's nothing to see.
+        UpdateStatus.Inlines.Clear();
+        UpdateStatus.Inlines.Add(new System.Windows.Documents.Run(text));
+        if (page is not null)
+        {
+            UpdateStatus.Inlines.Add(" ");
+            UpdateStatus.Inlines.Add(UpdateLink);
+        }
+        UpdateStatus.Visibility = text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     /// <summary>A problem with a shortcut, such as another app having it; empty to clear it.</summary>

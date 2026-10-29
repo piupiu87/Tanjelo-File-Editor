@@ -20,6 +20,9 @@ sealed class Settings
     public string? FfmpegPath { get; set; }
     public string? SevenZipPath { get; set; }
 
+    /// <summary>Whether to ask GitHub once a day if a newer Tanjelo is out; off unless turned on.</summary>
+    public bool CheckForUpdates { get; set; }
+
     public static string FilePath { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tanjelo", "settings.json");
 

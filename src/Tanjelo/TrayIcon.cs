@@ -9,6 +9,7 @@ sealed class TrayIcon : IDisposable
 {
     readonly Forms.NotifyIcon _icon;
     readonly Forms.ToolStripMenuItem _hotkeyItem, _toolsItem, _startupItem, _sendToItem;
+    Action? _clicked; // for the notice showing now
 
     public event Action? ConvertFilesClicked;
     public event Action? ShowShelfClicked;
@@ -55,6 +56,8 @@ sealed class TrayIcon : IDisposable
             ContextMenuStrip = menu,
             Visible = true,
         };
+        _icon.BalloonTipClicked += (_, _) => _clicked?.Invoke();
+        _icon.BalloonTipClosed += (_, _) => _clicked = null;
         _icon.MouseClick += (_, e) =>
         {
             if (e.Button == Forms.MouseButtons.Left) ConvertFilesClicked?.Invoke();
@@ -79,7 +82,12 @@ sealed class TrayIcon : IDisposable
         ]);
     }
 
-    public void Notify(string title, string text) => _icon.ShowBalloonTip(5000, title, text, Forms.ToolTipIcon.None);
+    /// <param name="clicked">What clicking the notice does, such as opening a page; nothing by default.</param>
+    public void Notify(string title, string text, Action? clicked = null)
+    {
+        _clicked = clicked;
+        _icon.ShowBalloonTip(5000, title, text, Forms.ToolTipIcon.None);
+    }
 
     static void Toggle(Action change)
     {

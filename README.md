@@ -142,8 +142,8 @@ and Move to….
 
 Tray menu → *Settings…* opens the settings window: the menu's and the shelf's shortcuts (click a box and press the
 keys), the theme, the quality of JPG, WebP and HEIC pictures and of PDF pages saved as pictures, where ffmpeg and 7-Zip
-are when they aren't found automatically, which optional programs were found, and *Start with Windows* and the "Send to"
-entry. Changes apply at once.
+are when they aren't found automatically, which optional programs were found, *Start with Windows*, the "Send to"
+entry and the [update check](#privacy). Changes apply at once.
 
 The settings live in `%APPDATA%\Tanjelo\settings.json` (*Open settings file* in the window), which can still be edited
 by hand; changes apply as soon as you save it.
@@ -158,12 +158,28 @@ by hand; changes apply as soon as you save it.
   "heicQuality": 90,
   "pdfRenderDpi": 300,        // resolution for PDF -> image
   "ffmpegPath": null,         // only needed if ffmpeg isn't found automatically
-  "sevenZipPath": null
+  "sevenZipPath": null,
+  "checkForUpdates": false    // ask GitHub once a day whether a newer version is out
 }
 ```
 
 The options dialogs remember each tool's last settings in `%APPDATA%\Tanjelo\tools.json`; delete it to go back to the
 defaults. Errors are logged to `%LOCALAPPDATA%\Tanjelo\log.txt`.
+
+## Privacy
+
+Tanjelo works offline. Your files never leave your computer, and nothing about you or how you use Tanjelo is collected:
+no account, no telemetry, no crash reports.
+
+Tanjelo itself makes one network request, and only if you turn it on: the **update check**. With *Check for a new
+version once a day* ticked in Settings (it's off at first), Tanjelo asks GitHub (`api.github.com`) once a day for the
+number of the latest release, sending nothing but the request itself, and shows a notice with a link to the release
+page when there's a newer one. It never downloads or installs anything. As with any visit to a website, GitHub sees the
+request come from your IP address. What it found last is kept in `%LOCALAPPDATA%\Tanjelo\update.json`.
+
+One optional program Tanjelo calls can reach the web: when **pandoc** makes a DOCX or an EPUB from Markdown or HTML, it
+downloads the pictures the file links to on the web so they can go inside the new file. It never uploads anything.
+Markdown and HTML printed to PDF are drawn with every web address blocked.
 
 ## Command line
 

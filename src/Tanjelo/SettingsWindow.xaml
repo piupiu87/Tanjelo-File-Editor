@@ -187,6 +187,15 @@
                 <CheckBox x:Name="SendToCheck" Style="{StaticResource Check}" Content="Show in the &quot;Send to&quot; menu" />
                 <TextBlock Style="{StaticResource Hint}" Margin="27,2,0,0" Text="Right-click files, then Send to, then Tanjelo." />
                 <TextBlock x:Name="WindowsProblem" Style="{StaticResource Problem}" Visibility="Collapsed" />
+
+                <TextBlock Text="Updates" Style="{StaticResource SectionHeading}" />
+                <CheckBox x:Name="CheckUpdatesBox" Style="{StaticResource Check}" Content="Check for a new version once a day" />
+                <TextBlock Style="{StaticResource Hint}" Margin="27,2,0,0"
+                           Text="Asks GitHub for the number of the latest version. Nothing is downloaded, and nothing about you or your files is sent." />
+                <TextBlock x:Name="UpdateStatus" Style="{StaticResource Hint}" Margin="27,6,0,0" Foreground="{DynamicResource TextSecondary}"
+                           Visibility="Collapsed">
+                    <Hyperlink x:Name="UpdateLink" Foreground="{DynamicResource Accent}">See what's new</Hyperlink>
+                </TextBlock>
             </StackPanel>
         </ScrollViewer>
 
