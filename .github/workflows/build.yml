@@ -17,6 +17,11 @@ env:
 jobs:
   build:
     runs-on: windows-latest
+    # Long enough to wait for a signing request's approval.
+    timeout-minutes: 360
+    env:
+      # The switch for signing: on for a tagged release once the SignPath secrets are added (see .signpath/README.md).
+      SIGN: ${{ github.ref_type == 'tag' && secrets.SIGNPATH_API_TOKEN != '' }}
     defaults:
       run:
         shell: pwsh
@@ -101,6 +106,48 @@ jobs:
             if (-not (Test-Path $file)) { throw "missing $file" }
           }
 
+      # ---- Signing through SignPath Foundation: only for tagged releases, and only once the SignPath secrets exist, so
+      # the workflow runs the same without them. Each signing request waits for its approval on SignPath, by hand.
+
+      - name: Gather the app's own files to sign
+        if: env.SIGN == 'true'
+        run: |
+          New-Item -ItemType Directory -Force artifacts/to-sign | Out-Null
+          foreach ($file in 'Tanjelo.exe', 'Tanjelo.dll', 'tanj.exe', 'tanj.dll', 'Tanjelo.Core.dll') {
+            Copy-Item "artifacts/Tanjelo/$file" artifacts/to-sign
+          }
+
+      - name: Upload them for signing
+        id: upload-unsigned-app
+        if: env.SIGN == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: unsigned-app
+          path: artifacts/to-sign
+
+      - name: Sign the app
+        if: env.SIGN == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+          organization-id: '${{ secrets.SIGNPATH_ORGANIZATION_ID }}'
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'Tanjelo-File-Editor' }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG || 'release-signing' }}
+          artifact-configuration-slug: 'app'
+          github-artifact-id: '${{ steps.upload-unsigned-app.outputs.artifact-id }}'
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 18000
+          output-artifact-directory: 'artifacts/signed-app'
+
+      - name: Put the signed files in place
+        if: env.SIGN == 'true'
+        run: |
+          foreach ($file in Get-ChildItem artifacts/signed-app -File) {
+            Copy-Item $file.FullName artifacts/Tanjelo -Force
+            $signature = Get-AuthenticodeSignature "artifacts/Tanjelo/$($file.Name)"
+            if ($signature.Status -ne 'Valid') { throw "$($file.Name) isn't signed: $($signature.StatusMessage)" }
+          }
+
       - name: Package
         run: |
           # The zip for portable use, and Tanjelo-<version>-Setup.exe: a per-user install with a Start menu entry and an
@@ -117,6 +164,37 @@ jobs:
           $setup = Get-ChildItem artifacts/velopack -Filter *-Setup.exe | Select-Object -First 1
           if (-not $setup) { throw "vpk made no installer" }
           Move-Item $setup.FullName "artifacts/release/Tanjelo-$version-Setup.exe"
+
+      - name: Upload the installer for signing
+        id: upload-unsigned-installer
+        if: env.SIGN == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: unsigned-installer
+          path: artifacts/release/*-Setup.exe
+
+      - name: Sign the installer
+        if: env.SIGN == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+          organization-id: '${{ secrets.SIGNPATH_ORGANIZATION_ID }}'
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'Tanjelo-File-Editor' }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG || 'release-signing' }}
+          artifact-configuration-slug: 'installer'
+          github-artifact-id: '${{ steps.upload-unsigned-installer.outputs.artifact-id }}'
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 18000
+          output-artifact-directory: 'artifacts/signed-installer'
+
+      - name: Put the signed installer in place
+        if: env.SIGN == 'true'
+        run: |
+          $setup = Get-ChildItem artifacts/signed-installer -Filter *-Setup.exe | Select-Object -First 1
+          if (-not $setup) { throw "SignPath sent back no installer" }
+          Copy-Item $setup.FullName artifacts/release -Force
+          $signature = Get-AuthenticodeSignature "artifacts/release/$($setup.Name)"
+          if ($signature.Status -ne 'Valid') { throw "the installer isn't signed: $($signature.StatusMessage)" }
 
       - name: winget manifests
         run: |

@@ -278,7 +278,9 @@ the app icon.
 
 Pushing a tag such as `v1.0.0` makes the GitHub Actions workflow build, test and smoke-test; make the zip, the
 installer (with [Velopack](https://velopack.io)'s `vpk pack`) and the winget manifests (from `winget/`); install, use and
-uninstall the installer on a fresh runner with its own .NET hidden; and attach them all to a new release.
+uninstall the installer on a fresh runner with its own .NET hidden; and attach them all to a new release. Once the
+SignPath secrets are added, the same workflow has the app and the installer signed first, each approved by hand on
+SignPath; [.signpath/README.md](.signpath/README.md) says how it's set up.
 
 | Project | What's in it |
 |---|---|

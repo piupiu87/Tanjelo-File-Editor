@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SignPath artifact configuration "app": Tanjelo's own files, as the release workflow gathers them before making the
+     zip and the installer. Each must name Tanjelo as its product and piupiu87 as its publisher, as Directory.Build.props
+     sets them. Libraries from other projects aren't signed here. -->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <zip-file>
+    <pe-file-set product-name="Tanjelo" company-name="piupiu87">
+      <include path="Tanjelo.exe" />
+      <include path="Tanjelo.dll" />
+      <include path="tanj.exe" />
+      <include path="tanj.dll" />
+      <include path="Tanjelo.Core.dll" />
+      <for-each>
+        <authenticode-sign />
+      </for-each>
+    </pe-file-set>
+  </zip-file>
+</artifact-configuration>
