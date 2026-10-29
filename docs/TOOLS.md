@@ -343,9 +343,9 @@ tanj convert move-to --folder=D:\Archive *.jpg
 
 A small panel that stays on top at the right edge of the screen, for files you'll want again in a moment. Drop files
 or folders on it from anywhere, or pick **Float** on the Actions tab, and drag them out later into a folder, an email
-or a chat: one, several (select them first) or all of them with **All**. The shelf holds references, not copies:
-dragging out to another folder on the same drive moves the file, as it would from Explorer (hold Ctrl to copy), and
-files that were moved or deleted drop off.
+or a chat: one, several (select them first) or all of them with **All**. Dragging out copies the files, even to a
+folder on the same drive; hold Shift as you drop to move them instead, or Alt to make shortcuts. The shelf holds
+references, not copies, so files that were moved or deleted drop off.
 
 - Press the Tanjelo shortcut on the shelf to convert what's selected there (or everything on it).
 - **Delete** or × takes an item off the shelf, **Clear** takes them all; the files themselves stay where they are.

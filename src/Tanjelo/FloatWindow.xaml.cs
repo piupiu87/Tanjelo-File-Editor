@@ -155,11 +155,10 @@ public partial class FloatWindow : Window
     void DragOut(IReadOnlyList<string> paths)
     {
         if (paths.Count == 0) return;
-        var data = new DataObject(DataFormats.FileDrop, paths.ToArray());
         _draggingOut = true;
         try
         {
-            DragDrop.DoDragDrop(this, data, DragDropEffects.Copy | DragDropEffects.Move | DragDropEffects.Link);
+            DragDrop.DoDragDrop(this, DragData(paths), DragDropEffects.Copy | DragDropEffects.Move | DragDropEffects.Link);
         }
         finally
         {
@@ -167,6 +166,18 @@ public partial class FloatWindow : Window
         }
         // Explorer reports a move as "none" when it moves within a drive, so look at the files themselves.
         _shelf.Prune();
+    }
+
+    /// <summary>
+    /// The files being dragged out, marked to be copied (DROPEFFECT_COPY), so Explorer copies them even within a drive.
+    /// The keys held still decide where they're dropped: Shift moves, Alt makes shortcuts.
+    /// </summary>
+    internal static DataObject DragData(IReadOnlyList<string> paths)
+    {
+        var data = new DataObject(DataFormats.FileDrop, paths.ToArray());
+        data.SetData("Preferred DropEffect", new MemoryStream(BitConverter.GetBytes((int)DragDropEffects.Copy)));
+        if (Native.ShellIdList(paths) is { } ids) data.SetData("Shell IDList Array", new MemoryStream(ids));
+        return data;
     }
 
     void OnRemove(object sender, RoutedEventArgs e)
