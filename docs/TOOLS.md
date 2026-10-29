@@ -302,7 +302,8 @@ drag its ends, or press I and O, to set when it starts and stops. Saved as `clip
 
 - Find faces adds a box over each face on the frame showing, found as in photos. Follow face moves the selected box
   with its face through its stretch, finding the face again 15 times a second (a small face in a crowd is looked at
-  enlarged), and ends it where the face is lost for half a second. On Windows 10, Windows' own face tracker follows
+  enlarged), and ends it where the face is lost for half a second. It's ready once the selected box has a face in it
+  where its stretch starts. On Windows 10, Windows' own face tracker follows
   instead, and loses faces that turn aside. Both on this PC.
 - Hidden as for photos: a solid colour (the safest), big pixels or a strong blur. Playing or paused, each box shows
   what's saved on the frame showing, its pixels or blur made from that frame.

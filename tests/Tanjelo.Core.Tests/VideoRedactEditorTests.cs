@@ -205,4 +205,45 @@ public class VideoRedactEditorTests
             }
         });
     }
+
+    [Fact]
+    public async Task Follow_face_is_there_only_for_a_box_with_a_face_in_it()
+    {
+        Assert.SkipUnless(Env.HasFfmpeg, Env.NoFfmpeg);
+        Assert.SkipUnless(Redaction.CanFindFaces && FaceFollow.CanFollow, "Windows can't find or follow faces on this PC");
+        using var scratch = new Scratch();
+        var portrait = Path.Combine(AppContext.BaseDirectory, "Fixtures", "portrait.jpg");
+        var clip = scratch.Ffmpeg("face.mp4", ["-loop", "1", "-i", portrait, "-vf", "scale=-2:480,pad=ceil(iw/2)*2:ih", "-t", "2", "-r", "25", "-c:v", "libx264", "-pix_fmt", "yuv420p"]);
+        await Ui.Run(async () =>
+        {
+            var (_, editor, _) = await TrimEditorTests.Open(clip, "redact", (file, target) => new VideoRedactEditor(file, target, Env.Tools));
+            try
+            {
+                Assert.False(editor.CanFollowNow);                   // nothing selected
+                TimelineTests.Enter(editor.TimeBox, "0:01");
+                await editor.FindFacesAsync();
+                Assert.Equal(0, editor.Selected);
+                await editor.FaceLook;
+                Assert.True(editor.CanFollowNow);
+
+                // A box drawn over the shirt, at the bottom left: no face to follow there.
+                Drag(editor.Canvas!, new Point(8, 390), new Point(90, 470));
+                Assert.Equal(1, editor.Selected);
+                Assert.False(editor.CanFollowNow);
+                await editor.FaceLook;
+                Assert.False(editor.CanFollowNow);
+
+                editor.Press(Key.Tab);
+                Assert.Equal(0, editor.Selected);
+                await editor.FaceLook;
+                Assert.True(editor.CanFollowNow);
+                editor.Press(Key.Escape);
+                Assert.False(editor.CanFollowNow);
+            }
+            finally
+            {
+                editor.Close();
+            }
+        });
+    }
 }

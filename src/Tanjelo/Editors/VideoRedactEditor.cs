@@ -58,9 +58,10 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
         CanvasPart.ViewChanged += DrawFrames;
 
         _faces = Panels.Button("", "Find faces", "Add a box over each face on the frame showing, found on this PC", () => _ = FindFacesAsync());
-        _follow = Panels.Button("", "Follow face", "Move the selected box with its face through its stretch, found again on this PC", () => _ = FollowAsync());
+        _follow = Panels.Button("", "Follow face", "Move the selected box with the face in it through its stretch, found again on this PC. Select a box with a face in it where it starts.", () => _ = FollowAsync());
         _faces.IsEnabled = Redaction.CanFindFaces;
         _follow.IsEnabled = false;
+        ToolTipService.SetShowOnDisabled(_follow, true);
         if (!_faces.IsEnabled) _faces.ToolTip = "Windows can't look for faces on this PC";
         var find = new WrapPanel();
         find.Children.Add(_faces);
@@ -95,6 +96,7 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
     internal VideoRedactState Current => State;
     internal int? Selected => _selected;
     internal string Found => _found.Text;
+    internal bool CanFollowNow => _follow.IsEnabled;
 
     /// <summary>Picks a style, as its chip does.</summary>
     internal void Restyle(string style) => Commit(State with { Style = style });
@@ -124,7 +126,7 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
         _showColour(state.Colour);
         _colourRow.Visibility = state.Style == "solid" ? Visibility.Visible : Visibility.Collapsed;
         _count.Text = state.Boxes.Count == 0 ? "No areas yet." : Describe.Count(state.Boxes.Count, "area") + " to hide.";
-        _follow.IsEnabled = _selected is not null && FaceFollow.CanFollow && !_busy;
+        ShowFollow();
         Timeline.Rows = Math.Max(1, state.Boxes.Count);
         DrawCovers();
         Timeline.InvalidateVisual();
@@ -242,7 +244,7 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
     void Select(int? index)
     {
         _selected = index;
-        _follow.IsEnabled = _selected is not null && FaceFollow.CanFollow && !_busy;
+        ShowFollow();
         DrawFrames();
         Timeline.InvalidateVisual();
         RaiseUpdated();
@@ -490,8 +492,83 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
         {
             _busy = false;
             _faces.IsEnabled = Redaction.CanFindFaces;
-            _follow.IsEnabled = _selected is not null && FaceFollow.CanFollow;
+            ShowFollow();
         }
+    }
+
+    // Follow face is there only for a selected box with a face in it where its stretch starts, which is where following
+    // starts from: looked for once for each place the box has there, once it has stayed put a moment (not at every step
+    // of a drag), as finding a frame and its faces takes a moment.
+    (int Frame, RedactBox Area)? _lookedAt;
+    bool _faceThere;
+    CancellationTokenSource? _looking;
+    (int Frame, byte[] Png)? _shot;
+
+    /// <summary>The last look for a face in the selected box, for tests to wait on.</summary>
+    internal Task FaceLook { get; private set; } = Task.CompletedTask;
+
+    void ShowFollow()
+    {
+        if (_selected is not { } index || _busy || !FaceFollow.CanFollow || Frames is not { } frames)
+        {
+            _follow.IsEnabled = false;
+            return;
+        }
+        var box = State.Boxes[index];
+        var place = (frames.At(box.From + 1e-6), box.At(box.From));
+        if (_lookedAt == place)
+        {
+            _follow.IsEnabled = _faceThere;
+            return;
+        }
+        _lookedAt = place;
+        _faceThere = false;
+        _follow.IsEnabled = false;
+        _looking?.Cancel();
+        _looking = CancellationTokenSource.CreateLinkedTokenSource(_closing.Token);
+        FaceLook = LookForFaceAsync(frames, place, _looking.Token);
+    }
+
+    async Task LookForFaceAsync(FrameIndex frames, (int Frame, RedactBox Area) place, CancellationToken ct)
+    {
+        bool found;
+        try
+        {
+            await Task.Delay(250, ct);
+            // The frame is kept, so moving or resizing the box only looks again.
+            if (_shot?.Frame != place.Frame) _shot = (place.Frame, await Media.FrameAsync(frames, place.Frame, 0, ct));
+            var png = _shot.Value.Png;
+            found = await Task.Run(() => FaceInAsync(png, place.Area), ct);
+        }
+        catch (Exception ex) when (ex is OperationCanceledException or ConversionException or InvalidOperationException or System.Runtime.InteropServices.COMException)
+        {
+            found = false;
+        }
+        if (ct.IsCancellationRequested || _lookedAt != place) return;
+        _faceThere = found;
+        ShowFollow();
+    }
+
+    /// <summary>
+    /// Whether a face has its middle inside an area of a frame: looked for in the area and a margin around it, enlarged
+    /// when small as Follow face does, so a face it finds here it finds too.
+    /// </summary>
+    static async Task<bool> FaceInAsync(byte[] png, RedactBox area)
+    {
+        using var frame = new MagickImage(png);
+        var margin = Math.Max(area.Width, area.Height) / 2;
+        if (new RedactBox(area.X - margin, area.Y - margin, area.Width + 2 * margin, area.Height + 2 * margin).Within((int)frame.Width, (int)frame.Height) is not { } part)
+            return false;
+        frame.Crop(new MagickGeometry(part.X, part.Y, (uint)part.Width, (uint)part.Height));
+        frame.ResetPage();
+        var scale = Math.Clamp(160.0 / Math.Max(1, area.Width), 1, 4);
+        if (scale > 1) frame.Resize((uint)Math.Round(part.Width * scale), (uint)Math.Round(part.Height * scale));
+        var faces = await Redaction.FindFacesAsync(frame);
+        return faces.Any(f =>
+        {
+            var (x, y) = (part.X + (f.X + f.Width / 2.0) / scale, part.Y + (f.Y + f.Height / 2.0) / scale);
+            return x >= area.X && x <= area.X + area.Width && y >= area.Y && y <= area.Y + area.Height;
+        });
     }
 
     internal async Task FollowAsync()
@@ -531,7 +608,7 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
         {
             _busy = false;
             _faces.IsEnabled = Redaction.CanFindFaces;
-            _follow.IsEnabled = _selected is not null && FaceFollow.CanFollow;
+            ShowFollow();
         }
     }
 
