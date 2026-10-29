@@ -351,6 +351,6 @@ references, not copies, so files that were moved or deleted drop off.
 - Press the Tanjelo shortcut on the shelf to convert what's selected there (or everything on it).
 - **Delete** or × takes an item off the shelf, **Clear** takes them all; the files themselves stay where they are.
 - It doesn't take the focus when it appears and stays out of Alt+Tab and the taskbar. × or **Esc** hides it, and
-  *Show shelf* in the tray menu brings it back. Set `floatHotkey` in the [settings](../README.md#settings) to show or
-  hide it with a shortcut of its own.
+  *Show shelf* in the tray menu brings it back. Give it a shortcut of its own in [Settings](../README.md#settings)
+  (`floatHotkey` in settings.json) to show or hide it from anywhere.
 - The list survives a restart, in `%APPDATA%\Tanjelo\float.json`.

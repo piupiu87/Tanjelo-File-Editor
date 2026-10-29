@@ -33,7 +33,7 @@ ffmpeg and pandoc; Office tests skip there.
 | Project | What's in it |
 |---|---|
 | `src/Tanjelo.Core` | Formats (`Formats.cs`), the engine (`ConverterEngine.cs`), optional tools (`Toolbox.cs`) and one converter per engine in `Converters/` |
-| `src/Tanjelo` | The WPF tray app: hotkey, Explorer selection, the menu, options dialogs, the editors (`Editors/`), progress cards, the Share sheet and the Float shelf |
+| `src/Tanjelo` | The WPF tray app: hotkey, Explorer selection, the menu, options dialogs, the editors (`Editors/`), progress cards, the Share sheet, the Float shelf and the settings window |
 | `src/tanj` | The command-line front end |
 | `tests/Tanjelo.Core.Tests` | xUnit tests for the engine, every converter, the app's pure helpers, and the editors' windows (`Ui.cs` renders them off-screen) |
 

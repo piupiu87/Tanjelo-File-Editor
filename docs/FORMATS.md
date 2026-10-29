@@ -2,7 +2,7 @@
 
 The menu's **Convert** tab lists what the selected files can become. With several files selected, it shows the formats
 they can all become, and files already in the chosen format are skipped. A format that needs a program you haven't
-installed doesn't appear; the tray's *Converters* submenu and `tanj tools` show what was found. Results go beside the
+installed doesn't appear; Settings, the tray's *Converters* submenu and `tanj tools` show what was found. Results go beside the
 original and never overwrite anything.
 
 - [Images](#images)

@@ -5,7 +5,7 @@ using Tanjelo.Core;
 
 namespace Tanjelo;
 
-/// <summary>User settings in %APPDATA%\Tanjelo\settings.json. Edited by hand; the app reloads it on save.</summary>
+/// <summary>User settings in %APPDATA%\Tanjelo\settings.json, changed in the settings window or by hand; the app reloads it on save.</summary>
 sealed class Settings
 {
     public string Hotkey { get; set; } = "Ctrl+Shift+Space";
@@ -84,4 +84,21 @@ sealed class Settings
         if (name.Length == 1 && char.IsDigit(name[0])) name = "D" + name; // "1" is Key.D1
         return Enum.TryParse(name, ignoreCase: true, out key) && key != Key.None;
     }
+
+    /// <summary>The text <see cref="TryParseHotkey"/> reads back: "Ctrl+Shift+Space", "Alt+1".</summary>
+    public static string FormatHotkey(ModifierKeys modifiers, Key key)
+    {
+        var name = key is >= Key.D0 and <= Key.D9 ? ((int)(key - Key.D0)).ToString() : key.ToString();
+        return FormatModifiers(modifiers) + name;
+    }
+
+    /// <summary>"Ctrl+Shift+", in the order Windows writes them; empty without modifiers.</summary>
+    public static string FormatModifiers(ModifierKeys modifiers) =>
+        (modifiers.HasFlag(ModifierKeys.Control) ? "Ctrl+" : "")
+        + (modifiers.HasFlag(ModifierKeys.Shift) ? "Shift+" : "")
+        + (modifiers.HasFlag(ModifierKeys.Alt) ? "Alt+" : "")
+        + (modifiers.HasFlag(ModifierKeys.Windows) ? "Win+" : "");
+
+    /// <summary>A copy to change, so a window never edits the settings the app is using.</summary>
+    public Settings Clone() => (Settings)MemberwiseClone();
 }

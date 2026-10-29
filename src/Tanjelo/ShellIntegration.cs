@@ -141,3 +141,25 @@ static class ShellIntegration
     [DllImport("gdi32.dll")]
     static extern bool DeleteObject(IntPtr handle);
 }
+
+/// <summary>The settings Windows keeps rather than settings.json, so the settings window can be tested without changing them.</summary>
+interface IWindowsSettings
+{
+    bool StartsWithWindows { get; set; }
+    bool InSendToMenu { get; set; }
+}
+
+sealed class WindowsSettings : IWindowsSettings
+{
+    public bool StartsWithWindows
+    {
+        get => ShellIntegration.StartsWithWindows;
+        set => ShellIntegration.StartsWithWindows = value;
+    }
+
+    public bool InSendToMenu
+    {
+        get => ShellIntegration.InSendToMenu;
+        set => ShellIntegration.InSendToMenu = value;
+    }
+}

@@ -21,6 +21,7 @@ public partial class App : Application
     TrayIcon? _tray;
     Mutex? _singleInstance;
     FileSystemWatcher? _settingsWatcher;
+    SettingsWindow? _settingsWindow;
     Window? _menu; // the menu, or the options dialog that follows it
     readonly List<ProgressToast> _toasts = []; // newest first; stacked upward from the bottom-right corner
     bool _oneShot;
@@ -79,7 +80,7 @@ public partial class App : Application
         _hotkey.Pressed += OnHotkey;
         _hotkey.ShelfPressed += ToggleShelf;
         _hotkey.AlsoIn = hwnd => _float is { IsVisible: true } shelf && hwnd == shelf.Hwnd;
-        _hotkey.Conflict += () => _tray.Notify("Shortcut unavailable", $"Another app is already using {_settings.Hotkey}. Choose a different one in Edit settings.");
+        _hotkey.Conflict += () => _tray.Notify("Shortcut unavailable", $"Another app is already using {_settings.Hotkey}. Choose a different one in Settings.");
         ApplyHotkey();
         WatchSettings();
 
@@ -91,6 +92,7 @@ public partial class App : Application
 
     void ApplyHotkey()
     {
+        _settingsWindow?.ShowShortcutProblem("");
         if (Settings.TryParseHotkey(_settings.Hotkey, out var modifiers, out var key))
         {
             _hotkey!.Set(modifiers, key);
@@ -105,9 +107,12 @@ public partial class App : Application
         if (string.IsNullOrWhiteSpace(_settings.FloatHotkey))
             _hotkey!.SetShelf(null);
         else if (!Settings.TryParseHotkey(_settings.FloatHotkey, out var shelfModifiers, out var shelfKey))
-            _tray!.Notify("Shortcut not recognised", $"Couldn't read the floatHotkey \"{_settings.FloatHotkey}\". Use something like Ctrl+Shift+F.");
+            _tray!.Notify("Shortcut not recognised", $"Couldn't read the shelf shortcut \"{_settings.FloatHotkey}\". Use something like Ctrl+Shift+F.");
         else if (!_hotkey!.SetShelf((shelfModifiers, shelfKey)))
-            _tray!.Notify("Shortcut unavailable", $"Another app is already using {_settings.FloatHotkey}. Choose a different floatHotkey in Edit settings.");
+        {
+            _tray!.Notify("Shortcut unavailable", $"Another app is already using {_settings.FloatHotkey}. Choose a different shelf shortcut in Settings.");
+            _settingsWindow?.ShowShortcutProblem($"Another app is already using {_settings.FloatHotkey}. Choose other keys for the shelf.");
+        }
     }
 
     /// <summary>The engine, rebuilt now and then so tools installed while we run (ffmpeg, 7-Zip) are picked up.</summary>
@@ -377,6 +382,58 @@ public partial class App : Application
 
     void OpenSettings()
     {
+        if (_settingsWindow is { } open)
+        {
+            if (open.WindowState == WindowState.Minimized) open.WindowState = WindowState.Normal;
+            open.Activate();
+            return;
+        }
+        var window = new SettingsWindow(_settings, ChangeSettings, new WindowsSettings(), Toolbox.Detect);
+        // While a shortcut box listens, the shelf's shortcut (which works everywhere) mustn't fire instead.
+        window.ListeningForShortcut += listening =>
+        {
+            if (listening) _hotkey?.SetShelf(null);
+            else ApplyHotkey();
+        };
+        window.OpenFileClicked += OpenSettingsFile;
+        window.Closed += (_, _) => _settingsWindow = null;
+        _settingsWindow = window;
+        window.Show();
+        window.Activate();
+    }
+
+    /// <summary>A change from the settings window: applied at once and written to settings.json.</summary>
+    void ChangeSettings(Settings settings)
+    {
+        var before = _settings;
+        _settings = settings;
+        try
+        {
+            settings.Save();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Log.Write($"settings: {ex.Message}");
+            _tray?.Notify("Settings not saved", ex.Message);
+        }
+        ApplySettings(before);
+    }
+
+    /// <summary>Puts new settings to work; the shortcuts are registered again only when they changed.</summary>
+    void ApplySettings(Settings before)
+    {
+        _engine = null;
+        if (before.Theme != _settings.Theme)
+        {
+            Theme.Preference = _settings.Theme;
+            Theme.Apply(Resources);
+        }
+        if (_tray is not null && (before.Hotkey != _settings.Hotkey || before.FloatHotkey != _settings.FloatHotkey))
+            ApplyHotkey();
+    }
+
+    void OpenSettingsFile()
+    {
         if (!File.Exists(Settings.FilePath)) _settings.Save();
         try
         {
@@ -397,11 +454,10 @@ public partial class App : Application
         debounce.Tick += (_, _) =>
         {
             debounce.Stop();
+            var before = _settings;
             _settings = LoadSettings(notify: true);
-            _engine = null;
-            Theme.Preference = _settings.Theme;
-            Theme.Apply(Resources);
-            ApplyHotkey();
+            ApplySettings(before);
+            _settingsWindow?.Show(_settings);
         };
         void Changed() => Dispatcher.BeginInvoke(() =>
         {

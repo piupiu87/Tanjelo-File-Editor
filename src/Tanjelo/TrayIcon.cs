@@ -38,7 +38,7 @@ sealed class TrayIcon : IDisposable
             _toolsItem,
             _startupItem,
             _sendToItem,
-            new Forms.ToolStripMenuItem("Edit settings…", null, (_, _) => SettingsClicked?.Invoke()),
+            new Forms.ToolStripMenuItem("Settings…", null, (_, _) => SettingsClicked?.Invoke()),
             new Forms.ToolStripSeparator(),
             new Forms.ToolStripMenuItem("Quit Tanjelo", null, (_, _) => QuitClicked?.Invoke()),
         ]);

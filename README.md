@@ -43,7 +43,7 @@ The app isn't code-signed yet, so the first launch may show "Windows protected y
 |---|---|
 | File Explorer or the desktop | Select files → **Ctrl+Shift+Space** → type to filter (`mp3`, `pdf`…) → **Enter**, or click |
 | Notification area | Click the Tanjelo icon to pick files; right-click for options |
-| "Send to" menu | Turn on *Show in "Send to" menu* in the tray menu, then right-click files → Send to → Tanjelo |
+| "Send to" menu | Turn on *Show in the "Send to" menu* in Settings, then right-click files → Send to → Tanjelo |
 | Float shelf | Drop files on the shelf at the right edge of the screen, drag copies out later (hold Shift to move them), or press the shortcut there to convert them |
 | Command line | `tanj convert webp *.png` (see [Command line](#command-line)) |
 
@@ -124,8 +124,8 @@ and Move to….
 - Windows 10 or 11 (x64) with the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
   Redact finds and follows faces best on Windows 11; Windows 10 can't run its face finder, so there Windows' own face
   detection finds only upright faces facing the camera.
-- Optional programs, found automatically. Formats that need a missing one just don't appear, and the tray's
-  *Converters* submenu shows what was found.
+- Optional programs, found automatically. Formats that need a missing one just don't appear, and Settings and the
+  tray's *Converters* submenu show what was found.
   - **ffmpeg** for audio and video: `winget install Gyan.FFmpeg.Essentials`
   - **7-Zip** for .7z and .rar, and faster zips. Windows' built-in `tar` covers the rest.
   - **Microsoft Office** or **LibreOffice** for documents.
@@ -140,7 +140,13 @@ and Move to….
 
 ## Settings
 
-Tray menu → *Edit settings…* opens `%APPDATA%\Tanjelo\settings.json`. Changes apply as soon as you save.
+Tray menu → *Settings…* opens the settings window: the menu's and the shelf's shortcuts (click a box and press the
+keys), the theme, the quality of JPG, WebP and HEIC pictures and of PDF pages saved as pictures, where ffmpeg and 7-Zip
+are when they aren't found automatically, which optional programs were found, and *Start with Windows* and the "Send to"
+entry. Changes apply at once.
+
+The settings live in `%APPDATA%\Tanjelo\settings.json` (*Open settings file* in the window), which can still be edited
+by hand; changes apply as soon as you save it.
 
 ```json
 {
