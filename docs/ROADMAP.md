@@ -113,14 +113,14 @@ A shared timeline first, then the editors that use it.
 
 ## v1.0: ready for everyone
 
-- [ ] Code signing, so downloads don't trigger "Windows protected your PC" (SignPath Foundation offers free signing for open-source projects) (M)
-- [ ] Installer with a Start menu entry and clean uninstall (M)
-- [ ] winget package: `winget install Tanjelo` (S)
-- [ ] Entry in the Windows 11 right-click menu (needs a packaged app) (M/L)
 - [ ] Settings window, so nobody has to edit JSON (M)
 - [ ] Update check, off by default so the app stays offline unless you opt in (S)
 - [ ] Accessibility pass: screen-reader names, full keyboard use, high-contrast themes (M)
 - [ ] Translations: move UI text into resource files (M)
+- [ ] Installer with a Start menu entry and clean uninstall (M)
+- [ ] winget package: `winget install Tanjelo` (S)
+- [ ] Code signing, so downloads don't trigger "Windows protected your PC" (SignPath Foundation offers free signing for open-source projects) (M)
+- [ ] Entry in the Windows 11 right-click menu (needs a signed package) (M/L)
 
 ## Later, if there's demand
 
