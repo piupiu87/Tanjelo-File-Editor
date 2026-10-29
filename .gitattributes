@@ -1,3 +1,5 @@
 * text=auto
 *.ico binary
 *.png binary
+*.onnx binary
+*.jpg binary

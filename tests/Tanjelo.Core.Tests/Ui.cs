@@ -28,6 +28,8 @@ static class Ui
             app.InitializeComponent();
             Theme.Preference = "light";
             Theme.Apply(app.Resources);
+            // Players in the tests never make a sound.
+            Tanjelo.Editors.FramePlayer.Muted = true;
             ready.SetResult(Dispatcher.CurrentDispatcher);
             Dispatcher.Run();
         })
@@ -155,3 +157,10 @@ static class Ui
 
     public static System.Windows.Media.Color Colour(string key) => ((SolidColorBrush)Application.Current.Resources[key]).Color;
 }
+
+/// <summary>
+/// Tests that drive Windows' media player run on their own, after the rest. With several ffmpeg encodes running beside
+/// it, the player was seen to show the frame next to the one asked for about once in a hundred seeks.
+/// </summary>
+[CollectionDefinition("Windows player", DisableParallelization = true)]
+public sealed class WindowsPlayerCollection;

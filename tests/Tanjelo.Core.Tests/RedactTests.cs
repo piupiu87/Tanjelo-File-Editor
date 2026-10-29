@@ -163,6 +163,34 @@ public class RedactTests
         Assert.True(green.G > 230 && green.R < 30 && green.B < 30, $"the face's middle is {green}");
     }
 
+    /// <summary>Photos from Fixtures (see its README) with the middle of each face in them, which Windows' own face detection misses.</summary>
+    [Theory]
+    [InlineData("side-on-faces.jpg", new[] { 533, 103, 656, 122 })]    // two people talking, seen from the side
+    [InlineData("masked-faces.jpg", new[] { 300, 350, 829, 339 })]     // two people in face masks
+    public async Task Faces_turned_aside_or_masked_are_found(string file, int[] middles)
+    {
+        Assert.SkipUnless(YuNet.IsAvailable, "Windows can't run the face finder on this PC (it needs Windows 11)");
+        using var photo = new MagickImage(Path.Combine(AppContext.BaseDirectory, "Fixtures", file));
+        var faces = await Redaction.FindFacesAsync(photo);
+        Assert.Equal(middles.Length / 2, faces.Count);
+        for (var i = 0; i < middles.Length; i += 2)
+        {
+            var (x, y) = (middles[i], middles[i + 1]);
+            Assert.True(faces.Any(f => x > f.X && x < f.X + f.Width && y > f.Y && y < f.Y + f.Height), $"no box over the face at {x},{y}: {RedactBox.FormatAll(faces)}");
+        }
+    }
+
+    [Fact]
+    public async Task The_small_faces_of_a_group_photo_are_found()
+    {
+        Assert.SkipUnless(YuNet.IsAvailable, "Windows can't run the face finder on this PC (it needs Windows 11)");
+        // About 70 people in rows, their faces 15 to 30 pixels across.
+        using var photo = new MagickImage(Path.Combine(AppContext.BaseDirectory, "Fixtures", "group-photo.jpg"));
+        var faces = await Redaction.FindFacesAsync(photo);
+        Assert.True(faces.Count >= 60, $"{faces.Count} faces found");
+        Assert.All(faces, f => Assert.True(f.Width < 50 && f.Height < 50, $"{f} is too big for a face here"));
+    }
+
     [Fact]
     public async Task Nothing_to_redact_and_areas_off_the_picture_are_errors()
     {

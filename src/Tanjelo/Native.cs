@@ -115,7 +115,49 @@ static class Native
     static extern IntPtr ILFindLastID(IntPtr pidl);
 
     [DllImport("shell32.dll")]
+    static extern uint ILGetSize(IntPtr pidl);
+
+    [DllImport("shell32.dll")]
     static extern int SHOpenFolderAndSelectItems(IntPtr folder, uint count, IntPtr[] items, uint flags);
+
+    /// <summary>
+    /// The paths as a shell ID list array (CFSTR_SHELLIDLIST), as Explorer's own drags carry them: Explorer makes
+    /// shortcuts only to items named this way. Null when a path can't be found.
+    /// </summary>
+    public static byte[]? ShellIdList(IReadOnlyList<string> paths)
+    {
+        // A CIDA: the count, the offsets of the parent folder's ID list and of each item's, then the lists. The parent
+        // is the desktop, whose list is empty, so each item's is its full one.
+        var lists = new List<byte[]> { new byte[2] };
+        foreach (var path in paths)
+        {
+            var pidl = ILCreateFromPath(path);
+            if (pidl == IntPtr.Zero) return null;
+            try
+            {
+                var list = new byte[ILGetSize(pidl)];
+                Marshal.Copy(pidl, list, 0, list.Length);
+                lists.Add(list);
+            }
+            finally
+            {
+                ILFree(pidl);
+            }
+        }
+        using var stream = new MemoryStream();
+        using (var writer = new BinaryWriter(stream))
+        {
+            writer.Write(paths.Count);
+            var offset = sizeof(int) * (lists.Count + 1);
+            foreach (var list in lists)
+            {
+                writer.Write(offset);
+                offset += list.Length;
+            }
+            foreach (var list in lists) writer.Write(list);
+        }
+        return stream.ToArray();
+    }
 
     /// <summary>Opens (or reuses) an Explorer window on the folder with all the given items selected.</summary>
     public static void RevealInExplorer(IReadOnlyList<string> paths)

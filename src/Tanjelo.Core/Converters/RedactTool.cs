@@ -46,7 +46,8 @@ public readonly record struct RedactBox(int X, int Y, int Width, int Height)
 
 /// <summary>
 /// Hides parts of a picture for good: the pixels are replaced, not covered, and what's left of the metadata that could
-/// give the hidden parts away goes too. Faces and text can be found with Windows' own face detection and OCR, on this PC.
+/// give the hidden parts away goes too. Faces can be found with YuNet run by Windows' own machine learning, and text with
+/// Windows' OCR, on this PC.
 /// </summary>
 public static class Redaction
 {
@@ -126,7 +127,9 @@ public static class Redaction
     /// <summary>Whether Windows has an OCR language to read text with.</summary>
     public static bool CanFindText => PdfText.CanOcr;
 
-    public static bool CanFindFaces
+    public static bool CanFindFaces => YuNet.IsAvailable || WindowsFindsFaces;
+
+    static bool WindowsFindsFaces
     {
         get
         {
@@ -135,10 +138,24 @@ public static class Redaction
         }
     }
 
-    /// <summary>The faces in an upright picture, each box grown to take in the hair and chin.</summary>
+    /// <summary>
+    /// The faces in an upright picture, each box grown to take in the hair and chin: found by YuNet where Windows can run
+    /// it (Windows 11), otherwise by Windows' own face detection, which finds only upright faces facing the camera.
+    /// </summary>
     public static async Task<IReadOnlyList<RedactBox>> FindFacesAsync(IMagickImage<byte> picture)
     {
-        if (!CanFindFaces) throw new ConversionException("Windows can't look for faces on this PC.");
+        if (YuNet.IsAvailable)
+        {
+            try
+            {
+                return YuNet.Find(picture);
+            }
+            catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or ArgumentException && WindowsFindsFaces)
+            {
+                // Should Windows' machine learning fail on this picture, its face detection still looks.
+            }
+        }
+        if (!WindowsFindsFaces) throw new ConversionException("Windows can't look for faces on this PC.");
         using var copy = picture.Clone();
         // Faces up to about 2,500 pixels across are found, so very large photos are looked at smaller.
         var scale = Fit(copy, largest: 2560, smallest: 0);
@@ -194,7 +211,7 @@ public static class Redaction
         return scale;
     }
 
-    static void Flatten(IMagickImage<byte> image)
+    internal static void Flatten(IMagickImage<byte> image)
     {
         image.BackgroundColor = MagickColors.White;
         image.Alpha(AlphaAction.Remove);
@@ -225,7 +242,7 @@ public sealed class RedactTool : IConverter
         Editor = EditorKind.Redact,
     }.WithOptions(
         new Option("boxes", "Areas", OptionKind.Text, "") { Optional = true, Remember = false, Hint = "x,y,width,height in pixels, separated by semicolons." },
-        new Option("faces", "Find faces", OptionKind.Toggle, "false") { Hint = "Found with Windows' own face detection, on this PC." },
+        new Option("faces", "Find faces", OptionKind.Toggle, "false") { Hint = "Found on this PC." },
         new Option("text", "Find text", OptionKind.Toggle, "false") { Hint = "Every word Windows' OCR reads." },
         new Option("style", "Style", OptionKind.Choice, "solid")
         {

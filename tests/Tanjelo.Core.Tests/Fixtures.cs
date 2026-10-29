@@ -237,6 +237,23 @@ sealed class Scratch : IDisposable
         return Ffmpeg(name, [.. inputs, .. encode, "-shortest"]);
     }
 
+    /// <summary>
+    /// A video whose every frame shows its own number, ffmpeg's n, in large digits over a moving test pattern, so any
+    /// picture taken from it can be told apart from its neighbours (see <see cref="Inspect.WhichFrame"/>).
+    /// </summary>
+    /// <param name="rate">Frames a second, such as "25" or "30000/1001".</param>
+    /// <param name="encode">Encoder settings; H.264 with a keyframe every second and AAC by default.</param>
+    public string Numbered(string name, double seconds = 4, string rate = "25", string size = "320x240", bool audio = true, params string[] encode)
+    {
+        var d = seconds.ToString(CultureInfo.InvariantCulture);
+        string[] inputs = ["-f", "lavfi", "-i", $"testsrc2=size={size}:rate={rate}:duration={d}," +
+            "drawtext=fontfile='C\\:/Windows/Fonts/arial.ttf':text='%{n}':fontsize=h/3:fontcolor=white:box=1:boxcolor=black:boxborderw=6:x=8:y=8"];
+        // The sound beeps for a tenth of a second at every whole second, so its place against the frames can be measured.
+        if (audio) inputs = [.. inputs, "-f", "lavfi", "-i", $"aevalsrc='if(lt(mod(t,1),0.1),0.5*sin(2*PI*1000*t),0)':s=48000:d={d}"];
+        string[] codec = encode.Length > 0 ? encode : ["-c:v", "libx264", "-pix_fmt", "yuv420p", "-g", "25", "-c:a", "aac"];
+        return Ffmpeg(name, [.. inputs, .. codec, "-shortest"]);
+    }
+
     /// <summary>A sine tone; <paramref name="filter"/> can shape it, e.g. pad it with silence.</summary>
     public string Tone(string name, double seconds = 2, int channels = 1, string? filter = null)
     {
@@ -308,6 +325,94 @@ static class Inspect
         return System.Text.RegularExpressions.Regex.Matches(result.StdErr, @"RMS level dB: (-?[\d.]+|-inf)")
             .Select(m => m.Groups[1].Value == "-inf" ? double.NegativeInfinity : double.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture))
             .ToList();
+    }
+
+    /// <summary>Frame <paramref name="frame"/> of a video as ffmpeg numbers them, as BGRA pixels at a size of our choosing.</summary>
+    public static byte[] Frame(string path, int frame, int width, int height) =>
+        TryFrame(path, frame, width, height) ?? throw new Xunit.Sdk.XunitException($"{path} has no frame {frame}");
+
+    static byte[]? TryFrame(string path, int frame, int width, int height)
+    {
+        using var temp = new Scratch();
+        var raw = temp.PathOf("frame.bgra");
+        temp.Ffmpeg("frame.bgra", ["-i", path, "-map", "0:V:0", "-vf", $"select=eq(n\\,{frame}),scale={width}:{height}", "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "bgra"]);
+        var pixels = File.ReadAllBytes(raw);
+        return pixels.Length == width * height * 4 ? pixels : null;
+    }
+
+    /// <summary>
+    /// Which of the <paramref name="candidates"/> frames of a numbered video (<see cref="Scratch.Numbered"/>) a picture
+    /// of it shows: the one ffmpeg pulls out by number that differs from it least. Colour channels only, as BGRA.
+    /// Candidates past the end are left out.
+    /// </summary>
+    public static int WhichFrame(byte[] pixels, int width, int height, string video, IEnumerable<int> candidates) =>
+        candidates.Select(n => (n, Frame: TryFrame(video, n, width, height))).Where(c => c.Frame is not null)
+            .MinBy(c => Difference(pixels, c.Frame!)).n;
+
+    /// <summary>The mean difference of the colour channels of two BGRA pictures of one size, 0 to 255.</summary>
+    public static double Difference(byte[] a, byte[] b)
+    {
+        Assert.Equal(a.Length, b.Length);
+        long sum = 0;
+        for (var i = 0; i < a.Length; i++)
+            if (i % 4 != 3) sum += Math.Abs(a[i] - b[i]);
+        return sum / (a.Length * 0.75);
+    }
+
+    /// <summary>When each burst of sound after a silence starts, such as the beeps of a numbered video, in seconds.</summary>
+    public static List<double> Beeps(string path)
+    {
+        var result = ProcessRunner.RunAsync(Env.Tools.Ffmpeg!,
+            ["-hide_banner", "-nostdin", "-nostats", "-v", "info", "-i", path, "-map", "0:a:0", "-af", "silencedetect=noise=-30dB:d=0.05", "-f", "null", "-"],
+            CancellationToken.None).GetAwaiter().GetResult();
+        return System.Text.RegularExpressions.Regex.Matches(result.StdErr, @"silence_end: (-?[\d.]+)")
+            .Select(m => double.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture)).ToList();
+    }
+
+    /// <summary>The first sound track's bitrate in bits a second, or the whole file's when the track doesn't say.</summary>
+    public static long Bitrate(string path)
+    {
+        var stream = Probe(path, "-select_streams", "a:0", "-show_entries", "stream=bit_rate").Trim(',');
+        return long.TryParse(stream, NumberStyles.None, CultureInfo.InvariantCulture, out var rate) ? rate
+            : long.Parse(Probe(path, "-show_entries", "format=bit_rate").Trim(','), CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>When the picture starts, after any sound before it, as players show it.</summary>
+    public static double PictureStart(string path) => double.Parse(Probe(path, "-select_streams", "V:0", "-show_entries", "stream=start_time"), CultureInfo.InvariantCulture);
+
+    /// <summary>The sizes of a video's picture packets in the order they're stored, from the one at <paramref name="from"/> seconds.</summary>
+    public static List<int> PacketSizes(string path, double from = 0, int count = 12)
+    {
+        var lines = Probe(path, "-select_streams", "V:0", "-show_entries", "packet=pts_time,size").Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(l => l.Split(',')).Select(f => (Time: double.Parse(f[0], CultureInfo.InvariantCulture), Size: int.Parse(f[1], CultureInfo.InvariantCulture))).ToList();
+        var at = lines.FindIndex(p => Math.Abs(p.Time - from) < 0.002);
+        Assert.True(at >= 0, $"{path} has no packet at {from}");
+        return lines.Skip(at).Take(count).Select(p => p.Size).ToList();
+    }
+
+    /// <summary>The picture's size as players show it, after any turn the file asks for.</summary>
+    public static (int Width, int Height) Shown(string path)
+    {
+        var fields = Probe(path, "-select_streams", "V:0", "-show_entries", "stream=width,height:stream_side_data=rotation").Split(',', '\n');
+        var (width, height) = (int.Parse(fields[0], CultureInfo.InvariantCulture), int.Parse(fields[1], CultureInfo.InvariantCulture));
+        var turned = fields.Length > 2 && int.TryParse(fields[2].Trim(), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var rotation) && Math.Abs(rotation) % 180 == 90;
+        return turned ? (height, width) : (width, height);
+    }
+
+    static string Probe(string path, params string[] args)
+    {
+        var result = ProcessRunner.RunAsync(Env.Tools.Ffprobe!, ["-v", "error", .. args, "-of", "csv=p=0", path], CancellationToken.None).GetAwaiter().GetResult();
+        Assert.True(result.ExitCode == 0, $"ffprobe can't read {path}: {result.LastError}");
+        return result.StdOut.Trim();
+    }
+
+    /// <summary>How many frames a video's picture has, counted from its packets.</summary>
+    public static int FrameCount(string path)
+    {
+        var result = ProcessRunner.RunAsync(Env.Tools.Ffprobe!, ["-v", "error", "-select_streams", "V:0", "-count_packets", "-show_entries", "stream=nb_read_packets", "-of", "csv=p=0", path],
+            CancellationToken.None).GetAwaiter().GetResult();
+        Assert.True(result.ExitCode == 0, $"ffprobe can't read {path}: {result.LastError}");
+        return int.Parse(result.StdOut.Trim().TrimEnd(','), CultureInfo.InvariantCulture);
     }
 
     /// <summary>Integrated loudness in LUFS, as ffmpeg's loudnorm measures it.</summary>

@@ -101,14 +101,15 @@ A shared editor window first, then the editors that use it.
 - [x] Annotate photos: arrows, shapes, text, numbered callouts, magnifier, freehand (L)
 - [x] Photo editor with live preview: light, colour, detail, dehaze, grain, noise reduction (L)
 
-## v0.6: audio and video editors
+## v0.6.0: audio and video editors (released)
 
-A shared timeline first: frame-accurate scrubbing, thumbnails and a waveform.
+A shared timeline first, then the editors that use it.
 
-- [ ] Trim video frame by frame, with exact timecodes (L)
-- [ ] Trim audio on a waveform (L)
-- [ ] Bleep sections of audio (L)
-- [ ] Redact areas of a video, each with its own time range (L)
+- [x] Timeline: frame-exact playback and scrubbing, thumbnails, waveform and keyframes; every edit can also be applied with `tanj` (L)
+- [x] Trim video frame by frame, with exact timecodes; lossless when the cuts fall on keyframes (M)
+- [x] Trim audio on a waveform (M)
+- [x] Bleep sections of audio or video with a tone or silence (M)
+- [x] Redact areas of a video, each with its own time range (L)
 
 ## v1.0: ready for everyone
 

@@ -33,6 +33,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- YuNet (MIT, from OpenCV Zoo), the face finder Windows' own machine learning runs; licence in licenses\YuNet-LICENSE.txt. -->
+    <EmbeddedResource Include="Models\face_detection_yunet_2026may.onnx" LogicalName="yunet.onnx" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- ImageMagick's native DLL bundles many libraries whose licenses require shipping their notices with it. -->
     <None Include="$(PkgMagick_NET-Q8-x64)\Notice.txt" Link="licenses\ImageMagick-NOTICE.txt" Visible="false"
           CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />

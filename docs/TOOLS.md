@@ -13,8 +13,9 @@ Each tool has a key for `tanj` (shown in brackets below), and its settings are p
   [Join videos](#join-videos-join-videos), [Save frames](#save-frames-save-frames),
   [Split at](#split-at-split-video-at), [Make a video](#make-a-video-visualize),
   [Channel volume](#channel-volume-channel-volume)
-- [Editors](#editors): [Organize pages](#organize-pages-organize-pdf), [Redact](#redact-redact),
-  [Annotate](#annotate-annotate), [Edit photo](#edit-photo-adjust)
+- [Editors](#editors): [the timeline](#audio-and-video-editors-share-a-timeline),
+  [Organize pages](#organize-pages-organize-pdf), [Redact](#redact-redact), [Annotate](#annotate-annotate),
+  [Edit photo](#edit-photo-adjust), [Trim](#trim-trim), [Bleep](#bleep-bleep), [Redact video](#redact-video-redact)
 - [Actions](#actions)
 - [Float shelf](#float-shelf)
 
@@ -147,6 +148,19 @@ work from "Send to" too.
 - Save (Ctrl+S) writes a copy beside the original; Cancel asks first when something changed.
 - Every edit can also be made with `tanj`.
 
+### Audio and video editors share a timeline
+
+The picture plays in Windows' own player, with its sound, over thumbnails, the shape of the sound, keyframe marks (▲)
+and a playhead that always rests on a real frame. Times show as `0:01:02.345` with the frame number, and a typed time
+goes to the nearest frame.
+
+- Space plays and pauses; J, K and L play back, pause and play (press again for faster).
+- ← and → move a frame (a hundredth of a second in sound), Shift+← and Shift+→ a second; Home and End go to the ends.
+- The wheel zooms the timeline around the pointer, Shift+wheel scrolls it, and the bar under it shows the part in view.
+- A file Windows can't play (MPEG-2, ProRes, AIFF, or HEVC without its extension) shows exact stills from ffmpeg
+  straight away, then plays from a small copy made in the background and deleted when the window closes. What's saved
+  is always made from the original.
+
 ### Organize pages… (`organize-pdf`)
 
 *PDF · PDFsharp, Windows' PDF renderer*
@@ -166,11 +180,14 @@ tanj convert organize-pdf --pages="3,1-2,2r90" report.pdf
 
 ### Redact… (`redact`)
 
-*Images · Magick.NET, Windows' face detection and OCR*
+*Images · Magick.NET, YuNet run by Windows' machine learning, Windows' OCR*
 
-Draw boxes over anything to hide, or have Windows find the faces and the words (its own face detection and OCR, on this
-PC). Every box can be moved, resized or removed before saving. Each is hidden for good, as a solid colour (the
-safest), big pixels or a strong blur, and what you see is exactly what's saved. Saved as `photo-redacted.jpg`.
+Draw boxes over anything to hide, or have the faces and the words found, on this PC. Faces are found by YuNet, a small
+face finder that Windows' own machine learning runs: side-on, tilted, dim and masked faces too, and crowds down to faces
+about 20 pixels across. On Windows 10, which can't run it, Windows' own face detection looks instead, and finds only
+upright faces facing the camera. Words are read by Windows' OCR. Every box can be moved, resized or removed before
+saving. Each is hidden for good, as a solid colour (the safest), big pixels or a strong blur, and what you see is
+exactly what's saved. Saved as `photo-redacted.jpg`.
 
 The copy also loses the EXIF thumbnail (a small copy from before), the maker note, the location, XMP and IPTC; the
 camera, the date and the colour profile stay.
@@ -227,6 +244,83 @@ a screen-sized copy. Saved as `photo-edited.jpg`.
 tanj convert adjust --exposure=0.3 --clarity=20 --vibrance=25 photo.jpg
 ```
 
+### Trim… (`trim`)
+
+*Video, audio · ffmpeg, Windows' media player*
+
+Drag the start and end handles on the timeline, press I and O at the playhead, or type the times. Saved as
+`clip-trimmed.mp4` or `song-trimmed.mp3`.
+
+- In video each cut goes to the nearest frame. When both cuts fall on keyframes the copy is made without re-encoding,
+  which is quick and loses nothing; otherwise the part kept is re-encoded so each cut lands on its exact frame. The
+  panel says which it will be, and *Snap to keyframes* keeps dragged handles on them.
+- The sound stays in step, and a phone video's turn and the file's tags are kept.
+- Sound on its own is trimmed on its shape, to the sample: WAV, FLAC and AIFF stay lossless, and MP3, M4A and the
+  like are re-encoded at the bitrate they had, keeping their tags and cover art.
+
+**With `tanj`:** `--range=0:30.033-1:00` (`1:00-` keeps the rest, `-1:00` the start); for video `--mode=auto`, or
+`exact` to re-encode anyway, or `lossless` to widen the cuts to the keyframes around them.
+
+```
+tanj convert trim --range=0:30.033-1:00 clip.mp4
+tanj convert trim --range=1:05.5- --mode=lossless clip.mp4
+```
+
+### Bleep… (`bleep`)
+
+*Audio, video · ffmpeg, Windows' media player*
+
+Drag on the shape of the sound to mark a stretch, then move it or pull its ends. Each stretch is covered with a tone of
+its own pitch or with silence, and the timeline shows it that way: a wave marked with its pitch, or a flat line marked
+Silence. Saved as `talk-bleeped.mp4`.
+
+- Click a stretch (on the timeline or in the list) to see and change what covers it: Tone or Silence, and the pitch,
+  from 200 Hz to 4 kHz. With none selected, the same controls set what new stretches get.
+- **Hear it** (H) plays the selected stretch with a second either side, and whatever plays has the bleeps in. The
+  sound is decoded once as the window opens (about half a second for five minutes); after that each change is ready
+  to hear in moments, however long the file. A video's picture plays from the file itself, with the bleeped sound in
+  step beside it.
+- I and O set the selected stretch's ends at the playhead, or mark a second's stretch when none is selected; Tab selects
+  the next one and Delete removes it. A stretch drawn over another covered the same way joins it; over one covered
+  differently, it takes that part.
+- Bleeps start and stop within about a millisecond and a half of their times; everywhere else the sound is left exactly
+  as it was. A video's picture is copied, not re-encoded; only its sound is.
+
+**With `tanj`:** `--ranges="0:10-0:12, 0:20-0:21.5"`, each stretch taking `--sound=tone` (or `silence`) and
+`--pitch=1000` unless it says its own: `0:10-0:12 silence`, `0:20-0:21.5 tone 800`.
+
+```
+tanj convert bleep --ranges="0:10-0:12, 0:20-0:21.5" talk.mp4
+tanj convert bleep --ranges="1:02-1:03.5 silence, 1:10-1:11 tone 800" interview.mp3
+```
+
+### Redact video… (`redact`)
+
+*Video · ffmpeg, YuNet run by Windows' machine learning*
+
+Draw boxes on the picture. Each is hidden from the frame it's drawn on to the end, and has a bar under the timeline:
+drag its ends, or press I and O, to set when it starts and stops. Saved as `clip-redacted.mp4`.
+
+- Find faces adds a box over each face on the frame showing, found as in photos. Follow face moves the selected box
+  with its face through its stretch, finding the face again 15 times a second (a small face in a crowd is looked at
+  enlarged), and ends it where the face is lost for half a second. It's ready once the selected box has a face in it
+  where its stretch starts. On Windows 10, Windows' own face tracker follows instead, and loses faces that turn aside.
+  Both on this PC.
+- Hidden as for photos: a solid colour (the safest), big pixels or a strong blur. Playing or paused, each box shows
+  what's saved on the frame showing, its pixels or blur made from that frame.
+- A box moved or resized by hand stays where it's put. Tab selects the next box, Delete removes one.
+- The picture is re-encoded and the sound copied. The copy loses its location, cover pictures, subtitles and data
+  tracks such as a camera's GPS log.
+
+**With `tanj`:** `--spec=boxes.json` or the JSON itself: `{"boxes": [{"x": 10, "y": 20, "width": 100, "height": 80,
+"from": 1.5, "to": 3}]}`, in pixels and seconds (without `"to"` it runs to the end, and `"track": [{"at": 1.5, "x": …,
+"y": …, "width": …, "height": …}, …]` moves it in straight lines between places); `--style=solid` (or `pixelate`,
+`blur`), `--colour=#000000`.
+
+```
+tanj convert redact --spec=boxes.json --style=blur clip.mp4
+```
+
 ## Actions
 
 Actions work with the selected files and folders themselves:
@@ -250,9 +344,9 @@ tanj convert move-to --folder=D:\Archive *.jpg
 
 A small panel that stays on top at the right edge of the screen, for files you'll want again in a moment. Drop files
 or folders on it from anywhere, or pick **Float** on the Actions tab, and drag them out later into a folder, an email
-or a chat: one, several (select them first) or all of them with **All**. The shelf holds references, not copies:
-dragging out to another folder on the same drive moves the file, as it would from Explorer (hold Ctrl to copy), and
-files that were moved or deleted drop off.
+or a chat: one, several (select them first) or all of them with **All**. Dragging out copies the files, even to a
+folder on the same drive; hold Shift as you drop to move them instead, or Alt to make shortcuts. The shelf holds
+references, not copies, so files that were moved or deleted drop off.
 
 - Press the Tanjelo shortcut on the shelf to convert what's selected there (or everything on it).
 - **Delete** or × takes an item off the shelf, **Clear** takes them all; the files themselves stay where they are.

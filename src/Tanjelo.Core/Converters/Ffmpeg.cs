@@ -31,6 +31,9 @@ sealed record MediaInfo(bool Probed, string? Video, string? Audio, double Durati
     /// <summary>ffmpeg's name for the first audio track's channel layout, such as "stereo" or "5.1(side)".</summary>
     public string? ChannelLayout { get; init; }
 
+    /// <summary>Where the file's timeline starts, in seconds: ffmpeg's -ss and every time in Tanjelo count from here.</summary>
+    public double StartTime { get; init; }
+
     /// <summary>Tags on the file itself (title, artist, location…), as ffmpeg names them.</summary>
     public IReadOnlyDictionary<string, string> Tags { get; init; } = new Dictionary<string, string>();
 }
@@ -55,15 +58,39 @@ static class Ffmpeg
         _ => throw new ConversionException($"Can't write .{key} audio."),
     };
 
+    /// <summary>
+    /// Encoder settings that keep a file's sound as it was, for tools that have to re-encode it: lossless stays
+    /// lossless, with the same sample format, and lossy keeps its bitrate.
+    /// </summary>
+    public static string[] KeepSound(string key, MediaInfo media)
+    {
+        var bitrate = media.AudioBitrate > 0 ? media.AudioBitrate : media.Bitrate;
+        string[] Rate(string codec, long fallback) =>
+            ["-c:a", codec, "-b:a", string.Create(CultureInfo.InvariantCulture, $"{Math.Max(32, (int)Math.Round((bitrate > 0 ? bitrate : fallback) / 1000.0))}k")];
+        return key switch
+        {
+            "wav" => ["-c:a", media.Audio is { } wav && wav.StartsWith("pcm_", StringComparison.Ordinal) ? wav : "pcm_s16le"],
+            "aiff" => ["-c:a", media.Audio is { } aiff && aiff.StartsWith("pcm_", StringComparison.Ordinal) ? aiff : "pcm_s16be"],
+            "flac" => ["-c:a", "flac"],
+            "mp3" => Rate("libmp3lame", 192_000),
+            "m4a" or "aac" => Rate("aac", 192_000),
+            "ogg" => Rate("libvorbis", 160_000),
+            "opus" => Rate("libopus", 128_000),
+            "wma" => Rate("wmav2", 192_000),
+            _ => AudioEncoder(key),
+        };
+    }
+
     /// <summary>Containers <see cref="VideoEncoder"/> can write; anything else is re-encoded to MP4.</summary>
     public static bool CanEncodeVideo(string key) => key is "mp4" or "m4v" or "mov" or "mkv" or "webm" or "avi" or "wmv";
 
     /// <summary>Encoder settings for re-encoding video (and its sound) into a container.</summary>
     /// <param name="filter">Video filters to run first, such as a speed change.</param>
-    public static string[] VideoEncoder(string key, string? filter = null)
+    /// <param name="graph">Whether the picture comes from a filter graph of the caller's, which then makes it even itself.</param>
+    public static string[] VideoEncoder(string key, string? filter = null, bool graph = false)
     {
         string Filters(bool even) => string.Join(',', new[] { filter, even ? EvenSize : null }.OfType<string>());
-        string[] Vf(bool even) => Filters(even) is { Length: > 0 } f ? ["-vf", f] : [];
+        string[] Vf(bool even) => !graph && Filters(even) is { Length: > 0 } f ? ["-vf", f] : [];
         return key switch
         {
             "mp4" or "m4v" or "mov" or "mkv" => ["-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p", .. Vf(even: true),
@@ -83,7 +110,7 @@ static class Ffmpeg
 
         var result = await ProcessRunner.RunAsync(tools.Ffprobe,
             ["-v", "error", "-show_entries",
-                "format=duration,bit_rate:format_tags:stream=codec_type,codec_name,width,height,channels,channel_layout,sample_rate,bit_rate," +
+                "format=duration,start_time,bit_rate:format_tags:stream=codec_type,codec_name,width,height,channels,channel_layout,sample_rate,bit_rate," +
                 "r_frame_rate,pix_fmt:stream_side_data=rotation:stream_disposition=attached_pic", "-of", "json", input], ct);
         if (result.ExitCode != 0)
             throw new ConversionException($"ffmpeg can't read this file: {result.LastError}");
@@ -129,13 +156,15 @@ static class Ffmpeg
                 }
             }
         }
-        double duration = 0;
+        double duration = 0, start = 0;
         long bitrate = 0;
         var tags = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         if (json.RootElement.TryGetProperty("format", out var format))
         {
             if (format.TryGetProperty("duration", out var dur))
                 double.TryParse(dur.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out duration);
+            if (format.TryGetProperty("start_time", out var st))
+                double.TryParse(st.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out start);
             if (format.TryGetProperty("bit_rate", out var br))
                 long.TryParse(br.GetString(), out bitrate);
             if (format.TryGetProperty("tags", out var list))
@@ -154,6 +183,7 @@ static class Ffmpeg
             AudioBitrate = audioBitrate,
             ChannelLayout = layout,
             Tags = tags,
+            StartTime = start,
         };
     }
 
@@ -176,6 +206,76 @@ static class Ffmpeg
         }, onStdErr: onLog);
         if (result.ExitCode != 0)
             throw new ConversionException($"ffmpeg failed: {result.LastError}");
+    }
+
+    /// <summary>
+    /// Runs ffmpeg or ffprobe with its standard output as a stream of bytes, such as samples or raw pictures, for
+    /// <paramref name="read"/> to take in as it comes. Lines of the error output go to <paramref name="onLog"/>.
+    /// </summary>
+    public static async Task PipeAsync(string exe, string[] args, Func<Stream, Task> read, CancellationToken ct, Action<string>? onLog = null)
+    {
+        var psi = new System.Diagnostics.ProcessStartInfo(exe)
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardInput = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        };
+        foreach (var arg in args) psi.ArgumentList.Add(arg);
+        using var process = new System.Diagnostics.Process { StartInfo = psi };
+        var last = "";
+        process.ErrorDataReceived += (_, e) =>
+        {
+            if (e.Data is not { Length: > 0 } line) return;
+            last = line;
+            onLog?.Invoke(line);
+        };
+        try
+        {
+            process.Start();
+        }
+        catch (System.ComponentModel.Win32Exception ex)
+        {
+            throw new ConversionException($"Couldn't start {Path.GetFileName(exe)}: {ex.Message}", ex);
+        }
+        process.StandardInput.Close();
+        process.BeginErrorReadLine();
+        using var kill = ct.Register(() =>
+        {
+            try { process.Kill(entireProcessTree: true); } catch (InvalidOperationException) { }
+        });
+        try
+        {
+            await read(process.StandardOutput.BaseStream);
+            // Whatever the reader left is drained, so the program isn't stuck writing to a full pipe.
+            if (process.StandardOutput.BaseStream.CanRead) await process.StandardOutput.BaseStream.CopyToAsync(Stream.Null, ct);
+            await process.WaitForExitAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            // A reader that gave up leaves the program writing to a pipe nobody empties.
+            try { process.Kill(entireProcessTree: true); } catch (InvalidOperationException) { }
+            if (ct.IsCancellationRequested) throw new OperationCanceledException(ct);
+            if (ex is IOException) throw new ConversionException($"ffmpeg failed: {last}", ex);
+            throw;
+        }
+        process.WaitForExit();
+        if (process.ExitCode != 0)
+            throw new ConversionException($"ffmpeg failed: {last}");
+    }
+
+    /// <summary>Reads exactly <paramref name="buffer"/>'s length; false at the end of the stream.</summary>
+    public static async Task<bool> FillAsync(Stream stream, byte[] buffer, CancellationToken ct)
+    {
+        var at = 0;
+        while (at < buffer.Length)
+        {
+            var read = await stream.ReadAsync(buffer.AsMemory(at), ct);
+            if (read == 0) return false;
+            at += read;
+        }
+        return true;
     }
 
     /// <summary>

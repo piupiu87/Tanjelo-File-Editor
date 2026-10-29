@@ -73,6 +73,7 @@ public partial class EditorWindow : Window
         Closed += (_, _) =>
         {
             _closing.Cancel();
+            _editor.Close();
             _result.TrySetResult(null);
         };
         SourceInitialized += OnSourceInitialized;
