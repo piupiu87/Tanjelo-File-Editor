@@ -157,7 +157,7 @@ and Move to….
 Tray menu → *Settings…* opens the settings window: the menu's and the shelf's shortcuts (click a box and press the
 keys), the theme, the quality of JPG, WebP and HEIC pictures and of PDF pages saved as pictures, where ffmpeg and 7-Zip
 are when they aren't found automatically, which optional programs were found, *Start with Windows*, the "Send to"
-entry and the [update check](#privacy). Changes apply at once.
+entry, the Windows 11 menu entry (in signed releases) and the [update check](#privacy). Changes apply at once.
 
 The settings live in `%APPDATA%\Tanjelo\settings.json` (*Open settings file* in the window), which can still be edited
 by hand; changes apply as soon as you save it.
@@ -293,8 +293,9 @@ SignPath; [.signpath/README.md](.signpath/README.md) says how it's set up.
 
 ## Roadmap
 
-Next up: v1.0, ready for everyone: code signing, an installer and a winget package, a settings window, and an
-accessibility pass. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are
+v1.0 makes Tanjelo ready for everyone: an installer and a winget package, the .NET runtime inside, a settings window,
+an opt-in update check, an accessibility pass and text ready to translate. Code signing and the Windows 11 menu entry
+follow once SignPath Foundation approves the signing. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are
 welcome; open an issue first for anything big, and see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License

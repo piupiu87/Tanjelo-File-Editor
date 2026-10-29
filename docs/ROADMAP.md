@@ -111,16 +111,18 @@ A shared timeline first, then the editors that use it.
 - [x] Bleep sections of audio or video with a tone or silence (M)
 - [x] Redact areas of a video, each with its own time range (L)
 
-## v1.0: ready for everyone
+## v1.0.0: ready for everyone
 
-- [ ] Settings window, so nobody has to edit JSON (M)
-- [ ] Update check, off by default so the app stays offline unless you opt in (S)
-- [ ] Accessibility pass: screen-reader names, full keyboard use, high-contrast themes (M)
-- [ ] Translations: move UI text into resource files (M)
-- [ ] Installer with a Start menu entry and clean uninstall (M)
-- [ ] winget package: `winget install Tanjelo` (S)
-- [ ] Code signing, so downloads don't trigger "Windows protected your PC" (SignPath Foundation offers free signing for open-source projects) (M)
-- [ ] Entry in the Windows 11 right-click menu (needs a signed package) (M/L)
+- [x] Settings window, so nobody has to edit JSON (M)
+- [x] Update check, off by default so the app stays offline unless you opt in (S)
+- [x] Accessibility pass: screen-reader names, full keyboard use, high-contrast themes (M)
+- [x] Translations: move UI text into resource files (M). English only so far; CONTRIBUTING says how to add a language.
+- [x] Installer with a Start menu entry and clean uninstall (M)
+- [x] winget package: `winget install Tanjelo` (S). The manifests come with each release, for a pull request to
+  microsoft/winget-pkgs.
+- [ ] Code signing, so downloads don't trigger "Windows protected your PC" (SignPath Foundation offers free signing for open-source projects) (M). The release workflow is ready and signs once SignPath approves; if that comes after v1.0, v1.1 brings it.
+- [ ] Entry in the Windows 11 right-click menu (needs a signed package) (M/L). Built and tried on CI; it ships with
+  the first signed release.
 
 ## Later, if there's demand
 
