@@ -135,9 +135,22 @@ public class ShelfTests
         Assert.Equal(["a.txt", "b.txt"], Directory.GetFiles(copies).Select(f => Path.GetFileName(f)).Order());
         Assert.Equal("b", File.ReadAllText(Path.Combine(copies, "b.txt")));
         Assert.True(File.Exists(a) && File.Exists(b));
-        Assert.Collection(Directory.GetFiles(shortcuts).Select(f => Path.GetFileName(f)).Order(),
-            name => Assert.Matches(@"^a\.txt.*\.lnk$", name),
-            name => Assert.Matches(@"^b\.txt.*\.lnk$", name));
+        // Named "a.txt - Shortcut.lnk", or "a - Shortcut.lnk" where Explorer hides extensions, so look where they point.
+        Assert.All(Directory.GetFiles(shortcuts), f => Assert.Equal(".lnk", Path.GetExtension(f)));
+        Assert.Equal(["a.txt", "b.txt"], Directory.GetFiles(shortcuts).Select(f => Path.GetFileName(ShortcutTarget(f))).Order());
+    }
+
+    static string ShortcutTarget(string shortcut)
+    {
+        dynamic shell = Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell")!)!;
+        try
+        {
+            return shell.CreateShortcut(shortcut).TargetPath;
+        }
+        finally
+        {
+            Marshal.FinalReleaseComObject(shell);
+        }
     }
 
     const int LeftButton = 0x1, Shift = 0x4, Control = 0x8, Alt = 0x20; // MK_*
