@@ -14,7 +14,7 @@ namespace Tanjelo.Core.Converters;
 /// </summary>
 internal static class HeicEncoder
 {
-    public const string Missing = "HEIC output needs the HEIF Image Extensions and HEVC Video Extensions from the Microsoft Store.";
+    public static string Missing => Strings.HEICOutputNeedsTheHEIFImageExtensions;
 
     // One tiny trial encode, the first time it's asked, tells whether the extensions are there.
     static readonly Lazy<bool> Works = new(() => Task.Run(TrialAsync).GetAwaiter().GetResult());

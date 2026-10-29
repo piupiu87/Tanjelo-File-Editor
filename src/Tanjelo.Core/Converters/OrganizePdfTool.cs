@@ -30,10 +30,11 @@ public static partial class PageList
             var match = Token().Match(token);
             var rotation = match.Groups[4].Success ? int.Parse(match.Groups[4].Value, CultureInfo.InvariantCulture) : 0;
             if (!match.Success || rotation is not (0 or 90 or 180 or 270))
-                throw new ConversionException($"Couldn't read '{token}' in the page list. Use page numbers and ranges such as 3,1-2,5r90.");
+                throw new ConversionException(string.Format(Strings.CouldnTReadInThePageList, token));
             var source = match.Groups[1].Success ? char.ToLowerInvariant(match.Groups[1].Value[0]) - 'a' : 0;
             if (source >= counts.Count)
-                throw new ConversionException($"'{token}' is a page of another PDF, but {(counts.Count == 1 ? "no other PDF was given" : $"only {counts.Count - 1} other {(counts.Count == 2 ? "PDF was" : "PDFs were")} given")}.");
+                throw new ConversionException(string.Format(Strings.IsAPageOfAnotherPDFBut, token,
+                    counts.Count == 1 ? Strings.NoOtherPDFWasGiven : string.Format(Strings.OnlyOtherGiven, counts.Count - 1, counts.Count == 2 ? Strings.PDFWas : Strings.PDFsWere)));
             var first = Number(match.Groups[2].Value, source);
             var last = match.Groups[3].Success ? Number(match.Groups[3].Value, source) : first;
             var step = last >= first ? 1 : -1;
@@ -41,14 +42,14 @@ public static partial class PageList
                 pages.Add(new Page(source, page - 1, rotation));
         }
         if (pages.Count == 0)
-            throw new ConversionException("The page list leaves no pages.");
+            throw new ConversionException(Strings.ThePageListLeavesNoPages);
         return pages;
 
         int Number(string digits, int source)
         {
             var page = int.TryParse(digits, NumberStyles.None, CultureInfo.InvariantCulture, out var n) ? n : int.MaxValue;
             if (page < 1 || page > counts[source])
-                throw new ConversionException($"There's no page {digits}: {names[source]} has {Describe.Count(counts[source], "page")}.");
+                throw new ConversionException(string.Format(Strings.ThereSNoPageHas, digits, names[source], Describe.Count(counts[source], Strings.OnePage, Strings.NPages)));
             return page;
         }
     }
@@ -83,20 +84,20 @@ public static partial class PageList
 /// </summary>
 public sealed class OrganizePdfTool : IConverter
 {
-    static readonly Target Entry = new Target("organize-pdf", "Organize pages…", "Reorder, turn or delete", Section.Document)
+    static readonly Target Entry = new Target("organize-pdf", Strings.OrganizePages, Strings.ReorderTurnOrDelete, Section.Document)
     {
         Kind = TargetKind.Tool,
-        Running = "Saving the pages…",
-        Done = "Pages organized",
-        Confirm = "Save",
+        Running = Strings.SavingThePages,
+        Done = Strings.PagesOrganized,
+        Confirm = Strings.Save,
         Editor = EditorKind.OrganizePdf,
     }.WithOptions(
-        new Option("pages", "Pages", OptionKind.Text, "")
+        new Option("pages", Strings.Pages, OptionKind.Text, "")
         {
-            Hint = "In their new order, such as 3,1-2,5r90: r90, r180 and r270 turn a page clockwise, a page listed twice is copied, " +
-                "and a page left out is deleted. Pages of the PDFs in --with are b1, b2…, then c1…",
+            Hint = Strings.InTheirNewOrderSuchAs3 +
+                Strings.AndAPageLeftOutIsDeleted,
         },
-        new Option("with", "Pages from", OptionKind.Text, "") { Optional = true, Hint = "Other PDFs to take pages from, separated by |." });
+        new Option("with", Strings.PagesFrom, OptionKind.Text, "") { Optional = true, Hint = Strings.OtherPDFsToTakePagesFromSeparated });
 
     public IEnumerable<Target> TargetsFor(string input) => Formats.Key(input) == "pdf" ? [Entry] : [];
 
@@ -147,7 +148,7 @@ public sealed class OrganizePdfTool : IConverter
             .Select(p => Path.GetFullPath(p, OutputPaths.DirectoryOf(input)))
             .ToList();
         if (paths.FirstOrDefault(p => !File.Exists(p)) is { } missing)
-            throw new ConversionException($"Couldn't find {missing} to take pages from.");
+            throw new ConversionException(string.Format(Strings.CouldnTFindToTakePagesFrom, missing));
         return paths;
     }
 
@@ -167,9 +168,9 @@ public sealed class OrganizePdfTool : IConverter
             page.Elements.GetArray("/Annots")?.Elements.Select(Resolve).OfType<PdfDictionary>().Any(IsInternalLink) == true);
         return (form, links) switch
         {
-            (true, true) => "This PDF's form fields and its links between pages won't work in the saved copy.",
-            (true, false) => "This PDF's form fields won't work in the saved copy; the pages keep how they look.",
-            (false, true) => "This PDF's links between pages won't work in the saved copy.",
+            (true, true) => Strings.ThisPDFSFormFieldsAndIts,
+            (true, false) => Strings.ThisPDFSFormFieldsWonT,
+            (false, true) => Strings.ThisPDFSLinksBetweenPagesWon,
             _ => null,
         };
     }

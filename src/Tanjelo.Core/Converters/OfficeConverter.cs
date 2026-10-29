@@ -14,39 +14,39 @@ namespace Tanjelo.Core.Converters;
 /// </remarks>
 public sealed class OfficeConverter(Toolbox tools) : IConverter
 {
-    static readonly Target Pdf = new("pdf", "PDF", "Exported by Microsoft Office", Section.Document);
+    static readonly Target Pdf = new("pdf", Strings.PDF, Strings.ExportedByMicrosoftOffice, Section.Document);
 
     static readonly Target[] WordOutputs =
     [
         Pdf,
-        new("docx", "DOCX", "Word document", Section.Document),
-        new("doc", "DOC", "Word 97-2003", Section.Document),
-        new("rtf", "RTF", "Rich text", Section.Document),
-        new("odt", "ODT", "OpenDocument text", Section.Document),
-        new("txt", "TXT", "Plain text, UTF-8", Section.Document),
-        new("html", "HTML", "Web page", Section.Document),
-        new("png", "PNG", "One image per page", Section.Image),
-        new("jpg", "JPG", "One image per page", Section.Image),
+        new("docx", Strings.DOCX, Strings.WordDocument, Section.Document),
+        new("doc", Strings.DOC, Strings.Word972003, Section.Document),
+        new("rtf", Strings.RTF, Strings.RichText, Section.Document),
+        new("odt", Strings.ODT, Strings.OpenDocumentText, Section.Document),
+        new("txt", Strings.TXT, Strings.PlainTextUTF8, Section.Document),
+        new("html", Strings.HTML, Strings.WebPage, Section.Document),
+        new("png", Strings.PNG, Strings.OneImagePerPage, Section.Image),
+        new("jpg", Strings.JPG, Strings.OneImagePerPage, Section.Image),
     ];
 
     static readonly Target[] PowerPointOutputs =
     [
         Pdf,
-        new("pptx", "PPTX", "PowerPoint presentation", Section.Document),
-        new("ppt", "PPT", "PowerPoint 97-2003", Section.Document),
-        new("odp", "ODP", "OpenDocument presentation", Section.Document),
-        new("png", "PNG", "One image per slide", Section.Image),
-        new("jpg", "JPG", "One image per slide", Section.Image),
+        new("pptx", Strings.PPTX, Strings.PowerPointPresentation, Section.Document),
+        new("ppt", Strings.PPT, Strings.PowerPoint972003, Section.Document),
+        new("odp", Strings.ODP, Strings.OpenDocumentPresentation, Section.Document),
+        new("png", Strings.PNG, Strings.OneImagePerSlide, Section.Image),
+        new("jpg", Strings.JPG, Strings.OneImagePerSlide, Section.Image),
     ];
 
     static readonly Target[] ExcelOutputs =
     [
         Pdf,
-        new("xlsx", "XLSX", "Excel workbook", Section.Document),
-        new("xls", "XLS", "Excel 97-2003", Section.Document),
-        new("ods", "ODS", "OpenDocument spreadsheet", Section.Document),
-        new("csv", "CSV", "Active sheet, UTF-8", Section.Document),
-        new("tsv", "TSV", "Tab-separated, UTF-8", Section.Document),
+        new("xlsx", Strings.XLSX, Strings.ExcelWorkbook, Section.Document),
+        new("xls", Strings.XLS, Strings.Excel972003, Section.Document),
+        new("ods", Strings.ODS, Strings.OpenDocumentSpreadsheet, Section.Document),
+        new("csv", Strings.CSV, Strings.ActiveSheetUTF8, Section.Document),
+        new("tsv", Strings.TSV, Strings.TabSeparatedUTF8, Section.Document),
     ];
 
     public IEnumerable<Target> TargetsFor(string input)
@@ -55,7 +55,7 @@ public sealed class OfficeConverter(Toolbox tools) : IConverter
         return Formats.KindOf(input) switch
         {
             FileKind.WordDocument when tools.Word => key == "txt" ? WordOutputs.Where(t => t.Key is "pdf" or "docx" or "html" or "png" or "jpg") : WordOutputs,
-            FileKind.Pdf when tools.Word => [new Target("docx", "DOCX", "Editable Word document", Section.Document)],
+            FileKind.Pdf when tools.Word => [new Target("docx", Strings.DOCX, Strings.EditableWordDocument, Section.Document)],
             FileKind.Presentation when tools.PowerPoint => PowerPointOutputs,
             // Plain-text tables offer the formats worth turning them into, not every Excel format.
             FileKind.Spreadsheet when tools.Excel => key is "csv" or "tsv" ? ExcelOutputs.Where(t => t.Key is "xlsx" or "pdf" or "csv" or "tsv") : ExcelOutputs,
@@ -66,8 +66,8 @@ public sealed class OfficeConverter(Toolbox tools) : IConverter
     public string? HintFor(string input) =>
         Formats.KindOf(input) is FileKind.WordDocument or FileKind.Presentation or FileKind.Spreadsheet
         && !tools.Word && !tools.PowerPoint && !tools.Excel && tools.LibreOffice is null
-            ? "Office documents need Microsoft Office or LibreOffice."
-            : Formats.Key(input) == "tsv" && !tools.Excel ? "TSV files need Microsoft Excel." : null;
+            ? Strings.OfficeDocumentsNeedMicrosoftOfficeOrLibreOffice
+            : Formats.Key(input) == "tsv" && !tools.Excel ? Strings.TSVFilesNeedMicrosoftExcel : null;
 
     public async Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx)
     {
@@ -98,7 +98,7 @@ public sealed class OfficeConverter(Toolbox tools) : IConverter
                 FileKind.WordDocument or FileKind.Pdf => [office.ConvertWord(copy, OutputPaths.Beside(original, target.Key), target.Key)],
                 FileKind.Presentation => office.ConvertPowerPoint(copy, original, target.Key),
                 FileKind.Spreadsheet => [office.ConvertExcel(copy, original, target.Key)],
-                _ => throw new ConversionException("Not an Office document."),
+                _ => throw new ConversionException(Strings.NotAnOfficeDocument),
             });
         }
         finally
@@ -171,8 +171,8 @@ public sealed class OfficeConverter(Toolbox tools) : IConverter
         }
         ctx.Cancellation.ThrowIfCancellationRequested();
         throw new ConversionException(killed
-            ? "Office stopped responding, so it was closed. The file may be damaged or need a password."
-            : "Office stopped responding. Check for a dialog in your open Office window.");
+            ? Strings.OfficeStoppedRespondingSoItWasClosed
+            : Strings.OfficeStoppedRespondingCheckForADialog);
     }
 
     /// <summary>
@@ -219,7 +219,7 @@ public sealed class OfficeConverter(Toolbox tools) : IConverter
                         "odt" => 23,  // wdFormatOpenDocumentText
                         "txt" => 2,   // wdFormatText
                         "html" => 10, // wdFormatFilteredHTML: clean HTML without Office-only markup
-                        _ => throw new ConversionException($"Word can't save as {key}."),
+                        _ => throw new ConversionException(string.Format(Strings.WordCanTSaveAs, key)),
                     };
                     if (key is "txt" or "html")
                         doc.SaveAs2(FileName: output, FileFormat: format, AddToRecentFiles: false, Encoding: 65001);
@@ -251,7 +251,7 @@ public sealed class OfficeConverter(Toolbox tools) : IConverter
                     "pptx" => 24, // ppSaveAsOpenXMLPresentation
                     "ppt" => 1,   // ppSaveAsPresentation
                     "odp" => 35,  // ppSaveAsOpenDocumentPresentation
-                    _ => throw new ConversionException($"PowerPoint can't save as {key}."),
+                    _ => throw new ConversionException(string.Format(Strings.PowerPointCanTSaveAs, key)),
                 };
                 pres.SaveAs(output, format);
                 return [output];

@@ -10,8 +10,8 @@ public sealed class PdfConverter : IConverter
 {
     static readonly Target[] Outputs =
     [
-        new("png", "PNG", "One image per page", Section.Image),
-        new("jpg", "JPG", "One image per page", Section.Image),
+        new("png", Strings.PNG, Strings.OneImagePerPage, Section.Image),
+        new("jpg", Strings.JPG, Strings.OneImagePerPage, Section.Image),
     ];
 
     public IEnumerable<Target> TargetsFor(string input) => Formats.Key(input) == "pdf" ? Outputs : [];
@@ -81,7 +81,7 @@ public sealed class PdfConverter : IConverter
         }
         catch (Exception ex) when (ex.HResult == unchecked((int)0x8007052B))
         {
-            throw new ConversionException("This PDF is password-protected.", ex);
+            throw new ConversionException(Strings.ThisPDFIsPasswordProtected, ex);
         }
     }
 

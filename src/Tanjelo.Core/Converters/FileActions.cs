@@ -40,7 +40,7 @@ public sealed class WindowsClipboard : IClipboard
         thread.Start();
         thread.Join();
         if (error is ExternalException)
-            throw new ConversionException("Another app is using the clipboard. Try again in a moment.", error);
+            throw new ConversionException(Strings.AnotherAppIsUsingTheClipboardTry, error);
         if (error is not null)
             throw error;
     }
@@ -52,19 +52,19 @@ public sealed class ClipboardActions(IClipboard clipboard) : IBatchOperation
     public IEnumerable<Target> TargetsFor(IReadOnlyList<string> inputs)
     {
         var one = inputs.Count == 1;
-        yield return new Target("copy-path", one ? "Copy path" : "Copy paths", one ? "Full path as text" : "One path per line", Section.File)
+        yield return new Target("copy-path", one ? Strings.CopyPath : Strings.CopyPaths, one ? Strings.FullPathAsText : Strings.OnePathPerLine, Section.File)
         {
             IsBatch = true,
             Kind = TargetKind.Action,
-            Running = "Copying…",
-            Done = one ? "Path copied" : "Paths copied",
+            Running = Strings.Copying,
+            Done = one ? Strings.PathCopied : Strings.PathsCopied,
         };
-        yield return new Target("copy-files", "Copy", "Ready to paste anywhere", Section.File)
+        yield return new Target("copy-files", Strings.Copy, Strings.ReadyToPasteAnywhere, Section.File)
         {
             IsBatch = true,
             Kind = TargetKind.Action,
-            Running = "Copying…",
-            Done = "Copied, ready to paste",
+            Running = Strings.Copying,
+            Done = Strings.CopiedReadyToPaste,
         };
     }
 
@@ -86,12 +86,12 @@ public sealed class OpenTerminalAction(Toolbox tools) : IBatchOperation
 
     public IEnumerable<Target> TargetsFor(IReadOnlyList<string> inputs)
     {
-        yield return new Target("open-terminal", "Open in Terminal", tools.WindowsTerminal is null ? "PowerShell" : "Windows Terminal", Section.File)
+        yield return new Target("open-terminal", Strings.OpenInTerminal, tools.WindowsTerminal is null ? Strings.PowerShell : Strings.WindowsTerminal, Section.File)
         {
             IsBatch = true,
             Kind = TargetKind.Action,
-            Running = "Opening…",
-            Done = "Opened in Terminal",
+            Running = Strings.Opening,
+            Done = Strings.OpenedInTerminal,
         };
     }
 
@@ -99,7 +99,7 @@ public sealed class OpenTerminalAction(Toolbox tools) : IBatchOperation
     {
         var folders = Folders(inputs);
         if (folders.Count > MaxFolders)
-            throw new ConversionException($"That's {folders.Count} different folders; Tanjelo opens at most {MaxFolders} at once.");
+            throw new ConversionException(string.Format(Strings.ThatSDifferentFoldersTanjeloOpensAt, folders.Count, MaxFolders));
         foreach (var start in StartInfos(folders, tools.WindowsTerminal))
         {
             try
@@ -108,7 +108,7 @@ public sealed class OpenTerminalAction(Toolbox tools) : IBatchOperation
             }
             catch (System.ComponentModel.Win32Exception ex)
             {
-                throw new ConversionException($"Couldn't open {Path.GetFileName(start.FileName)}: {ex.Message}", ex);
+                throw new ConversionException(string.Format(Strings.CouldnTOpen, Path.GetFileName(start.FileName), ex.Message), ex);
             }
         }
         return Task.FromResult<IReadOnlyList<string>>([]);
@@ -153,12 +153,12 @@ public sealed class MoveToFolderAction : IConverter
 
     public IEnumerable<Target> TargetsFor(string input) =>
     [
-        new("move-to", "Move to…", "Pick a folder", Section.File)
+        new("move-to", Strings.MoveTo, Strings.PickAFolder, Section.File)
         {
             Kind = TargetKind.Action,
-            Running = "Moving…",
-            Done = "Moved",
-            FolderPrompt = "Move to which folder?",
+            Running = Strings.Moving,
+            Done = Strings.Moved,
+            FolderPrompt = Strings.MoveToWhichFolder,
             Parameters = new Dictionary<string, string> { ["folder"] = "" },
         },
     ];
@@ -167,17 +167,17 @@ public sealed class MoveToFolderAction : IConverter
     {
         var chosen = target.Parameter("folder");
         if (chosen.Length == 0)
-            throw new ConversionException("Choose a folder to move to.");
+            throw new ConversionException(Strings.ChooseAFolderToMoveTo);
         var destination = Path.GetFullPath(chosen);
         if (!Directory.Exists(destination))
-            throw new ConversionException("That folder doesn't exist.");
+            throw new ConversionException(Strings.ThatFolderDoesnTExist);
 
         var source = Path.GetFullPath(input).TrimEnd('\\');
         var isFolder = Directory.Exists(source);
         if (string.Equals(OutputPaths.DirectoryOf(source).TrimEnd('\\'), destination.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase))
-            throw new ConversionException("It's already in that folder.");
+            throw new ConversionException(Strings.ItSAlreadyInThatFolder);
         if (isFolder && (destination + "\\").StartsWith(source + "\\", StringComparison.OrdinalIgnoreCase))
-            throw new ConversionException("A folder can't be moved into itself.");
+            throw new ConversionException(Strings.AFolderCanTBeMovedInto);
 
         var output = isFolder ? OutputPaths.Unique(destination, Path.GetFileName(source), "") : FreeFileName(source, destination);
         if (!isFolder)
@@ -220,7 +220,7 @@ public sealed class MoveToFolderAction : IConverter
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            throw new ConversionException($"Copied to {output}, but some of the original folder couldn't be deleted: {ex.Message}", ex);
+            throw new ConversionException(string.Format(Strings.CopiedToButSomeOfTheOriginal, output, ex.Message), ex);
         }
     }
 

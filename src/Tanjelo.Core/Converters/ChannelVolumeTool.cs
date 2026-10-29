@@ -10,18 +10,18 @@ namespace Tanjelo.Core.Converters;
 /// </summary>
 public sealed class ChannelVolumeTool(Toolbox tools) : IConverter, IPreviewer
 {
-    static Target Entry(Section section) => new Target("channel-volume", "Channel volume…", "Left and right apart", section)
+    static Target Entry(Section section) => new Target("channel-volume", Strings.ChannelVolume, Strings.LeftAndRightApart, section)
     {
         Kind = TargetKind.Tool,
-        Running = "Changing the volume…",
-        Done = "Volume changed",
-        Confirm = "Change volume",
+        Running = Strings.ChangingTheVolume,
+        Done = Strings.VolumeChanged,
+        Confirm = Strings.ChangeVolume,
     }.WithOptions(
-        new Option("left", "Left", OptionKind.Number, "100") { Min = 0, Max = 400, Whole = true, Unit = "%", Slider = true },
-        new Option("right", "Right", OptionKind.Number, "100")
+        new Option("left", Strings.Left, OptionKind.Number, "100") { Min = 0, Max = 400, Whole = true, Unit = "%", Slider = true },
+        new Option("right", Strings.Right, OptionKind.Number, "100")
         {
             Min = 0, Max = 400, Whole = true, Unit = "%", Slider = true,
-            Hint = "0% silences a side and 200% makes it twice as loud (+6 dB). In surround sound, every channel on that side.",
+            Hint = Strings.N0SilencesASideAnd200Makes,
         });
 
     static readonly Target AudioEntry = Entry(Section.Audio);
@@ -41,7 +41,7 @@ public sealed class ChannelVolumeTool(Toolbox tools) : IConverter, IPreviewer
         var media = await Ffmpeg.ProbeAsync(tools, input, ctx.Cancellation);
         var (left, right) = (target.Number("left") / 100, target.Number("right") / 100);
         if (left == 1 && right == 1)
-            throw new ConversionException("Both sides are at 100%, so nothing would change.");
+            throw new ConversionException(Strings.BothSidesAreAt100SoNothing);
         var (pan, _, _) = await PanAsync(media, left, right, ctx.Cancellation);
 
         var key = Formats.Key(input);
@@ -89,10 +89,10 @@ public sealed class ChannelVolumeTool(Toolbox tools) : IConverter, IPreviewer
 
         return new Preview(await File.ReadAllBytesAsync(picture, ctx.Cancellation),
         [
-            new("Sound", $"{layout}, {Describe.Length(media.Duration)}"),
-            new("Left", Change(left)),
-            new("Right", Change(right)),
-            new("Colours", sides.Any(s => s == 0) ? "Orange is left, blue right, grey the middle" : "Orange is left, blue right"),
+            new(Strings.Sound, $"{layout}, {Describe.Length(media.Duration)}"),
+            new(Strings.Left, Change(left)),
+            new(Strings.Right, Change(right)),
+            new(Strings.Colours, sides.Any(s => s == 0) ? Strings.OrangeIsLeftBlueRightGreyThe : Strings.OrangeIsLeftBlueRight),
         ]);
     }
 
@@ -101,21 +101,21 @@ public sealed class ChannelVolumeTool(Toolbox tools) : IConverter, IPreviewer
     static string Change(double gain) => gain switch
     {
         0 => "silent",
-        1 => "as it is",
-        _ => string.Create(CultureInfo.InvariantCulture, $"{gain * 100:0}%, {20 * Math.Log10(gain):+0.0;-0.0} dB"),
+        1 => Strings.AsItIs,
+        _ => string.Format(CultureInfo.InvariantCulture, Strings.DB, gain * 100, 20 * Math.Log10(gain)),
     };
 
     /// <summary>The pan filter that scales each channel by the gain for its side, the layout it works on, and each channel's side.</summary>
     async Task<(string Pan, string Layout, IReadOnlyList<int> Sides)> PanAsync(MediaInfo media, double left, double right, CancellationToken ct)
     {
         if (media.Audio is null)
-            throw new ConversionException("This file has no sound.");
+            throw new ConversionException(Strings.ThisFileHasNoSound);
         if (media.Channels < 2)
-            throw new ConversionException("This file's sound has one channel, so it has no sides. Make it stereo first.");
+            throw new ConversionException(Strings.ThisFileSSoundHasOneChannel);
         var layouts = await LayoutsAsync(ct);
         var name = media.ChannelLayout is { Length: > 0 } layout && layouts.Channels.ContainsKey(layout) ? layout : media.Channels == 2 ? "stereo" : null;
         if (name is null)
-            throw new ConversionException($"Tanjelo can't tell which side each of this file's {media.Channels} channels is on.");
+            throw new ConversionException(string.Format(Strings.TanjeloCanTTellWhichSideEach, media.Channels));
         var sides = layouts.Channels[name].Select(layouts.Side).ToList();
         var gains = Gains(sides, left, right);
         return ($"pan={name}|" + string.Join('|', gains.Select((g, i) => string.Create(CultureInfo.InvariantCulture, $"c{i}={g:0.####}*c{i}"))), name, sides);

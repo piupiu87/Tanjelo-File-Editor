@@ -44,7 +44,8 @@ ffmpeg and pandoc; Office tests skip there.
    writes the result beside the input and returns its path.
 2. Name outputs with `OutputPaths.Beside` or `OutputPaths.Suffixed`, which never overwrite anything, and delete a
    half-written output if the conversion fails.
-3. Throw `ConversionException` with a message fit to show the user ("This PDF is password-protected.").
+3. Throw `ConversionException` with a message fit to show the user ("This PDF is password-protected."). Words people
+   see go in the resource files (see [Words and translations](#words-and-translations)), not in the code.
 4. When the conversion needs a program that may not be installed, find it in `Toolbox`, offer nothing without it, and
    say what to install in `HintFor`.
 5. Tools that need settings declare them with `Target.WithOptions`; the app then shows the options dialog and `tanj`
@@ -62,6 +63,25 @@ ffmpeg and pandoc; Office tests skip there.
    app does. Skip with `Assert.SkipUnless` when an optional tool is missing.
 8. Describe it in [docs/FORMATS.md](docs/FORMATS.md) or [docs/TOOLS.md](docs/TOOLS.md), add it to the short tables in
    [README.md](README.md), and list any new library in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+
+## Words and translations
+
+Every word Tanjelo shows is in a resource file: the engine's (menu labels and descriptions, settings, notes and
+problems) in `src/Tanjelo.Core/Strings.resx`, the app's windows in `src/Tanjelo/Strings.resx`. Code reads them as
+`Strings.Name`, XAML as `{x:Static local:Strings.Name}`. Menu keys, settings.json, output file names and what `tanj`
+prints stay in English in the code, since scripts read them.
+
+- **A new string:** add it to the right `Strings.resx` and a line `public static string Name => Get();` to the
+  `Strings.cs` beside it (`StringsTests` checks the two match). Use `{0}`, `{1}` for what goes in, with
+  `string.Format`, and whole sentences rather than pieces joined in code; counts come in pairs such as
+  `Strings.OnePage` and `Strings.NPages` for `Describe.Count`.
+- **A new language:** copy both `Strings.resx` files to `Strings.<language>.resx` beside them (`Strings.de.resx`,
+  `Strings.pt-BR.resx`) and translate each `<value>`. Keep the `{0}` placeholders, the `|*.pdf` parts of file filters,
+  and the `, ` between keys in key lists such as `Ctrl, Arrows`. The build makes the satellite assemblies, and Tanjelo
+  shows the language Windows is set to, falling back to English for anything missing.
+- **The pseudo-language test** (`PseudoLanguageTests`) shows every window with each string bracketed, accented and a
+  third longer, in a process of its own, and fails on any text left outside the resource files or cut off at its
+  edge. Its renders are saved as `pseudo-*.png` in `%TEMP%\tanjelo-tests\renders`.
 
 ## Ground rules
 

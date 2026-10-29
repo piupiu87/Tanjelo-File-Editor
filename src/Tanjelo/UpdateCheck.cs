@@ -65,7 +65,7 @@ sealed class UpdateCheck
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
             using var response = await client.SendAsync(request, cancel);
             if (!response.IsSuccessStatusCode)
-                throw new HttpRequestException($"GitHub answered {(int)response.StatusCode} {response.ReasonPhrase}.");
+                throw new HttpRequestException(string.Format(Strings.GitHubAnswered, (int)response.StatusCode, response.ReasonPhrase));
             using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancel));
             var tag = json.RootElement.TryGetProperty("tag_name", out var t) ? t.GetString() : null;
             var latest = tag?.TrimStart('v', 'V');
@@ -78,7 +78,7 @@ sealed class UpdateCheck
                                    or InvalidOperationException)
         {
             if (cancel.IsCancellationRequested) throw;
-            Last = Last with { Problem = ex is TaskCanceledException ? "GitHub didn't answer in time." : ex.Message };
+            Last = Last with { Problem = ex is TaskCanceledException ? Strings.GitHubDidnTAnswerInTime : ex.Message };
         }
         Save();
         return true;
@@ -95,10 +95,10 @@ sealed class UpdateCheck
     public (string Text, string? Link) Describe()
     {
         if (Last.Checked is not { } at) return ("", null);
-        var when = at.LocalDateTime.Date == _now().LocalDateTime.Date ? $"today at {at.LocalDateTime:HH:mm}" : $"on {at.LocalDateTime:d MMMM}";
-        if (Last.Problem is { } problem) return ($"Couldn't check {when}: {problem}", null);
-        if (Newer is { } newer) return ($"Tanjelo {newer} is out (checked {when}).", Page);
-        return ($"Tanjelo {Current} is the latest version (checked {when}).", null);
+        var when = at.LocalDateTime.Date == _now().LocalDateTime.Date ? string.Format(Strings.TodayAt, at.LocalDateTime) : string.Format(Strings.On, at.LocalDateTime);
+        if (Last.Problem is { } problem) return (string.Format(Strings.CouldnTCheck, when, problem), null);
+        if (Newer is { } newer) return (string.Format(Strings.TanjeloIsOutChecked, newer, when), Page);
+        return (string.Format(Strings.TanjeloIsTheLatestVersionChecked, Current, when), null);
     }
 
     static Version? Parse(string text) => Version.TryParse(text, out var v) ? new Version(v.Major, v.Minor, Math.Max(v.Build, 0)) : null;

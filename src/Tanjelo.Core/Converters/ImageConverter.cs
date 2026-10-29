@@ -6,19 +6,19 @@ public sealed class ImageConverter(Toolbox tools) : IConverter
 {
     static readonly Target[] Outputs =
     [
-        new("png", "PNG", "Lossless, keeps transparency", Section.Image),
-        new("jpg", "JPG", "Small photos, no transparency", Section.Image),
-        new("webp", "WebP", "Modern web format", Section.Image),
-        new("avif", "AVIF", "Smallest files, newer apps only", Section.Image),
-        new("gif", "GIF", "256 colours, keeps animation", Section.Image),
-        new("bmp", "BMP", "Uncompressed bitmap", Section.Image),
-        new("tiff", "TIFF", "Print and archiving", Section.Image),
-        new("ico", "ICO", "Windows icon, 16 to 256 px", Section.Image),
-        new("pdf", "PDF", "Image as a PDF page", Section.Document),
+        new("png", Strings.PNG, Strings.LosslessKeepsTransparency, Section.Image),
+        new("jpg", Strings.JPG, Strings.SmallPhotosNoTransparency, Section.Image),
+        new("webp", Strings.WebP, Strings.ModernWebFormat, Section.Image),
+        new("avif", Strings.AVIF, Strings.SmallestFilesNewerAppsOnly, Section.Image),
+        new("gif", Strings.GIF, Strings.N256ColoursKeepsAnimation, Section.Image),
+        new("bmp", Strings.BMP, Strings.UncompressedBitmap, Section.Image),
+        new("tiff", Strings.TIFF, Strings.PrintAndArchiving, Section.Image),
+        new("ico", Strings.ICO, Strings.WindowsIcon16To256Px, Section.Image),
+        new("pdf", Strings.PDF, Strings.ImageAsAPDFPage, Section.Document),
     ];
 
-    static readonly Target Heic = new("heic", "HEIC", "Small photos for iPhone and Mac", Section.Image);
-    static readonly Target HeicStill = Heic with { Description = "First frame only, for iPhone and Mac" };
+    static readonly Target Heic = new("heic", Strings.HEIC, Strings.SmallPhotosForIPhoneAndMac, Section.Image);
+    static readonly Target HeicStill = Heic with { Description = Strings.FirstFrameOnlyForIPhoneAndMac };
 
     static readonly HashSet<string> Animated = ["gif", "webp"];
 
@@ -85,7 +85,7 @@ public sealed class ImageConverter(Toolbox tools) : IConverter
         catch (Exception ex) when (ex is not (ConversionException or OperationCanceledException))
         {
             OutputPaths.TryDelete(output);
-            throw new ConversionException($"Windows couldn't write the HEIC: {ex.Message.Split('\n')[0].Trim()}", ex);
+            throw new ConversionException(string.Format(Strings.WindowsCouldnTWriteTheHEIC, ex.Message.Split('\n')[0].Trim()), ex);
         }
         ctx.Progress.Report(1);
         return [output];
@@ -107,12 +107,12 @@ public sealed class ImageConverter(Toolbox tools) : IConverter
         catch (MagickException ex)
         {
             frames.Dispose();
-            throw new ConversionException($"This doesn't look like a valid image ({Reason(ex)}).", ex);
+            throw new ConversionException(string.Format(Strings.ThisDoesnTLookLikeAValid, Reason(ex)), ex);
         }
         if (frames.Count == 0)
         {
             frames.Dispose();
-            throw new ConversionException("The image has no frames.");
+            throw new ConversionException(Strings.TheImageHasNoFrames);
         }
         return frames;
     }
@@ -207,11 +207,11 @@ public sealed class CombinePdfOperation : IBatchOperation
     public IEnumerable<Target> TargetsFor(IReadOnlyList<string> inputs)
     {
         if (inputs.Count >= 2 && inputs.All(i => Formats.KindOf(i) == FileKind.Image))
-            yield return new Target("combine-pdf", "One PDF", $"Combine {inputs.Count} images as pages", Section.Document)
+            yield return new Target("combine-pdf", Strings.OnePDF, string.Format(Strings.CombineImagesAsPages, inputs.Count), Section.Document)
             {
                 IsBatch = true,
-                Running = "Combining into a PDF…",
-                Done = "Combined into one PDF",
+                Running = Strings.CombiningIntoAPDF,
+                Done = Strings.CombinedIntoOnePDF,
             };
     }
 

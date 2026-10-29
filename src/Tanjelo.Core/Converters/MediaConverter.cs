@@ -5,25 +5,25 @@ public sealed class MediaConverter(Toolbox tools) : IConverter
 {
     static readonly Target[] VideoOutputs =
     [
-        new("mp4", "MP4", "H.264, plays everywhere", Section.Video),
-        new("mov", "MOV", "QuickTime movie", Section.Video),
-        new("mkv", "MKV", "Matroska, keeps every track", Section.Video),
-        new("webm", "WebM", "VP9 + Opus for the web", Section.Video),
-        new("avi", "AVI", "Legacy MPEG-4", Section.Video),
-        new("wmv", "WMV", "Windows Media Video", Section.Video),
-        new("gif", "GIF", "Animated, 15 fps, up to 640 px", Section.Image),
+        new("mp4", Strings.MP4, Strings.H264PlaysEverywhere, Section.Video),
+        new("mov", Strings.MOV, Strings.QuickTimeMovie, Section.Video),
+        new("mkv", Strings.MKV, Strings.MatroskaKeepsEveryTrack, Section.Video),
+        new("webm", Strings.WebM, Strings.VP9OpusForTheWeb, Section.Video),
+        new("avi", Strings.AVI, Strings.LegacyMPEG4, Section.Video),
+        new("wmv", Strings.WMV, Strings.WindowsMediaVideo, Section.Video),
+        new("gif", Strings.GIF, Strings.Animated15FpsUpTo640Px, Section.Image),
     ];
 
     static readonly Target[] AudioOutputs =
     [
-        new("mp3", "MP3", "Plays everywhere, ~190 kbps", Section.Audio),
-        new("m4a", "M4A", "AAC, 256 kbps", Section.Audio),
-        new("wav", "WAV", "Uncompressed", Section.Audio),
-        new("flac", "FLAC", "Lossless, compressed", Section.Audio),
-        new("ogg", "OGG", "Ogg Vorbis", Section.Audio),
-        new("opus", "Opus", "Small and efficient", Section.Audio),
-        new("aiff", "AIFF", "Uncompressed (Apple)", Section.Audio),
-        new("wma", "WMA", "Windows Media, 192 kbps", Section.Audio),
+        new("mp3", Strings.MP3, Strings.PlaysEverywhere190Kbps, Section.Audio),
+        new("m4a", Strings.M4A, Strings.AAC256Kbps, Section.Audio),
+        new("wav", Strings.WAV, Strings.Uncompressed, Section.Audio),
+        new("flac", Strings.FLAC, Strings.LosslessCompressed, Section.Audio),
+        new("ogg", Strings.OGG, Strings.OggVorbis, Section.Audio),
+        new("opus", Strings.Opus, Strings.SmallAndEfficient, Section.Audio),
+        new("aiff", Strings.AIFF, Strings.UncompressedApple, Section.Audio),
+        new("wma", Strings.WMA, Strings.WindowsMedia192Kbps, Section.Audio),
     ];
 
     static readonly HashSet<string> ExtractableAudio = ["mp3", "m4a", "wav", "flac"];
@@ -34,11 +34,11 @@ public sealed class MediaConverter(Toolbox tools) : IConverter
         var key = Formats.Key(input);
         if (Formats.Videos.Contains(key))
             return VideoOutputs
-                .Concat(AudioOutputs.Where(t => ExtractableAudio.Contains(t.Key)).Select(t => t with { Description = "Audio track only" }));
+                .Concat(AudioOutputs.Where(t => ExtractableAudio.Contains(t.Key)).Select(t => t with { Description = Strings.AudioTrackOnly }));
         if (Formats.Audio.Contains(key))
             return AudioOutputs;
         if (key == "gif")
-            return VideoOutputs.Where(t => t.Key is "mp4" or "webm").Select(t => t with { Description = "Animated GIF as video" });
+            return VideoOutputs.Where(t => t.Key is "mp4" or "webm").Select(t => t with { Description = Strings.AnimatedGIFAsVideo });
         return [];
     }
 
@@ -46,7 +46,7 @@ public sealed class MediaConverter(Toolbox tools) : IConverter
     {
         var key = Formats.Key(input);
         return tools.Ffmpeg is null && (Formats.Videos.Contains(key) || Formats.Audio.Contains(key))
-            ? "Audio and video need ffmpeg: winget install Gyan.FFmpeg.Essentials"
+            ? Strings.AudioAndVideoNeedFfmpegWingetInstall
             : null;
     }
 
@@ -54,7 +54,7 @@ public sealed class MediaConverter(Toolbox tools) : IConverter
     {
         var media = await Ffmpeg.ProbeAsync(tools, input, ctx.Cancellation);
         if (target.Section == Section.Audio && media.Audio is null && media.Probed)
-            throw new ConversionException("This file has no audio track.");
+            throw new ConversionException(Strings.ThisFileHasNoAudioTrack);
 
         var output = OutputPaths.Beside(input, target.Key);
         // A stream-copy attempt can fail on odd inputs; the next plan re-encodes.
@@ -112,7 +112,7 @@ public sealed class MediaConverter(Toolbox tools) : IConverter
                 yield return [.. audioMap, .. Ffmpeg.AudioEncoder(key)];
                 break;
             default:
-                throw new ConversionException($"Unknown media target '{key}'.");
+                throw new ConversionException(string.Format(Strings.UnknownMediaTarget, key));
         }
     }
 }

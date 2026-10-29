@@ -10,9 +10,9 @@ public sealed partial class SubtitleConverter : IConverter
 {
     static readonly Target[] Outputs =
     [
-        new("srt", "SRT", "SubRip, plays anywhere", Section.Document),
-        new("vtt", "VTT", "WebVTT, for web video", Section.Document),
-        new("txt", "TXT", "Just the words", Section.Document),
+        new("srt", Strings.SRT, Strings.SubRipPlaysAnywhere, Section.Document),
+        new("vtt", Strings.VTT, Strings.WebVTTForWebVideo, Section.Document),
+        new("txt", Strings.TXT, Strings.JustTheWords, Section.Document),
     ];
 
     public IEnumerable<Target> TargetsFor(string input) => Formats.KindOf(input) == FileKind.Subtitle ? Outputs : [];
@@ -21,7 +21,7 @@ public sealed partial class SubtitleConverter : IConverter
     {
         var cues = Parse(TextFiles.Read(input), isVtt: Formats.Key(input) == "vtt");
         if (cues.Count == 0)
-            throw new ConversionException("No subtitles were found in this file.");
+            throw new ConversionException(Strings.NoSubtitlesWereFoundInThisFile);
 
         var (text, encoding) = target.Key switch
         {
@@ -29,7 +29,7 @@ public sealed partial class SubtitleConverter : IConverter
             "srt" => (ToSrt(cues), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true)),
             "vtt" => (ToVtt(cues), new UTF8Encoding(false)),
             "txt" => (ToText(cues), new UTF8Encoding(false)),
-            _ => throw new ConversionException($"Can't write {target.Label} subtitles."),
+            _ => throw new ConversionException(string.Format(Strings.CanTWriteSubtitles, target.Label)),
         };
         var output = OutputPaths.Beside(input, target.Key);
         await File.WriteAllTextAsync(output, text, encoding, ctx.Cancellation);

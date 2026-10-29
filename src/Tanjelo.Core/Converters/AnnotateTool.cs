@@ -74,7 +74,7 @@ public static class MarkSpec
         if (!text.StartsWith('{') && !text.StartsWith('['))
         {
             var path = Path.GetFullPath(text, OutputPaths.DirectoryOf(besides));
-            if (!System.IO.File.Exists(path)) throw new ConversionException($"Couldn't find the marks file {path}.");
+            if (!System.IO.File.Exists(path)) throw new ConversionException(string.Format(Strings.CouldnTFindTheMarksFile, path));
             text = System.IO.File.ReadAllText(path);
         }
         IReadOnlyList<Mark>? marks;
@@ -86,8 +86,8 @@ public static class MarkSpec
         }
         catch (JsonException ex)
         {
-            throw new ConversionException($"Couldn't read the marks: {ex.Message.Split(" Path:")[0].Split(" LineNumber:")[0].TrimEnd('.')}" +
-                (ex.LineNumber is { } line ? $", on line {line + 1}." : "."), ex);
+            throw new ConversionException(string.Format(Strings.CouldnTReadTheMarks, ex.Message.Split(" Path:")[0].Split(" LineNumber:")[0].TrimEnd('.')) +
+                (ex.LineNumber is { } line ? string.Format(Strings.OnLine, line + 1) : "."), ex);
         }
         marks ??= [];
         for (var i = 0; i < marks.Count; i++)
@@ -104,13 +104,13 @@ public static class MarkSpec
         };
         var name = mark.Kind.ToString().ToLowerInvariant();
         if (mark.Points.IsDefault || mark.Points.Length < needs || (needs == 2 && mark.Points.Length != 2))
-            throw new ConversionException($"Mark {number} ({name}) needs {(needs == 2 ? "two points" : "a point")}, as [x, y].");
+            throw new ConversionException(string.Format(Strings.MarkNeedsAsXY, number, name, (needs == 2 ? "two points" : "a point")));
         if (!Core.Colour.TryParse(mark.Colour, out _))
-            throw new ConversionException($"Mark {number} ({name}) has the colour '{mark.Colour}'; use one such as #E5383B.");
+            throw new ConversionException(string.Format(Strings.MarkHasTheColourUseOneSuch, number, name, mark.Colour));
         if (mark.Width <= 0 || mark.Size <= 0 || mark.Zoom < 1)
-            throw new ConversionException($"Mark {number} ({name}) needs a width and size above 0, and a zoom of at least 1.");
+            throw new ConversionException(string.Format(Strings.MarkNeedsAWidthAndSizeAbove, number, name));
         if (mark.Kind == MarkKind.Text && string.IsNullOrWhiteSpace(mark.Text))
-            throw new ConversionException($"Mark {number} (text) has no text.");
+            throw new ConversionException(string.Format(Strings.MarkTextHasNoText, number));
     }
 }
 
@@ -119,13 +119,13 @@ public sealed class MarkPointConverter : JsonConverter<MarkPoint>
 {
     public override MarkPoint Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        if (reader.TokenType != JsonTokenType.StartArray) throw new JsonException("A point is written as [x, y]");
+        if (reader.TokenType != JsonTokenType.StartArray) throw new JsonException(Strings.APointIsWrittenAsXY);
         reader.Read();
         var x = reader.GetDouble();
         reader.Read();
         var y = reader.GetDouble();
         reader.Read();
-        if (reader.TokenType != JsonTokenType.EndArray) throw new JsonException("A point is written as [x, y]");
+        if (reader.TokenType != JsonTokenType.EndArray) throw new JsonException(Strings.APointIsWrittenAsXY);
         return new MarkPoint(x, y);
     }
 
@@ -363,18 +363,18 @@ public sealed class AnnotateTool : IConverter
 {
     static readonly Lazy<StaWorker> Painter = new(() => new StaWorker("Tanjelo marks"));
 
-    static readonly Target Entry = new Target("annotate", "Annotate…", "Arrows, shapes and text", Section.Image)
+    static readonly Target Entry = new Target("annotate", Strings.Annotate, Strings.ArrowsShapesAndText, Section.Image)
     {
         Kind = TargetKind.Tool,
-        Running = "Annotating…",
-        Done = "Annotated",
-        Confirm = "Save",
+        Running = Strings.Annotating,
+        Done = Strings.Annotated,
+        Confirm = Strings.Save,
         Editor = EditorKind.Annotate,
-    }.WithOptions(new Option("spec", "Marks", OptionKind.Text, "")
+    }.WithOptions(new Option("spec", Strings.Marks, OptionKind.Text, "")
     {
         Remember = false,
-        Hint = "The marks as JSON, or a .json file of them: {\"marks\": [{\"type\": \"arrow\", \"points\": [[10, 10], [200, 120]], \"colour\": \"#E5383B\", \"width\": 8}]}. " +
-            "Types: arrow, line, rectangle, ellipse (two points); text (\"text\", \"size\"), callout and magnifier (one point, \"size\"); pen and highlighter (any points).",
+        Hint = Strings.TheMarksAsJSONOrAJson +
+            Strings.TypesArrowLineRectangleEllipseTwoPoints,
     });
 
     public IEnumerable<Target> TargetsFor(string input) =>
@@ -383,7 +383,7 @@ public sealed class AnnotateTool : IConverter
     public async Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx)
     {
         var marks = MarkSpec.Read(target.Text("spec"), input);
-        if (marks.Count == 0) throw new ConversionException("There are no marks to draw.");
+        if (marks.Count == 0) throw new ConversionException(Strings.ThereAreNoMarksToDraw);
         using var frames = ImageConverter.Read(input);
         var image = frames[0];
         image.AutoOrient();

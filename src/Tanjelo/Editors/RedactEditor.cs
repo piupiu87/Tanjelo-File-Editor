@@ -51,20 +51,20 @@ sealed class RedactEditor : Editor<RedactState>, ICanvasTool
         _canvas.Tool = this;
         _canvas.ViewChanged += DrawFrames;
 
-        _faces = Panels.Button("", "Find faces", "Add a box over each face found, on this PC", () => _ = FindAsync(faces: true));
-        _text = Panels.Button("", "Find text", "Add a box over each word Windows' OCR reads, on this PC", () => _ = FindAsync(faces: false));
+        _faces = Panels.Button("", Strings.FindFaces, Strings.AddABoxOverEachFaceFound, () => _ = FindAsync(faces: true));
+        _text = Panels.Button("", Strings.FindText, Strings.AddABoxOverEachWordWindows, () => _ = FindAsync(faces: false));
         _faces.IsEnabled = Redaction.CanFindFaces;
         _text.IsEnabled = Env.Ocr;
-        if (!_faces.IsEnabled) _faces.ToolTip = "Windows can't look for faces on this PC";
-        if (!_text.IsEnabled) _text.ToolTip = "Finding text needs an OCR language in Windows' language settings";
+        if (!_faces.IsEnabled) _faces.ToolTip = Strings.WindowsCanTLookForFacesOn;
+        if (!_text.IsEnabled) _text.ToolTip = Strings.FindingTextNeedsAnOCRLanguageIn;
         var find = new WrapPanel();
         find.Children.Add(_faces);
         find.Children.Add(_text);
 
-        _panel.Children.Add(Panels.Heading("Find"));
+        _panel.Children.Add(Panels.Heading(Strings.Find));
         _panel.Children.Add(find);
         _panel.Children.Add(_found);
-        _panel.Children.Add(Panels.Heading("Hide with", 20));
+        _panel.Children.Add(Panels.Heading(Strings.HideWith, 20));
         var (chips, showStyle) = Panels.Chips(Redaction.Styles, "solid", style => Commit(State with { Style = style }));
         _showStyle = showStyle;
         _panel.Children.Add(chips);
@@ -76,12 +76,12 @@ sealed class RedactEditor : Editor<RedactState>, ICanvasTool
         _colourRow.Margin = new Thickness(0, 12, 0, 0);
         _colourRow.Children.Add(swatches);
         _panel.Children.Add(_colourRow);
-        _panel.Children.Add(Panels.Hint("Solid is the safest. Pixelate and blur are strong here, but a light blur can sometimes be undone.", 8));
-        _panel.Children.Add(Panels.Heading("Areas", 20));
-        _panel.Children.Add(Panels.Hint("Drag on the picture to draw a box. Drag a box to move it or its edges to resize it; Delete removes the selected one, and the arrows nudge it.", 0));
+        _panel.Children.Add(Panels.Hint(Strings.SolidIsTheSafestPixelateAndBlur, 8));
+        _panel.Children.Add(Panels.Heading(Strings.Areas, 20));
+        _panel.Children.Add(Panels.Hint(Strings.DragOnThePictureToDrawA, 0));
         _panel.Children.Add(_count);
         _panel.Children.Add(Panels.Keys(RedactKeys));
-        _panel.Children.Add(Panels.Hint("The copy also loses its location, its XMP and the small preview cameras keep in EXIF.", 14));
+        _panel.Children.Add(Panels.Hint(Strings.TheCopyAlsoLosesItsLocationIts, 14));
     }
 
     /// <summary>Whether Windows has an OCR language; looked up once.</summary>
@@ -92,20 +92,20 @@ sealed class RedactEditor : Editor<RedactState>, ICanvasTool
 
     static readonly (string Keys, string Does)[] RedactKeys =
     [
-        ("Insert, N", "Add a box in the middle"),
-        ("Tab", "Select the next box"),
-        ("Arrows", "Move it a pixel; with Shift, 10"),
-        ("Ctrl, Arrows", "Make it bigger or smaller"),
-        ("Delete", "Remove the selected box"),
+        (Strings.InsertN, Strings.AddABoxInTheMiddle),
+        (Strings.Tab, Strings.SelectTheNextBox),
+        (Strings.Arrows, Strings.MoveItAPixelWithShift10),
+        (Strings.CtrlArrows, Strings.MakeItBiggerOrSmaller),
+        (Strings.Delete, Strings.RemoveTheSelectedBox),
     ];
 
-    public override (string Name, string Keys) Spoken => ("Picture", string.Join(". ", RedactKeys.Select(k => $"{k.Keys}: {k.Does}")));
+    public override (string Name, string Keys) Spoken => (Strings.Picture, string.Join(". ", RedactKeys.Select(k => $"{k.Keys}: {k.Does}")));
 
     public override FrameworkElement Main => _canvas;
     public override FrameworkElement Panel => _panel;
     public override ZoomCanvas Canvas => _canvas;
     public override string Summary => _picture is null ? "" : Describe.Pixels((int)_picture.Width, (int)_picture.Height);
-    public override string Status => _picture is null ? "" : Describe.Count(State.Boxes.Count, "area") + Panels.Which(_selected, State.Boxes.Count);
+    public override string Status => _picture is null ? "" : Describe.Count(State.Boxes.Count, Tanjelo.Core.Strings.OneArea, Tanjelo.Core.Strings.NAreas) + Panels.Which(_selected, State.Boxes.Count);
 
     internal RedactState Current => State;
     internal int? Selected => _selected;
@@ -120,7 +120,7 @@ sealed class RedactEditor : Editor<RedactState>, ICanvasTool
 
     public override Target Result()
     {
-        if (State.Boxes.Count == 0) throw new ConversionException("Draw a box over something to hide first, or find faces or text.");
+        if (State.Boxes.Count == 0) throw new ConversionException(Strings.DrawABoxOverSomethingToHide);
         return _target.WithParameters(new Dictionary<string, string>
         {
             ["boxes"] = RedactBox.FormatAll(State.Boxes),
@@ -137,7 +137,7 @@ sealed class RedactEditor : Editor<RedactState>, ICanvasTool
         _showStyle(state.Style);
         _showColour(state.Colour);
         _colourRow.Visibility = state.Style == "solid" ? Visibility.Visible : Visibility.Collapsed;
-        _count.Text = state.Boxes.Count == 0 ? "No areas yet." : Describe.Count(state.Boxes.Count, "area") + " to hide.";
+        _count.Text = state.Boxes.Count == 0 ? Strings.NoAreasYet : Describe.Count(state.Boxes.Count, Tanjelo.Core.Strings.OneArea, Tanjelo.Core.Strings.NAreas) + Strings.ToHide;
         // Covers, in the picture's own pixels: exactly what the engine will put there.
         _canvas.World.Children.Clear();
         foreach (var box in state.Boxes)
@@ -212,7 +212,7 @@ sealed class RedactEditor : Editor<RedactState>, ICanvasTool
         if (_picture is null || _busy) return;
         _busy = true;
         _faces.IsEnabled = _text.IsEnabled = false;
-        _found.Text = faces ? "Looking for faces…" : "Reading the text…";
+        _found.Text = faces ? Strings.LookingForFaces : Strings.ReadingTheText;
         try
         {
             // A copy of its own, as the boxes keep being drawn from the picture meanwhile.
@@ -224,10 +224,10 @@ sealed class RedactEditor : Editor<RedactState>, ICanvasTool
             var added = found.Where(b => !known.Contains(b)).ToList();
             _found.Text = (faces, found.Count) switch
             {
-                (true, 0) => "No faces were found.",
-                (false, 0) => "No text was found.",
-                (true, var n) => $"{Describe.Count(n, "face")} found. Check each box, and remove any that aren't needed.",
-                (false, var n) => $"{Describe.Count(n, "word")} found. Check each box, and remove any that aren't needed.",
+                (true, 0) => Strings.NoFacesWereFound,
+                (false, 0) => Strings.NoTextWasFound,
+                (true, var n) => string.Format(Strings.FoundCheckEachBoxAndRemoveAny, Describe.Count(n, Tanjelo.Core.Strings.OneFace, Tanjelo.Core.Strings.NFaces)),
+                (false, var n) => string.Format(Strings.FoundCheckEachBoxAndRemoveAny, Describe.Count(n, Tanjelo.Core.Strings.OneWord, Tanjelo.Core.Strings.NWords)),
             };
             if (added.Count > 0) Commit(State with { Boxes = State.Boxes.AddRange(added) });
         }

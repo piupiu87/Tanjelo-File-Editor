@@ -10,33 +10,33 @@ public sealed class MediaTools(Toolbox tools) : IConverter
 
     static readonly Target[] VideoTools =
     [
-        Tool("mute", "Mute", "Remove the sound, losslessly", Section.Video, "Muting…", "Muted"),
-        Speed("0.5", "Slow motion, same pitch"),
-        Speed("1.5", "Faster, same pitch"),
-        Speed("2", "Twice as fast, same pitch"),
+        Tool("mute", Strings.Mute, Strings.RemoveTheSoundLosslessly, Section.Video, Strings.Muting, Strings.Muted),
+        Speed("0.5", Strings.SlowMotionSamePitch),
+        Speed("1.5", Strings.FasterSamePitch),
+        Speed("2", Strings.TwiceAsFastSamePitch),
         Split(2, "Two"),
         Split(3, "Three"),
         Split(4, "Four"),
     ];
 
     static Target Split(int parts, string count) =>
-        Tool($"split-video-{parts}", $"Split in {parts}", $"{count} equal parts", Section.Video, "Splitting…", "Split") with
+        Tool($"split-video-{parts}", string.Format(Strings.SplitIn, parts), string.Format(Strings.EqualParts, count), Section.Video, Strings.Splitting, Strings.Split) with
         {
             Parameters = new Dictionary<string, string> { ["parts"] = parts.ToString(CultureInfo.InvariantCulture) },
         };
 
     static Target Speed(string factor, string description) =>
-        Tool($"speed-{factor}x", $"{factor}× speed", description, Section.Video, "Changing speed…", "Speed changed") with
+        Tool($"speed-{factor}x", string.Format(Strings.Speed, factor), description, Section.Video, Strings.ChangingSpeed, Strings.SpeedChanged) with
         {
             Parameters = new Dictionary<string, string> { ["factor"] = factor },
         };
 
     static readonly Target[] AudioTools =
     [
-        Tool("normalize", "Normalize volume", "Even loudness, -16 LUFS", Section.Audio, "Normalizing…", "Normalized"),
-        Tool("mono", "To mono", "All channels in one", Section.Audio, "Mixing to mono…", "Mixed to mono"),
-        Tool("stereo", "To stereo", "Two channels", Section.Audio, "Making stereo…", "Made stereo"),
-        Tool("trim-silence", "Trim silence", "At the start and end", Section.Audio, "Trimming silence…", "Silence trimmed"),
+        Tool("normalize", Strings.NormalizeVolume, Strings.EvenLoudness16LUFS, Section.Audio, Strings.Normalizing, Strings.Normalized),
+        Tool("mono", Strings.ToMono, Strings.AllChannelsInOne, Section.Audio, Strings.MixingToMono, Strings.MixedToMono),
+        Tool("stereo", Strings.ToStereo, Strings.TwoChannels, Section.Audio, Strings.MakingStereo, Strings.MadeStereo),
+        Tool("trim-silence", Strings.TrimSilence, Strings.AtTheStartAndEnd, Section.Audio, Strings.TrimmingSilence, Strings.SilenceTrimmed),
     ];
 
     /// <summary>EBU R128 loudness: -16 LUFS integrated, peaks at most -1.5 dBTP.</summary>
@@ -63,14 +63,14 @@ public sealed class MediaTools(Toolbox tools) : IConverter
             "mono" => [await ChannelsAsync(input, media, 1, ctx)],
             "stereo" => [await ChannelsAsync(input, media, 2, ctx)],
             "trim-silence" => [await TrimSilenceAsync(input, media, ctx)],
-            _ => throw new ConversionException($"Unknown tool '{target.Key}'."),
+            _ => throw new ConversionException(string.Format(Strings.UnknownTool, target.Key)),
         };
     }
 
     async Task<string> MuteAsync(string input, MediaInfo media, JobContext ctx)
     {
         if (media.Audio is null)
-            throw new ConversionException("This video has no sound to remove.");
+            throw new ConversionException(Strings.ThisVideoHasNoSoundToRemove);
         var output = OutputPaths.Suffixed(input, "muted");
         // Subtitles come along when the container takes them as they are; otherwise just the picture.
         await Ffmpeg.RunFirstWorkingAsync(tools, input, output,
@@ -101,14 +101,14 @@ public sealed class MediaTools(Toolbox tools) : IConverter
     {
         var parts = (int)target.Number("parts", 2, 100);
         if (media.Duration <= 0)
-            throw new ConversionException("Couldn't tell how long this video is.");
+            throw new ConversionException(Strings.CouldnTTellHowLongThisVideo);
         if (media.Duration < parts)
-            throw new ConversionException($"This video is too short to split into {parts} parts.");
+            throw new ConversionException(string.Format(Strings.ThisVideoIsTooShortToSplit, parts));
 
         var length = media.Duration / parts;
         var tolerance = Math.Min(Math.Clamp(length / 10, 2, 10), length / 4);
         return await CutAtAsync(tools, input, media, Enumerable.Range(1, parts - 1).Select(i => length * i).ToList(), tolerance,
-            "ffmpeg couldn't split this video evenly.", ctx);
+            Strings.FfmpegCouldnTSplitThisVideoEvenly, ctx);
     }
 
     /// <summary>
@@ -199,11 +199,11 @@ public sealed class MediaTools(Toolbox tools) : IConverter
         lock (log) text = string.Join('\n', log);
         int open = text.LastIndexOf('{'), close = text.LastIndexOf('}');
         if (open < 0 || close < open)
-            throw new ConversionException("ffmpeg didn't report the loudness of this file.");
+            throw new ConversionException(Strings.FfmpegDidnTReportTheLoudnessOf);
         using var json = System.Text.Json.JsonDocument.Parse(text[open..(close + 1)]);
         string Measured(string name) => json.RootElement.GetProperty(name).GetString()!;
         if (!double.TryParse(Measured("input_i"), NumberStyles.Float, CultureInfo.InvariantCulture, out var loudness) || double.IsInfinity(loudness))
-            throw new ConversionException("This file is silent.");
+            throw new ConversionException(Strings.ThisFileIsSilent);
 
         var output = OutputPaths.Suffixed(input, "normalized");
         // loudnorm works at 192 kHz internally, so ask for the original rate back (Opus only takes 48 kHz).
@@ -220,7 +220,7 @@ public sealed class MediaTools(Toolbox tools) : IConverter
     {
         var name = channels == 1 ? "mono" : "stereo";
         if (media.Channels == channels)
-            throw new ConversionException($"This file is already {name}.");
+            throw new ConversionException(string.Format(Strings.ThisFileIsAlready, name));
         var output = OutputPaths.Suffixed(input, name);
         string[] args = ["-map", "0:a:0", "-ac", channels.ToString(CultureInfo.InvariantCulture), .. Ffmpeg.AudioEncoder(Formats.Key(input))];
         await Ffmpeg.RunFirstWorkingAsync(tools, input, output, [args], media.Duration, ctx);
@@ -252,9 +252,9 @@ public sealed class MediaTools(Toolbox tools) : IConverter
         if (silences is [.., var last] && (last.End is null || last.End >= duration - 0.05) && last.Start > 0.05)
             to = last.Start;
         if (to - from < 0.05)
-            throw new ConversionException("This file is silent.");
+            throw new ConversionException(Strings.ThisFileIsSilent);
         if (from <= 0 && to >= duration)
-            throw new ConversionException("There's no silence at the start or end to trim.");
+            throw new ConversionException(Strings.ThereSNoSilenceAtTheStart);
 
         var output = OutputPaths.Suffixed(input, "trimmed");
         string Time(double seconds) => seconds.ToString("0.###", CultureInfo.InvariantCulture);

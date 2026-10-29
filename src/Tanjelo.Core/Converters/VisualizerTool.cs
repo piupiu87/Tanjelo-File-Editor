@@ -8,27 +8,27 @@ namespace Tanjelo.Core.Converters;
 /// </summary>
 public sealed class VisualizerTool(Toolbox tools) : IConverter, IPreviewer
 {
-    static readonly Target Entry = new Target("visualize", "Make a video…", "Waveform or picture, as MP4", Section.Video)
+    static readonly Target Entry = new Target("visualize", Strings.MakeAVideo, Strings.WaveformOrPictureAsMP4, Section.Video)
     {
         Kind = TargetKind.Tool,
-        Running = "Making a video…",
-        Done = "Video made",
-        Confirm = "Make video",
+        Running = Strings.MakingAVideo,
+        Done = Strings.VideoMade,
+        Confirm = Strings.MakeVideo,
     }.WithOptions(
-        new Option("style", "Show", OptionKind.Choice, "wave") { Choices = [new("wave", "Waveform"), new("image", "A still picture")] },
-        new Option("shape", "Shape", OptionKind.Choice, "landscape")
+        new Option("style", Strings.Show, OptionKind.Choice, "wave") { Choices = [new("wave", Strings.Waveform), new("image", Strings.AStillPicture)] },
+        new Option("shape", Strings.Shape, OptionKind.Choice, "landscape")
         {
-            Choices = [new("landscape", "Landscape 16:9"), new("portrait", "Portrait 9:16"), new("square", "Square")],
+            Choices = [new("landscape", Strings.Landscape169), new("portrait", Strings.Portrait916), new("square", Strings.Square)],
         },
-        new Option("wave", "Wave colour", OptionKind.Colour, "#F97A3D") { ShownWhen = new("style", "wave") },
-        new Option("background", "Background", OptionKind.Colour, "#1B1B1B"),
-        new Option("image", "Picture", OptionKind.File, "")
+        new Option("wave", Strings.WaveColour, OptionKind.Colour, "#F97A3D") { ShownWhen = new("style", "wave") },
+        new Option("background", Strings.Background, OptionKind.Colour, "#1B1B1B"),
+        new Option("image", Strings.Picture, OptionKind.File, "")
         {
             Optional = true,
             FileFilter = BackgroundTool.Pictures,
-            Hint = "Empty uses the cover art, if the file has some. Behind a waveform, it's darkened.",
+            Hint = Strings.EmptyUsesTheCoverArtIfThe,
         },
-        new Option("range", "Part", OptionKind.TimeRange, "") { Remember = false, Hint = "Empty makes a video of the whole file." });
+        new Option("range", Strings.Part2, OptionKind.TimeRange, "") { Remember = false, Hint = Strings.EmptyMakesAVideoOfTheWhole });
 
     public IEnumerable<Target> TargetsFor(string input) =>
         tools.Ffmpeg is not null && tools.Ffprobe is not null && Formats.Audio.Contains(Formats.Key(input)) ? [Entry] : [];
@@ -84,8 +84,8 @@ public sealed class VisualizerTool(Toolbox tools) : IConverter, IPreviewer
             "-ss", "0.4", "-frames:v", "1", "-an", "-update", "1", frame], 0, new ActionProgress<double>(_ => { }), ctx.Cancellation);
         return new Preview(await File.ReadAllBytesAsync(frame, ctx.Cancellation),
         [
-            new("Video", $"{Describe.Pixels(width, height)}, {Describe.Length(length)}"),
-            new("Picture", picture is null ? "None" : target.File("image") is { } file ? Path.GetFileName(file) : "The cover art"),
+            new(Strings.Video, $"{Describe.Pixels(width, height)}, {Describe.Length(length)}"),
+            new(Strings.Picture, picture is null ? Strings.None : target.File("image") is { } file ? Path.GetFileName(file) : Strings.TheCoverArt),
         ]);
     }
 
@@ -93,10 +93,10 @@ public sealed class VisualizerTool(Toolbox tools) : IConverter, IPreviewer
     static (double Start, double Length) Part(MediaInfo media, Target target)
     {
         if (media.Audio is null || media.Duration <= 0)
-            throw new ConversionException("This file has no sound to show.");
+            throw new ConversionException(Strings.ThisFileHasNoSoundToShow);
         var (start, end) = target.TimeRange("range");
         if (start >= media.Duration)
-            throw new ConversionException($"The part starts after the end of the file, which is {Describe.Length(media.Duration)} long.");
+            throw new ConversionException(string.Format(Strings.ThePartStartsAfterTheEndOf, Describe.Length(media.Duration)));
         return (start, Math.Min(end ?? media.Duration, media.Duration) - start);
     }
 
@@ -111,7 +111,7 @@ public sealed class VisualizerTool(Toolbox tools) : IConverter, IPreviewer
             return cover;
         }
         if (target.Choice("style") == "image")
-            throw new ConversionException("Choose a picture: this file has no cover art.");
+            throw new ConversionException(Strings.ChooseAPictureThisFileHasNo);
         return null;
     }
 

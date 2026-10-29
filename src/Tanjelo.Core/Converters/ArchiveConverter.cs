@@ -15,26 +15,26 @@ public sealed class ArchiveConverter(Toolbox tools) : IConverter
         if (!Formats.Archives.Contains(key))
         {
             // Each file is gzipped on its own: notes.txt becomes notes.txt.gz. The wording has to fit one file or many.
-            yield return new Target("gz", "GZIP", "Compress to .gz, one per file", Section.Archive) { Running = "Compressing…", Done = "Compressed to GZIP" };
+            yield return new Target("gz", Strings.GZIP, Strings.CompressToGzOnePerFile, Section.Archive) { Running = Strings.Compressing, Done = Strings.CompressedToGZIP };
             yield break;
         }
         if (!Archiver.CanExtract(tools, key))
             yield break;
 
-        yield return new Target("extract", "Extract here", "Unpack next to the archive", Section.Archive) { Running = "Extracting…", Done = "Extracted" };
+        yield return new Target("extract", Strings.ExtractHere, Strings.UnpackNextToTheArchive, Section.Archive) { Running = Strings.Extracting, Done = Strings.Extracted };
         if (!Repackable.Contains(key))
             yield break;
-        yield return new Target("zip", "ZIP", "Opens anywhere", Section.Archive);
+        yield return new Target("zip", Strings.ZIP, Strings.OpensAnywhere, Section.Archive);
         if (tools.SevenZip is not null)
-            yield return new Target("7z", "7Z", "Smaller, needs 7-Zip to open", Section.Archive);
-        yield return new Target("tar.gz", "TAR.GZ", "Common on Linux and macOS", Section.Archive);
-        yield return new Target("tar", "TAR", "Uncompressed, common on Linux", Section.Archive);
+            yield return new Target("7z", "7Z", Strings.SmallerNeeds7ZipToOpen, Section.Archive);
+        yield return new Target("tar.gz", Strings.TARGZ, Strings.CommonOnLinuxAndMacOS, Section.Archive);
+        yield return new Target("tar", Strings.TAR, Strings.UncompressedCommonOnLinux, Section.Archive);
     }
 
     public string? HintFor(string input)
     {
         var key = Formats.Key(input);
-        return Formats.Archives.Contains(key) && !Archiver.CanExtract(tools, key) ? "Install 7-Zip to open this kind of archive." : null;
+        return Formats.Archives.Contains(key) && !Archiver.CanExtract(tools, key) ? Strings.Install7ZipToOpenThisKind : null;
     }
 
     public async Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx)
@@ -126,12 +126,11 @@ public sealed class CompressOperation(Toolbox tools) : IBatchOperation
     {
         if (inputs.All(i => Formats.KindOf(i) == FileKind.Archive))
             yield break;
-        var what = inputs.Count == 1 ? "Compress into" : $"Compress {inputs.Count} items into";
-        yield return new Target("compress-zip", "ZIP", $"{what} a .zip", Section.Archive) { IsBatch = true, Running = "Compressing…", Done = "Compressed to ZIP" };
+        string ForCount(string one, string many) => inputs.Count == 1 ? one : string.Format(many, inputs.Count);
+        yield return new Target("compress-zip", Strings.ZIP, ForCount(Strings.ZipOne, Strings.ZipMany), Section.Archive) { IsBatch = true, Running = Strings.Compressing, Done = Strings.CompressedToZIP };
         if (tools.SevenZip is not null)
-            yield return new Target("compress-7z", "7Z", $"{what} a .7z (smaller)", Section.Archive) { IsBatch = true, Running = "Compressing…", Done = "Compressed to 7Z" };
-        var pack = inputs.Count == 1 ? "Pack into" : $"Pack {inputs.Count} items into";
-        yield return new Target("compress-tar", "TAR", $"{pack} a .tar", Section.Archive) { IsBatch = true, Running = "Packing…", Done = "Packed into TAR" };
+            yield return new Target("compress-7z", "7Z", ForCount(Strings.SevenZipOne, Strings.SevenZipMany), Section.Archive) { IsBatch = true, Running = Strings.Compressing, Done = Strings.CompressedTo7Z };
+        yield return new Target("compress-tar", Strings.TAR, ForCount(Strings.TarOne, Strings.TarMany), Section.Archive) { IsBatch = true, Running = Strings.Packing, Done = Strings.PackedIntoTAR };
     }
 
     public async Task<IReadOnlyList<string>> RunAsync(IReadOnlyList<string> inputs, Target target, JobContext ctx)
@@ -188,7 +187,7 @@ static class Archiver
         }
         else
         {
-            throw new ConversionException("Install 7-Zip to open this kind of archive.");
+            throw new ConversionException(Strings.Install7ZipToOpenThisKind);
         }
     }
 
@@ -199,7 +198,7 @@ static class Archiver
             switch (format)
             {
                 case "7z":
-                    if (tools.SevenZip is null) throw new ConversionException("Creating .7z files needs 7-Zip.");
+                    if (tools.SevenZip is null) throw new ConversionException(Strings.Creating7zFilesNeeds7Zip);
                     await RunAsync(tools.SevenZip, ["a", "-t7z", "-mx=7", "-y", "-bso0", "-bsp0", output, .. items], "7-Zip", ct);
                     break;
                 case "zip" when tools.SevenZip is not null:
@@ -212,7 +211,7 @@ static class Archiver
                     await Task.Run(() => WriteTar(items, output, gzip: format == "tar.gz", ct, progress), ct);
                     break;
                 default:
-                    throw new ConversionException($"Can't create .{format} archives.");
+                    throw new ConversionException(string.Format(Strings.CanTCreateArchives, format));
             }
         }
         catch
@@ -230,8 +229,8 @@ static class Archiver
         {
             var error = result.LastError;
             if (error.Contains("Wrong password", StringComparison.OrdinalIgnoreCase) || error.Contains("encrypted", StringComparison.OrdinalIgnoreCase))
-                throw new ConversionException("This archive is password-protected.");
-            throw new ConversionException($"{name} failed: {error}");
+                throw new ConversionException(Strings.ThisArchiveIsPasswordProtected);
+            throw new ConversionException(string.Format(Strings.Failed, name, error));
         }
     }
 

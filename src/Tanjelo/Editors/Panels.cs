@@ -108,17 +108,17 @@ static class Panels
     /// <summary>What a screen reader calls one of the editors' colours; anything else by its code.</summary>
     public static string ColourName(string hex) => hex.ToUpperInvariant() switch
     {
-        "#E5383B" => "Red",
-        "#F97A3D" => "Orange",
-        "#C2410C" => "Dark orange",
-        "#FFD400" => "Yellow",
-        "#2E8540" => "Green",
-        "#3A7BD5" => "Blue",
-        "#000000" or "#1B1B1B" => "Black",
-        "#2B2B2B" => "Dark grey",
-        "#5F5F5F" => "Grey",
-        "#F3EFEA" => "Off-white",
-        "#FFFFFF" => "White",
+        "#E5383B" => Strings.Red,
+        "#F97A3D" => Strings.Orange,
+        "#C2410C" => Strings.DarkOrange,
+        "#FFD400" => Strings.Yellow,
+        "#2E8540" => Strings.Green,
+        "#3A7BD5" => Strings.Blue,
+        "#000000" or "#1B1B1B" => Strings.Black,
+        "#2B2B2B" => Strings.DarkGrey,
+        "#5F5F5F" => Strings.Grey,
+        "#F3EFEA" => Strings.OffWhite,
+        "#FFFFFF" => Strings.White,
         _ => hex,
     };
 
@@ -158,7 +158,7 @@ static class Panels
 
     /// <summary>" · one selected", or " · 2 of 3 selected" when there are several, so a screen reader hears which one Tab picked.</summary>
     public static string Which(int? selected, int count) =>
-        selected is not { } s ? "" : count == 1 ? " · one selected" : $" · {s + 1} of {count} selected";
+        selected is not { } s ? "" : count == 1 ? Strings.OneSelected : string.Format(Strings.OfSelected, s + 1, count);
 
     public static T Themed<T>(T element, DependencyProperty property, string key) where T : FrameworkElement
     {

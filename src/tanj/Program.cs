@@ -23,6 +23,9 @@ if (args.Length == 0 || args[0] is "-h" or "--help" or "help")
 
 // Labels use characters such as × and …, which the console's default OEM code page can't show.
 Console.OutputEncoding = System.Text.Encoding.UTF8;
+// Scripts read what tanj prints, so the engine's words stay in English whatever language Windows is in.
+System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = System.Globalization.CultureInfo.CurrentUICulture =
+    System.Globalization.CultureInfo.InvariantCulture;
 ExitGuard.EndWhenMainReturns();
 var engine = new ConverterEngine(Toolbox.Detect());
 

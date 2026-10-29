@@ -7,7 +7,7 @@ namespace Tanjelo.Core.Converters;
 /// <summary>The text in a picture, such as a screenshot or a photo of a page, read with the OCR built into Windows.</summary>
 public sealed class PictureTextConverter(Toolbox tools) : IConverter
 {
-    static readonly Target Txt = new("txt", "TXT", "The text in the picture, by OCR", Section.Document);
+    static readonly Target Txt = new("txt", Strings.TXT, Strings.TheTextInThePictureByOCR, Section.Document);
 
     public IEnumerable<Target> TargetsFor(string input) => tools.Ocr && Formats.KindOf(input) == FileKind.Image ? [Txt] : [];
 
@@ -31,9 +31,9 @@ public sealed class PictureTextConverter(Toolbox tools) : IConverter
             text = await PdfText.ReadPictureAsync(bitmap);
         }
         if (text is null)
-            throw new ConversionException("Reading pictures needs an OCR language. " + PdfText.NoOcrHint[(PdfText.NoOcrHint.IndexOf('.') + 2)..]);
+            throw new ConversionException(Strings.ReadingPicturesNeedsAnOCRLanguage + PdfText.NoOcrHint[(PdfText.NoOcrHint.IndexOf('.') + 2)..]);
         if (text.Pages[0].Count == 0)
-            throw new ConversionException("No text was found in this picture.");
+            throw new ConversionException(Strings.NoTextWasFoundInThisPicture);
 
         var output = OutputPaths.Beside(input, "txt");
         await File.WriteAllTextAsync(output, text.ToPlainText(pageBreaks: false), new UTF8Encoding(false), ctx.Cancellation);

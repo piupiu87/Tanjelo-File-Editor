@@ -8,7 +8,7 @@ public static class Describe
     /// <summary>Like File Explorer: 1 KB is 1024 bytes.</summary>
     public static string Size(long bytes) => bytes switch
     {
-        < 1024 => $"{bytes} bytes",
+        < 1024 => string.Format(Strings.Bytes, bytes),
         < 1024 * 1024 => string.Format(CultureInfo.InvariantCulture, "{0:0} KB", bytes / 1024.0),
         < 1024L * 1024 * 1024 => string.Format(CultureInfo.InvariantCulture, "{0:0.#} MB", bytes / 1024.0 / 1024),
         _ => string.Format(CultureInfo.InvariantCulture, "{0:0.##} GB", bytes / 1024.0 / 1024 / 1024),
@@ -19,8 +19,8 @@ public static class Describe
 
     public static string Pixels(int width, int height) => $"{width} × {height}";
 
-    /// <summary>"1 page", "12 pages".</summary>
-    public static string Count(int count, string thing) => count == 1 ? $"1 {thing}" : $"{count} {thing}s";
+    /// <summary>"1 page" or "12 pages", from a pair of strings such as <see cref="Strings.OnePage"/> and <see cref="Strings.NPages"/>.</summary>
+    public static string Count(int count, string one, string many) => count == 1 ? one : string.Format(many, count);
 
     public static string Rate(double bitsPerSecond) => string.Format(CultureInfo.InvariantCulture, "{0:N0} kbps", bitsPerSecond / 1000);
 

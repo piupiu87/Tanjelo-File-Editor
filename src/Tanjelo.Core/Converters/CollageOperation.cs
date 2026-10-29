@@ -14,29 +14,29 @@ public sealed class CollageOperation : IBatchOperation, IPreviewer
     public IEnumerable<Target> TargetsFor(IReadOnlyList<string> inputs)
     {
         if (inputs.Count < 2 || !inputs.All(i => Formats.KindOf(i) == FileKind.Image)) yield break;
-        yield return new Target("collage", "Collage…", $"{inputs.Count} pictures in one", Section.Image)
+        yield return new Target("collage", Strings.Collage, string.Format(Strings.PicturesInOne, inputs.Count), Section.Image)
         {
             IsBatch = true,
             Kind = TargetKind.Tool,
-            Running = "Making a collage…",
-            Done = "Collage made",
-            Confirm = "Make collage",
+            Running = Strings.MakingACollage,
+            Done = Strings.CollageMade,
+            Confirm = Strings.MakeCollage,
         }.WithOptions(
-            new Option("layout", "Layout", OptionKind.Choice, "grid")
+            new Option("layout", Strings.Layout, OptionKind.Choice, "grid")
             {
-                Choices = [new("grid", "Grid"), new("row", "Row"), new("column", "Column"), new("featured", "Featured")],
-                Hint = "Featured shows the first picture large, with the rest beside it.",
+                Choices = [new("grid", Strings.Grid), new("row", Strings.Row), new("column", Strings.Column), new("featured", Strings.Featured)],
+                Hint = Strings.FeaturedShowsTheFirstPictureLargeWith,
             },
-            new Option("columns", "Columns", OptionKind.Number, "0") { Min = 0, Max = 20, Whole = true, ShownWhen = new("layout", "grid"), Hint = "0 picks a balanced grid." },
-            new Option("fit", "Pictures", OptionKind.Choice, "fill")
+            new Option("columns", Strings.Columns, OptionKind.Number, "0") { Min = 0, Max = 20, Whole = true, ShownWhen = new("layout", "grid"), Hint = Strings.N0PicksABalancedGrid },
+            new Option("fit", Strings.Pictures, OptionKind.Choice, "fill")
             {
-                Choices = [new("fill", "Fill their cells"), new("whole", "Show them whole")],
+                Choices = [new("fill", Strings.FillTheirCells), new("whole", Strings.ShowThemWhole)],
                 ShownWhen = new("layout", "grid", "featured"),
             },
-            new Option("width", "Width", OptionKind.Number, "2400") { Min = 200, Max = 20_000, Whole = true, Unit = "px" },
-            new Option("gap", "Space between", OptionKind.Number, "16") { Min = 0, Max = 500, Whole = true, Unit = "px" },
-            new Option("background", "Background", OptionKind.Colour, "#FFFFFF"),
-            new Option("order", "Order", OptionKind.Order, "") { Remember = false });
+            new Option("width", Strings.Width, OptionKind.Number, "2400") { Min = 200, Max = 20_000, Whole = true, Unit = "px" },
+            new Option("gap", Strings.SpaceBetween, OptionKind.Number, "16") { Min = 0, Max = 500, Whole = true, Unit = "px" },
+            new Option("background", Strings.Background, OptionKind.Colour, "#FFFFFF"),
+            new Option("order", Strings.Order, OptionKind.Order, "") { Remember = false });
     }
 
     public Task<IReadOnlyList<string>> RunAsync(IReadOnlyList<string> inputs, Target target, JobContext ctx) => Task.Run<IReadOnlyList<string>>(() =>
@@ -67,8 +67,8 @@ public sealed class CollageOperation : IBatchOperation, IPreviewer
         using var collage = Compose(ordered, target, Math.Min(width, request.MaxSize), null, ctx.Cancellation);
         return new Preview(collage.ToByteArray(MagickFormat.Png),
         [
-            new Fact("Size", Describe.Pixels(width, height)),
-            new Fact("Saved as", $"{(target.Colour("background").A < 255 ? "Collage.png" : "Collage.jpg")}, beside the first picture"),
+            new Fact(Strings.Size, Describe.Pixels(width, height)),
+            new Fact(Strings.SavedAs, string.Format(Strings.BesideTheFirstPicture, (target.Colour("background").A < 255 ? "Collage.png" : "Collage.jpg"))),
         ]);
     }, ctx.Cancellation);
 
@@ -122,7 +122,7 @@ public sealed class CollageOperation : IBatchOperation, IPreviewer
         }
         catch (MagickException ex)
         {
-            throw new ConversionException($"{Path.GetFileName(path)} doesn't look like a valid image ({ImageConverter.Reason(ex)}).", ex);
+            throw new ConversionException(string.Format(Strings.DoesnTLookLikeAValidImage, Path.GetFileName(path), ImageConverter.Reason(ex)), ex);
         }
     }
 

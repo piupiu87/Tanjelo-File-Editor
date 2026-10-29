@@ -87,7 +87,7 @@ sealed class ShortcutBox : TextBox
         }
         if ((modifiers & (ModifierKeys.Control | ModifierKeys.Alt | ModifierKeys.Windows)) == ModifierKeys.None)
         {
-            ShowHint("Hold Ctrl, Alt or Win with the key, so the shortcut doesn't get in the way of typing.");
+            ShowHint(Strings.HoldCtrlAltOrWinWithThe);
             return true;
         }
         Record(Settings.FormatHotkey(modifiers, key));

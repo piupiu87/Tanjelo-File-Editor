@@ -1,7 +1,8 @@
 <Window x:Class="Tanjelo.OptionsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Tanjelo" SizeToContent="WidthAndHeight"
+        xmlns:local="clr-namespace:Tanjelo"
+        Title="{x:Static local:Strings.Tanjelo}" SizeToContent="WidthAndHeight"
         Style="{StaticResource PopupWindow}" Opacity="0">
     <Grid Margin="18,14,14,16">
         <Grid.RowDefinitions>
@@ -27,7 +28,7 @@
                 <TextBlock x:Name="Subheading" FontSize="12" Margin="0,1,0,0" Foreground="{DynamicResource TextSecondary}" TextTrimming="CharacterEllipsis" />
             </StackPanel>
             <Button x:Name="CloseButton" Grid.Column="2" Style="{StaticResource IconButton}" Content="&#xE711;"
-                    VerticalAlignment="Top" Margin="8,-4,0,0" ToolTip="Cancel (Esc)" />
+                    VerticalAlignment="Top" Margin="8,-4,0,0" ToolTip="{x:Static local:Strings.CancelEsc}" />
         </Grid>
 
         <Grid Grid.Row="1">
@@ -56,7 +57,7 @@
                                      VerticalAlignment="Bottom" Margin="10,0,10,6" Visibility="Collapsed" IsHitTestVisible="False" />
                     </Grid>
                 </Border>
-                <ItemsControl x:Name="FactList" Margin="2,10,2,0" Grid.IsSharedSizeScope="True" Focusable="False" AutomationProperties.Name="About the file">
+                <ItemsControl x:Name="FactList" Margin="2,10,2,0" Grid.IsSharedSizeScope="True" Focusable="False" AutomationProperties.Name="{x:Static local:Strings.AboutTheFile}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Grid Margin="0,0,0,3">
@@ -77,10 +78,14 @@
         </Grid>
 
         <Grid Grid.Row="2" Margin="0,8,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
             <TextBlock x:Name="Note" FontSize="12" Foreground="{DynamicResource TextTertiary}" VerticalAlignment="Center"
-                       Text="Saved as a copy beside the original" />
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button x:Name="CancelButton" Style="{StaticResource SubtleButton}" Content="Cancel" />
+                       TextTrimming="CharacterEllipsis" Text="{x:Static local:Strings.SavedAsACopyBesideTheOriginal}" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="12,0,0,0">
+                <Button x:Name="CancelButton" Style="{StaticResource SubtleButton}" Content="{x:Static local:Strings.Cancel}" />
                 <Button x:Name="RunButton" Style="{StaticResource PrimaryButton}" />
             </StackPanel>
         </Grid>

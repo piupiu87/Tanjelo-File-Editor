@@ -6,7 +6,7 @@ namespace Tanjelo.Core.Converters;
 /// </summary>
 public sealed class WebPageConverter(Toolbox tools) : IConverter
 {
-    static readonly Target Pdf = new("pdf", "PDF", "Printed offline by Windows' WebView2", Section.Document);
+    static readonly Target Pdf = new("pdf", Strings.PDF, Strings.PrintedOfflineByWindowsWebView2, Section.Document);
 
     public IEnumerable<Target> TargetsFor(string input) =>
         Formats.KindOf(input) == FileKind.WebPage && tools.WebView2 is not null ? [Pdf] : [];

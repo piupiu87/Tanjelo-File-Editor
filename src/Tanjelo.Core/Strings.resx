@@ -1,0 +1,2097 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="ConvertingTo" xml:space="preserve">
+    <value>Converting to {0}…</value>
+  </data>
+  <data name="ConvertedTo" xml:space="preserve">
+    <value>Converted to {0}</value>
+  </data>
+  <data name="NeedsAValueFor" xml:space="preserve">
+    <value>{0} needs a value for '{1}'.</value>
+  </data>
+  <data name="MustBeANumberFromToNot" xml:space="preserve">
+    <value>'{0}' must be a number from {1} to {2}, not '{3}'.</value>
+  </data>
+  <data name="ListsFilesButAreSelected" xml:space="preserve">
+    <value>{0} lists {1} files, but {2} are selected.</value>
+  </data>
+  <data name="Not" xml:space="preserve">
+    <value>, not '{0}'.</value>
+  </data>
+  <data name="Items" xml:space="preserve">
+    <value>{0} items</value>
+  </data>
+  <data name="CanTConvertThisFileTo" xml:space="preserve">
+    <value>Can't convert this file to {0}.</value>
+  </data>
+  <data name="DoesnTWorkOnThisFile" xml:space="preserve">
+    <value>{0} doesn't work on this file.</value>
+  </data>
+  <data name="ImageError" xml:space="preserve">
+    <value>Image error: {0}.</value>
+  </data>
+  <data name="OfficeReportedAnError" xml:space="preserve">
+    <value>Office reported an error: {0}</value>
+  </data>
+  <data name="AccessDeniedTheFolderMayBeRead" xml:space="preserve">
+    <value>Access denied. The folder may be read-only.</value>
+  </data>
+  <data name="CouldnTFindTheMarksFile" xml:space="preserve">
+    <value>Couldn't find the marks file {0}.</value>
+  </data>
+  <data name="CouldnTReadTheMarks" xml:space="preserve">
+    <value>Couldn't read the marks: {0}</value>
+  </data>
+  <data name="OnLine" xml:space="preserve">
+    <value>, on line {0}.</value>
+  </data>
+  <data name="MarkNeedsAsXY" xml:space="preserve">
+    <value>Mark {0} ({1}) needs {2}, as [x, y].</value>
+  </data>
+  <data name="MarkHasTheColourUseOneSuch" xml:space="preserve">
+    <value>Mark {0} ({1}) has the colour '{2}'; use one such as #E5383B.</value>
+  </data>
+  <data name="MarkNeedsAWidthAndSizeAbove" xml:space="preserve">
+    <value>Mark {0} ({1}) needs a width and size above 0, and a zoom of at least 1.</value>
+  </data>
+  <data name="MarkTextHasNoText" xml:space="preserve">
+    <value>Mark {0} (text) has no text.</value>
+  </data>
+  <data name="APointIsWrittenAsXY" xml:space="preserve">
+    <value>A point is written as [x, y]</value>
+  </data>
+  <data name="Annotate" xml:space="preserve">
+    <value>Annotate…</value>
+  </data>
+  <data name="ArrowsShapesAndText" xml:space="preserve">
+    <value>Arrows, shapes and text</value>
+  </data>
+  <data name="Annotating" xml:space="preserve">
+    <value>Annotating…</value>
+  </data>
+  <data name="Annotated" xml:space="preserve">
+    <value>Annotated</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Marks" xml:space="preserve">
+    <value>Marks</value>
+  </data>
+  <data name="TheMarksAsJSONOrAJson" xml:space="preserve">
+    <value>The marks as JSON, or a .json file of them: {"marks": [{"type": "arrow", "points": [[10, 10], [200, 120]], "colour": "#E5383B", "width": 8}]}. </value>
+  </data>
+  <data name="TypesArrowLineRectangleEllipseTwoPoints" xml:space="preserve">
+    <value>Types: arrow, line, rectangle, ellipse (two points); text ("text", "size"), callout and magnifier (one point, "size"); pen and highlighter (any points).</value>
+  </data>
+  <data name="ThereAreNoMarksToDraw" xml:space="preserve">
+    <value>There are no marks to draw.</value>
+  </data>
+  <data name="GZIP" xml:space="preserve">
+    <value>GZIP</value>
+  </data>
+  <data name="CompressToGzOnePerFile" xml:space="preserve">
+    <value>Compress to .gz, one per file</value>
+  </data>
+  <data name="Compressing" xml:space="preserve">
+    <value>Compressing…</value>
+  </data>
+  <data name="CompressedToGZIP" xml:space="preserve">
+    <value>Compressed to GZIP</value>
+  </data>
+  <data name="ExtractHere" xml:space="preserve">
+    <value>Extract here</value>
+  </data>
+  <data name="UnpackNextToTheArchive" xml:space="preserve">
+    <value>Unpack next to the archive</value>
+  </data>
+  <data name="Extracting" xml:space="preserve">
+    <value>Extracting…</value>
+  </data>
+  <data name="Extracted" xml:space="preserve">
+    <value>Extracted</value>
+  </data>
+  <data name="ZIP" xml:space="preserve">
+    <value>ZIP</value>
+  </data>
+  <data name="OpensAnywhere" xml:space="preserve">
+    <value>Opens anywhere</value>
+  </data>
+  <data name="SmallerNeeds7ZipToOpen" xml:space="preserve">
+    <value>Smaller, needs 7-Zip to open</value>
+  </data>
+  <data name="TARGZ" xml:space="preserve">
+    <value>TAR.GZ</value>
+  </data>
+  <data name="CommonOnLinuxAndMacOS" xml:space="preserve">
+    <value>Common on Linux and macOS</value>
+  </data>
+  <data name="TAR" xml:space="preserve">
+    <value>TAR</value>
+  </data>
+  <data name="UncompressedCommonOnLinux" xml:space="preserve">
+    <value>Uncompressed, common on Linux</value>
+  </data>
+  <data name="Install7ZipToOpenThisKind" xml:space="preserve">
+    <value>Install 7-Zip to open this kind of archive.</value>
+  </data>
+  <data name="CompressedToZIP" xml:space="preserve">
+    <value>Compressed to ZIP</value>
+  </data>
+  <data name="CompressedTo7Z" xml:space="preserve">
+    <value>Compressed to 7Z</value>
+  </data>
+  <data name="Packing" xml:space="preserve">
+    <value>Packing…</value>
+  </data>
+  <data name="PackedIntoTAR" xml:space="preserve">
+    <value>Packed into TAR</value>
+  </data>
+  <data name="Creating7zFilesNeeds7Zip" xml:space="preserve">
+    <value>Creating .7z files needs 7-Zip.</value>
+  </data>
+  <data name="CanTCreateArchives" xml:space="preserve">
+    <value>Can't create .{0} archives.</value>
+  </data>
+  <data name="ThisArchiveIsPasswordProtected" xml:space="preserve">
+    <value>This archive is password-protected.</value>
+  </data>
+  <data name="Failed" xml:space="preserve">
+    <value>{0} failed: {1}</value>
+  </data>
+  <data name="AddBackground" xml:space="preserve">
+    <value>Add background…</value>
+  </data>
+  <data name="ColourGradientOrPicture" xml:space="preserve">
+    <value>Colour, gradient or picture</value>
+  </data>
+  <data name="AddingABackground" xml:space="preserve">
+    <value>Adding a background…</value>
+  </data>
+  <data name="BackgroundAdded" xml:space="preserve">
+    <value>Background added</value>
+  </data>
+  <data name="AddBackground2" xml:space="preserve">
+    <value>Add background</value>
+  </data>
+  <data name="Background" xml:space="preserve">
+    <value>Background</value>
+  </data>
+  <data name="Colour" xml:space="preserve">
+    <value>Colour</value>
+  </data>
+  <data name="Gradient" xml:space="preserve">
+    <value>Gradient</value>
+  </data>
+  <data name="Picture" xml:space="preserve">
+    <value>Picture</value>
+  </data>
+  <data name="FadingTo" xml:space="preserve">
+    <value>Fading to</value>
+  </data>
+  <data name="Direction" xml:space="preserve">
+    <value>Direction</value>
+  </data>
+  <data name="TopToBottom" xml:space="preserve">
+    <value>Top to bottom</value>
+  </data>
+  <data name="LeftToRight" xml:space="preserve">
+    <value>Left to right</value>
+  </data>
+  <data name="Diagonal" xml:space="preserve">
+    <value>Diagonal</value>
+  </data>
+  <data name="FillsTheBackgroundCutToFit" xml:space="preserve">
+    <value>Fills the background, cut to fit.</value>
+  </data>
+  <data name="SpaceAround" xml:space="preserve">
+    <value>Space around</value>
+  </data>
+  <data name="RoundedCorners" xml:space="preserve">
+    <value>Rounded corners</value>
+  </data>
+  <data name="Shadow" xml:space="preserve">
+    <value>Shadow</value>
+  </data>
+  <data name="None" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="Soft" xml:space="preserve">
+    <value>Soft</value>
+  </data>
+  <data name="Strong" xml:space="preserve">
+    <value>Strong</value>
+  </data>
+  <data name="Shape" xml:space="preserve">
+    <value>Shape</value>
+  </data>
+  <data name="FitThePicture" xml:space="preserve">
+    <value>Fit the picture</value>
+  </data>
+  <data name="FitKeepsTheSameSpaceOnEvery" xml:space="preserve">
+    <value>Fit keeps the same space on every side; a ratio adds more where it's needed.</value>
+  </data>
+  <data name="Size" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="ChooseAPictureForTheBackground" xml:space="preserve">
+    <value>Choose a picture for the background.</value>
+  </data>
+  <data name="ToneHz" xml:space="preserve">
+    <value>Tone, {0} Hz</value>
+  </data>
+  <data name="Silence" xml:space="preserve">
+    <value>Silence</value>
+  </data>
+  <data name="Tone" xml:space="preserve">
+    <value>Tone</value>
+  </data>
+  <data name="Bleep" xml:space="preserve">
+    <value>Bleep…</value>
+  </data>
+  <data name="ToneOrSilenceOverParts" xml:space="preserve">
+    <value>Tone or silence over parts</value>
+  </data>
+  <data name="Bleeping" xml:space="preserve">
+    <value>Bleeping…</value>
+  </data>
+  <data name="Bleeped" xml:space="preserve">
+    <value>Bleeped</value>
+  </data>
+  <data name="Bleep2" xml:space="preserve">
+    <value>Bleep</value>
+  </data>
+  <data name="StretchesToCoverSuchAs010" xml:space="preserve">
+    <value>Stretches to cover, such as 0:10-0:12, 0:20-0:21.5. Each takes the sound and pitch below, unless it says its own: 0:10-0:12 silence, 0:20-0:21.5 tone 800.</value>
+  </data>
+  <data name="With" xml:space="preserve">
+    <value>With</value>
+  </data>
+  <data name="Pitch" xml:space="preserve">
+    <value>Pitch</value>
+  </data>
+  <data name="Hz" xml:space="preserve">
+    <value>Hz</value>
+  </data>
+  <data name="CouldnTReadAsAStretchWrite" xml:space="preserve">
+    <value>Couldn't read '{0}' as a stretch. Write each as from-to, such as 0:10-0:12, and add silence or tone 800 to cover it otherwise.</value>
+  </data>
+  <data name="CouldnTReadAfterTheTimesWrite" xml:space="preserve">
+    <value>Couldn't read '{0}': after the times, write silence, or tone and a pitch such as tone 800.</value>
+  </data>
+  <data name="ThePitchInMustBeFromTo" xml:space="preserve">
+    <value>The pitch in '{0}' must be from {1} to {2} Hz.</value>
+  </data>
+  <data name="TheStretchesAnd" xml:space="preserve">
+    <value>The stretches {0}-{1} and </value>
+  </data>
+  <data name="OverlapButAreCoveredDifferently" xml:space="preserve">
+    <value>{0}-{1} overlap but are covered differently.</value>
+  </data>
+  <data name="ThisFileHasNoSoundToBleep" xml:space="preserve">
+    <value>This file has no sound to bleep.</value>
+  </data>
+  <data name="ThereSNothingToBleepGiveThe" xml:space="preserve">
+    <value>There's nothing to bleep: give the stretches, such as 0:10-0:12.</value>
+  </data>
+  <data name="IsPastTheEndOfThisFile" xml:space="preserve">
+    <value>{0} is past the end of this file, which is {1} long.</value>
+  </data>
+  <data name="N1Stretch" xml:space="preserve">
+    <value>1 stretch</value>
+  </data>
+  <data name="Stretches" xml:space="preserve">
+    <value>{0} stretches</value>
+  </data>
+  <data name="Bleeped2" xml:space="preserve">
+    <value>{0} bleeped</value>
+  </data>
+  <data name="Silenced" xml:space="preserve">
+    <value>{0} silenced</value>
+  </data>
+  <data name="Covered" xml:space="preserve">
+    <value>{0} covered</value>
+  </data>
+  <data name="CouldnTReadTheSoundFfmpegMade" xml:space="preserve">
+    <value>Couldn't read the sound ffmpeg made.</value>
+  </data>
+  <data name="ChannelVolume" xml:space="preserve">
+    <value>Channel volume…</value>
+  </data>
+  <data name="LeftAndRightApart" xml:space="preserve">
+    <value>Left and right apart</value>
+  </data>
+  <data name="ChangingTheVolume" xml:space="preserve">
+    <value>Changing the volume…</value>
+  </data>
+  <data name="VolumeChanged" xml:space="preserve">
+    <value>Volume changed</value>
+  </data>
+  <data name="ChangeVolume" xml:space="preserve">
+    <value>Change volume</value>
+  </data>
+  <data name="Left" xml:space="preserve">
+    <value>Left</value>
+  </data>
+  <data name="Right" xml:space="preserve">
+    <value>Right</value>
+  </data>
+  <data name="N0SilencesASideAnd200Makes" xml:space="preserve">
+    <value>0% silences a side and 200% makes it twice as loud (+6 dB). In surround sound, every channel on that side.</value>
+  </data>
+  <data name="BothSidesAreAt100SoNothing" xml:space="preserve">
+    <value>Both sides are at 100%, so nothing would change.</value>
+  </data>
+  <data name="Sound" xml:space="preserve">
+    <value>Sound</value>
+  </data>
+  <data name="Colours" xml:space="preserve">
+    <value>Colours</value>
+  </data>
+  <data name="OrangeIsLeftBlueRightGreyThe" xml:space="preserve">
+    <value>Orange is left, blue right, grey the middle</value>
+  </data>
+  <data name="OrangeIsLeftBlueRight" xml:space="preserve">
+    <value>Orange is left, blue right</value>
+  </data>
+  <data name="AsItIs" xml:space="preserve">
+    <value>as it is</value>
+  </data>
+  <data name="DB" xml:space="preserve">
+    <value>{0:0}%, {1:+0.0;-0.0} dB</value>
+  </data>
+  <data name="ThisFileHasNoSound" xml:space="preserve">
+    <value>This file has no sound.</value>
+  </data>
+  <data name="ThisFileSSoundHasOneChannel" xml:space="preserve">
+    <value>This file's sound has one channel, so it has no sides. Make it stereo first.</value>
+  </data>
+  <data name="TanjeloCanTTellWhichSideEach" xml:space="preserve">
+    <value>Tanjelo can't tell which side each of this file's {0} channels is on.</value>
+  </data>
+  <data name="Collage" xml:space="preserve">
+    <value>Collage…</value>
+  </data>
+  <data name="PicturesInOne" xml:space="preserve">
+    <value>{0} pictures in one</value>
+  </data>
+  <data name="MakingACollage" xml:space="preserve">
+    <value>Making a collage…</value>
+  </data>
+  <data name="CollageMade" xml:space="preserve">
+    <value>Collage made</value>
+  </data>
+  <data name="MakeCollage" xml:space="preserve">
+    <value>Make collage</value>
+  </data>
+  <data name="Layout" xml:space="preserve">
+    <value>Layout</value>
+  </data>
+  <data name="Grid" xml:space="preserve">
+    <value>Grid</value>
+  </data>
+  <data name="Row" xml:space="preserve">
+    <value>Row</value>
+  </data>
+  <data name="Column" xml:space="preserve">
+    <value>Column</value>
+  </data>
+  <data name="Featured" xml:space="preserve">
+    <value>Featured</value>
+  </data>
+  <data name="FeaturedShowsTheFirstPictureLargeWith" xml:space="preserve">
+    <value>Featured shows the first picture large, with the rest beside it.</value>
+  </data>
+  <data name="Columns" xml:space="preserve">
+    <value>Columns</value>
+  </data>
+  <data name="N0PicksABalancedGrid" xml:space="preserve">
+    <value>0 picks a balanced grid.</value>
+  </data>
+  <data name="Pictures" xml:space="preserve">
+    <value>Pictures</value>
+  </data>
+  <data name="FillTheirCells" xml:space="preserve">
+    <value>Fill their cells</value>
+  </data>
+  <data name="ShowThemWhole" xml:space="preserve">
+    <value>Show them whole</value>
+  </data>
+  <data name="Width" xml:space="preserve">
+    <value>Width</value>
+  </data>
+  <data name="SpaceBetween" xml:space="preserve">
+    <value>Space between</value>
+  </data>
+  <data name="Order" xml:space="preserve">
+    <value>Order</value>
+  </data>
+  <data name="SavedAs" xml:space="preserve">
+    <value>Saved as</value>
+  </data>
+  <data name="BesideTheFirstPicture" xml:space="preserve">
+    <value>{0}, beside the first picture</value>
+  </data>
+  <data name="DoesnTLookLikeAValidImage" xml:space="preserve">
+    <value>{0} doesn't look like a valid image ({1}).</value>
+  </data>
+  <data name="Compress" xml:space="preserve">
+    <value>Compress…</value>
+  </data>
+  <data name="ToASizeOrAPercentage" xml:space="preserve">
+    <value>To a size or a percentage</value>
+  </data>
+  <data name="Compressed" xml:space="preserve">
+    <value>Compressed</value>
+  </data>
+  <data name="CompressTo" xml:space="preserve">
+    <value>Compress to</value>
+  </data>
+  <data name="Percentage" xml:space="preserve">
+    <value>Percentage</value>
+  </data>
+  <data name="TargetSize" xml:space="preserve">
+    <value>Target size</value>
+  </data>
+  <data name="PercentageOfTheOriginalSize" xml:space="preserve">
+    <value>Percentage of the original size</value>
+  </data>
+  <data name="MB" xml:space="preserve">
+    <value>MB</value>
+  </data>
+  <data name="EachFileEndsUpAtMostThis" xml:space="preserve">
+    <value>Each file ends up at most this size.</value>
+  </data>
+  <data name="Dimensions" xml:space="preserve">
+    <value>Dimensions</value>
+  </data>
+  <data name="N100KeepsTheWidthAndHeightSmaller" xml:space="preserve">
+    <value>100% keeps the width and height. Smaller dimensions keep more of the quality.</value>
+  </data>
+  <data name="Now" xml:space="preserve">
+    <value>Now</value>
+  </data>
+  <data name="After" xml:space="preserve">
+    <value>After</value>
+  </data>
+  <data name="AboutMP4" xml:space="preserve">
+    <value>about {0} ({1}), MP4</value>
+  </data>
+  <data name="Video" xml:space="preserve">
+    <value>Video</value>
+  </data>
+  <data name="AAC" xml:space="preserve">
+    <value>{0} AAC</value>
+  </data>
+  <data name="About" xml:space="preserve">
+    <value>about {0} ({1})</value>
+  </data>
+  <data name="ItSAlreadyWhichIsUnderThe" xml:space="preserve">
+    <value>It's already {0}, which is under the target.</value>
+  </data>
+  <data name="CouldnTGetThisImageDownTo" xml:space="preserve">
+    <value>Couldn't get this image down to {0}.</value>
+  </data>
+  <data name="Quality" xml:space="preserve">
+    <value>quality {0}</value>
+  </data>
+  <data name="Quality5" xml:space="preserve">
+    <value>quality 5</value>
+  </data>
+  <data name="AllColours" xml:space="preserve">
+    <value>all colours</value>
+  </data>
+  <data name="N256Colours" xml:space="preserve">
+    <value>256 colours</value>
+  </data>
+  <data name="CouldnTTellHowLongThisVideo" xml:space="preserve">
+    <value>Couldn't tell how long this video is.</value>
+  </data>
+  <data name="IsTooSmallForOfVideoIt" xml:space="preserve">
+    <value>{0} is too small for {1} of video; it needs at least {2}.</value>
+  </data>
+  <data name="CouldnTGetThisVideoDownTo" xml:space="preserve">
+    <value>Couldn't get this video down to {0}; it came out at {1}.</value>
+  </data>
+  <data name="CouldnTTellHowLongThisFile" xml:space="preserve">
+    <value>Couldn't tell how long this file is.</value>
+  </data>
+  <data name="IsTooSmallForOfItNeeds" xml:space="preserve">
+    <value>{0} is too small for {1} of {2}; it needs at least {3}.</value>
+  </data>
+  <data name="Centre" xml:space="preserve">
+    <value>Centre</value>
+  </data>
+  <data name="Top" xml:space="preserve">
+    <value>Top</value>
+  </data>
+  <data name="Bottom" xml:space="preserve">
+    <value>Bottom</value>
+  </data>
+  <data name="TopLeft" xml:space="preserve">
+    <value>Top left</value>
+  </data>
+  <data name="TopRight" xml:space="preserve">
+    <value>Top right</value>
+  </data>
+  <data name="BottomLeft" xml:space="preserve">
+    <value>Bottom left</value>
+  </data>
+  <data name="BottomRight" xml:space="preserve">
+    <value>Bottom right</value>
+  </data>
+  <data name="ExactOffset" xml:space="preserve">
+    <value>Exact offset</value>
+  </data>
+  <data name="CropTo" xml:space="preserve">
+    <value>Crop to</value>
+  </data>
+  <data name="AspectRatio" xml:space="preserve">
+    <value>Aspect ratio</value>
+  </data>
+  <data name="ExactSize" xml:space="preserve">
+    <value>Exact size</value>
+  </data>
+  <data name="Free" xml:space="preserve">
+    <value>Free</value>
+  </data>
+  <data name="OrDragTheBoxOnThePicture" xml:space="preserve">
+    <value>Or drag the box on the picture, which switches to Free.</value>
+  </data>
+  <data name="Any" xml:space="preserve">
+    <value>Any</value>
+  </data>
+  <data name="DragInsideTheBoxToMoveIt" xml:space="preserve">
+    <value>Drag inside the box to move it, pull its edges or corners to resize it, or drag outside it to draw a new one.</value>
+  </data>
+  <data name="Height" xml:space="preserve">
+    <value>Height</value>
+  </data>
+  <data name="LargerThanThePictureItSCut" xml:space="preserve">
+    <value>Larger than the picture? It's cut to fit.</value>
+  </data>
+  <data name="Keep" xml:space="preserve">
+    <value>Keep</value>
+  </data>
+  <data name="FromTheLeft" xml:space="preserve">
+    <value>From the left</value>
+  </data>
+  <data name="FromTheTop" xml:space="preserve">
+    <value>From the top</value>
+  </data>
+  <data name="ThatLeavesTooLittleOfThePicture" xml:space="preserve">
+    <value>That leaves too little of the picture.</value>
+  </data>
+  <data name="Keeps" xml:space="preserve">
+    <value>Keeps</value>
+  </data>
+  <data name="From" xml:space="preserve">
+    <value>{0}, from {1}, {2}</value>
+  </data>
+  <data name="Of" xml:space="preserve">
+    <value>Of</value>
+  </data>
+  <data name="Crop" xml:space="preserve">
+    <value>Crop…</value>
+  </data>
+  <data name="AspectRatioSizeOrFree" xml:space="preserve">
+    <value>Aspect ratio, size or free</value>
+  </data>
+  <data name="Cropping" xml:space="preserve">
+    <value>Cropping…</value>
+  </data>
+  <data name="Cropped" xml:space="preserve">
+    <value>Cropped</value>
+  </data>
+  <data name="ThatKeepsTheWholePictureSoThere" xml:space="preserve">
+    <value>That keeps the whole picture, so there's nothing to crop.</value>
+  </data>
+  <data name="CouldnTTellHowBigThisVideo" xml:space="preserve">
+    <value>Couldn't tell how big this video's picture is.</value>
+  </data>
+  <data name="Share" xml:space="preserve">
+    <value>Share…</value>
+  </data>
+  <data name="WindowsShareAndNearbySharing" xml:space="preserve">
+    <value>Windows Share and Nearby Sharing</value>
+  </data>
+  <data name="OpeningShare" xml:space="preserve">
+    <value>Opening Share…</value>
+  </data>
+  <data name="Shared" xml:space="preserve">
+    <value>Shared</value>
+  </data>
+  <data name="Float" xml:space="preserve">
+    <value>Float</value>
+  </data>
+  <data name="ParkOnTheShelfDragOutLater" xml:space="preserve">
+    <value>Park on the shelf, drag out later</value>
+  </data>
+  <data name="Floating" xml:space="preserve">
+    <value>Floating…</value>
+  </data>
+  <data name="Floated" xml:space="preserve">
+    <value>Floated</value>
+  </data>
+  <data name="NeedsTheTanjeloAppSelectTheFiles" xml:space="preserve">
+    <value>{0} needs the Tanjelo app: select the files in File Explorer and press its shortcut.</value>
+  </data>
+  <data name="CanTWriteAudio" xml:space="preserve">
+    <value>Can't write .{0} audio.</value>
+  </data>
+  <data name="CanTWriteVideo" xml:space="preserve">
+    <value>Can't write .{0} video.</value>
+  </data>
+  <data name="FfmpegCanTReadThisFile" xml:space="preserve">
+    <value>ffmpeg can't read this file: {0}</value>
+  </data>
+  <data name="FfmpegFailed" xml:space="preserve">
+    <value>ffmpeg failed: {0}</value>
+  </data>
+  <data name="CouldnTStart" xml:space="preserve">
+    <value>Couldn't start {0}: {1}</value>
+  </data>
+  <data name="FfmpegHadNothingToDo" xml:space="preserve">
+    <value>ffmpeg had nothing to do.</value>
+  </data>
+  <data name="ThereSNoPictureAt" xml:space="preserve">
+    <value>There's no picture at {0}.</value>
+  </data>
+  <data name="AnotherAppIsUsingTheClipboardTry" xml:space="preserve">
+    <value>Another app is using the clipboard. Try again in a moment.</value>
+  </data>
+  <data name="CopyPath" xml:space="preserve">
+    <value>Copy path</value>
+  </data>
+  <data name="CopyPaths" xml:space="preserve">
+    <value>Copy paths</value>
+  </data>
+  <data name="FullPathAsText" xml:space="preserve">
+    <value>Full path as text</value>
+  </data>
+  <data name="OnePathPerLine" xml:space="preserve">
+    <value>One path per line</value>
+  </data>
+  <data name="Copying" xml:space="preserve">
+    <value>Copying…</value>
+  </data>
+  <data name="PathCopied" xml:space="preserve">
+    <value>Path copied</value>
+  </data>
+  <data name="PathsCopied" xml:space="preserve">
+    <value>Paths copied</value>
+  </data>
+  <data name="Copy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="ReadyToPasteAnywhere" xml:space="preserve">
+    <value>Ready to paste anywhere</value>
+  </data>
+  <data name="CopiedReadyToPaste" xml:space="preserve">
+    <value>Copied, ready to paste</value>
+  </data>
+  <data name="OpenInTerminal" xml:space="preserve">
+    <value>Open in Terminal</value>
+  </data>
+  <data name="PowerShell" xml:space="preserve">
+    <value>PowerShell</value>
+  </data>
+  <data name="WindowsTerminal" xml:space="preserve">
+    <value>Windows Terminal</value>
+  </data>
+  <data name="Opening" xml:space="preserve">
+    <value>Opening…</value>
+  </data>
+  <data name="OpenedInTerminal" xml:space="preserve">
+    <value>Opened in Terminal</value>
+  </data>
+  <data name="ThatSDifferentFoldersTanjeloOpensAt" xml:space="preserve">
+    <value>That's {0} different folders; Tanjelo opens at most {1} at once.</value>
+  </data>
+  <data name="CouldnTOpen" xml:space="preserve">
+    <value>Couldn't open {0}: {1}</value>
+  </data>
+  <data name="MoveTo" xml:space="preserve">
+    <value>Move to…</value>
+  </data>
+  <data name="PickAFolder" xml:space="preserve">
+    <value>Pick a folder</value>
+  </data>
+  <data name="Moving" xml:space="preserve">
+    <value>Moving…</value>
+  </data>
+  <data name="Moved" xml:space="preserve">
+    <value>Moved</value>
+  </data>
+  <data name="MoveToWhichFolder" xml:space="preserve">
+    <value>Move to which folder?</value>
+  </data>
+  <data name="ChooseAFolderToMoveTo" xml:space="preserve">
+    <value>Choose a folder to move to.</value>
+  </data>
+  <data name="ThatFolderDoesnTExist" xml:space="preserve">
+    <value>That folder doesn't exist.</value>
+  </data>
+  <data name="ItSAlreadyInThatFolder" xml:space="preserve">
+    <value>It's already in that folder.</value>
+  </data>
+  <data name="AFolderCanTBeMovedInto" xml:space="preserve">
+    <value>A folder can't be moved into itself.</value>
+  </data>
+  <data name="CopiedToButSomeOfTheOriginal" xml:space="preserve">
+    <value>Copied to {0}, but some of the original folder couldn't be deleted: {1}</value>
+  </data>
+  <data name="HEICOutputNeedsTheHEIFImageExtensions" xml:space="preserve">
+    <value>HEIC output needs the HEIF Image Extensions and HEVC Video Extensions from the Microsoft Store.</value>
+  </data>
+  <data name="WebView2StoppedRespondingWhilePrinting" xml:space="preserve">
+    <value>WebView2 stopped responding while printing.</value>
+  </data>
+  <data name="WebView2CouldnTOpenThePageTo" xml:space="preserve">
+    <value>WebView2 couldn't open the page to print it.</value>
+  </data>
+  <data name="WebView2CouldnTPrintThePDF" xml:space="preserve">
+    <value>WebView2 couldn't print the PDF.</value>
+  </data>
+  <data name="WebView2CouldnTStart" xml:space="preserve">
+    <value>WebView2 couldn't start: {0}</value>
+  </data>
+  <data name="PNG" xml:space="preserve">
+    <value>PNG</value>
+  </data>
+  <data name="LosslessKeepsTransparency" xml:space="preserve">
+    <value>Lossless, keeps transparency</value>
+  </data>
+  <data name="JPG" xml:space="preserve">
+    <value>JPG</value>
+  </data>
+  <data name="SmallPhotosNoTransparency" xml:space="preserve">
+    <value>Small photos, no transparency</value>
+  </data>
+  <data name="WebP" xml:space="preserve">
+    <value>WebP</value>
+  </data>
+  <data name="ModernWebFormat" xml:space="preserve">
+    <value>Modern web format</value>
+  </data>
+  <data name="AVIF" xml:space="preserve">
+    <value>AVIF</value>
+  </data>
+  <data name="SmallestFilesNewerAppsOnly" xml:space="preserve">
+    <value>Smallest files, newer apps only</value>
+  </data>
+  <data name="GIF" xml:space="preserve">
+    <value>GIF</value>
+  </data>
+  <data name="N256ColoursKeepsAnimation" xml:space="preserve">
+    <value>256 colours, keeps animation</value>
+  </data>
+  <data name="BMP" xml:space="preserve">
+    <value>BMP</value>
+  </data>
+  <data name="UncompressedBitmap" xml:space="preserve">
+    <value>Uncompressed bitmap</value>
+  </data>
+  <data name="TIFF" xml:space="preserve">
+    <value>TIFF</value>
+  </data>
+  <data name="PrintAndArchiving" xml:space="preserve">
+    <value>Print and archiving</value>
+  </data>
+  <data name="ICO" xml:space="preserve">
+    <value>ICO</value>
+  </data>
+  <data name="WindowsIcon16To256Px" xml:space="preserve">
+    <value>Windows icon, 16 to 256 px</value>
+  </data>
+  <data name="PDF" xml:space="preserve">
+    <value>PDF</value>
+  </data>
+  <data name="ImageAsAPDFPage" xml:space="preserve">
+    <value>Image as a PDF page</value>
+  </data>
+  <data name="HEIC" xml:space="preserve">
+    <value>HEIC</value>
+  </data>
+  <data name="SmallPhotosForIPhoneAndMac" xml:space="preserve">
+    <value>Small photos for iPhone and Mac</value>
+  </data>
+  <data name="FirstFrameOnlyForIPhoneAndMac" xml:space="preserve">
+    <value>First frame only, for iPhone and Mac</value>
+  </data>
+  <data name="WindowsCouldnTWriteTheHEIC" xml:space="preserve">
+    <value>Windows couldn't write the HEIC: {0}</value>
+  </data>
+  <data name="ThisDoesnTLookLikeAValid" xml:space="preserve">
+    <value>This doesn't look like a valid image ({0}).</value>
+  </data>
+  <data name="TheImageHasNoFrames" xml:space="preserve">
+    <value>The image has no frames.</value>
+  </data>
+  <data name="OnePDF" xml:space="preserve">
+    <value>One PDF</value>
+  </data>
+  <data name="CombineImagesAsPages" xml:space="preserve">
+    <value>Combine {0} images as pages</value>
+  </data>
+  <data name="CombiningIntoAPDF" xml:space="preserve">
+    <value>Combining into a PDF…</value>
+  </data>
+  <data name="CombinedIntoOnePDF" xml:space="preserve">
+    <value>Combined into one PDF</value>
+  </data>
+  <data name="CanTEditTheMetadataOfFiles" xml:space="preserve">
+    <value>Can't edit the metadata of .{0} files.</value>
+  </data>
+  <data name="ThisDoesnTLookLikeAValid2" xml:space="preserve">
+    <value>This doesn't look like a valid {0} file.</value>
+  </data>
+  <data name="TheMetadataIsTooBigToFit" xml:space="preserve">
+    <value>The metadata is too big to fit in a JPEG.</value>
+  </data>
+  <data name="ThisWebPFileIsLaidOutIn" xml:space="preserve">
+    <value>This WebP file is laid out in a way Tanjelo can't add metadata to.</value>
+  </data>
+  <data name="JoinVideos" xml:space="preserve">
+    <value>Join videos…</value>
+  </data>
+  <data name="ClipsIntoOneMP4" xml:space="preserve">
+    <value>{0} clips into one MP4</value>
+  </data>
+  <data name="Joining" xml:space="preserve">
+    <value>Joining…</value>
+  </data>
+  <data name="JoinedIntoOneVideo" xml:space="preserve">
+    <value>Joined into one video</value>
+  </data>
+  <data name="Join" xml:space="preserve">
+    <value>Join</value>
+  </data>
+  <data name="PictureSize" xml:space="preserve">
+    <value>Picture size</value>
+  </data>
+  <data name="LikeTheFirstClip" xml:space="preserve">
+    <value>Like the first clip</value>
+  </data>
+  <data name="LikeTheLargest" xml:space="preserve">
+    <value>Like the largest</value>
+  </data>
+  <data name="ClipsOfAnotherShape" xml:space="preserve">
+    <value>Clips of another shape</value>
+  </data>
+  <data name="AddBlackBars" xml:space="preserve">
+    <value>Add black bars</value>
+  </data>
+  <data name="FillAndCrop" xml:space="preserve">
+    <value>Fill and crop</value>
+  </data>
+  <data name="EveryFileNeedsAPictureToBe" xml:space="preserve">
+    <value>Every file needs a picture to be joined as video.</value>
+  </data>
+  <data name="TheirVideoFormatsDiffer" xml:space="preserve">
+    <value>their video formats differ</value>
+  </data>
+  <data name="TheirSizesDiffer" xml:space="preserve">
+    <value>their sizes differ</value>
+  </data>
+  <data name="OfTheNewSize" xml:space="preserve">
+    <value>of the new size</value>
+  </data>
+  <data name="TheirFrameRatesDiffer" xml:space="preserve">
+    <value>their frame rates differ</value>
+  </data>
+  <data name="TheirSoundDiffers" xml:space="preserve">
+    <value>their sound differs</value>
+  </data>
+  <data name="TheyReDifferentKindsOfFile" xml:space="preserve">
+    <value>they're different kinds of file</value>
+  </data>
+  <data name="AsTheyAreWithoutReEncoding" xml:space="preserve">
+    <value>as they are, without re-encoding</value>
+  </data>
+  <data name="ReEncodedToAtFpsBecause" xml:space="preserve">
+    <value>re-encoded to {0} at {1:0.##} fps, because {2}</value>
+  </data>
+  <data name="Length" xml:space="preserve">
+    <value>Length</value>
+  </data>
+  <data name="InAll" xml:space="preserve">
+    <value>{0} in all</value>
+  </data>
+  <data name="Joined" xml:space="preserve">
+    <value>Joined</value>
+  </data>
+  <data name="AndMore" xml:space="preserve">
+    <value>and {0} more</value>
+  </data>
+  <data name="ExportedByLibreOffice" xml:space="preserve">
+    <value>Exported by LibreOffice</value>
+  </data>
+  <data name="DOCX" xml:space="preserve">
+    <value>DOCX</value>
+  </data>
+  <data name="WordDocument" xml:space="preserve">
+    <value>Word document</value>
+  </data>
+  <data name="ODT" xml:space="preserve">
+    <value>ODT</value>
+  </data>
+  <data name="OpenDocumentText" xml:space="preserve">
+    <value>OpenDocument text</value>
+  </data>
+  <data name="RTF" xml:space="preserve">
+    <value>RTF</value>
+  </data>
+  <data name="RichText" xml:space="preserve">
+    <value>Rich text</value>
+  </data>
+  <data name="TXT" xml:space="preserve">
+    <value>TXT</value>
+  </data>
+  <data name="PlainTextUTF8" xml:space="preserve">
+    <value>Plain text, UTF-8</value>
+  </data>
+  <data name="PPTX" xml:space="preserve">
+    <value>PPTX</value>
+  </data>
+  <data name="PowerPointPresentation" xml:space="preserve">
+    <value>PowerPoint presentation</value>
+  </data>
+  <data name="ODP" xml:space="preserve">
+    <value>ODP</value>
+  </data>
+  <data name="OpenDocumentPresentation" xml:space="preserve">
+    <value>OpenDocument presentation</value>
+  </data>
+  <data name="XLSX" xml:space="preserve">
+    <value>XLSX</value>
+  </data>
+  <data name="ExcelWorkbook" xml:space="preserve">
+    <value>Excel workbook</value>
+  </data>
+  <data name="ODS" xml:space="preserve">
+    <value>ODS</value>
+  </data>
+  <data name="OpenDocumentSpreadsheet" xml:space="preserve">
+    <value>OpenDocument spreadsheet</value>
+  </data>
+  <data name="CSV" xml:space="preserve">
+    <value>CSV</value>
+  </data>
+  <data name="FirstSheetUTF8" xml:space="preserve">
+    <value>First sheet, UTF-8</value>
+  </data>
+  <data name="LibreOfficeCouldnTConvertThisFile" xml:space="preserve">
+    <value>LibreOffice couldn't convert this file: {0}</value>
+  </data>
+  <data name="HTML" xml:space="preserve">
+    <value>HTML</value>
+  </data>
+  <data name="StyledWebPagePicturesIncluded" xml:space="preserve">
+    <value>Styled web page, pictures included</value>
+  </data>
+  <data name="PrintedOfflineByWindowsWebView2" xml:space="preserve">
+    <value>Printed offline by Windows' WebView2</value>
+  </data>
+  <data name="TheTextWithoutTheMarkup" xml:space="preserve">
+    <value>The text, without the markup</value>
+  </data>
+  <data name="MarkdownToPDFNeedsTheWebView2Runtime" xml:space="preserve">
+    <value>Markdown to PDF needs the WebView2 Runtime: winget install Microsoft.EdgeWebView2Runtime</value>
+  </data>
+  <data name="MarkdownCanTBecome" xml:space="preserve">
+    <value>Markdown can't become {0}.</value>
+  </data>
+  <data name="MP4" xml:space="preserve">
+    <value>MP4</value>
+  </data>
+  <data name="H264PlaysEverywhere" xml:space="preserve">
+    <value>H.264, plays everywhere</value>
+  </data>
+  <data name="MOV" xml:space="preserve">
+    <value>MOV</value>
+  </data>
+  <data name="QuickTimeMovie" xml:space="preserve">
+    <value>QuickTime movie</value>
+  </data>
+  <data name="MKV" xml:space="preserve">
+    <value>MKV</value>
+  </data>
+  <data name="MatroskaKeepsEveryTrack" xml:space="preserve">
+    <value>Matroska, keeps every track</value>
+  </data>
+  <data name="WebM" xml:space="preserve">
+    <value>WebM</value>
+  </data>
+  <data name="VP9OpusForTheWeb" xml:space="preserve">
+    <value>VP9 + Opus for the web</value>
+  </data>
+  <data name="AVI" xml:space="preserve">
+    <value>AVI</value>
+  </data>
+  <data name="LegacyMPEG4" xml:space="preserve">
+    <value>Legacy MPEG-4</value>
+  </data>
+  <data name="WMV" xml:space="preserve">
+    <value>WMV</value>
+  </data>
+  <data name="WindowsMediaVideo" xml:space="preserve">
+    <value>Windows Media Video</value>
+  </data>
+  <data name="Animated15FpsUpTo640Px" xml:space="preserve">
+    <value>Animated, 15 fps, up to 640 px</value>
+  </data>
+  <data name="MP3" xml:space="preserve">
+    <value>MP3</value>
+  </data>
+  <data name="PlaysEverywhere190Kbps" xml:space="preserve">
+    <value>Plays everywhere, ~190 kbps</value>
+  </data>
+  <data name="M4A" xml:space="preserve">
+    <value>M4A</value>
+  </data>
+  <data name="AAC256Kbps" xml:space="preserve">
+    <value>AAC, 256 kbps</value>
+  </data>
+  <data name="WAV" xml:space="preserve">
+    <value>WAV</value>
+  </data>
+  <data name="Uncompressed" xml:space="preserve">
+    <value>Uncompressed</value>
+  </data>
+  <data name="FLAC" xml:space="preserve">
+    <value>FLAC</value>
+  </data>
+  <data name="LosslessCompressed" xml:space="preserve">
+    <value>Lossless, compressed</value>
+  </data>
+  <data name="OGG" xml:space="preserve">
+    <value>OGG</value>
+  </data>
+  <data name="OggVorbis" xml:space="preserve">
+    <value>Ogg Vorbis</value>
+  </data>
+  <data name="Opus" xml:space="preserve">
+    <value>Opus</value>
+  </data>
+  <data name="SmallAndEfficient" xml:space="preserve">
+    <value>Small and efficient</value>
+  </data>
+  <data name="AIFF" xml:space="preserve">
+    <value>AIFF</value>
+  </data>
+  <data name="UncompressedApple" xml:space="preserve">
+    <value>Uncompressed (Apple)</value>
+  </data>
+  <data name="WMA" xml:space="preserve">
+    <value>WMA</value>
+  </data>
+  <data name="WindowsMedia192Kbps" xml:space="preserve">
+    <value>Windows Media, 192 kbps</value>
+  </data>
+  <data name="AudioTrackOnly" xml:space="preserve">
+    <value>Audio track only</value>
+  </data>
+  <data name="AnimatedGIFAsVideo" xml:space="preserve">
+    <value>Animated GIF as video</value>
+  </data>
+  <data name="AudioAndVideoNeedFfmpegWingetInstall" xml:space="preserve">
+    <value>Audio and video need ffmpeg: winget install Gyan.FFmpeg.Essentials</value>
+  </data>
+  <data name="ThisFileHasNoAudioTrack" xml:space="preserve">
+    <value>This file has no audio track.</value>
+  </data>
+  <data name="UnknownMediaTarget" xml:space="preserve">
+    <value>Unknown media target '{0}'.</value>
+  </data>
+  <data name="Mute" xml:space="preserve">
+    <value>Mute</value>
+  </data>
+  <data name="RemoveTheSoundLosslessly" xml:space="preserve">
+    <value>Remove the sound, losslessly</value>
+  </data>
+  <data name="Muting" xml:space="preserve">
+    <value>Muting…</value>
+  </data>
+  <data name="Muted" xml:space="preserve">
+    <value>Muted</value>
+  </data>
+  <data name="SlowMotionSamePitch" xml:space="preserve">
+    <value>Slow motion, same pitch</value>
+  </data>
+  <data name="FasterSamePitch" xml:space="preserve">
+    <value>Faster, same pitch</value>
+  </data>
+  <data name="TwiceAsFastSamePitch" xml:space="preserve">
+    <value>Twice as fast, same pitch</value>
+  </data>
+  <data name="SplitIn" xml:space="preserve">
+    <value>Split in {0}</value>
+  </data>
+  <data name="EqualParts" xml:space="preserve">
+    <value>{0} equal parts</value>
+  </data>
+  <data name="Splitting" xml:space="preserve">
+    <value>Splitting…</value>
+  </data>
+  <data name="Split" xml:space="preserve">
+    <value>Split</value>
+  </data>
+  <data name="Speed" xml:space="preserve">
+    <value>{0}× speed</value>
+  </data>
+  <data name="ChangingSpeed" xml:space="preserve">
+    <value>Changing speed…</value>
+  </data>
+  <data name="SpeedChanged" xml:space="preserve">
+    <value>Speed changed</value>
+  </data>
+  <data name="NormalizeVolume" xml:space="preserve">
+    <value>Normalize volume</value>
+  </data>
+  <data name="EvenLoudness16LUFS" xml:space="preserve">
+    <value>Even loudness, -16 LUFS</value>
+  </data>
+  <data name="Normalizing" xml:space="preserve">
+    <value>Normalizing…</value>
+  </data>
+  <data name="Normalized" xml:space="preserve">
+    <value>Normalized</value>
+  </data>
+  <data name="ToMono" xml:space="preserve">
+    <value>To mono</value>
+  </data>
+  <data name="AllChannelsInOne" xml:space="preserve">
+    <value>All channels in one</value>
+  </data>
+  <data name="MixingToMono" xml:space="preserve">
+    <value>Mixing to mono…</value>
+  </data>
+  <data name="MixedToMono" xml:space="preserve">
+    <value>Mixed to mono</value>
+  </data>
+  <data name="ToStereo" xml:space="preserve">
+    <value>To stereo</value>
+  </data>
+  <data name="TwoChannels" xml:space="preserve">
+    <value>Two channels</value>
+  </data>
+  <data name="MakingStereo" xml:space="preserve">
+    <value>Making stereo…</value>
+  </data>
+  <data name="MadeStereo" xml:space="preserve">
+    <value>Made stereo</value>
+  </data>
+  <data name="TrimSilence" xml:space="preserve">
+    <value>Trim silence</value>
+  </data>
+  <data name="AtTheStartAndEnd" xml:space="preserve">
+    <value>At the start and end</value>
+  </data>
+  <data name="TrimmingSilence" xml:space="preserve">
+    <value>Trimming silence…</value>
+  </data>
+  <data name="SilenceTrimmed" xml:space="preserve">
+    <value>Silence trimmed</value>
+  </data>
+  <data name="UnknownTool" xml:space="preserve">
+    <value>Unknown tool '{0}'.</value>
+  </data>
+  <data name="ThisVideoHasNoSoundToRemove" xml:space="preserve">
+    <value>This video has no sound to remove.</value>
+  </data>
+  <data name="ThisVideoIsTooShortToSplit" xml:space="preserve">
+    <value>This video is too short to split into {0} parts.</value>
+  </data>
+  <data name="FfmpegCouldnTSplitThisVideoEvenly" xml:space="preserve">
+    <value>ffmpeg couldn't split this video evenly.</value>
+  </data>
+  <data name="FfmpegDidnTReportTheLoudnessOf" xml:space="preserve">
+    <value>ffmpeg didn't report the loudness of this file.</value>
+  </data>
+  <data name="ThisFileIsSilent" xml:space="preserve">
+    <value>This file is silent.</value>
+  </data>
+  <data name="ThisFileIsAlready" xml:space="preserve">
+    <value>This file is already {0}.</value>
+  </data>
+  <data name="ThereSNoSilenceAtTheStart" xml:space="preserve">
+    <value>There's no silence at the start or end to trim.</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="NewTitleEmptyKeepsTheCurrentOne" xml:space="preserve">
+    <value>New title; empty keeps the current one</value>
+  </data>
+  <data name="NewEmptyKeepsTheCurrentOne" xml:space="preserve">
+    <value>New {0}; empty keeps the current one</value>
+  </data>
+  <data name="RemoveTheLocation" xml:space="preserve">
+    <value>Remove the location</value>
+  </data>
+  <data name="WhereItWasTakenAsPhonesAnd" xml:space="preserve">
+    <value>Where it was taken, as phones and cameras record it.</value>
+  </data>
+  <data name="RemoveCameraDetails" xml:space="preserve">
+    <value>Remove camera details</value>
+  </data>
+  <data name="MakeModelLensAndSerialNumbers" xml:space="preserve">
+    <value>Make, model, lens and serial numbers.</value>
+  </data>
+  <data name="RemoveEverythingElse" xml:space="preserve">
+    <value>Remove everything else</value>
+  </data>
+  <data name="DatesSoftwareCommentsAndTheRestAnything" xml:space="preserve">
+    <value>Dates, software, comments and the rest. Anything typed above is still saved.</value>
+  </data>
+  <data name="Metadata" xml:space="preserve">
+    <value>Metadata…</value>
+  </data>
+  <data name="ViewEditOrRemove" xml:space="preserve">
+    <value>View, edit or remove</value>
+  </data>
+  <data name="SavingMetadata" xml:space="preserve">
+    <value>Saving metadata…</value>
+  </data>
+  <data name="SavedWithNewMetadata" xml:space="preserve">
+    <value>Saved with new metadata</value>
+  </data>
+  <data name="SaveCopy" xml:space="preserve">
+    <value>Save copy</value>
+  </data>
+  <data name="Author" xml:space="preserve">
+    <value>Author</value>
+  </data>
+  <data name="Artist" xml:space="preserve">
+    <value>Artist</value>
+  </data>
+  <data name="ThereSNothingToChangeNoneOf" xml:space="preserve">
+    <value>There's nothing to change: none of the metadata to remove is there, and no new title or author was given.</value>
+  </data>
+  <data name="Camera" xml:space="preserve">
+    <value>Camera</value>
+  </data>
+  <data name="Location" xml:space="preserve">
+    <value>Location</value>
+  </data>
+  <data name="Taken" xml:space="preserve">
+    <value>Taken</value>
+  </data>
+  <data name="Software" xml:space="preserve">
+    <value>Software</value>
+  </data>
+  <data name="Comment" xml:space="preserve">
+    <value>Comment</value>
+  </data>
+  <data name="Other" xml:space="preserve">
+    <value>Other</value>
+  </data>
+  <data name="MoreEXIFFields" xml:space="preserve">
+    <value>{0} more EXIF fields</value>
+  </data>
+  <data name="XMP" xml:space="preserve">
+    <value>XMP</value>
+  </data>
+  <data name="Subject" xml:space="preserve">
+    <value>Subject</value>
+  </data>
+  <data name="Keywords" xml:space="preserve">
+    <value>Keywords</value>
+  </data>
+  <data name="MadeWith" xml:space="preserve">
+    <value>Made with</value>
+  </data>
+  <data name="Producer" xml:space="preserve">
+    <value>Producer</value>
+  </data>
+  <data name="Created" xml:space="preserve">
+    <value>Created</value>
+  </data>
+  <data name="Album" xml:space="preserve">
+    <value>Album</value>
+  </data>
+  <data name="Date" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="MoreTags" xml:space="preserve">
+    <value>{0} more tags</value>
+  </data>
+  <data name="New" xml:space="preserve">
+    <value>{0} (new)</value>
+  </data>
+  <data name="Removed" xml:space="preserve">
+    <value>{0} → removed</value>
+  </data>
+  <data name="Metadata2" xml:space="preserve">
+    <value>Metadata</value>
+  </data>
+  <data name="NoneFound" xml:space="preserve">
+    <value>None found</value>
+  </data>
+  <data name="ExportedByMicrosoftOffice" xml:space="preserve">
+    <value>Exported by Microsoft Office</value>
+  </data>
+  <data name="DOC" xml:space="preserve">
+    <value>DOC</value>
+  </data>
+  <data name="Word972003" xml:space="preserve">
+    <value>Word 97-2003</value>
+  </data>
+  <data name="WebPage" xml:space="preserve">
+    <value>Web page</value>
+  </data>
+  <data name="OneImagePerPage" xml:space="preserve">
+    <value>One image per page</value>
+  </data>
+  <data name="PPT" xml:space="preserve">
+    <value>PPT</value>
+  </data>
+  <data name="PowerPoint972003" xml:space="preserve">
+    <value>PowerPoint 97-2003</value>
+  </data>
+  <data name="OneImagePerSlide" xml:space="preserve">
+    <value>One image per slide</value>
+  </data>
+  <data name="XLS" xml:space="preserve">
+    <value>XLS</value>
+  </data>
+  <data name="Excel972003" xml:space="preserve">
+    <value>Excel 97-2003</value>
+  </data>
+  <data name="ActiveSheetUTF8" xml:space="preserve">
+    <value>Active sheet, UTF-8</value>
+  </data>
+  <data name="TSV" xml:space="preserve">
+    <value>TSV</value>
+  </data>
+  <data name="TabSeparatedUTF8" xml:space="preserve">
+    <value>Tab-separated, UTF-8</value>
+  </data>
+  <data name="EditableWordDocument" xml:space="preserve">
+    <value>Editable Word document</value>
+  </data>
+  <data name="OfficeDocumentsNeedMicrosoftOfficeOrLibreOffice" xml:space="preserve">
+    <value>Office documents need Microsoft Office or LibreOffice.</value>
+  </data>
+  <data name="TSVFilesNeedMicrosoftExcel" xml:space="preserve">
+    <value>TSV files need Microsoft Excel.</value>
+  </data>
+  <data name="NotAnOfficeDocument" xml:space="preserve">
+    <value>Not an Office document.</value>
+  </data>
+  <data name="OfficeStoppedRespondingSoItWasClosed" xml:space="preserve">
+    <value>Office stopped responding, so it was closed. The file may be damaged or need a password.</value>
+  </data>
+  <data name="OfficeStoppedRespondingCheckForADialog" xml:space="preserve">
+    <value>Office stopped responding. Check for a dialog in your open Office window.</value>
+  </data>
+  <data name="WordCanTSaveAs" xml:space="preserve">
+    <value>Word can't save as {0}.</value>
+  </data>
+  <data name="PowerPointCanTSaveAs" xml:space="preserve">
+    <value>PowerPoint can't save as {0}.</value>
+  </data>
+  <data name="CouldnTReadInThePageList" xml:space="preserve">
+    <value>Couldn't read '{0}' in the page list. Use page numbers and ranges such as 3,1-2,5r90.</value>
+  </data>
+  <data name="IsAPageOfAnotherPDFBut" xml:space="preserve">
+    <value>'{0}' is a page of another PDF, but {1}.</value>
+  </data>
+  <data name="OnlyOtherGiven" xml:space="preserve">
+    <value>only {0} other {1} given</value>
+  </data>
+  <data name="ThePageListLeavesNoPages" xml:space="preserve">
+    <value>The page list leaves no pages.</value>
+  </data>
+  <data name="ThereSNoPageHas" xml:space="preserve">
+    <value>There's no page {0}: {1} has {2}.</value>
+  </data>
+  <data name="OrganizePages" xml:space="preserve">
+    <value>Organize pages…</value>
+  </data>
+  <data name="ReorderTurnOrDelete" xml:space="preserve">
+    <value>Reorder, turn or delete</value>
+  </data>
+  <data name="SavingThePages" xml:space="preserve">
+    <value>Saving the pages…</value>
+  </data>
+  <data name="PagesOrganized" xml:space="preserve">
+    <value>Pages organized</value>
+  </data>
+  <data name="Pages" xml:space="preserve">
+    <value>Pages</value>
+  </data>
+  <data name="InTheirNewOrderSuchAs3" xml:space="preserve">
+    <value>In their new order, such as 3,1-2,5r90: r90, r180 and r270 turn a page clockwise, a page listed twice is copied, </value>
+  </data>
+  <data name="AndAPageLeftOutIsDeleted" xml:space="preserve">
+    <value>and a page left out is deleted. Pages of the PDFs in --with are b1, b2…, then c1…</value>
+  </data>
+  <data name="PagesFrom" xml:space="preserve">
+    <value>Pages from</value>
+  </data>
+  <data name="OtherPDFsToTakePagesFromSeparated" xml:space="preserve">
+    <value>Other PDFs to take pages from, separated by |.</value>
+  </data>
+  <data name="CouldnTFindToTakePagesFrom" xml:space="preserve">
+    <value>Couldn't find {0} to take pages from.</value>
+  </data>
+  <data name="ThisPDFSFormFieldsAndIts" xml:space="preserve">
+    <value>This PDF's form fields and its links between pages won't work in the saved copy.</value>
+  </data>
+  <data name="ThisPDFSFormFieldsWonT" xml:space="preserve">
+    <value>This PDF's form fields won't work in the saved copy; the pages keep how they look.</value>
+  </data>
+  <data name="ThisPDFSLinksBetweenPagesWon" xml:space="preserve">
+    <value>This PDF's links between pages won't work in the saved copy.</value>
+  </data>
+  <data name="WordAndEPUBConversionsNeedPandocWinget" xml:space="preserve">
+    <value>Word and EPUB conversions need pandoc: winget install JohnMacFarlane.Pandoc</value>
+  </data>
+  <data name="WordDocumentViaPandoc" xml:space="preserve">
+    <value>Word document, via pandoc</value>
+  </data>
+  <data name="EPUB" xml:space="preserve">
+    <value>EPUB</value>
+  </data>
+  <data name="EBookViaPandoc" xml:space="preserve">
+    <value>E-book, via pandoc</value>
+  </data>
+  <data name="Markdown" xml:space="preserve">
+    <value>Markdown</value>
+  </data>
+  <data name="PicturesInAFolderBesideIt" xml:space="preserve">
+    <value>Pictures in a folder beside it</value>
+  </data>
+  <data name="TheTextViaPandoc" xml:space="preserve">
+    <value>The text, via pandoc</value>
+  </data>
+  <data name="OneWebPagePicturesIncluded" xml:space="preserve">
+    <value>One web page, pictures included</value>
+  </data>
+  <data name="EBookOfTheTextAndHeadings" xml:space="preserve">
+    <value>E-book of the text and headings only</value>
+  </data>
+  <data name="ThePageAsMarkdownViaPandoc" xml:space="preserve">
+    <value>The page as Markdown, via pandoc</value>
+  </data>
+  <data name="PandocCanTReadThisFile" xml:space="preserve">
+    <value>pandoc can't read this file.</value>
+  </data>
+  <data name="PandocTookMoreThan5MinutesSo" xml:space="preserve">
+    <value>pandoc took more than 5 minutes, so it was stopped.</value>
+  </data>
+  <data name="PandocCouldnTConvertThisFile" xml:space="preserve">
+    <value>pandoc couldn't convert this file: </value>
+  </data>
+  <data name="ThisPDFIsPasswordProtected" xml:space="preserve">
+    <value>This PDF is password-protected.</value>
+  </data>
+  <data name="ThisDoesnTLookLikeAValid3" xml:space="preserve">
+    <value>This doesn't look like a valid PDF.</value>
+  </data>
+  <data name="ScannedPDFPagesNeedAnOCRLanguage" xml:space="preserve">
+    <value>Scanned PDF pages need an OCR language. Add a language in Settings › Time &amp; language › Language &amp; region.</value>
+  </data>
+  <data name="ThisPDFHasNoTextLayerAnd" xml:space="preserve">
+    <value>This PDF has no text layer, and no OCR language is installed to read it. </value>
+  </data>
+  <data name="ThisPDFHasNoTextInIt" xml:space="preserve">
+    <value>This PDF has no text in it.</value>
+  </data>
+  <data name="N1PageReadWithOCR" xml:space="preserve">
+    <value>1 page read with OCR</value>
+  </data>
+  <data name="PagesReadWithOCR" xml:space="preserve">
+    <value>{0} pages read with OCR</value>
+  </data>
+  <data name="N1ScannedPageLeftOutNoOCR" xml:space="preserve">
+    <value>1 scanned page left out: no OCR language is installed</value>
+  </data>
+  <data name="ScannedPagesLeftOutNoOCRLanguage" xml:space="preserve">
+    <value>{0} scanned pages left out: no OCR language is installed</value>
+  </data>
+  <data name="TextInReadingOrder" xml:space="preserve">
+    <value>Text in reading order</value>
+  </data>
+  <data name="HeadingsListsAndParagraphs" xml:space="preserve">
+    <value>Headings, lists and paragraphs</value>
+  </data>
+  <data name="PageBreaksMustBeTrueOrFalse" xml:space="preserve">
+    <value>'page-breaks' must be true or false, not '{0}'.</value>
+  </data>
+  <data name="SplitIntoPages" xml:space="preserve">
+    <value>Split into pages</value>
+  </data>
+  <data name="OnePDFPerPage" xml:space="preserve">
+    <value>One PDF per page</value>
+  </data>
+  <data name="ThisPDFHasOnlyOnePage" xml:space="preserve">
+    <value>This PDF has only one page.</value>
+  </data>
+  <data name="MergeIntoOnePDF" xml:space="preserve">
+    <value>Merge into one PDF</value>
+  </data>
+  <data name="InTheOrderSelected" xml:space="preserve">
+    <value>In the order selected</value>
+  </data>
+  <data name="Merging" xml:space="preserve">
+    <value>Merging…</value>
+  </data>
+  <data name="MergedIntoOnePDF" xml:space="preserve">
+    <value>Merged into one PDF</value>
+  </data>
+  <data name="EditPhoto" xml:space="preserve">
+    <value>Edit photo…</value>
+  </data>
+  <data name="LightColourAndDetail" xml:space="preserve">
+    <value>Light, colour and detail</value>
+  </data>
+  <data name="Developing" xml:space="preserve">
+    <value>Developing…</value>
+  </data>
+  <data name="PhotoEdited" xml:space="preserve">
+    <value>Photo edited</value>
+  </data>
+  <data name="Exposure" xml:space="preserve">
+    <value>Exposure</value>
+  </data>
+  <data name="Contrast" xml:space="preserve">
+    <value>Contrast</value>
+  </data>
+  <data name="Highlights" xml:space="preserve">
+    <value>Highlights</value>
+  </data>
+  <data name="Shadows" xml:space="preserve">
+    <value>Shadows</value>
+  </data>
+  <data name="Whites" xml:space="preserve">
+    <value>Whites</value>
+  </data>
+  <data name="Blacks" xml:space="preserve">
+    <value>Blacks</value>
+  </data>
+  <data name="Temperature" xml:space="preserve">
+    <value>Temperature</value>
+  </data>
+  <data name="WarmerAbove0CoolerBelow" xml:space="preserve">
+    <value>Warmer above 0, cooler below.</value>
+  </data>
+  <data name="Tint" xml:space="preserve">
+    <value>Tint</value>
+  </data>
+  <data name="MagentaAbove0GreenBelow" xml:space="preserve">
+    <value>Magenta above 0, green below.</value>
+  </data>
+  <data name="Vibrance" xml:space="preserve">
+    <value>Vibrance</value>
+  </data>
+  <data name="StrengthensMutedColoursMoreThanStrongOnes" xml:space="preserve">
+    <value>Strengthens muted colours more than strong ones.</value>
+  </data>
+  <data name="Saturation" xml:space="preserve">
+    <value>Saturation</value>
+  </data>
+  <data name="Sharpness" xml:space="preserve">
+    <value>Sharpness</value>
+  </data>
+  <data name="Clarity" xml:space="preserve">
+    <value>Clarity</value>
+  </data>
+  <data name="NoiseReduction" xml:space="preserve">
+    <value>Noise reduction</value>
+  </data>
+  <data name="Dehaze" xml:space="preserve">
+    <value>Dehaze</value>
+  </data>
+  <data name="Grain" xml:space="preserve">
+    <value>Grain</value>
+  </data>
+  <data name="Vignette" xml:space="preserve">
+    <value>Vignette</value>
+  </data>
+  <data name="DarkerCornersAbove0LighterBelow" xml:space="preserve">
+    <value>Darker corners above 0, lighter below.</value>
+  </data>
+  <data name="EverySettingIsAt0SoThe" xml:space="preserve">
+    <value>Every setting is at 0, so the photo would come out the same.</value>
+  </data>
+  <data name="TheTextInThePictureByOCR" xml:space="preserve">
+    <value>The text in the picture, by OCR</value>
+  </data>
+  <data name="ReadingPicturesNeedsAnOCRLanguage" xml:space="preserve">
+    <value>Reading pictures needs an OCR language. </value>
+  </data>
+  <data name="NoTextWasFoundInThisPicture" xml:space="preserve">
+    <value>No text was found in this picture.</value>
+  </data>
+  <data name="CouldnTReadAsAnAreaWrite" xml:space="preserve">
+    <value>Couldn't read '{0}' as an area. Write each as x,y,width,height in pixels, such as 10,20,200,80.</value>
+  </data>
+  <data name="Solid" xml:space="preserve">
+    <value>Solid</value>
+  </data>
+  <data name="Pixelate" xml:space="preserve">
+    <value>Pixelate</value>
+  </data>
+  <data name="Blur" xml:space="preserve">
+    <value>Blur</value>
+  </data>
+  <data name="WindowsCanTLookForFacesOn" xml:space="preserve">
+    <value>Windows can't look for faces on this PC.</value>
+  </data>
+  <data name="Redact" xml:space="preserve">
+    <value>Redact…</value>
+  </data>
+  <data name="FacesTextOrAnyArea" xml:space="preserve">
+    <value>Faces, text or any area</value>
+  </data>
+  <data name="Redacting" xml:space="preserve">
+    <value>Redacting…</value>
+  </data>
+  <data name="Redacted" xml:space="preserve">
+    <value>Redacted</value>
+  </data>
+  <data name="Areas" xml:space="preserve">
+    <value>Areas</value>
+  </data>
+  <data name="XYWidthHeightInPixelsSeparated" xml:space="preserve">
+    <value>x,y,width,height in pixels, separated by semicolons.</value>
+  </data>
+  <data name="FindFaces" xml:space="preserve">
+    <value>Find faces</value>
+  </data>
+  <data name="FoundOnThisPC" xml:space="preserve">
+    <value>Found on this PC.</value>
+  </data>
+  <data name="FindText" xml:space="preserve">
+    <value>Find text</value>
+  </data>
+  <data name="EveryWordWindowsOCRReads" xml:space="preserve">
+    <value>Every word Windows' OCR reads.</value>
+  </data>
+  <data name="Style" xml:space="preserve">
+    <value>Style</value>
+  </data>
+  <data name="SolidIsTheSafestPixelateAndBlur" xml:space="preserve">
+    <value>Solid is the safest. Pixelate and blur are strong here, but a light blur can sometimes be undone.</value>
+  </data>
+  <data name="TheAreaIsOutsideThePicture" xml:space="preserve">
+    <value>The area {0} is outside the {1} picture.</value>
+  </data>
+  <data name="NoFacesWereFound" xml:space="preserve">
+    <value>No faces were found</value>
+  </data>
+  <data name="Found" xml:space="preserve">
+    <value> found</value>
+  </data>
+  <data name="FindingTextNeedsAnOCRLanguage" xml:space="preserve">
+    <value>Finding text needs an OCR language. </value>
+  </data>
+  <data name="NoTextWasFound" xml:space="preserve">
+    <value>No text was found</value>
+  </data>
+  <data name="NothingWasFoundToRedactSoNo" xml:space="preserve">
+    <value>Nothing was found to redact, so no copy was saved.</value>
+  </data>
+  <data name="ThereSNothingToRedactGiveThe" xml:space="preserve">
+    <value>There's nothing to redact: give the areas, or find faces or text.</value>
+  </data>
+  <data name="OneSlidePerPage" xml:space="preserve">
+    <value>One slide per page</value>
+  </data>
+  <data name="OnePPTX" xml:space="preserve">
+    <value>One PPTX</value>
+  </data>
+  <data name="CombineImagesAsSlides" xml:space="preserve">
+    <value>Combine {0} images as slides</value>
+  </data>
+  <data name="CombiningIntoAPPTX" xml:space="preserve">
+    <value>Combining into a PPTX…</value>
+  </data>
+  <data name="CombinedIntoOnePPTX" xml:space="preserve">
+    <value>Combined into one PPTX</value>
+  </data>
+  <data name="SRT" xml:space="preserve">
+    <value>SRT</value>
+  </data>
+  <data name="SubRipPlaysAnywhere" xml:space="preserve">
+    <value>SubRip, plays anywhere</value>
+  </data>
+  <data name="VTT" xml:space="preserve">
+    <value>VTT</value>
+  </data>
+  <data name="WebVTTForWebVideo" xml:space="preserve">
+    <value>WebVTT, for web video</value>
+  </data>
+  <data name="JustTheWords" xml:space="preserve">
+    <value>Just the words</value>
+  </data>
+  <data name="NoSubtitlesWereFoundInThisFile" xml:space="preserve">
+    <value>No subtitles were found in this file.</value>
+  </data>
+  <data name="CanTWriteSubtitles" xml:space="preserve">
+    <value>Can't write {0} subtitles.</value>
+  </data>
+  <data name="CouldnTFindAnyFramesInThis" xml:space="preserve">
+    <value>Couldn't find any frames in this video.</value>
+  </data>
+  <data name="EditingAudioAndVideoNeedsFfmpegInstall" xml:space="preserve">
+    <value>Editing audio and video needs ffmpeg. Install it with: winget install Gyan.FFmpeg.Essentials</value>
+  </data>
+  <data name="ThereSNoPictureOrSoundIn" xml:space="preserve">
+    <value>There's no picture or sound in this file that ffmpeg can read.</value>
+  </data>
+  <data name="LosslessWhenTheCutsAreOnKeyframes" xml:space="preserve">
+    <value>Lossless when the cuts are on keyframes, otherwise exact</value>
+  </data>
+  <data name="ExactReEncodeThePartKept" xml:space="preserve">
+    <value>Exact: re-encode the part kept</value>
+  </data>
+  <data name="LosslessWidenTheCutsToTheKeyframes" xml:space="preserve">
+    <value>Lossless: widen the cuts to the keyframes around them</value>
+  </data>
+  <data name="FromAndToSuchAs030" xml:space="preserve">
+    <value>From and to, such as 0:30.033-1:00. Each end goes to the nearest frame; leave out the end to keep the rest.</value>
+  </data>
+  <data name="Trim" xml:space="preserve">
+    <value>Trim…</value>
+  </data>
+  <data name="FrameByFrameExactTimes" xml:space="preserve">
+    <value>Frame by frame, exact times</value>
+  </data>
+  <data name="Trimming" xml:space="preserve">
+    <value>Trimming…</value>
+  </data>
+  <data name="Trimmed" xml:space="preserve">
+    <value>Trimmed</value>
+  </data>
+  <data name="Cut" xml:space="preserve">
+    <value>Cut</value>
+  </data>
+  <data name="OnTheSoundSShape" xml:space="preserve">
+    <value>On the sound's shape</value>
+  </data>
+  <data name="FromAndToSuchAs0302" xml:space="preserve">
+    <value>From and to, such as 0:30.5-1:00, to the millisecond; leave out the end to keep the rest.</value>
+  </data>
+  <data name="CouldnTFindAPictureInThis" xml:space="preserve">
+    <value>Couldn't find a picture in this video.</value>
+  </data>
+  <data name="ThatKeepsAllOfItSoThere" xml:space="preserve">
+    <value>That keeps all of it, so there's nothing to trim.</value>
+  </data>
+  <data name="IsPastTheEndOfThisVideo" xml:space="preserve">
+    <value>{0} is past the end of this video, which is {1} long.</value>
+  </data>
+  <data name="KeepAtLeastOneFrameTheEnd" xml:space="preserve">
+    <value>Keep at least one frame: the end has to come after the start.</value>
+  </data>
+  <data name="CutAtTheKeyframesAroundItWithout" xml:space="preserve">
+    <value>Cut at the keyframes around it, without re-encoding: {0} to {1}</value>
+  </data>
+  <data name="CopiedWithoutReEncodingBothCutsAre" xml:space="preserve">
+    <value>Copied without re-encoding: both cuts are on keyframes</value>
+  </data>
+  <data name="ReEncodedSoEachCutIsOn" xml:space="preserve">
+    <value>Re-encoded, so each cut is on the exact frame</value>
+  </data>
+  <data name="SaveFrames" xml:space="preserve">
+    <value>Save frames…</value>
+  </data>
+  <data name="MomentsAsFullSizePNGs" xml:space="preserve">
+    <value>Moments as full-size PNGs</value>
+  </data>
+  <data name="SavingFrames" xml:space="preserve">
+    <value>Saving frames…</value>
+  </data>
+  <data name="FramesSaved" xml:space="preserve">
+    <value>Frames saved</value>
+  </data>
+  <data name="SaveFrames2" xml:space="preserve">
+    <value>Save frames</value>
+  </data>
+  <data name="Moments" xml:space="preserve">
+    <value>Moments</value>
+  </data>
+  <data name="MoveTheSliderToAMomentAnd" xml:space="preserve">
+    <value>Move the slider to a moment and press Add, or type times such as 0:05, 1:12.5.</value>
+  </data>
+  <data name="SplitAt" xml:space="preserve">
+    <value>Split at…</value>
+  </data>
+  <data name="AtTheMomentsYouChoose" xml:space="preserve">
+    <value>At the moments you choose</value>
+  </data>
+  <data name="SplitAt2" xml:space="preserve">
+    <value>Split at</value>
+  </data>
+  <data name="EachMomentStartsANewPartMove" xml:space="preserve">
+    <value>Each moment starts a new part. Move the slider and press Add, or type times such as 0:30, 1:45.</value>
+  </data>
+  <data name="CouldnTFindAPictureAndA" xml:space="preserve">
+    <value>Couldn't find a picture and a length in this video.</value>
+  </data>
+  <data name="EveryPartNeedsToBeAtLeast" xml:space="preserve">
+    <value>Every part needs to be at least half a second long.</value>
+  </data>
+  <data name="FfmpegCouldnTSplitThisVideoAt" xml:space="preserve">
+    <value>ffmpeg couldn't split this video at those moments.</value>
+  </data>
+  <data name="Showing" xml:space="preserve">
+    <value>Showing</value>
+  </data>
+  <data name="Of2" xml:space="preserve">
+    <value>{0} of {1}</value>
+  </data>
+  <data name="Frames" xml:space="preserve">
+    <value>Frames</value>
+  </data>
+  <data name="NoneYet" xml:space="preserve">
+    <value>None yet</value>
+  </data>
+  <data name="PNG2" xml:space="preserve">
+    <value>{0} PNG{1}, {2}</value>
+  </data>
+  <data name="Parts" xml:space="preserve">
+    <value>Parts</value>
+  </data>
+  <data name="AddAMomentToSplitAt" xml:space="preserve">
+    <value>Add a moment to split at</value>
+  </data>
+  <data name="Part" xml:space="preserve">
+    <value>Part {0}</value>
+  </data>
+  <data name="ToLong" xml:space="preserve">
+    <value>{0} to {1} · {2} long</value>
+  </data>
+  <data name="CouldnTFindTheBoxesFile" xml:space="preserve">
+    <value>Couldn't find the boxes file {0}.</value>
+  </data>
+  <data name="CouldnTReadTheBoxes" xml:space="preserve">
+    <value>Couldn't read the boxes: {0}</value>
+  </data>
+  <data name="AreasForStretchesOfTime" xml:space="preserve">
+    <value>Areas for stretches of time</value>
+  </data>
+  <data name="TheAreasAsJSONOrAJson" xml:space="preserve">
+    <value>The areas as JSON, or a .json file of them: {"boxes": [{"x": 10, "y": 20, "width": 100, "height": 80, "from": 1.5, "to": 3}]}, </value>
+  </data>
+  <data name="InPixelsAndSecondsLeaveOutTo" xml:space="preserve">
+    <value>in pixels and seconds; leave out "to" to hide it to the end. A box can follow something with "track": [{"at": 1.5, "x": 10, "y": 20, "width": 100, "height": 80}, …].</value>
+  </data>
+  <data name="ThereSNothingToRedactGiveThe2" xml:space="preserve">
+    <value>There's nothing to redact: give the areas, such as {"boxes": [{"x": 10, "y": 20, "width": 100, "height": 80}]}.</value>
+  </data>
+  <data name="AreaNeedsAWidthAndAHeight" xml:space="preserve">
+    <value>Area {0} needs a width and a height of at least a pixel.</value>
+  </data>
+  <data name="AreaIsOutsideThePicture" xml:space="preserve">
+    <value>Area {0} is outside the {1} picture.</value>
+  </data>
+  <data name="AreaHasToEndAfterItStarts" xml:space="preserve">
+    <value>Area {0} has to end after it starts.</value>
+  </data>
+  <data name="AreaStartsAtPastTheEndOf" xml:space="preserve">
+    <value>Area {0} starts at {1}, past the end of this video, which is {2} long.</value>
+  </data>
+  <data name="Hidden" xml:space="preserve">
+    <value> hidden</value>
+  </data>
+  <data name="TheLocationRemoved" xml:space="preserve">
+    <value>; the location removed</value>
+  </data>
+  <data name="WindowsCanTFollowFacesOnThis" xml:space="preserve">
+    <value>Windows can't follow faces on this PC.</value>
+  </data>
+  <data name="WindowsFaceTrackerCouldnTLookAt" xml:space="preserve">
+    <value>Windows' face tracker couldn't look at the video (0x{0:X8}).</value>
+  </data>
+  <data name="MakeAVideo" xml:space="preserve">
+    <value>Make a video…</value>
+  </data>
+  <data name="WaveformOrPictureAsMP4" xml:space="preserve">
+    <value>Waveform or picture, as MP4</value>
+  </data>
+  <data name="MakingAVideo" xml:space="preserve">
+    <value>Making a video…</value>
+  </data>
+  <data name="VideoMade" xml:space="preserve">
+    <value>Video made</value>
+  </data>
+  <data name="MakeVideo" xml:space="preserve">
+    <value>Make video</value>
+  </data>
+  <data name="Show" xml:space="preserve">
+    <value>Show</value>
+  </data>
+  <data name="Waveform" xml:space="preserve">
+    <value>Waveform</value>
+  </data>
+  <data name="AStillPicture" xml:space="preserve">
+    <value>A still picture</value>
+  </data>
+  <data name="Landscape169" xml:space="preserve">
+    <value>Landscape 16:9</value>
+  </data>
+  <data name="Portrait916" xml:space="preserve">
+    <value>Portrait 9:16</value>
+  </data>
+  <data name="Square" xml:space="preserve">
+    <value>Square</value>
+  </data>
+  <data name="WaveColour" xml:space="preserve">
+    <value>Wave colour</value>
+  </data>
+  <data name="EmptyUsesTheCoverArtIfThe" xml:space="preserve">
+    <value>Empty uses the cover art, if the file has some. Behind a waveform, it's darkened.</value>
+  </data>
+  <data name="Part2" xml:space="preserve">
+    <value>Part</value>
+  </data>
+  <data name="EmptyMakesAVideoOfTheWhole" xml:space="preserve">
+    <value>Empty makes a video of the whole file.</value>
+  </data>
+  <data name="TheCoverArt" xml:space="preserve">
+    <value>The cover art</value>
+  </data>
+  <data name="ThisFileHasNoSoundToShow" xml:space="preserve">
+    <value>This file has no sound to show.</value>
+  </data>
+  <data name="ThePartStartsAfterTheEndOf" xml:space="preserve">
+    <value>The part starts after the end of the file, which is {0} long.</value>
+  </data>
+  <data name="ChooseAPictureThisFileHasNo" xml:space="preserve">
+    <value>Choose a picture: this file has no cover art.</value>
+  </data>
+  <data name="WindowsCanTRunTheFaceFinder" xml:space="preserve">
+    <value>Windows can't run the face finder on this PC.</value>
+  </data>
+  <data name="Bytes" xml:space="preserve">
+    <value>{0} bytes</value>
+  </data>
+  <data name="To" xml:space="preserve">
+    <value>{0} to {1}</value>
+  </data>
+  <data name="MustBeAWholeNumberFrom" xml:space="preserve">
+    <value>must be a whole number from {0}</value>
+  </data>
+  <data name="MustBeANumberFrom" xml:space="preserve">
+    <value>must be a number from {0}</value>
+  </data>
+  <data name="MustBeOneOf" xml:space="preserve">
+    <value>must be one of </value>
+  </data>
+  <data name="MustBeTrueOrFalse" xml:space="preserve">
+    <value>must be true or false</value>
+  </data>
+  <data name="MustBeAColourSuchAsFF8800" xml:space="preserve">
+    <value>must be a colour such as #FF8800</value>
+  </data>
+  <data name="IsNeeded" xml:space="preserve">
+    <value>is needed</value>
+  </data>
+  <data name="MustBeAFileThatExists" xml:space="preserve">
+    <value>must be a file that exists</value>
+  </data>
+  <data name="MustBeATimeRangeSuchAs" xml:space="preserve">
+    <value>must be a time range such as 0:30-1:45</value>
+  </data>
+  <data name="MustBeTimesSuchAs005" xml:space="preserve">
+    <value>must be times such as 0:05, 1:12.5</value>
+  </data>
+  <data name="NeedsAtLeastOneTime" xml:space="preserve">
+    <value>needs at least one time</value>
+  </data>
+  <data name="MustListEachFileOnceSuchAs" xml:space="preserve">
+    <value>must list each file once, such as 2,1,3</value>
+  </data>
+  <data name="NoOtherPDFWasGiven" xml:space="preserve">
+    <value>no other PDF was given</value>
+  </data>
+  <data name="PDFWas" xml:space="preserve">
+    <value>PDF was</value>
+  </data>
+  <data name="PDFsWere" xml:space="preserve">
+    <value>PDFs were</value>
+  </data>
+  <data name="OnePage" xml:space="preserve">
+    <value>1 page</value>
+  </data>
+  <data name="NPages" xml:space="preserve">
+    <value>{0} pages</value>
+  </data>
+  <data name="OneMark" xml:space="preserve">
+    <value>1 mark</value>
+  </data>
+  <data name="NMarks" xml:space="preserve">
+    <value>{0} marks</value>
+  </data>
+  <data name="OneArea" xml:space="preserve">
+    <value>1 area</value>
+  </data>
+  <data name="NAreas" xml:space="preserve">
+    <value>{0} areas</value>
+  </data>
+  <data name="OneFace" xml:space="preserve">
+    <value>1 face</value>
+  </data>
+  <data name="NFaces" xml:space="preserve">
+    <value>{0} faces</value>
+  </data>
+  <data name="OneWord" xml:space="preserve">
+    <value>1 word</value>
+  </data>
+  <data name="NWords" xml:space="preserve">
+    <value>{0} words</value>
+  </data>
+  <data name="OneFrame" xml:space="preserve">
+    <value>1 frame</value>
+  </data>
+  <data name="NFrames" xml:space="preserve">
+    <value>{0} frames</value>
+  </data>
+  <data name="OneFile" xml:space="preserve">
+    <value>1 file</value>
+  </data>
+  <data name="NFiles" xml:space="preserve">
+    <value>{0} files</value>
+  </data>
+  <data name="OneItem" xml:space="preserve">
+    <value>1 item</value>
+  </data>
+  <data name="NItems" xml:space="preserve">
+    <value>{0} items</value>
+  </data>
+  <data name="ZipOne" xml:space="preserve">
+    <value>Compress into a .zip</value>
+  </data>
+  <data name="ZipMany" xml:space="preserve">
+    <value>Compress {0} items into a .zip</value>
+  </data>
+  <data name="SevenZipOne" xml:space="preserve">
+    <value>Compress into a .7z (smaller)</value>
+  </data>
+  <data name="SevenZipMany" xml:space="preserve">
+    <value>Compress {0} items into a .7z (smaller)</value>
+  </data>
+  <data name="TarOne" xml:space="preserve">
+    <value>Pack into a .tar</value>
+  </data>
+  <data name="TarMany" xml:space="preserve">
+    <value>Pack {0} items into a .tar</value>
+  </data>
+</root>

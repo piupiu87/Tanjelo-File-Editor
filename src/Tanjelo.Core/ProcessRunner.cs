@@ -53,7 +53,7 @@ public static class ProcessRunner
         }
         catch (System.ComponentModel.Win32Exception ex)
         {
-            throw new ConversionException($"Couldn't start {Path.GetFileName(exe)}: {ex.Message}", ex);
+            throw new ConversionException(string.Format(Strings.CouldnTStart, Path.GetFileName(exe), ex.Message), ex);
         }
         // A closed stdin makes any unexpected prompt (e.g. "enter password") fail instead of hanging forever.
         process.StandardInput.Close();

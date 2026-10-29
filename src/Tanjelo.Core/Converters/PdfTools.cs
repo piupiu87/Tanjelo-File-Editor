@@ -5,11 +5,11 @@ namespace Tanjelo.Core.Converters;
 /// <summary>Splits a PDF into one file per page. Pages are copied as they are, so nothing is re-rendered or lost.</summary>
 public sealed class SplitPdfTool : IConverter
 {
-    static readonly Target Split = new("split-pdf", "Split into pages", "One PDF per page", Section.Document)
+    static readonly Target Split = new("split-pdf", Strings.SplitIntoPages, Strings.OnePDFPerPage, Section.Document)
     {
         Kind = TargetKind.Tool,
-        Running = "Splitting…",
-        Done = "Split into pages",
+        Running = Strings.Splitting,
+        Done = Strings.SplitIntoPages,
     };
 
     public IEnumerable<Target> TargetsFor(string input) => Formats.Key(input) == "pdf" ? [Split] : [];
@@ -19,7 +19,7 @@ public sealed class SplitPdfTool : IConverter
         using var source = PdfFiles.OpenForImport(input);
         var count = source.PageCount;
         if (count < 2)
-            throw new ConversionException("This PDF has only one page.");
+            throw new ConversionException(Strings.ThisPDFHasOnlyOnePage);
 
         var baseName = Formats.BaseName(input);
         var folder = OutputPaths.Unique(OutputPaths.DirectoryOf(input), baseName + " pages", "");
@@ -51,12 +51,12 @@ public sealed class MergePdfOperation : IBatchOperation
     public IEnumerable<Target> TargetsFor(IReadOnlyList<string> inputs)
     {
         if (inputs.Count >= 2 && inputs.All(i => Formats.Key(i) == "pdf"))
-            yield return new Target("merge-pdf", "Merge into one PDF", "In the order selected", Section.Document)
+            yield return new Target("merge-pdf", Strings.MergeIntoOnePDF, Strings.InTheOrderSelected, Section.Document)
             {
                 IsBatch = true,
                 Kind = TargetKind.Tool,
-                Running = "Merging…",
-                Done = "Merged into one PDF",
+                Running = Strings.Merging,
+                Done = Strings.MergedIntoOnePDF,
             };
     }
 

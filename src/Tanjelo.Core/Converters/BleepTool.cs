@@ -10,7 +10,7 @@ public readonly record struct Bleep(double Start, double End, bool Tone = true, 
         $"{OptionValues.FormatTime(Start)}-{OptionValues.FormatTime(End)} " + (Tone ? $"tone {Pitch.ToString(CultureInfo.InvariantCulture)}" : "silence");
 
     /// <summary>What covers it, as people read it: "Tone, 1000 Hz" or "Silence".</summary>
-    public string Cover => Tone ? $"Tone, {Pitch.ToString(CultureInfo.InvariantCulture)} Hz" : "Silence";
+    public string Cover => Tone ? string.Format(Strings.ToneHz, Pitch.ToString(CultureInfo.InvariantCulture)) : Strings.Silence;
 
     public bool SameCover(Bleep other) => Tone == other.Tone && (!Tone || Pitch == other.Pitch);
 }
@@ -22,7 +22,7 @@ public readonly record struct Bleep(double Start, double End, bool Tone = true, 
 /// </summary>
 public sealed class BleepTool(Toolbox tools) : IConverter
 {
-    public static readonly Choice[] Sounds = [new("tone", "Tone"), new("silence", "Silence")];
+    public static readonly Choice[] Sounds = [new("tone", Strings.Tone), new("silence", Strings.Silence)];
 
     /// <summary>The pitches a tone can have, in hertz.</summary>
     public const int LowestPitch = 200, HighestPitch = 4000;
@@ -30,22 +30,22 @@ public sealed class BleepTool(Toolbox tools) : IConverter
     /// <summary>How loud the tone is, from 0 to 1: about −13 dB, plainly a bleep without being harsh.</summary>
     const double ToneLevel = 0.3;
 
-    static Target Entry(Section section) => new Target("bleep", "Bleep…", "Tone or silence over parts", section)
+    static Target Entry(Section section) => new Target("bleep", Strings.Bleep, Strings.ToneOrSilenceOverParts, section)
     {
         Kind = TargetKind.Tool,
-        Running = "Bleeping…",
-        Done = "Bleeped",
-        Confirm = "Save",
+        Running = Strings.Bleeping,
+        Done = Strings.Bleeped,
+        Confirm = Strings.Save,
         Editor = EditorKind.Bleep,
     }.WithOptions(
-        new Option("ranges", "Bleep", OptionKind.Text, "")
+        new Option("ranges", Strings.Bleep2, OptionKind.Text, "")
         {
             Optional = true,
             Remember = false,
-            Hint = "Stretches to cover, such as 0:10-0:12, 0:20-0:21.5. Each takes the sound and pitch below, unless it says its own: 0:10-0:12 silence, 0:20-0:21.5 tone 800.",
+            Hint = Strings.StretchesToCoverSuchAs010,
         },
-        new Option("sound", "With", OptionKind.Choice, "tone") { Choices = Sounds },
-        new Option("pitch", "Pitch", OptionKind.Number, "1000") { Min = LowestPitch, Max = HighestPitch, Whole = true, Unit = "Hz", ShownWhen = new("sound", "tone") });
+        new Option("sound", Strings.With, OptionKind.Choice, "tone") { Choices = Sounds },
+        new Option("pitch", Strings.Pitch, OptionKind.Number, "1000") { Min = LowestPitch, Max = HighestPitch, Whole = true, Unit = Strings.Hz, ShownWhen = new("sound", "tone") });
 
     static readonly Target VideoEntry = Entry(Section.Video);
     static readonly Target AudioEntry = Entry(Section.Audio);
@@ -69,7 +69,7 @@ public sealed class BleepTool(Toolbox tools) : IConverter
         {
             var words = part.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (!OptionValues.TryRange(words[0], out var range) || range.End is not { } end)
-                throw new ConversionException($"Couldn't read '{part}' as a stretch. Write each as from-to, such as 0:10-0:12, and add silence or tone 800 to cover it otherwise.");
+                throw new ConversionException(string.Format(Strings.CouldnTReadAsAStretchWrite, part));
             // After the times: nothing, "silence", "tone", or "tone 800" (or just "800", with or without "Hz").
             var rest = words.Skip(1).Select(w => w.ToLowerInvariant()).Where(w => w != "hz").ToList();
             var (isTone, hertz) = (tone, pitch);
@@ -85,11 +85,11 @@ public sealed class BleepTool(Toolbox tools) : IConverter
             else if (number is not null)
             {
                 if (!int.TryParse(number.EndsWith("hz", StringComparison.Ordinal) ? number[..^2] : number, NumberStyles.None, CultureInfo.InvariantCulture, out hertz))
-                    throw new ConversionException($"Couldn't read '{part}': after the times, write silence, or tone and a pitch such as tone 800.");
+                    throw new ConversionException(string.Format(Strings.CouldnTReadAfterTheTimesWrite, part));
                 isTone = true;
             }
             if (isTone && hertz is < LowestPitch or > HighestPitch)
-                throw new ConversionException($"The pitch in '{part}' must be from {LowestPitch} to {HighestPitch} Hz.");
+                throw new ConversionException(string.Format(Strings.ThePitchInMustBeFromTo, part, LowestPitch, HighestPitch));
             bleeps.Add(new Bleep(range.Start, end, isTone, hertz));
         }
         return Join(bleeps);
@@ -106,8 +106,8 @@ public sealed class BleepTool(Toolbox tools) : IConverter
             if (joined.Count > 0 && bleep.Start <= joined[^1].End)
             {
                 if (!bleep.SameCover(joined[^1]) && bleep.Start < joined[^1].End)
-                    throw new ConversionException($"The stretches {OptionValues.FormatTime(joined[^1].Start)}-{OptionValues.FormatTime(joined[^1].End)} and " +
-                        $"{OptionValues.FormatTime(bleep.Start)}-{OptionValues.FormatTime(bleep.End)} overlap but are covered differently.");
+                    throw new ConversionException(string.Format(Strings.TheStretchesAnd, OptionValues.FormatTime(joined[^1].Start), OptionValues.FormatTime(joined[^1].End)) +
+                        string.Format(Strings.OverlapButAreCoveredDifferently, OptionValues.FormatTime(bleep.Start), OptionValues.FormatTime(bleep.End)));
                 if (bleep.SameCover(joined[^1]))
                 {
                     joined[^1] = joined[^1] with { End = Math.Max(joined[^1].End, bleep.End) };
@@ -122,19 +122,19 @@ public sealed class BleepTool(Toolbox tools) : IConverter
     public async Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx)
     {
         var media = await Ffmpeg.ProbeAsync(tools, input, ctx.Cancellation);
-        if (media.Audio is null) throw new ConversionException("This file has no sound to bleep.");
+        if (media.Audio is null) throw new ConversionException(Strings.ThisFileHasNoSoundToBleep);
         var bleeps = ParseBleeps(target.Text("ranges"), target.Choice("sound") == "tone", (int)target.Number("pitch"));
-        if (bleeps.Count == 0) throw new ConversionException("There's nothing to bleep: give the stretches, such as 0:10-0:12.");
+        if (bleeps.Count == 0) throw new ConversionException(Strings.ThereSNothingToBleepGiveThe);
         if (bleeps[0].Start >= media.Duration)
-            throw new ConversionException($"{OptionValues.FormatTime(bleeps[0].Start)} is past the end of this file, which is {OptionValues.FormatTime(media.Duration)} long.");
+            throw new ConversionException(string.Format(Strings.IsPastTheEndOfThisFile, OptionValues.FormatTime(bleeps[0].Start), OptionValues.FormatTime(media.Duration)));
 
         var key = Formats.Key(input);
         var video = media.Video is not null;
         var ext = !video || Ffmpeg.CanEncodeVideo(key) ? Formats.Ext(input) : "mkv";
         var output = OutputPaths.Suffixed(input, "bleeped", ext == Formats.Ext(input) ? null : ext);
         await RenderAsync(tools, input, media, bleeps, output, video ? VideoSound(ext, media) : Ffmpeg.KeepSound(key, media), ctx.Progress, ctx.Cancellation);
-        var stretches = bleeps.Count == 1 ? "1 stretch" : $"{bleeps.Count} stretches";
-        ctx.Note(bleeps.All(b => b.Tone) ? $"{stretches} bleeped" : bleeps.All(b => !b.Tone) ? $"{stretches} silenced" : $"{stretches} covered");
+        var stretches = bleeps.Count == 1 ? Strings.N1Stretch : string.Format(Strings.Stretches, bleeps.Count);
+        ctx.Note(bleeps.All(b => b.Tone) ? string.Format(Strings.Bleeped2, stretches) : bleeps.All(b => !b.Tone) ? string.Format(Strings.Silenced, stretches) : string.Format(Strings.Covered, stretches));
         return [output];
     }
 
@@ -242,7 +242,7 @@ public sealed class BleepSound
         using var file = File.OpenRead(wave);
         using var reader = new BinaryReader(file);
         var riff = new string(reader.ReadChars(4));
-        if (riff is not ("RIFF" or "RF64")) throw new ConversionException("Couldn't read the sound ffmpeg made.");
+        if (riff is not ("RIFF" or "RF64")) throw new ConversionException(Strings.CouldnTReadTheSoundFfmpegMade);
         reader.ReadUInt32();
         reader.ReadChars(4);
         int rate = 0, channels = 0;
@@ -265,12 +265,12 @@ public sealed class BleepSound
                     break;
                 case "data":
                     var length = big >= 0 && size == uint.MaxValue ? big : size;
-                    if (rate <= 0 || channels <= 0) throw new ConversionException("Couldn't read the sound ffmpeg made.");
+                    if (rate <= 0 || channels <= 0) throw new ConversionException(Strings.CouldnTReadTheSoundFfmpegMade);
                     return new BleepSound(wave, file.Position, Math.Min(length, file.Length - file.Position), rate, channels);
             }
             file.Position = next;
         }
-        throw new ConversionException("Couldn't read the sound ffmpeg made.");
+        throw new ConversionException(Strings.CouldnTReadTheSoundFfmpegMade);
     }
 
     /// <summary>

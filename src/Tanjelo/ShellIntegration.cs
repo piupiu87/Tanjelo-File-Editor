@@ -44,7 +44,7 @@ static class ShellIntegration
             dynamic shell = Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell")!)!;
             dynamic link = shell.CreateShortcut(SendToShortcut);
             link.TargetPath = ExePath;
-            link.Description = "Convert with Tanjelo";
+            link.Description = Strings.ConvertWithTanjelo;
             link.IconLocation = ExePath + ",0";
             link.Save();
         }

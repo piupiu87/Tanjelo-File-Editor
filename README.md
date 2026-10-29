@@ -60,6 +60,9 @@ Everything works from the keyboard, with a focus ring showing where Tab has got 
 Narrator, which reads out the menu's entries as the arrows move and each result as it appears. With a Windows contrast
 theme on, Tanjelo uses that theme's colours.
 
+Tanjelo is in English for now. Its words are in resource files, ready to translate: [CONTRIBUTING.md](CONTRIBUTING.md#words-and-translations)
+says how to add a language.
+
 ## What converts to what
 
 | From | To | Needs |

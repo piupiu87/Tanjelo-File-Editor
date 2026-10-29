@@ -48,7 +48,7 @@ public partial class SettingsWindow : Window
         _apply = apply;
         _windows = windows;
         _detect = detect;
-        Subheading.Text = $"Tanjelo {Version} · changes apply at once";
+        Subheading.Text = string.Format(Strings.TanjeloChangesApplyAtOnce, Version);
         Height = Math.Min(Height, SystemParameters.WorkArea.Height - 40);
 
         MenuShortcut.Recorded += shortcut => SetShortcut(menu: true, shortcut);
@@ -67,7 +67,7 @@ public partial class SettingsWindow : Window
         Quality(JpegSlider, JpegValue, v => $"{v}", (s, v) => s.JpegQuality = v);
         Quality(WebpSlider, WebpValue, v => $"{v}", (s, v) => s.WebpQuality = v);
         Quality(HeicSlider, HeicValue, v => $"{v}", (s, v) => s.HeicQuality = v);
-        Quality(DpiSlider, DpiValue, v => $"{v} DPI", (s, v) => s.PdfRenderDpi = v);
+        Quality(DpiSlider, DpiValue, v => string.Format(Strings.DPI, v), (s, v) => s.PdfRenderDpi = v);
 
         FfmpegPath.TextChanged += (_, _) => PathTyped(s => s.FfmpegPath = Blank(FfmpegPath.Text));
         SevenZipPath.TextChanged += (_, _) => PathTyped(s => s.SevenZipPath = Blank(SevenZipPath.Text));
@@ -179,7 +179,7 @@ public partial class SettingsWindow : Window
         }
         if (shortcut is not null && string.Equals(shortcut, other, StringComparison.OrdinalIgnoreCase))
         {
-            ShowShortcutProblem(menu ? "That's the shelf's shortcut. Choose other keys." : "That's the menu's shortcut. Choose other keys.");
+            ShowShortcutProblem(menu ? Strings.ThatSTheShelfSShortcutChoose : Strings.ThatSTheMenuSShortcutChoose);
             box.Shortcut = current;
             return;
         }
@@ -248,8 +248,8 @@ public partial class SettingsWindow : Window
     {
         var dialog = new OpenFileDialog
         {
-            Title = $"Choose {exe}",
-            Filter = $"{exe}|{exe}|Programs (*.exe)|*.exe",
+            Title = string.Format(Strings.Choose, exe),
+            Filter = string.Format(Strings.ProgramsExeExe, exe),
             FileName = exe,
         };
         if (File.Exists(box.Text)) dialog.InitialDirectory = Path.GetDirectoryName(box.Text);
@@ -278,9 +278,9 @@ public partial class SettingsWindow : Window
     void ShowTools(Toolbox tools, string? ffmpegPath, string? sevenZipPath)
     {
         ShowStatus(FfmpegStatus, ffmpegPath, "ffmpeg.exe", tools.Ffmpeg,
-            "Not found. Audio and video conversions need it: winget install Gyan.FFmpeg.Essentials");
+            Strings.NotFoundAudioAndVideoConversionsNeed);
         ShowStatus(SevenZipStatus, sevenZipPath, "7z.exe", tools.SevenZip,
-            "Not found. Windows' own zip and tar cover the rest: winget install 7zip.7zip");
+            Strings.NotFoundWindowsOwnZipAndTar);
 
         var office = new List<string>();
         if (tools.Word) office.Add("Word");
@@ -288,23 +288,23 @@ public partial class SettingsWindow : Window
         if (tools.Excel) office.Add("Excel");
         OtherTools.ItemsSource = new[]
         {
-            office.Count > 0 ? new ToolRow("Microsoft Office", true, "Found: " + string.Join(", ", office))
-                : tools.LibreOffice is not null ? new ToolRow("LibreOffice", true, "Found: " + tools.LibreOffice)
-                : new ToolRow("Office", false, "Not found. Word, PowerPoint and Excel files need Microsoft Office or LibreOffice."),
-            tools.Pandoc is not null ? new ToolRow("pandoc", true, "Found: " + tools.Pandoc)
-                : new ToolRow("pandoc", false, "Not found. Word, EPUB and Markdown-to-DOCX need it: winget install JohnMacFarlane.Pandoc"),
-            tools.WebView2 is not null ? new ToolRow("WebView2", true, "Found: version " + tools.WebView2)
-                : new ToolRow("WebView2", false, "Not found. Markdown, EPUB and HTML to PDF need it: winget install Microsoft.EdgeWebView2Runtime"),
-            tools.Heic ? new ToolRow("HEIC", true, "Windows can write HEIC")
-                : new ToolRow("HEIC", false, "HEIC output needs the HEIF and HEVC Video Extensions from the Microsoft Store."),
+            office.Count > 0 ? new ToolRow(Strings.MicrosoftOffice, true, Strings.Found + string.Join(", ", office))
+                : tools.LibreOffice is not null ? new ToolRow(Strings.LibreOffice, true, Strings.Found + tools.LibreOffice)
+                : new ToolRow(Strings.Office, false, Strings.NotFoundWordPowerPointAndExcelFiles),
+            tools.Pandoc is not null ? new ToolRow(Strings.Pandoc, true, Strings.Found + tools.Pandoc)
+                : new ToolRow(Strings.Pandoc, false, Strings.NotFoundWordEPUBAndMarkdownTo),
+            tools.WebView2 is not null ? new ToolRow(Strings.WebView2, true, Strings.FoundVersion + tools.WebView2)
+                : new ToolRow(Strings.WebView2, false, Strings.NotFoundMarkdownEPUBAndHTMLTo),
+            tools.Heic ? new ToolRow(Strings.HEIC, true, Strings.WindowsCanWriteHEIC)
+                : new ToolRow(Strings.HEIC, false, Strings.HEICOutputNeedsTheHEIFAndHEVC),
         };
     }
 
     static void ShowStatus(TextBlock status, string? chosen, string exe, string? found, string missing)
     {
-        var text = found is not null ? "Found: " + found : missing;
+        var text = found is not null ? Strings.Found + found : missing;
         if (chosen is not null && !File.Exists(chosen))
-            text = $"There's no {exe} at that path. " + (found is not null ? "Using " + found : missing);
+            text = string.Format(Strings.ThereSNoAtThatPath, exe) + (found is not null ? Strings.Using + found : missing);
         status.Text = text;
         status.SetResourceReference(TextBlock.ForegroundProperty, found is not null ? "Success" : "TextTertiary");
     }

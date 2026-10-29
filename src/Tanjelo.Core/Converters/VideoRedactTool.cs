@@ -63,7 +63,7 @@ public static class VideoBoxSpec
         if (!text.StartsWith('{') && !text.StartsWith('['))
         {
             var path = Path.GetFullPath(text, OutputPaths.DirectoryOf(besides));
-            if (!System.IO.File.Exists(path)) throw new ConversionException($"Couldn't find the boxes file {path}.");
+            if (!System.IO.File.Exists(path)) throw new ConversionException(string.Format(Strings.CouldnTFindTheBoxesFile, path));
             text = System.IO.File.ReadAllText(path);
         }
         try
@@ -75,8 +75,8 @@ public static class VideoBoxSpec
         }
         catch (JsonException ex)
         {
-            throw new ConversionException($"Couldn't read the boxes: {ex.Message.Split(" Path:")[0].Split(" LineNumber:")[0].TrimEnd('.')}" +
-                (ex.LineNumber is { } line ? $", on line {line + 1}." : "."), ex);
+            throw new ConversionException(string.Format(Strings.CouldnTReadTheBoxes, ex.Message.Split(" Path:")[0].Split(" LineNumber:")[0].TrimEnd('.')) +
+                (ex.LineNumber is { } line ? string.Format(Strings.OnLine, line + 1) : "."), ex);
         }
     }
 }
@@ -89,23 +89,23 @@ public static class VideoBoxSpec
 /// </summary>
 public sealed class VideoRedactTool(Toolbox tools) : IConverter
 {
-    static readonly Target Entry = new Target("redact", "Redact…", "Areas for stretches of time", Section.Video)
+    static readonly Target Entry = new Target("redact", Strings.Redact, Strings.AreasForStretchesOfTime, Section.Video)
     {
         Kind = TargetKind.Tool,
-        Running = "Redacting…",
-        Done = "Redacted",
-        Confirm = "Save",
+        Running = Strings.Redacting,
+        Done = Strings.Redacted,
+        Confirm = Strings.Save,
         Editor = EditorKind.RedactVideo,
     }.WithOptions(
-        new Option("spec", "Areas", OptionKind.Text, "")
+        new Option("spec", Strings.Areas, OptionKind.Text, "")
         {
             Optional = true,
             Remember = false,
-            Hint = "The areas as JSON, or a .json file of them: {\"boxes\": [{\"x\": 10, \"y\": 20, \"width\": 100, \"height\": 80, \"from\": 1.5, \"to\": 3}]}, " +
-                "in pixels and seconds; leave out \"to\" to hide it to the end. A box can follow something with \"track\": [{\"at\": 1.5, \"x\": 10, \"y\": 20, \"width\": 100, \"height\": 80}, …].",
+            Hint = Strings.TheAreasAsJSONOrAJson +
+                Strings.InPixelsAndSecondsLeaveOutTo,
         },
-        new Option("style", "Style", OptionKind.Choice, "solid") { Choices = Redaction.Styles },
-        new Option("colour", "Colour", OptionKind.Colour, "#000000") { ShownWhen = new("style", "solid") });
+        new Option("style", Strings.Style, OptionKind.Choice, "solid") { Choices = Redaction.Styles },
+        new Option("colour", Strings.Colour, OptionKind.Colour, "#000000") { ShownWhen = new("style", "solid") });
 
     public IEnumerable<Target> TargetsFor(string input) =>
         tools.Ffmpeg is not null && tools.Ffprobe is not null && Formats.Videos.Contains(Formats.Key(input)) ? [Entry] : [];
@@ -114,20 +114,20 @@ public sealed class VideoRedactTool(Toolbox tools) : IConverter
     {
         var media = await Ffmpeg.ProbeAsync(tools, input, ctx.Cancellation);
         if (media.Video is null || media.Width <= 0 || media.Height <= 0)
-            throw new ConversionException("Couldn't find a picture in this video.");
+            throw new ConversionException(Strings.CouldnTFindAPictureInThis);
         var boxes = VideoBoxSpec.Read(target.Text("spec"), input);
-        if (boxes.Count == 0) throw new ConversionException("There's nothing to redact: give the areas, such as {\"boxes\": [{\"x\": 10, \"y\": 20, \"width\": 100, \"height\": 80}]}.");
+        if (boxes.Count == 0) throw new ConversionException(Strings.ThereSNothingToRedactGiveThe2);
         for (var i = 0; i < boxes.Count; i++)
         {
             var box = boxes[i];
             if (box.Width < 1 || box.Height < 1)
-                throw new ConversionException($"Area {i + 1} needs a width and a height of at least a pixel.");
+                throw new ConversionException(string.Format(Strings.AreaNeedsAWidthAndAHeight, i + 1));
             if (new RedactBox(box.X, box.Y, box.Width, box.Height).Within(media.Width, media.Height) is null && box.Track is not { Count: > 0 })
-                throw new ConversionException($"Area {i + 1} is outside the {Describe.Pixels(media.Width, media.Height)} picture.");
+                throw new ConversionException(string.Format(Strings.AreaIsOutsideThePicture, i + 1, Describe.Pixels(media.Width, media.Height)));
             if (box.To is { } to && to <= box.From)
-                throw new ConversionException($"Area {i + 1} has to end after it starts.");
+                throw new ConversionException(string.Format(Strings.AreaHasToEndAfterItStarts, i + 1));
             if (box.From >= media.Duration)
-                throw new ConversionException($"Area {i + 1} starts at {OptionValues.FormatTime(box.From)}, past the end of this video, which is {OptionValues.FormatTime(media.Duration)} long.");
+                throw new ConversionException(string.Format(Strings.AreaStartsAtPastTheEndOf, i + 1, OptionValues.FormatTime(box.From), OptionValues.FormatTime(media.Duration)));
         }
 
         var key = Ffmpeg.CanEncodeVideo(Formats.Key(input)) ? Formats.Key(input) : "mp4";
@@ -143,7 +143,7 @@ public sealed class VideoRedactTool(Toolbox tools) : IConverter
         // The sound is copied when the container is the same; otherwise, or if that fails, it's re-encoded too.
         IEnumerable<string[]> plans = key == Formats.Key(input) ? [[.. encode, "-c:a", "copy"], encode] : [encode];
         await Ffmpeg.RunFirstWorkingAsync(tools, input, output, plans, media.Duration, ctx);
-        ctx.Note(Describe.Count(boxes.Count, "area") + " hidden" + (MetadataTool.LocationTags.Any(media.Tags.ContainsKey) ? "; the location removed" : ""));
+        ctx.Note(Describe.Count(boxes.Count, Strings.OneArea, Strings.NAreas) + Strings.Hidden + (MetadataTool.LocationTags.Any(media.Tags.ContainsKey) ? Strings.TheLocationRemoved : ""));
         return [output];
     }
 
@@ -414,7 +414,7 @@ public static class FaceFollow
     public static async Task<IReadOnlyList<BoxAt>> TrackAsync(Toolbox tools, string input, RedactBox start, double from, double to,
         IProgress<double> progress, CancellationToken ct)
     {
-        if (!CanFollow) throw new ConversionException("Windows can't follow faces on this PC.");
+        if (!CanFollow) throw new ConversionException(Strings.WindowsCanTFollowFacesOnThis);
         var media = await Ffmpeg.ProbeAsync(tools, input, ct);
         if (YuNet.IsAvailable)
         {
@@ -453,7 +453,7 @@ public static class FaceFollow
             }
             catch (System.Runtime.InteropServices.COMException ex)
             {
-                throw new ConversionException($"Windows' face tracker couldn't look at the video (0x{ex.HResult:X8}).", ex);
+                throw new ConversionException(string.Format(Strings.WindowsFaceTrackerCouldnTLookAt, ex.HResult), ex);
             }
         }, progress, ct);
     }

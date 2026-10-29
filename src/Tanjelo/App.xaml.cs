@@ -67,7 +67,7 @@ public partial class App : Application
         _singleInstance = new Mutex(true, @"Local\Tanjelo.Tray", out var isFirst);
         if (!isFirst)
         {
-            MessageBox.Show("Tanjelo is already running. Look for its icon in the notification area.", "Tanjelo");
+            MessageBox.Show(Strings.TanjeloIsAlreadyRunningLookForIts, "Tanjelo");
             Shutdown();
             return;
         }
@@ -87,13 +87,13 @@ public partial class App : Application
         _hotkey.Pressed += OnHotkey;
         _hotkey.ShelfPressed += ToggleShelf;
         _hotkey.AlsoIn = hwnd => _float is { IsVisible: true } shelf && hwnd == shelf.Hwnd;
-        _hotkey.Conflict += () => _tray.Notify("Shortcut unavailable", $"Another app is already using {_settings.Hotkey}. Choose a different one in Settings.");
+        _hotkey.Conflict += () => _tray.Notify(Strings.ShortcutUnavailable, string.Format(Strings.AnotherAppIsAlreadyUsingChooseA, _settings.Hotkey));
         ApplyHotkey();
         WatchSettings();
         StartUpdateChecks();
 
         if (showWelcome)
-            _tray.Notify("Tanjelo is ready", $"Select files in File Explorer and press {_settings.Hotkey}.");
+            _tray.Notify(Strings.TanjeloIsReady, string.Format(Strings.SelectFilesInFileExplorerAndPress, _settings.Hotkey));
         if (_shelf.Open)
             ShowShelf();
     }
@@ -108,18 +108,18 @@ public partial class App : Application
         }
         else
         {
-            _tray!.Notify("Shortcut not recognised", $"Couldn't read \"{_settings.Hotkey}\". Use something like Ctrl+Shift+Space.");
+            _tray!.Notify(Strings.ShortcutNotRecognised, string.Format(Strings.CouldnTReadUseSomethingLikeCtrl, _settings.Hotkey));
         }
 
         // The shelf's own shortcut is optional and works everywhere.
         if (string.IsNullOrWhiteSpace(_settings.FloatHotkey))
             _hotkey!.SetShelf(null);
         else if (!Settings.TryParseHotkey(_settings.FloatHotkey, out var shelfModifiers, out var shelfKey))
-            _tray!.Notify("Shortcut not recognised", $"Couldn't read the shelf shortcut \"{_settings.FloatHotkey}\". Use something like Ctrl+Shift+F.");
+            _tray!.Notify(Strings.ShortcutNotRecognised, string.Format(Strings.CouldnTReadTheShelfShortcutUse, _settings.FloatHotkey));
         else if (!_hotkey!.SetShelf((shelfModifiers, shelfKey)))
         {
-            _tray!.Notify("Shortcut unavailable", $"Another app is already using {_settings.FloatHotkey}. Choose a different shelf shortcut in Settings.");
-            _settingsWindow?.ShowShortcutProblem($"Another app is already using {_settings.FloatHotkey}. Choose other keys for the shelf.");
+            _tray!.Notify(Strings.ShortcutUnavailable, string.Format(Strings.AnotherAppIsAlreadyUsingChooseA2, _settings.FloatHotkey));
+            _settingsWindow?.ShowShortcutProblem(string.Format(Strings.AnotherAppIsAlreadyUsingChooseOther, _settings.FloatHotkey));
         }
     }
 
@@ -144,7 +144,7 @@ public partial class App : Application
             // On the shelf, the shortcut converts what's selected there, or everything on it.
             files = shelf.SelectedOrAll();
             if (files.Count == 0)
-                Toast().ShowMessage("The shelf is empty", "Drop files on it first.");
+                Toast().ShowMessage(Strings.TheShelfIsEmpty, Strings.DropFilesOnItFirst);
             else
                 _ = ShowMenuAsync(files);
             return;
@@ -156,12 +156,12 @@ public partial class App : Application
         catch (Exception ex)
         {
             Log.Write(ex);
-            Toast().ShowError("Couldn't read the selection", ex.Message);
+            Toast().ShowError(Strings.CouldnTReadTheSelection, ex.Message);
             return;
         }
         if (files.Count == 0)
         {
-            Toast().ShowMessage("Nothing selected", "Select one or more files in File Explorer first.");
+            Toast().ShowMessage(Strings.NothingSelected, Strings.SelectOneOrMoreFilesInFile);
             return;
         }
         _ = ShowMenuAsync(files);
@@ -169,7 +169,7 @@ public partial class App : Application
 
     void PickFilesAndConvert()
     {
-        var dialog = new OpenFileDialog { Multiselect = true, Title = "Choose files to convert" };
+        var dialog = new OpenFileDialog { Multiselect = true, Title = Strings.ChooseFilesToConvert };
         if (dialog.ShowDialog() == true)
             _ = ShowMenuAsync(dialog.FileNames);
     }
@@ -202,7 +202,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             Log.Write(ex);
-            Toast().ShowError("Something went wrong", ex.Message);
+            Toast().ShowError(Strings.SomethingWentWrong, ex.Message);
         }
         finally
         {
@@ -273,7 +273,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             Log.Write(ex);
-            toast.ShowError("Conversion failed", ex.Message);
+            toast.ShowError(Strings.ConversionFailed, ex.Message);
         }
         finally
         {
@@ -383,7 +383,7 @@ public partial class App : Application
         if (error is not null)
         {
             Log.Write($"settings: {error}");
-            if (notify) _tray?.Notify("Settings not loaded", error);
+            if (notify) _tray?.Notify(Strings.SettingsNotLoaded, error);
         }
         return settings;
     }
@@ -428,7 +428,7 @@ public partial class App : Application
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             Log.Write($"settings: {ex.Message}");
-            _tray?.Notify("Settings not saved", ex.Message);
+            _tray?.Notify(Strings.SettingsNotSaved, ex.Message);
         }
         ApplySettings(before);
     }
@@ -470,14 +470,14 @@ public partial class App : Application
         _checkingUpdates = true;
         try
         {
-            _settingsWindow?.ShowUpdate("Checking…", null);
+            _settingsWindow?.ShowUpdate(Strings.Checking, null);
             await updates.RunIfDueAsync(_settings.CheckForUpdates);
             var (text, link) = updates.Describe();
             _settingsWindow?.ShowUpdate(text, link);
             if (updates.ShouldAnnounce)
             {
                 updates.MarkAnnounced();
-                _tray?.Notify($"Tanjelo {updates.Newer} is out", "Click to see what's new on its release page.", () => OpenPage(updates.Page));
+                _tray?.Notify(string.Format(Strings.TanjeloIsOut, updates.Newer), Strings.ClickToSeeWhatSNewOn, () => OpenPage(updates.Page));
             }
         }
         finally
@@ -544,7 +544,7 @@ public partial class App : Application
     {
         Log.Write(e.Exception);
         e.Handled = true; // keep the tray app alive
-        try { Toast().ShowError("Something went wrong", e.Exception.Message); }
+        try { Toast().ShowError(Strings.SomethingWentWrong, e.Exception.Message); }
         catch (Exception ex) { Log.Write(ex); }
     }
 

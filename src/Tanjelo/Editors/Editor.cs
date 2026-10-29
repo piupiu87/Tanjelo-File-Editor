@@ -66,7 +66,7 @@ abstract class Editor
     public virtual bool Press(Key key, ModifierKeys modifiers = ModifierKeys.None, bool repeat = false) => false;
 
     /// <summary>What a screen reader calls the canvas or timeline, and the keys it takes, for its help text.</summary>
-    public virtual (string Name, string Keys) Spoken => ("Picture", "");
+    public virtual (string Name, string Keys) Spoken => (Strings.Picture, "");
 
     /// <summary>The window closed: let go of players and delete temporary files.</summary>
     public virtual void Close() { }

@@ -30,7 +30,7 @@ public partial class EditorWindow : Window
         Heading.Text = target.Label.TrimEnd('…');
         Subheading.Text = $"{Path.GetFileName(file)} · {Describe.Size(new FileInfo(file).Length)}";
         Title = $"{Heading.Text} · {Path.GetFileName(file)}";
-        SaveButton.Content = target.Confirm ?? "Save";
+        SaveButton.Content = target.Confirm ?? Strings.Save;
 
         MainSlot.Content = editor.Main;
         ToolSlot.Content = editor.Toolbar;
@@ -108,7 +108,7 @@ public partial class EditorWindow : Window
     /// <summary>Reads the file into the editor, showing progress and then any problem in place of the canvas.</summary>
     internal async Task LoadAsync()
     {
-        Message.Text = "Opening…";
+        Message.Text = Strings.Opening;
         Busy.Visibility = Visibility.Visible;
         try
         {
@@ -288,7 +288,7 @@ public partial class EditorWindow : Window
             ? new Thickness(border.Left + 4, border.Top + 4, border.Right + 4, border.Bottom + 4)
             : new Thickness(0);
         MaximizeButton.Content = WindowState == WindowState.Maximized ? "" : "";
-        MaximizeButton.ToolTip = WindowState == WindowState.Maximized ? "Restore" : "Maximize";
+        MaximizeButton.ToolTip = WindowState == WindowState.Maximized ? Strings.Restore : Strings.Maximize;
     }
 
     internal Brush Brush(string key) => (Brush)FindResource(key);

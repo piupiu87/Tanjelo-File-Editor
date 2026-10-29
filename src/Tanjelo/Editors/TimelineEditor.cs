@@ -67,24 +67,24 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
         Timeline.ShowPictures = Video;
         Timeline.SoundFills = !Video;
         Timeline.Scrubbed += t => MoveTo(t);
-        System.Windows.Automation.AutomationProperties.SetName(Timeline, "Timeline");
+        System.Windows.Automation.AutomationProperties.SetName(Timeline, Strings.Timeline);
         System.Windows.Automation.AutomationProperties.SetHelpText(Timeline,
-            "Space plays or pauses, the arrows step through it, and Tab selects the next stretch or box. The keys are listed beside it.");
+            Strings.SpacePlaysOrPausesTheArrowsStep);
 
-        _play = Panels.Button("\uE768", "Play", "Play or pause (Space)", TogglePlay);
+        _play = Panels.Button("\uE768", Strings.Play, Strings.PlayOrPauseSpace, TogglePlay);
         _play.Margin = new Thickness(0, 0, 4, 0);
         _transport.Children.Add(_play);
-        _transport.Children.Add(Small("\uE892", "Back a frame (←); a second with Shift", () => Step(-1, false)));
-        _transport.Children.Add(Small("\uE893", "On a frame (→); a second with Shift", () => Step(1, false)));
+        _transport.Children.Add(Small("\uE892", Strings.BackAFrameASecondWithShift, () => Step(-1, false)));
+        _transport.Children.Add(Small("\uE893", Strings.OnAFrameASecondWithShift, () => Step(1, false)));
         _time = Panels.Themed(new TextBox
         {
             Width = 108,
             Margin = new Thickness(10, 0, 8, 0),
             VerticalContentAlignment = VerticalAlignment.Center,
-            ToolTip = "Type a time and press Enter to go there, such as 1:02.5",
+            ToolTip = Strings.TypeATimeAndPressEnterTo,
         }, FrameworkElement.StyleProperty, "FieldBox");
-        System.Windows.Automation.AutomationProperties.SetName(_time, "Time");
-        System.Windows.Automation.AutomationProperties.SetHelpText(_time, "Type a time and press Enter to go there, such as 1:02.5");
+        System.Windows.Automation.AutomationProperties.SetName(_time, Strings.Time);
+        System.Windows.Automation.AutomationProperties.SetHelpText(_time, Strings.TypeATimeAndPressEnterTo);
         _time.KeyDown += (_, e) =>
         {
             if (e.Key == Key.Enter) GoToTyped();
@@ -153,7 +153,7 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
     protected double Showing => _frames is { } frames && _preview is { } preview ? frames.Start(frames.At(preview.PictureAt)) : _playhead;
 
     public override FrameworkElement Main => _main;
-    public override (string Name, string Keys) Spoken => ("Picture", "Space plays or pauses, and the arrows step a frame. The keys are listed beside it.");
+    public override (string Name, string Keys) Spoken => (Strings.Picture, Strings.SpacePlaysOrPausesAndTheArrows);
     public override ZoomCanvas? Canvas => Video ? _canvas : null;
 
     /// <summary>Controls of the editor's own at the right of the transport bar, such as the length kept.</summary>
@@ -165,9 +165,9 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
 
     public override string Summary => _media is not { } media ? "" : media.HasVideo
         ? $"{Describe.Pixels(media.Width, media.Height)} · {Rate(media.FrameRate)} · {Describe.Length(media.Duration)}"
-        : $"{media.SampleRate / 1000.0:0.#} kHz · {(media.Channels switch { 1 => "mono", 2 => "stereo", var n => $"{n} channels" })} · {Describe.Length(media.Duration)}";
+        : string.Format(Strings.KHz, media.SampleRate / 1000.0, media.Channels switch { 1 => Strings.Mono, 2 => Strings.Stereo, var n => string.Format(Strings.Channels, n) }, Describe.Length(media.Duration));
 
-    static string Rate(double fps) => fps <= 0 ? "variable frame rate" : string.Create(CultureInfo.InvariantCulture, $"{Math.Round(fps, 3):0.###} fps");
+    static string Rate(double fps) => fps <= 0 ? Strings.VariableFrameRate : string.Format(CultureInfo.InvariantCulture, Strings.Fps, Math.Round(fps, 3));
 
     /// <summary>What's being read in the background, then the editor's own line.</summary>
     public override string Status => string.Join(" · ", new[] { _loading, EditorStatus }.Where(s => s.Length > 0));
@@ -194,7 +194,7 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
         var ct = link.Token;
         _media = await TimelineMedia.OpenAsync(_tools, File, ct);
         if (Video && !_media.HasVideo)
-            throw new ConversionException("There's no picture in this video that ffmpeg can read.");
+            throw new ConversionException(Strings.ThereSNoPictureInThisVideo);
         _frames = Video ? _media.EstimatedFrames : null;
         Timeline.Frames = _frames;
         Timeline.Duration = _media.Duration;
@@ -235,7 +235,7 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
             ShowTime();
         };
         _play.IsEnabled = preview.CanPlay;
-        if (!preview.CanPlay) _play.ToolTip = "Playing needs Windows' player, which can't open this file here";
+        if (!preview.CanPlay) _play.ToolTip = Strings.PlayingNeedsWindowsPlayerWhichCanT;
     }
 
     /// <summary>Reads what the window can show before it's all in: the frames, the shape of the sound, thumbnails, and a copy to play if needed.</summary>
@@ -259,8 +259,8 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
         {
             tasks.Add(Task.Run(async () =>
             {
-                Progress("Reading frames", 0);
-                var frames = await media.LoadFramesAsync(new ActionProgress<double>(f => Progress("Reading frames", f)), ct);
+                Progress(Strings.ReadingFrames, 0);
+                var frames = await media.LoadFramesAsync(new ActionProgress<double>(f => Progress(Strings.ReadingFrames, f)), ct);
                 Dispatch(() =>
                 {
                     _frames = frames;
@@ -269,7 +269,7 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
                     FramesLoaded();
                     ShowTime();
                 });
-                Progress("Reading frames", 1);
+                Progress(Strings.ReadingFrames, 1);
             }, ct));
             tasks.Add(Task.Run(() => media.ThumbnailsAsync((int)TimelineView.PicturesHeight - 4, media.Duration / 240, thumbnail =>
             {
@@ -287,9 +287,9 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
         if (needsCopy)
             tasks.Add(Task.Run(async () =>
             {
-                Progress("Making a copy to play", 0);
-                var copy = await media.PreviewCopyAsync(TempFolder,new ActionProgress<double>(f => Progress("Making a copy to play", f)), ct);
-                Progress("Making a copy to play", 1);
+                Progress(Strings.MakingACopyToPlay, 0);
+                var copy = await media.PreviewCopyAsync(TempFolder,new ActionProgress<double>(f => Progress(Strings.MakingACopyToPlay, f)), ct);
+                Progress(Strings.MakingACopyToPlay, 1);
                 var opened = await Dispatcher.InvokeAsync(() => FramePlayer.OpenAsync(copy, Video, _frames?.Inside(Frame) ?? _playhead, ct)).Task.Unwrap();
                 if (opened is null) return;
                 Dispatch(() =>
@@ -319,7 +319,7 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
             Log.Write(ex);
             Dispatch(() =>
             {
-                _loading = ex is ConversionException ? ex.Message : "Couldn't read all of the file";
+                _loading = ex is ConversionException ? ex.Message : Strings.CouldnTReadAllOfTheFile;
                 RaiseUpdated();
             });
         }
@@ -410,8 +410,8 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
         Timeline.Playhead = _playhead;
         if (!_time.IsKeyboardFocusWithin) _time.Text = Timecode.Format(_playhead);
         _where.Text = _frames is { } frames
-            ? $"frame {frames.At(_playhead) + 1:N0} of {frames.Count:N0}"
-            : $"of {Timecode.Format(Duration)}";
+            ? string.Format(Strings.FrameOf, frames.At(_playhead) + 1, frames.Count)
+            : string.Format(Strings.Of, Timecode.Format(Duration));
     }
 
     // ---- Playing
@@ -507,7 +507,7 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
     {
         var content = (StackPanel)_play.Content;
         ((TextBlock)content.Children[0]).Text = Playing ? "\uE769" : "\uE768";
-        ((TextBlock)content.Children[1]).Text = Playing ? "Pause" : "Play";
+        ((TextBlock)content.Children[1]).Text = Playing ? Strings.Pause : Strings.Play;
     }
 
     void FollowPlayback()
@@ -610,11 +610,11 @@ abstract class TimelineEditor<T> : Editor<T>, ITimelineTool, ITimelineEditor
     /// <summary>The keys every timeline editor has, for the panel.</summary>
     protected IEnumerable<(string Keys, string Does)> TimelineKeys() =>
     [
-        ("Space", "Play or pause"),
-        ("J, K, L", "Back, pause, play; again for faster"),
-        ("←, →", Video ? "A frame back or on" : "A hundredth of a second"),
-        ("Shift, ←, →", "A second back or on"),
-        ("Home, End", "The start or the end"),
+        (Strings.Space, Strings.PlayOrPause),
+        (Strings.JKL, Strings.BackPausePlayAgainForFaster),
+        ("←, →", Video ? Strings.AFrameBackOrOn : Strings.AHundredthOfASecond),
+        (Strings.Shift2, Strings.ASecondBackOrOn),
+        (Strings.HomeEnd, Strings.TheStartOrTheEnd),
     ];
 
     // ---- The timeline's pointer and marks: the editors' own

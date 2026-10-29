@@ -21,12 +21,12 @@ public partial class FormatMenuWindow : Window
         public string Description => Target.Description;
         public string Group => Target.Section switch
         {
-            Section.Image => "Image",
-            Section.Video => "Video",
-            Section.Audio => "Audio",
-            Section.Document => "Document",
-            Section.File => "Files",
-            _ => "Archive",
+            Section.Image => Strings.Image,
+            Section.Video => Strings.Video,
+            Section.Audio => Strings.Audio,
+            Section.Document => Strings.Document,
+            Section.File => Strings.Files,
+            _ => Strings.Archive,
         };
         public string Glyph => Target.Key switch
         {
@@ -89,9 +89,9 @@ public partial class FormatMenuWindow : Window
         _entries = menu.Targets.Select(t => new Entry(t)).ToList();
         _tabs =
         [
-            new(TargetKind.Convert, "Convert", "Convert to…", "There's nothing to convert this selection to.", ConvertTab),
-            new(TargetKind.Tool, "Tools", "Find a tool…", "There are no tools for this selection.", ToolsTab),
-            new(TargetKind.Action, "Actions", "Find an action…", "There are no actions for this selection.", ActionsTab),
+            new(TargetKind.Convert, Strings.Convert, Strings.ConvertTo, Strings.ThereSNothingToConvertThisSelection, ConvertTab),
+            new(TargetKind.Tool, Strings.Tools, Strings.FindATool, Strings.ThereAreNoToolsForThisSelection, ToolsTab),
+            new(TargetKind.Action, Strings.Actions, Strings.FindAnAction, Strings.ThereAreNoActionsForThisSelection, ActionsTab),
         ];
 
         _tab = _tabs.FirstOrDefault(t => Count(t) > 0) ?? _tabs[0];
@@ -138,12 +138,12 @@ public partial class FormatMenuWindow : Window
             var path = files[0];
             Heading.Text = Path.GetFileName(path.TrimEnd('\\'));
             Subheading.Text = Directory.Exists(path)
-                ? "Folder"
-                : $"{Formats.Ext(path).ToUpperInvariant()} file · {Describe.Size(new FileInfo(path).Length)}";
+                ? Strings.Folder
+                : string.Format(Strings.File, Formats.Ext(path).ToUpperInvariant(), Describe.Size(new FileInfo(path).Length));
         }
         else
         {
-            Heading.Text = $"{files.Count} items";
+            Heading.Text = string.Format(Strings.Items, files.Count);
             Subheading.Text = string.Join(", ", files.Take(3).Select(Path.GetFileName)) + (files.Count > 3 ? ", …" : "");
         }
 
@@ -205,7 +205,7 @@ public partial class FormatMenuWindow : Window
         }
 
         var empty = List.Items.Count == 0;
-        EmptyText.Text = Search.Text.Trim().Length > 0 ? $"Nothing matches “{Search.Text.Trim()}”." : tab.Empty;
+        EmptyText.Text = Search.Text.Trim().Length > 0 ? string.Format(Strings.NothingMatches, Search.Text.Trim()) : tab.Empty;
         EmptyText.Visibility = empty ? Visibility.Visible : Visibility.Collapsed;
         if (empty) Speech.Announce(Spoken, EmptyText.Text);
         SelectFirst();
@@ -286,7 +286,7 @@ public partial class FormatMenuWindow : Window
     void SpeakSelection()
     {
         if (List.SelectedItem is not Entry entry) return;
-        Speech.Announce(Spoken, $"{entry.Label}, {entry.Description}, {List.SelectedIndex + 1} of {List.Items.Count}");
+        Speech.Announce(Spoken, string.Format(Strings.Of3, entry.Label, entry.Description, List.SelectedIndex + 1, List.Items.Count));
     }
 
     void OnEntryHover(object sender, MouseEventArgs e) => ((ListBoxItem)sender).IsSelected = true;

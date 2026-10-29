@@ -5,10 +5,10 @@ public sealed class LibreOfficeConverter(Toolbox tools) : IConverter
 {
     static Target T(string key, string label, string description) => new(key, label, description, Section.Document);
 
-    static readonly Target Pdf = T("pdf", "PDF", "Exported by LibreOffice");
-    static readonly Target[] Writer = [Pdf, T("docx", "DOCX", "Word document"), T("odt", "ODT", "OpenDocument text"), T("rtf", "RTF", "Rich text"), T("txt", "TXT", "Plain text, UTF-8")];
-    static readonly Target[] Impress = [Pdf, T("pptx", "PPTX", "PowerPoint presentation"), T("odp", "ODP", "OpenDocument presentation")];
-    static readonly Target[] Calc = [Pdf, T("xlsx", "XLSX", "Excel workbook"), T("ods", "ODS", "OpenDocument spreadsheet"), T("csv", "CSV", "First sheet, UTF-8")];
+    static readonly Target Pdf = T("pdf", Strings.PDF, Strings.ExportedByLibreOffice);
+    static readonly Target[] Writer = [Pdf, T("docx", Strings.DOCX, Strings.WordDocument), T("odt", Strings.ODT, Strings.OpenDocumentText), T("rtf", Strings.RTF, Strings.RichText), T("txt", Strings.TXT, Strings.PlainTextUTF8)];
+    static readonly Target[] Impress = [Pdf, T("pptx", Strings.PPTX, Strings.PowerPointPresentation), T("odp", Strings.ODP, Strings.OpenDocumentPresentation)];
+    static readonly Target[] Calc = [Pdf, T("xlsx", Strings.XLSX, Strings.ExcelWorkbook), T("ods", Strings.ODS, Strings.OpenDocumentSpreadsheet), T("csv", Strings.CSV, Strings.FirstSheetUTF8)];
 
     public IEnumerable<Target> TargetsFor(string input)
     {
@@ -40,7 +40,7 @@ public sealed class LibreOfficeConverter(Toolbox tools) : IConverter
 
         var produced = Directory.EnumerateFiles(temp.Path, "*." + target.Key).FirstOrDefault();
         if (result.ExitCode != 0 || produced is null)
-            throw new ConversionException($"LibreOffice couldn't convert this file: {result.LastError}");
+            throw new ConversionException(string.Format(Strings.LibreOfficeCouldnTConvertThisFile, result.LastError));
 
         var output = OutputPaths.Beside(input, target.Key);
         File.Move(produced, output);

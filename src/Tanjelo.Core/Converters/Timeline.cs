@@ -124,7 +124,7 @@ public sealed class FrameIndex
         frames.Sort((a, b) => a.Start.CompareTo(b.Start));
         // Two packets at one time would be one frame shown twice; keep the first.
         var unique = frames.Where((f, i) => i == 0 || f.Start > frames[i - 1].Start + 1e-7).ToList();
-        if (unique.Count == 0) throw new ConversionException("Couldn't find any frames in this video.");
+        if (unique.Count == 0) throw new ConversionException(Strings.CouldnTFindAnyFramesInThis);
         var last = unique[^1];
         var typical = unique.Count > 1 ? (unique[^1].Start - unique[0].Start) / (unique.Count - 1) : 0;
         var end = last.Start + (last.Length > 0 ? last.Length : typical);
@@ -267,12 +267,12 @@ public sealed class TimelineMedia
     public static async Task<TimelineMedia> OpenAsync(Toolbox tools, string path, CancellationToken ct)
     {
         if (tools.Ffmpeg is null || tools.Ffprobe is null)
-            throw new ConversionException("Editing audio and video needs ffmpeg. Install it with: winget install Gyan.FFmpeg.Essentials");
+            throw new ConversionException(Strings.EditingAudioAndVideoNeedsFfmpegInstall);
         var info = await Ffmpeg.ProbeAsync(tools, path, ct);
         if (info.Video is null && info.Audio is null)
-            throw new ConversionException("There's no picture or sound in this file that ffmpeg can read.");
+            throw new ConversionException(Strings.ThereSNoPictureOrSoundIn);
         if (info.Duration <= 0)
-            throw new ConversionException("Couldn't tell how long this file is.");
+            throw new ConversionException(Strings.CouldnTTellHowLongThisFile);
         return new TimelineMedia(tools, path, info);
     }
 

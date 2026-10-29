@@ -36,7 +36,7 @@ internal sealed record Part(PartKind Kind, IReadOnlyList<Token> Tokens)
 /// </summary>
 internal sealed class PdfText
 {
-    public const string NoOcrHint = "Scanned PDF pages need an OCR language. Add a language in Settings › Time & language › Language & region.";
+    public static string NoOcrHint => Strings.ScannedPDFPagesNeedAnOCRLanguage;
 
     const double OcrDpi = 300;
 
@@ -153,14 +153,14 @@ internal sealed class PdfText
     {
         if (Pages.All(p => p.Count == 0))
             throw new ConversionException(UnreadPages > 0
-                ? "This PDF has no text layer, and no OCR language is installed to read it. " + NoOcrHint[(NoOcrHint.IndexOf('.') + 2)..]
-                : "This PDF has no text in it.");
+                ? Strings.ThisPDFHasNoTextLayerAnd + NoOcrHint[(NoOcrHint.IndexOf('.') + 2)..]
+                : Strings.ThisPDFHasNoTextInIt);
     }
 
     public void AddNotes(JobContext ctx)
     {
-        if (OcrPages > 0) ctx.Note(OcrPages == 1 ? "1 page read with OCR" : $"{OcrPages} pages read with OCR");
-        if (UnreadPages > 0) ctx.Note(UnreadPages == 1 ? "1 scanned page left out: no OCR language is installed" : $"{UnreadPages} scanned pages left out: no OCR language is installed");
+        if (OcrPages > 0) ctx.Note(OcrPages == 1 ? Strings.N1PageReadWithOCR : string.Format(Strings.PagesReadWithOCR, OcrPages));
+        if (UnreadPages > 0) ctx.Note(UnreadPages == 1 ? Strings.N1ScannedPageLeftOutNoOCR : string.Format(Strings.ScannedPagesLeftOutNoOCRLanguage, UnreadPages));
     }
 
     static PigDocument Open(string path)
@@ -171,11 +171,11 @@ internal sealed class PdfText
         }
         catch (PdfDocumentEncryptedException ex)
         {
-            throw new ConversionException("This PDF is password-protected.", ex);
+            throw new ConversionException(Strings.ThisPDFIsPasswordProtected, ex);
         }
         catch (Exception ex) when (ex is not (IOException or UnauthorizedAccessException or OperationCanceledException or OutOfMemoryException))
         {
-            throw new ConversionException("This doesn't look like a valid PDF.", ex);
+            throw new ConversionException(Strings.ThisDoesnTLookLikeAValid3, ex);
         }
     }
 

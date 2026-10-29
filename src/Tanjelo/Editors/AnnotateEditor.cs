@@ -32,21 +32,21 @@ sealed class AnnotateEditor : Editor<ImmutableList<Mark>>, ICanvasTool
 
     static readonly (Tool Tool, string Glyph, string Name, Key Key, string Hint)[] Tools =
     [
-        (Tool.Select, "", "Select", Key.V, "Click a mark to pick it; drag it or its handles"),
-        (Tool.Arrow, "", "Arrow", Key.A, "Drag from the tail to the point; Shift keeps to 45°"),
-        (Tool.Line, "", "Line", Key.L, "Drag from one end to the other; Shift keeps to 45°"),
-        (Tool.Rectangle, "", "Rectangle", Key.R, "Drag from corner to corner; Shift makes a square"),
-        (Tool.Ellipse, "", "Ellipse", Key.E, "Drag across it; Shift makes a circle"),
-        (Tool.Text, "", "Text", Key.T, "Click where the text starts and type; Enter finishes"),
-        (Tool.Callout, "", "Callout", Key.N, "Click to place the next number"),
-        (Tool.Magnifier, "", "Magnifier", Key.M, "Click what to enlarge; pull the ring's handle to resize it"),
-        (Tool.Pen, "", "Pen", Key.P, "Draw freehand; hold Shift for a straight line"),
-        (Tool.Highlighter, "", "Highlighter", Key.H, "Draw over what to highlight; hold Shift to keep it straight"),
+        (Tool.Select, "", Strings.Select, Key.V, Strings.ClickAMarkToPickItDrag),
+        (Tool.Arrow, "", Strings.Arrow, Key.A, Strings.DragFromTheTailToThePoint),
+        (Tool.Line, "", Strings.Line, Key.L, Strings.DragFromOneEndToTheOther),
+        (Tool.Rectangle, "", Strings.Rectangle, Key.R, Strings.DragFromCornerToCornerShiftMakes),
+        (Tool.Ellipse, "", Strings.Ellipse, Key.E, Strings.DragAcrossItShiftMakesACircle),
+        (Tool.Text, "", Strings.Text, Key.T, Strings.ClickWhereTheTextStartsAndType),
+        (Tool.Callout, "", Strings.Callout, Key.N, Strings.ClickToPlaceTheNextNumber),
+        (Tool.Magnifier, "", Strings.Magnifier, Key.M, Strings.ClickWhatToEnlargePullTheRing),
+        (Tool.Pen, "", Strings.Pen, Key.P, Strings.DrawFreehandHoldShiftForAStraight),
+        (Tool.Highlighter, "", Strings.Highlighter, Key.H, Strings.DrawOverWhatToHighlightHoldShift),
     ];
 
     static readonly string[] Colours = ["#E5383B", "#F97A3D", "#FFD400", "#2E8540", "#3A7BD5", "#1B1B1B", "#FFFFFF"];
-    static readonly Choice[] Widths = [new("1", "Thin"), new("2", "Medium"), new("4", "Thick")];
-    static readonly Choice[] Sizes = [new("1", "Small"), new("1.6", "Medium"), new("2.6", "Large")];
+    static readonly Choice[] Widths = [new("1", Strings.Thin), new("2", Strings.Medium), new("4", Strings.Thick)];
+    static readonly Choice[] Sizes = [new("1", Strings.Small), new("1.6", Strings.Medium), new("2.6", Strings.Large)];
 
     /// <summary>How near a mark or handle, in screen pixels, still counts as on it.</summary>
     const double Grip = 7;
@@ -116,7 +116,7 @@ sealed class AnnotateEditor : Editor<ImmutableList<Mark>>, ICanvasTool
                 Margin = new Thickness(0, 0, 4, 4),
             }, FrameworkElement.StyleProperty, "Chip");
             System.Windows.Automation.AutomationProperties.SetName(button, name);
-            System.Windows.Automation.AutomationProperties.SetHelpText(button, $"Key {key}. {hint}");
+            System.Windows.Automation.AutomationProperties.SetHelpText(button, string.Format(Strings.Key, key, hint));
             button.Checked += (_, _) => Use(tool);
             _toolButtons[tool] = button;
             _toolbar.Children.Add(button);
@@ -147,31 +147,31 @@ sealed class AnnotateEditor : Editor<ImmutableList<Mark>>, ICanvasTool
             });
         });
         _showSize = showSize;
-        _panel.Children.Add(Panels.Heading("Colour"));
+        _panel.Children.Add(Panels.Heading(Strings.Colour));
         _panel.Children.Add(swatches);
-        _panel.Children.Add(Panels.Heading("Line", 14));
+        _panel.Children.Add(Panels.Heading(Strings.Line, 14));
         _panel.Children.Add(widths);
         var sizeRow = new StackPanel();
-        sizeRow.Children.Add(Panels.Heading("Text and numbers", 20));
+        sizeRow.Children.Add(Panels.Heading(Strings.TextAndNumbers, 20));
         sizeRow.Children.Add(sizes);
         _sizeRow = sizeRow;
         _panel.Children.Add(sizeRow);
-        _panel.Children.Add(Panels.Hint("Changes go to the selected mark, and to the ones you draw next.", 14));
-        _panel.Children.Add(Panels.Hint("Marks stay editable until you save: pick one with Select to move it or pull its handles.", 6));
-        _panel.Children.Add(Panels.Heading("Keys", 20));
+        _panel.Children.Add(Panels.Hint(Strings.ChangesGoToTheSelectedMarkAnd, 14));
+        _panel.Children.Add(Panels.Hint(Strings.MarksStayEditableUntilYouSavePick, 6));
+        _panel.Children.Add(Panels.Heading(Strings.Keys, 20));
         _panel.Children.Add(Panels.Keys(
         [
-            ("Shift", "Lines at 45°, squares and circles; straight pen and highlighter strokes"),
-            ("Insert, Enter", "Add a mark with the tool in use, in the middle"),
-            ("Tab", "Select the next mark"),
-            ("Delete", "Remove the selected mark"),
-            ("Arrows", "Nudge it a pixel; with Shift, 10"),
-            ("Ctrl, Arrows", "Make it bigger or smaller"),
-            ("Esc", "Let go of it, or stop typing"),
-            ("Double-click", "Change a text"),
-            ("Ctrl+Z, Ctrl+Y", "Undo, redo"),
-            ("Space", "Hold and drag to look around"),
-            ("Ctrl+0, Ctrl+1", "Fit, every pixel"),
+            (Strings.Shift, Strings.LinesAt45SquaresAndCirclesStraight),
+            (Strings.InsertEnter, Strings.AddAMarkWithTheToolIn),
+            (Strings.Tab, Strings.SelectTheNextMark),
+            (Strings.Delete, Strings.RemoveTheSelectedMark),
+            (Strings.Arrows, Strings.NudgeItAPixelWithShift10),
+            (Strings.CtrlArrows, Strings.MakeItBiggerOrSmaller),
+            (Strings.Esc, Strings.LetGoOfItOrStopTyping),
+            (Strings.DoubleClick, Strings.ChangeAText),
+            (Strings.CtrlZCtrlY, Strings.UndoRedo),
+            (Strings.Space, Strings.HoldAndDragToLookAround),
+            (Strings.Ctrl0Ctrl1, Strings.FitEveryPixel),
         ]));
     }
 
@@ -182,8 +182,8 @@ sealed class AnnotateEditor : Editor<ImmutableList<Mark>>, ICanvasTool
         return circle;
     }
 
-    public override (string Name, string Keys) Spoken => ("Picture",
-        "Letters choose a tool, such as A for an arrow. Insert adds a mark in the middle, Tab selects the next, the arrows move it and Ctrl with the arrows sizes it.");
+    public override (string Name, string Keys) Spoken => (Strings.Picture,
+        Strings.LettersChooseAToolSuchAsA);
 
     public override FrameworkElement Main => _canvas;
     public override FrameworkElement Toolbar => _toolbar;
@@ -192,7 +192,7 @@ sealed class AnnotateEditor : Editor<ImmutableList<Mark>>, ICanvasTool
     public override string Summary => _layer.PictureSize.Width > 0 ? Describe.Pixels((int)_layer.PictureSize.Width, (int)_layer.PictureSize.Height) : "";
 
     public override string Status => !Started ? "" :
-        Describe.Count(State.Count, "mark") + Panels.Which(_selected, State.Count) + " · " + Tools.First(t => t.Tool == _tool).Hint;
+        Describe.Count(State.Count, Tanjelo.Core.Strings.OneMark, Tanjelo.Core.Strings.NMarks) + Panels.Which(_selected, State.Count) + " · " + Tools.First(t => t.Tool == _tool).Hint;
 
     internal ImmutableList<Mark> Marks => State;
     internal int? Selected => _selected;
@@ -217,7 +217,7 @@ sealed class AnnotateEditor : Editor<ImmutableList<Mark>>, ICanvasTool
     public override Target Result()
     {
         EndText(keep: true);
-        if (State.Count == 0) throw new ConversionException("Draw something first.");
+        if (State.Count == 0) throw new ConversionException(Strings.DrawSomethingFirst);
         return _target.WithParameters(new Dictionary<string, string> { ["spec"] = MarkSpec.Write(State) });
     }
 

@@ -15,22 +15,22 @@ public sealed class JoinVideosOperation(Toolbox tools) : IBatchOperation, IPrevi
     {
         if (tools.Ffmpeg is null || tools.Ffprobe is null) yield break;
         if (inputs.Count < 2 || !inputs.All(i => Formats.KindOf(i) == FileKind.Video)) yield break;
-        yield return new Target("join-videos", "Join videos…", $"{inputs.Count} clips into one MP4", Section.Video)
+        yield return new Target("join-videos", Strings.JoinVideos, string.Format(Strings.ClipsIntoOneMP4, inputs.Count), Section.Video)
         {
             IsBatch = true,
             Kind = TargetKind.Tool,
-            Running = "Joining…",
-            Done = "Joined into one video",
-            Confirm = "Join",
+            Running = Strings.Joining,
+            Done = Strings.JoinedIntoOneVideo,
+            Confirm = Strings.Join,
         }.WithOptions(
-            new Option("order", "Order", OptionKind.Order, "") { Remember = false },
-            new Option("size", "Picture size", OptionKind.Choice, "first")
+            new Option("order", Strings.Order, OptionKind.Order, "") { Remember = false },
+            new Option("size", Strings.PictureSize, OptionKind.Choice, "first")
             {
-                Choices = [new("first", "Like the first clip"), new("largest", "Like the largest"), new("1080", "1080p"), new("720", "720p")],
+                Choices = [new("first", Strings.LikeTheFirstClip), new("largest", Strings.LikeTheLargest), new("1080", "1080p"), new("720", "720p")],
             },
-            new Option("fit", "Clips of another shape", OptionKind.Choice, "pad")
+            new Option("fit", Strings.ClipsOfAnotherShape, OptionKind.Choice, "pad")
             {
-                Choices = [new("pad", "Add black bars"), new("crop", "Fill and crop")],
+                Choices = [new("pad", Strings.AddBlackBars), new("crop", Strings.FillAndCrop)],
             });
     }
 
@@ -41,7 +41,7 @@ public sealed class JoinVideosOperation(Toolbox tools) : IBatchOperation, IPrevi
     internal static Plan PlanFor(IReadOnlyList<MediaInfo> clips, IReadOnlyList<string> containers, Target target)
     {
         if (clips.Any(c => c.Video is null || c.Width <= 0))
-            throw new ConversionException("Every file needs a picture to be joined as video.");
+            throw new ConversionException(Strings.EveryFileNeedsAPictureToBe);
         var first = clips[0];
         static int Even(double size) => Math.Max(2, (int)Math.Round(size / 2) * 2);
         var (width, height) = target.Choice("size") switch
@@ -54,16 +54,16 @@ public sealed class JoinVideosOperation(Toolbox tools) : IBatchOperation, IPrevi
         var frameRate = first.FrameRate is > 0 and <= 120 ? first.FrameRate : 30;
 
         string? differs = null;
-        if (clips.Any(c => c.Video != first.Video) || first.Video is not ("h264" or "hevc")) differs = "their video formats differ";
-        else if (clips.Any(c => c.Width != first.Width || c.Height != first.Height || c.Rotation != first.Rotation)) differs = "their sizes differ";
-        else if (width != first.Width || height != first.Height) differs = "of the new size";
-        else if (clips.Any(c => Math.Abs(c.FrameRate - first.FrameRate) > 0.01 || c.PixelFormat != first.PixelFormat)) differs = "their frame rates differ";
+        if (clips.Any(c => c.Video != first.Video) || first.Video is not ("h264" or "hevc")) differs = Strings.TheirVideoFormatsDiffer;
+        else if (clips.Any(c => c.Width != first.Width || c.Height != first.Height || c.Rotation != first.Rotation)) differs = Strings.TheirSizesDiffer;
+        else if (width != first.Width || height != first.Height) differs = Strings.OfTheNewSize;
+        else if (clips.Any(c => Math.Abs(c.FrameRate - first.FrameRate) > 0.01 || c.PixelFormat != first.PixelFormat)) differs = Strings.TheirFrameRatesDiffer;
         else if (clips.Any(c => c.Audio != first.Audio || c.SampleRate != first.SampleRate || c.Channels != first.Channels) || first.Audio is not (null or "aac"))
-            differs = "their sound differs";
-        else if (containers.Distinct().Count() > 1) differs = "they're different kinds of file";
+            differs = Strings.TheirSoundDiffers;
+        else if (containers.Distinct().Count() > 1) differs = Strings.TheyReDifferentKindsOfFile;
         return differs is null
-            ? new Plan(true, width, height, frameRate, "as they are, without re-encoding")
-            : new Plan(false, width, height, frameRate, string.Create(CultureInfo.InvariantCulture, $"re-encoded to {Describe.Pixels(width, height)} at {frameRate:0.##} fps, because {differs}"));
+            ? new Plan(true, width, height, frameRate, Strings.AsTheyAreWithoutReEncoding)
+            : new Plan(false, width, height, frameRate, string.Format(CultureInfo.InvariantCulture, Strings.ReEncodedToAtFpsBecause, Describe.Pixels(width, height), frameRate, differs));
 
         // 1080p and 720p name the short side, so portrait clips stay portrait.
         (int, int) Scaled(int shortSide)
@@ -175,12 +175,12 @@ public sealed class JoinVideosOperation(Toolbox tools) : IBatchOperation, IPrevi
 
         var facts = new List<Fact>
         {
-            new("Length", $"{Describe.Length(media.Sum(m => m.Duration))} in all"),
-            new("Joined", plan.Why),
+            new(Strings.Length, string.Format(Strings.InAll, Describe.Length(media.Sum(m => m.Duration)))),
+            new(Strings.Joined, plan.Why),
         };
         facts.AddRange(clips.Take(MaxShown).Select((clip, i) =>
             new Fact($"{i + 1}.", $"{Path.GetFileName(clip)} · {Describe.Length(media[i].Duration)} · {Describe.Pixels(media[i].Width, media[i].Height)}")));
-        if (clips.Count > MaxShown) facts.Add(new Fact("", $"and {clips.Count - MaxShown} more"));
+        if (clips.Count > MaxShown) facts.Add(new Fact("", string.Format(Strings.AndMore, clips.Count - MaxShown)));
         return new Preview(row.ToByteArray(MagickFormat.Png), facts);
     }
 }

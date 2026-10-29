@@ -38,15 +38,15 @@ public partial class ProgressToast : Window
     public void ShowRunning(Target target, int count)
     {
         Heading.Text = target.RunningText;
-        Detail.Text = count == 1 ? "" : $"{count} items";
+        Detail.Text = count == 1 ? "" : string.Format(Strings.Items, count);
         Speech.Announce(Card, Detail.Text.Length > 0 ? $"{Heading.Text} {Detail.Text}" : Heading.Text);
-        SetButtons(primary: null, secondary: ("Cancel", () => CancelRequested?.Invoke()));
+        SetButtons(primary: null, secondary: (Strings.Cancel, () => CancelRequested?.Invoke()));
     }
 
     public void Report(BatchProgress progress)
     {
         if (_finished) return; // progress callbacks are posted, so stragglers can arrive after the result
-        Detail.Text = progress.Count > 1 ? $"{progress.Current} · {progress.Index + 1} of {progress.Count}" : progress.Current;
+        Detail.Text = progress.Count > 1 ? string.Format(Strings.Of4, progress.Current, progress.Index + 1, progress.Count) : progress.Current;
         Bar.IsIndeterminate = double.IsNaN(progress.Fraction);
         if (!Bar.IsIndeterminate) Bar.Value = progress.Fraction;
     }
@@ -59,37 +59,37 @@ public partial class ProgressToast : Window
 
         if (result.Canceled)
         {
-            Finish(Mood.Info, "Canceled", outputs.Count > 0 ? $"{Count(outputs.Count, "file")} finished before you canceled." : "Nothing was changed.",
+            Finish(Mood.Info, Strings.Canceled, outputs.Count > 0 ? string.Format(Strings.FinishedBeforeYouCanceled, Describe.Count(outputs.Count, Tanjelo.Core.Strings.OneFile, Tanjelo.Core.Strings.NFiles)) : Strings.NothingWasChanged,
                 outputs.Count > 0 ? Reveal(outputs) : null, null, TimeSpan.FromSeconds(4));
         }
         else if (failures.Count == 0 && outputs.Count == 0 && target.Kind != TargetKind.Action)
         {
-            Finish(Mood.Info, "Nothing to do", $"Already {target.Label}.", null, null, TimeSpan.FromSeconds(4));
+            Finish(Mood.Info, Strings.NothingToDo, string.Format(Strings.Already, target.Label), null, null, TimeSpan.FromSeconds(4));
         }
         else if (failures.Count == 0 && outputs.Count == 0)
         {
             // Actions such as "Copy path" work on the selection itself and make no files.
-            var detail = inputCount == 1 ? Path.GetFileName(inputs[0].TrimEnd('\\')) : Count(inputCount, "item");
+            var detail = inputCount == 1 ? Path.GetFileName(inputs[0].TrimEnd('\\')) : Describe.Count(inputCount, Tanjelo.Core.Strings.OneItem, Tanjelo.Core.Strings.NItems);
             Finish(Mood.Success, target.DoneText, detail, null, null, TimeSpan.FromSeconds(4));
         }
         else if (failures.Count == 0)
         {
-            var detail = outputs.Count == 1 ? Path.GetFileName(outputs[0]) : Count(outputs.Count, "file");
-            if (result.Skipped.Count > 0) detail += $" · {result.Skipped.Count} already {target.Label}";
+            var detail = outputs.Count == 1 ? Path.GetFileName(outputs[0]) : Describe.Count(outputs.Count, Tanjelo.Core.Strings.OneFile, Tanjelo.Core.Strings.NFiles);
+            if (result.Skipped.Count > 0) detail += string.Format(Strings.Already2, result.Skipped.Count, target.Label);
             foreach (var note in result.Notes) detail += " · " + note;
-            (string, Action)? open = outputs.Count == 1 ? ("Open", () => Open(outputs[0])) : null;
+            (string, Action)? open = outputs.Count == 1 ? (Strings.Open, () => Open(outputs[0])) : null;
             Finish(Mood.Success, target.DoneText, detail, Reveal(outputs), open, TimeSpan.FromSeconds(7));
         }
         else
         {
             var first = failures[0];
-            var what = inputCount == 1 ? Path.GetFileName(first.Input) : Count(inputCount, "item");
+            var what = inputCount == 1 ? Path.GetFileName(first.Input) : Describe.Count(inputCount, Tanjelo.Core.Strings.OneItem, Tanjelo.Core.Strings.NItems);
             var heading = failures.Count == inputCount
-                ? target.Kind == TargetKind.Convert ? $"Couldn't convert {what}" : $"{target.Label.TrimEnd('…')} didn't work on {what}"
-                : $"{failures.Count} of {inputCount} failed";
+                ? target.Kind == TargetKind.Convert ? string.Format(Strings.CouldnTConvert, what) : string.Format(Strings.DidnTWorkOn, target.Label.TrimEnd('…'), what)
+                : string.Format(Strings.OfFailed, failures.Count, inputCount);
             var detail = inputCount == 1 ? first.Message : $"{Path.GetFileName(first.Input)}: {first.Message}";
             var report = string.Join(Environment.NewLine, failures.Select(f => $"{f.Input}: {f.Message}"));
-            (string, Action) copy = ("Copy details", () => Clipboard.SetText(report));
+            (string, Action) copy = (Strings.CopyDetails, () => Clipboard.SetText(report));
             Finish(Mood.Failure, heading, detail, outputs.Count > 0 ? Reveal(outputs) : null, copy, autoClose: null);
         }
     }
@@ -139,7 +139,7 @@ public partial class ProgressToast : Window
         Actions.Visibility = primary is null && secondary is null ? Visibility.Collapsed : Visibility.Visible;
     }
 
-    (string, Action) Reveal(IReadOnlyList<string> outputs) => ("Show in folder", () =>
+    (string, Action) Reveal(IReadOnlyList<string> outputs) => (Strings.ShowInFolder, () =>
     {
         Native.RevealInExplorer(outputs);
         Close();
@@ -151,7 +151,6 @@ public partial class ProgressToast : Window
         Close();
     }
 
-    static string Count(int n, string noun) => n == 1 ? $"1 {noun}" : $"{n} {noun}s";
 
     System.Windows.Media.Brush Brush(string key) => (System.Windows.Media.Brush)FindResource(key);
 }

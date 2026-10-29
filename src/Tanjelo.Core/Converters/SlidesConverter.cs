@@ -8,7 +8,7 @@ namespace Tanjelo.Core.Converters;
 /// </summary>
 public sealed class PdfSlidesConverter : IConverter
 {
-    static readonly Target Pptx = new("pptx", "PPTX", "One slide per page", Section.Document);
+    static readonly Target Pptx = new("pptx", Strings.PPTX, Strings.OneSlidePerPage, Section.Document);
 
     // Sharp on a projector, but a poster-sized page still stays near 4K.
     const double Dpi = 200;
@@ -68,11 +68,11 @@ public sealed class CombinePptxOperation : IBatchOperation
     public IEnumerable<Target> TargetsFor(IReadOnlyList<string> inputs)
     {
         if (inputs.Count >= 2 && inputs.All(i => Formats.KindOf(i) == FileKind.Image))
-            yield return new Target("combine-pptx", "One PPTX", $"Combine {inputs.Count} images as slides", Section.Document)
+            yield return new Target("combine-pptx", Strings.OnePPTX, string.Format(Strings.CombineImagesAsSlides, inputs.Count), Section.Document)
             {
                 IsBatch = true,
-                Running = "Combining into a PPTX…",
-                Done = "Combined into one PPTX",
+                Running = Strings.CombiningIntoAPPTX,
+                Done = Strings.CombinedIntoOnePPTX,
             };
     }
 

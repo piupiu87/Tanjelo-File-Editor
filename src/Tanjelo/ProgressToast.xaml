@@ -1,7 +1,8 @@
 <Window x:Class="Tanjelo.ProgressToast"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Tanjelo" Width="360" SizeToContent="Height"
+        xmlns:local="clr-namespace:Tanjelo"
+        Title="{x:Static local:Strings.Tanjelo}" Width="360" SizeToContent="Height"
         Style="{StaticResource PopupWindow}" ShowActivated="False">
     <Grid x:Name="Card" Margin="16,14,10,14">
         <Grid.ColumnDefinitions>
@@ -28,6 +29,6 @@
         </StackPanel>
 
         <Button x:Name="CloseButton" Grid.Column="2" Style="{StaticResource IconButton}" Content="&#xE711;"
-                VerticalAlignment="Top" Margin="2,-4,0,0" ToolTip="Close" />
+                VerticalAlignment="Top" Margin="2,-4,0,0" ToolTip="{x:Static local:Strings.Close}" />
     </Grid>
 </Window>

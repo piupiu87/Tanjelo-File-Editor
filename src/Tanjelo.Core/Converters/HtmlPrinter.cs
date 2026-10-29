@@ -70,7 +70,7 @@ internal sealed class HtmlPrinter : IDisposable
         if (await Task.WhenAny(printing, Task.Delay(Timeout, ct)) != printing)
         {
             ct.ThrowIfCancellationRequested();
-            throw new ConversionException("WebView2 stopped responding while printing.");
+            throw new ConversionException(Strings.WebView2StoppedRespondingWhilePrinting);
         }
         await printing;
     }
@@ -85,7 +85,7 @@ internal sealed class HtmlPrinter : IDisposable
         {
             web.Navigate(new Uri(Path.GetFullPath(htmlFile)).AbsoluteUri);
             if (!await loaded.Task)
-                throw new ConversionException("WebView2 couldn't open the page to print it.");
+                throw new ConversionException(Strings.WebView2CouldnTOpenThePageTo);
         }
         finally
         {
@@ -101,7 +101,7 @@ internal sealed class HtmlPrinter : IDisposable
         settings.ShouldPrintHeaderAndFooter = false;
         settings.ShouldPrintBackgrounds = true;
         if (!await web.PrintToPdfAsync(Path.GetFullPath(pdf), settings))
-            throw new ConversionException("WebView2 couldn't print the PDF.");
+            throw new ConversionException(Strings.WebView2CouldnTPrintThePDF);
     }
 
     async Task<CoreWebView2> StartAsync()
@@ -126,7 +126,7 @@ internal sealed class HtmlPrinter : IDisposable
         }
         catch (Exception ex) when (ex is not ConversionException)
         {
-            throw new ConversionException($"WebView2 couldn't start: {ex.Message.Split('\n')[0].Trim()}", ex);
+            throw new ConversionException(string.Format(Strings.WebView2CouldnTStart, ex.Message.Split('\n')[0].Trim()), ex);
         }
 
         var web = _controller.CoreWebView2;

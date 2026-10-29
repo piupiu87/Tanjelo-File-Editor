@@ -1,0 +1,1428 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="TanjeloIsAlreadyRunningLookForIts" xml:space="preserve">
+    <value>Tanjelo is already running. Look for its icon in the notification area.</value>
+  </data>
+  <data name="ShortcutUnavailable" xml:space="preserve">
+    <value>Shortcut unavailable</value>
+  </data>
+  <data name="AnotherAppIsAlreadyUsingChooseA" xml:space="preserve">
+    <value>Another app is already using {0}. Choose a different one in Settings.</value>
+  </data>
+  <data name="TanjeloIsReady" xml:space="preserve">
+    <value>Tanjelo is ready</value>
+  </data>
+  <data name="SelectFilesInFileExplorerAndPress" xml:space="preserve">
+    <value>Select files in File Explorer and press {0}.</value>
+  </data>
+  <data name="ShortcutNotRecognised" xml:space="preserve">
+    <value>Shortcut not recognised</value>
+  </data>
+  <data name="CouldnTReadUseSomethingLikeCtrl" xml:space="preserve">
+    <value>Couldn't read "{0}". Use something like Ctrl+Shift+Space.</value>
+  </data>
+  <data name="CouldnTReadTheShelfShortcutUse" xml:space="preserve">
+    <value>Couldn't read the shelf shortcut "{0}". Use something like Ctrl+Shift+F.</value>
+  </data>
+  <data name="AnotherAppIsAlreadyUsingChooseA2" xml:space="preserve">
+    <value>Another app is already using {0}. Choose a different shelf shortcut in Settings.</value>
+  </data>
+  <data name="AnotherAppIsAlreadyUsingChooseOther" xml:space="preserve">
+    <value>Another app is already using {0}. Choose other keys for the shelf.</value>
+  </data>
+  <data name="TheShelfIsEmpty" xml:space="preserve">
+    <value>The shelf is empty</value>
+  </data>
+  <data name="DropFilesOnItFirst" xml:space="preserve">
+    <value>Drop files on it first.</value>
+  </data>
+  <data name="CouldnTReadTheSelection" xml:space="preserve">
+    <value>Couldn't read the selection</value>
+  </data>
+  <data name="NothingSelected" xml:space="preserve">
+    <value>Nothing selected</value>
+  </data>
+  <data name="SelectOneOrMoreFilesInFile" xml:space="preserve">
+    <value>Select one or more files in File Explorer first.</value>
+  </data>
+  <data name="ChooseFilesToConvert" xml:space="preserve">
+    <value>Choose files to convert</value>
+  </data>
+  <data name="SomethingWentWrong" xml:space="preserve">
+    <value>Something went wrong</value>
+  </data>
+  <data name="ConversionFailed" xml:space="preserve">
+    <value>Conversion failed</value>
+  </data>
+  <data name="SettingsNotLoaded" xml:space="preserve">
+    <value>Settings not loaded</value>
+  </data>
+  <data name="SettingsNotSaved" xml:space="preserve">
+    <value>Settings not saved</value>
+  </data>
+  <data name="Checking" xml:space="preserve">
+    <value>Checking…</value>
+  </data>
+  <data name="TanjeloIsOut" xml:space="preserve">
+    <value>Tanjelo {0} is out</value>
+  </data>
+  <data name="ClickToSeeWhatSNewOn" xml:space="preserve">
+    <value>Click to see what's new on its release page.</value>
+  </data>
+  <data name="Select" xml:space="preserve">
+    <value>Select</value>
+  </data>
+  <data name="ClickAMarkToPickItDrag" xml:space="preserve">
+    <value>Click a mark to pick it; drag it or its handles</value>
+  </data>
+  <data name="Arrow" xml:space="preserve">
+    <value>Arrow</value>
+  </data>
+  <data name="DragFromTheTailToThePoint" xml:space="preserve">
+    <value>Drag from the tail to the point; Shift keeps to 45°</value>
+  </data>
+  <data name="Line" xml:space="preserve">
+    <value>Line</value>
+  </data>
+  <data name="DragFromOneEndToTheOther" xml:space="preserve">
+    <value>Drag from one end to the other; Shift keeps to 45°</value>
+  </data>
+  <data name="Rectangle" xml:space="preserve">
+    <value>Rectangle</value>
+  </data>
+  <data name="DragFromCornerToCornerShiftMakes" xml:space="preserve">
+    <value>Drag from corner to corner; Shift makes a square</value>
+  </data>
+  <data name="Ellipse" xml:space="preserve">
+    <value>Ellipse</value>
+  </data>
+  <data name="DragAcrossItShiftMakesACircle" xml:space="preserve">
+    <value>Drag across it; Shift makes a circle</value>
+  </data>
+  <data name="Text" xml:space="preserve">
+    <value>Text</value>
+  </data>
+  <data name="ClickWhereTheTextStartsAndType" xml:space="preserve">
+    <value>Click where the text starts and type; Enter finishes</value>
+  </data>
+  <data name="Callout" xml:space="preserve">
+    <value>Callout</value>
+  </data>
+  <data name="ClickToPlaceTheNextNumber" xml:space="preserve">
+    <value>Click to place the next number</value>
+  </data>
+  <data name="Magnifier" xml:space="preserve">
+    <value>Magnifier</value>
+  </data>
+  <data name="ClickWhatToEnlargePullTheRing" xml:space="preserve">
+    <value>Click what to enlarge; pull the ring's handle to resize it</value>
+  </data>
+  <data name="Pen" xml:space="preserve">
+    <value>Pen</value>
+  </data>
+  <data name="DrawFreehandHoldShiftForAStraight" xml:space="preserve">
+    <value>Draw freehand; hold Shift for a straight line</value>
+  </data>
+  <data name="Highlighter" xml:space="preserve">
+    <value>Highlighter</value>
+  </data>
+  <data name="DrawOverWhatToHighlightHoldShift" xml:space="preserve">
+    <value>Draw over what to highlight; hold Shift to keep it straight</value>
+  </data>
+  <data name="Thin" xml:space="preserve">
+    <value>Thin</value>
+  </data>
+  <data name="Medium" xml:space="preserve">
+    <value>Medium</value>
+  </data>
+  <data name="Thick" xml:space="preserve">
+    <value>Thick</value>
+  </data>
+  <data name="Small" xml:space="preserve">
+    <value>Small</value>
+  </data>
+  <data name="Large" xml:space="preserve">
+    <value>Large</value>
+  </data>
+  <data name="Key" xml:space="preserve">
+    <value>Key {0}. {1}</value>
+  </data>
+  <data name="Colour" xml:space="preserve">
+    <value>Colour</value>
+  </data>
+  <data name="TextAndNumbers" xml:space="preserve">
+    <value>Text and numbers</value>
+  </data>
+  <data name="ChangesGoToTheSelectedMarkAnd" xml:space="preserve">
+    <value>Changes go to the selected mark, and to the ones you draw next.</value>
+  </data>
+  <data name="MarksStayEditableUntilYouSavePick" xml:space="preserve">
+    <value>Marks stay editable until you save: pick one with Select to move it or pull its handles.</value>
+  </data>
+  <data name="Keys" xml:space="preserve">
+    <value>Keys</value>
+  </data>
+  <data name="Shift" xml:space="preserve">
+    <value>Shift</value>
+  </data>
+  <data name="LinesAt45SquaresAndCirclesStraight" xml:space="preserve">
+    <value>Lines at 45°, squares and circles; straight pen and highlighter strokes</value>
+  </data>
+  <data name="InsertEnter" xml:space="preserve">
+    <value>Insert, Enter</value>
+  </data>
+  <data name="AddAMarkWithTheToolIn" xml:space="preserve">
+    <value>Add a mark with the tool in use, in the middle</value>
+  </data>
+  <data name="Tab" xml:space="preserve">
+    <value>Tab</value>
+  </data>
+  <data name="SelectTheNextMark" xml:space="preserve">
+    <value>Select the next mark</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="RemoveTheSelectedMark" xml:space="preserve">
+    <value>Remove the selected mark</value>
+  </data>
+  <data name="Arrows" xml:space="preserve">
+    <value>Arrows</value>
+  </data>
+  <data name="NudgeItAPixelWithShift10" xml:space="preserve">
+    <value>Nudge it a pixel; with Shift, 10</value>
+  </data>
+  <data name="CtrlArrows" xml:space="preserve">
+    <value>Ctrl, Arrows</value>
+  </data>
+  <data name="MakeItBiggerOrSmaller" xml:space="preserve">
+    <value>Make it bigger or smaller</value>
+  </data>
+  <data name="Esc" xml:space="preserve">
+    <value>Esc</value>
+  </data>
+  <data name="LetGoOfItOrStopTyping" xml:space="preserve">
+    <value>Let go of it, or stop typing</value>
+  </data>
+  <data name="DoubleClick" xml:space="preserve">
+    <value>Double-click</value>
+  </data>
+  <data name="ChangeAText" xml:space="preserve">
+    <value>Change a text</value>
+  </data>
+  <data name="CtrlZCtrlY" xml:space="preserve">
+    <value>Ctrl+Z, Ctrl+Y</value>
+  </data>
+  <data name="UndoRedo" xml:space="preserve">
+    <value>Undo, redo</value>
+  </data>
+  <data name="Space" xml:space="preserve">
+    <value>Space</value>
+  </data>
+  <data name="HoldAndDragToLookAround" xml:space="preserve">
+    <value>Hold and drag to look around</value>
+  </data>
+  <data name="Ctrl0Ctrl1" xml:space="preserve">
+    <value>Ctrl+0, Ctrl+1</value>
+  </data>
+  <data name="FitEveryPixel" xml:space="preserve">
+    <value>Fit, every pixel</value>
+  </data>
+  <data name="Picture" xml:space="preserve">
+    <value>Picture</value>
+  </data>
+  <data name="LettersChooseAToolSuchAsA" xml:space="preserve">
+    <value>Letters choose a tool, such as A for an arrow. Insert adds a mark in the middle, Tab selects the next, the arrows move it and Ctrl with the arrows sizes it.</value>
+  </data>
+  <data name="DrawSomethingFirst" xml:space="preserve">
+    <value>Draw something first.</value>
+  </data>
+  <data name="Pitch" xml:space="preserve">
+    <value>Pitch</value>
+  </data>
+  <data name="Hz" xml:space="preserve">
+    <value>{0:0} Hz</value>
+  </data>
+  <data name="HearIt" xml:space="preserve">
+    <value>Hear it</value>
+  </data>
+  <data name="PlayThisStretchWithASecondEither" xml:space="preserve">
+    <value>Play this stretch with a second either side, with the bleep in (H)</value>
+  </data>
+  <data name="Remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="RemoveThisStretchDelete" xml:space="preserve">
+    <value>Remove this stretch (Delete)</value>
+  </data>
+  <data name="Stretches" xml:space="preserve">
+    <value>Stretches</value>
+  </data>
+  <data name="HearTheSelectedStretch" xml:space="preserve">
+    <value>Hear the selected stretch</value>
+  </data>
+  <data name="IO" xml:space="preserve">
+    <value>I, O</value>
+  </data>
+  <data name="StartOrEndTheSelectedStretchAt" xml:space="preserve">
+    <value>Start or end the selected stretch at the playhead, or mark a new one</value>
+  </data>
+  <data name="InsertN" xml:space="preserve">
+    <value>Insert, N</value>
+  </data>
+  <data name="MarkASecondFromThePlayhead" xml:space="preserve">
+    <value>Mark a second from the playhead</value>
+  </data>
+  <data name="SelectTheNextStretch" xml:space="preserve">
+    <value>Select the next stretch</value>
+  </data>
+  <data name="Alt" xml:space="preserve">
+    <value>Alt, ←, →</value>
+  </data>
+  <data name="MoveItAFrameWithShiftA" xml:space="preserve">
+    <value>Move it a frame; with Shift, a second</value>
+  </data>
+  <data name="Ctrl" xml:space="preserve">
+    <value>Ctrl, ←, →</value>
+  </data>
+  <data name="MoveItsEnd" xml:space="preserve">
+    <value>Move its end</value>
+  </data>
+  <data name="RemoveTheSelectedStretch" xml:space="preserve">
+    <value>Remove the selected stretch</value>
+  </data>
+  <data name="N1Stretch" xml:space="preserve">
+    <value>1 stretch</value>
+  </data>
+  <data name="Stretches2" xml:space="preserve">
+    <value>{0} stretches</value>
+  </data>
+  <data name="MarkAStretchToBleepFirstDrag" xml:space="preserve">
+    <value>Mark a stretch to bleep first: drag on the shape of the sound.</value>
+  </data>
+  <data name="Stretch" xml:space="preserve">
+    <value>Stretch {0}</value>
+  </data>
+  <data name="ToSCoveredWith" xml:space="preserve">
+    <value>{0} to {1} · {2:0.000} s, covered with:</value>
+  </data>
+  <data name="NewStretchesAreCoveredTheSameWay" xml:space="preserve">
+    <value>New stretches are covered the same way.</value>
+  </data>
+  <data name="NewStretches" xml:space="preserve">
+    <value>New stretches</value>
+  </data>
+  <data name="CoveredWith" xml:space="preserve">
+    <value>Covered with:</value>
+  </data>
+  <data name="DragOnTheShapeOfTheSound" xml:space="preserve">
+    <value>Drag on the shape of the sound to mark a stretch.</value>
+  </data>
+  <data name="ClickAStretchToChangeItsCover" xml:space="preserve">
+    <value>Click a stretch to change its cover or hear it, or drag on the sound to mark another.</value>
+  </data>
+  <data name="Hz2" xml:space="preserve">
+    <value>{0} Hz</value>
+  </data>
+  <data name="NoneYet" xml:space="preserve">
+    <value>None yet.</value>
+  </data>
+  <data name="SelectThisStretchAndGoToIt" xml:space="preserve">
+    <value>Select this stretch and go to it</value>
+  </data>
+  <data name="WindowsCanTPlayThisFileHere" xml:space="preserve">
+    <value>Windows can't play this file here, so the bleeps can't be heard before saving. They're saved all the same.</value>
+  </data>
+  <data name="GettingTheSoundReadyToBleep" xml:space="preserve">
+    <value>Getting the sound ready to bleep…</value>
+  </data>
+  <data name="ReadyWhatPlaysHasTheBleepsIn" xml:space="preserve">
+    <value>Ready: what plays has the bleeps in. Press Hear it, or play from anywhere.</value>
+  </data>
+  <data name="CouldnTPlayTheSoundWithThe" xml:space="preserve">
+    <value>Couldn't play the sound with the bleeps in. They're saved all the same.</value>
+  </data>
+  <data name="CouldnTMakeTheSoundWithThe" xml:space="preserve">
+    <value>Couldn't make the sound with the bleeps in: </value>
+  </data>
+  <data name="Silence" xml:space="preserve">
+    <value>Silence</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Opening" xml:space="preserve">
+    <value>Opening…</value>
+  </data>
+  <data name="Restore" xml:space="preserve">
+    <value>Restore</value>
+  </data>
+  <data name="Maximize" xml:space="preserve">
+    <value>Maximize</value>
+  </data>
+  <data name="SaveOnlyTheSelectedPages" xml:space="preserve">
+    <value>Save only the selected pages</value>
+  </data>
+  <data name="Left" xml:space="preserve">
+    <value>Left</value>
+  </data>
+  <data name="TurnLeftCtrlL" xml:space="preserve">
+    <value>Turn left (Ctrl+L)</value>
+  </data>
+  <data name="Right" xml:space="preserve">
+    <value>Right</value>
+  </data>
+  <data name="TurnRightCtrlR" xml:space="preserve">
+    <value>Turn right (Ctrl+R)</value>
+  </data>
+  <data name="Copy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="CopyTheSelectedPagesCtrlD" xml:space="preserve">
+    <value>Copy the selected pages (Ctrl+D)</value>
+  </data>
+  <data name="DeleteTheSelectedPagesDelete" xml:space="preserve">
+    <value>Delete the selected pages (Delete)</value>
+  </data>
+  <data name="AddPages" xml:space="preserve">
+    <value>Add pages…</value>
+  </data>
+  <data name="AddThePagesOfAnotherPDFAfter" xml:space="preserve">
+    <value>Add the pages of another PDF after the selection</value>
+  </data>
+  <data name="Selected" xml:space="preserve">
+    <value> · {0} selected</value>
+  </data>
+  <data name="DragPagesToMoveThemCtrlOr" xml:space="preserve">
+    <value> · Drag pages to move them; Ctrl or Shift picks several</value>
+  </data>
+  <data name="ThereAreNoPagesLeftToSave" xml:space="preserve">
+    <value>There are no pages left to save.</value>
+  </data>
+  <data name="Page" xml:space="preserve">
+    <value>{0}, page {1}</value>
+  </data>
+  <data name="APDFNeedsAtLeastOnePage" xml:space="preserve">
+    <value>A PDF needs at least one page; keep one or more.</value>
+  </data>
+  <data name="CouldnTAdd" xml:space="preserve">
+    <value>Couldn't add {0}: {1}</value>
+  </data>
+  <data name="AddThePagesOf" xml:space="preserve">
+    <value>Add the pages of</value>
+  </data>
+  <data name="PDFDocumentsPdf" xml:space="preserve">
+    <value>PDF documents|*.pdf</value>
+  </data>
+  <data name="Red" xml:space="preserve">
+    <value>Red</value>
+  </data>
+  <data name="Orange" xml:space="preserve">
+    <value>Orange</value>
+  </data>
+  <data name="DarkOrange" xml:space="preserve">
+    <value>Dark orange</value>
+  </data>
+  <data name="Yellow" xml:space="preserve">
+    <value>Yellow</value>
+  </data>
+  <data name="Green" xml:space="preserve">
+    <value>Green</value>
+  </data>
+  <data name="Blue" xml:space="preserve">
+    <value>Blue</value>
+  </data>
+  <data name="Black" xml:space="preserve">
+    <value>Black</value>
+  </data>
+  <data name="DarkGrey" xml:space="preserve">
+    <value>Dark grey</value>
+  </data>
+  <data name="Grey" xml:space="preserve">
+    <value>Grey</value>
+  </data>
+  <data name="OffWhite" xml:space="preserve">
+    <value>Off-white</value>
+  </data>
+  <data name="White" xml:space="preserve">
+    <value>White</value>
+  </data>
+  <data name="OneSelected" xml:space="preserve">
+    <value> · one selected</value>
+  </data>
+  <data name="OfSelected" xml:space="preserve">
+    <value> · {0} of {1} selected</value>
+  </data>
+  <data name="Light" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="Detail" xml:space="preserve">
+    <value>Detail</value>
+  </data>
+  <data name="Effects" xml:space="preserve">
+    <value>Effects</value>
+  </data>
+  <data name="Original" xml:space="preserve">
+    <value>Original</value>
+  </data>
+  <data name="HoldToSeeThePhotoAsIt" xml:space="preserve">
+    <value>Hold to see the photo as it was (or hold \)</value>
+  </data>
+  <data name="Auto" xml:space="preserve">
+    <value>Auto</value>
+  </data>
+  <data name="AStartingPointExposureWhitesAndBlacks" xml:space="preserve">
+    <value>A starting point: exposure, whites and blacks for this photo</value>
+  </data>
+  <data name="ResetAll" xml:space="preserve">
+    <value>Reset all</value>
+  </data>
+  <data name="EverySliderBackTo0" xml:space="preserve">
+    <value>Every slider back to 0</value>
+  </data>
+  <data name="DoubleClickASliderToPutIt" xml:space="preserve">
+    <value>Double-click a slider to put it back to 0. Hold \ to compare with the original.</value>
+  </data>
+  <data name="TheOriginal" xml:space="preserve">
+    <value>The original</value>
+  </data>
+  <data name="PreviewDrawnInMsHoldToCompare" xml:space="preserve">
+    <value>Preview drawn in {0} ms · hold \ to compare</value>
+  </data>
+  <data name="HoldToCompareWithTheOriginal" xml:space="preserve">
+    <value>Hold \ to compare with the original</value>
+  </data>
+  <data name="FindFaces" xml:space="preserve">
+    <value>Find faces</value>
+  </data>
+  <data name="AddABoxOverEachFaceFound" xml:space="preserve">
+    <value>Add a box over each face found, on this PC</value>
+  </data>
+  <data name="FindText" xml:space="preserve">
+    <value>Find text</value>
+  </data>
+  <data name="AddABoxOverEachWordWindows" xml:space="preserve">
+    <value>Add a box over each word Windows' OCR reads, on this PC</value>
+  </data>
+  <data name="WindowsCanTLookForFacesOn" xml:space="preserve">
+    <value>Windows can't look for faces on this PC</value>
+  </data>
+  <data name="FindingTextNeedsAnOCRLanguageIn" xml:space="preserve">
+    <value>Finding text needs an OCR language in Windows' language settings</value>
+  </data>
+  <data name="Find" xml:space="preserve">
+    <value>Find</value>
+  </data>
+  <data name="HideWith" xml:space="preserve">
+    <value>Hide with</value>
+  </data>
+  <data name="SolidIsTheSafestPixelateAndBlur" xml:space="preserve">
+    <value>Solid is the safest. Pixelate and blur are strong here, but a light blur can sometimes be undone.</value>
+  </data>
+  <data name="Areas" xml:space="preserve">
+    <value>Areas</value>
+  </data>
+  <data name="DragOnThePictureToDrawA" xml:space="preserve">
+    <value>Drag on the picture to draw a box. Drag a box to move it or its edges to resize it; Delete removes the selected one, and the arrows nudge it.</value>
+  </data>
+  <data name="TheCopyAlsoLosesItsLocationIts" xml:space="preserve">
+    <value>The copy also loses its location, its XMP and the small preview cameras keep in EXIF.</value>
+  </data>
+  <data name="AddABoxInTheMiddle" xml:space="preserve">
+    <value>Add a box in the middle</value>
+  </data>
+  <data name="SelectTheNextBox" xml:space="preserve">
+    <value>Select the next box</value>
+  </data>
+  <data name="MoveItAPixelWithShift10" xml:space="preserve">
+    <value>Move it a pixel; with Shift, 10</value>
+  </data>
+  <data name="RemoveTheSelectedBox" xml:space="preserve">
+    <value>Remove the selected box</value>
+  </data>
+  <data name="DrawABoxOverSomethingToHide" xml:space="preserve">
+    <value>Draw a box over something to hide first, or find faces or text.</value>
+  </data>
+  <data name="NoAreasYet" xml:space="preserve">
+    <value>No areas yet.</value>
+  </data>
+  <data name="ToHide" xml:space="preserve">
+    <value> to hide.</value>
+  </data>
+  <data name="LookingForFaces" xml:space="preserve">
+    <value>Looking for faces…</value>
+  </data>
+  <data name="ReadingTheText" xml:space="preserve">
+    <value>Reading the text…</value>
+  </data>
+  <data name="NoFacesWereFound" xml:space="preserve">
+    <value>No faces were found.</value>
+  </data>
+  <data name="NoTextWasFound" xml:space="preserve">
+    <value>No text was found.</value>
+  </data>
+  <data name="FoundCheckEachBoxAndRemoveAny" xml:space="preserve">
+    <value>{0} found. Check each box, and remove any that aren't needed.</value>
+  </data>
+  <data name="Timeline" xml:space="preserve">
+    <value>Timeline</value>
+  </data>
+  <data name="SpacePlaysOrPausesTheArrowsStep" xml:space="preserve">
+    <value>Space plays or pauses, the arrows step through it, and Tab selects the next stretch or box. The keys are listed beside it.</value>
+  </data>
+  <data name="Play" xml:space="preserve">
+    <value>Play</value>
+  </data>
+  <data name="PlayOrPauseSpace" xml:space="preserve">
+    <value>Play or pause (Space)</value>
+  </data>
+  <data name="BackAFrameASecondWithShift" xml:space="preserve">
+    <value>Back a frame (←); a second with Shift</value>
+  </data>
+  <data name="OnAFrameASecondWithShift" xml:space="preserve">
+    <value>On a frame (→); a second with Shift</value>
+  </data>
+  <data name="TypeATimeAndPressEnterTo" xml:space="preserve">
+    <value>Type a time and press Enter to go there, such as 1:02.5</value>
+  </data>
+  <data name="Time" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="SpacePlaysOrPausesAndTheArrows" xml:space="preserve">
+    <value>Space plays or pauses, and the arrows step a frame. The keys are listed beside it.</value>
+  </data>
+  <data name="KHz" xml:space="preserve">
+    <value>{0:0.#} kHz · {1} · {2}</value>
+  </data>
+  <data name="Channels" xml:space="preserve">
+    <value>{0} channels</value>
+  </data>
+  <data name="VariableFrameRate" xml:space="preserve">
+    <value>variable frame rate</value>
+  </data>
+  <data name="Fps" xml:space="preserve">
+    <value>{0:0.###} fps</value>
+  </data>
+  <data name="ThereSNoPictureInThisVideo" xml:space="preserve">
+    <value>There's no picture in this video that ffmpeg can read.</value>
+  </data>
+  <data name="PlayingNeedsWindowsPlayerWhichCanT" xml:space="preserve">
+    <value>Playing needs Windows' player, which can't open this file here</value>
+  </data>
+  <data name="ReadingFrames" xml:space="preserve">
+    <value>Reading frames</value>
+  </data>
+  <data name="MakingACopyToPlay" xml:space="preserve">
+    <value>Making a copy to play</value>
+  </data>
+  <data name="CouldnTReadAllOfTheFile" xml:space="preserve">
+    <value>Couldn't read all of the file</value>
+  </data>
+  <data name="FrameOf" xml:space="preserve">
+    <value>frame {0:N0} of {1:N0}</value>
+  </data>
+  <data name="Of" xml:space="preserve">
+    <value>of {0}</value>
+  </data>
+  <data name="Pause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="PlayOrPause" xml:space="preserve">
+    <value>Play or pause</value>
+  </data>
+  <data name="JKL" xml:space="preserve">
+    <value>J, K, L</value>
+  </data>
+  <data name="BackPausePlayAgainForFaster" xml:space="preserve">
+    <value>Back, pause, play; again for faster</value>
+  </data>
+  <data name="AFrameBackOrOn" xml:space="preserve">
+    <value>A frame back or on</value>
+  </data>
+  <data name="AHundredthOfASecond" xml:space="preserve">
+    <value>A hundredth of a second</value>
+  </data>
+  <data name="Shift2" xml:space="preserve">
+    <value>Shift, ←, →</value>
+  </data>
+  <data name="ASecondBackOrOn" xml:space="preserve">
+    <value>A second back or on</value>
+  </data>
+  <data name="HomeEnd" xml:space="preserve">
+    <value>Home, End</value>
+  </data>
+  <data name="TheStartOrTheEnd" xml:space="preserve">
+    <value>The start or the end</value>
+  </data>
+  <data name="Start" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="WhereThePartKeptStartsEnterTo" xml:space="preserve">
+    <value>Where the part kept starts; Enter to set it</value>
+  </data>
+  <data name="End" xml:space="preserve">
+    <value>End</value>
+  </data>
+  <data name="WhereThePartKeptEndsEnterTo" xml:space="preserve">
+    <value>Where the part kept ends; Enter to set it</value>
+  </data>
+  <data name="Keep" xml:space="preserve">
+    <value>Keep</value>
+  </data>
+  <data name="From" xml:space="preserve">
+    <value>From</value>
+  </data>
+  <data name="StartHere" xml:space="preserve">
+    <value>Start here</value>
+  </data>
+  <data name="StartAtThePlayheadI" xml:space="preserve">
+    <value>Start at the playhead (I)</value>
+  </data>
+  <data name="To" xml:space="preserve">
+    <value>To</value>
+  </data>
+  <data name="EndHere" xml:space="preserve">
+    <value>End here</value>
+  </data>
+  <data name="EndAfterTheFrameAtThePlayhead" xml:space="preserve">
+    <value>End after the frame at the playhead (O)</value>
+  </data>
+  <data name="EndAtThePlayheadO" xml:space="preserve">
+    <value>End at the playhead (O)</value>
+  </data>
+  <data name="SnapToKeyframes" xml:space="preserve">
+    <value>Snap to keyframes</value>
+  </data>
+  <data name="DraggedHandlesStopAtKeyframesSoThe" xml:space="preserve">
+    <value>Dragged handles stop at keyframes, so the copy can be made without re-encoding</value>
+  </data>
+  <data name="Saving" xml:space="preserve">
+    <value>Saving</value>
+  </data>
+  <data name="StartAtThePlayheadOrEndAfter" xml:space="preserve">
+    <value>Start at the playhead, or end after its frame</value>
+  </data>
+  <data name="StartOrEndAtThePlayhead" xml:space="preserve">
+    <value>Start or end at the playhead</value>
+  </data>
+  <data name="DragTheHandlesAtEitherEndOf" xml:space="preserve">
+    <value>Drag the handles at either end of the part kept. Click anywhere else to move the playhead.</value>
+  </data>
+  <data name="WillBeSavedWithoutReEncoding" xml:space="preserve">
+    <value>Will be saved without re-encoding</value>
+  </data>
+  <data name="WillBeReEncodedSoTheCuts" xml:space="preserve">
+    <value>Will be re-encoded so the cuts are exact</value>
+  </data>
+  <data name="MoveTheStartOrTheEndFirst" xml:space="preserve">
+    <value>Move the start or the end first: this keeps all of it.</value>
+  </data>
+  <data name="Keeps" xml:space="preserve">
+    <value>Keeps {0} · {1}</value>
+  </data>
+  <data name="Keeps2" xml:space="preserve">
+    <value>Keeps {0}</value>
+  </data>
+  <data name="Of2" xml:space="preserve">
+    <value>{0} of {1}</value>
+  </data>
+  <data name="FindingTheKeyframes" xml:space="preserve">
+    <value>Finding the keyframes…</value>
+  </data>
+  <data name="BothCutsAreOnKeyframesSoThe" xml:space="preserve">
+    <value>Both cuts are on keyframes, so the copy is made without re-encoding: quick, and nothing is lost.</value>
+  </data>
+  <data name="ThePartKeptIsReEncodedSo" xml:space="preserve">
+    <value>The part kept is re-encoded so each cut lands on its exact frame. To save without re-encoding, put both cuts on keyframes (the marks under the pictures), or turn on Snap to keyframes.</value>
+  </data>
+  <data name="AddABoxOverEachFaceOn" xml:space="preserve">
+    <value>Add a box over each face on the frame showing, found on this PC</value>
+  </data>
+  <data name="FollowFace" xml:space="preserve">
+    <value>Follow face</value>
+  </data>
+  <data name="MoveTheSelectedBoxWithTheFace" xml:space="preserve">
+    <value>Move the selected box with the face in it through its stretch, found again on this PC. Select a box with a face in it where it starts.</value>
+  </data>
+  <data name="DragOnThePictureToDrawA2" xml:space="preserve">
+    <value>Drag on the picture to draw a box, hidden from this frame to the end. Each box has a bar under the timeline: drag its ends to set when it starts and stops.</value>
+  </data>
+  <data name="AddABoxInTheMiddleFrom" xml:space="preserve">
+    <value>Add a box in the middle, from here on</value>
+  </data>
+  <data name="StartTheSelectedBoxHereOrEnd" xml:space="preserve">
+    <value>Start the selected box here, or end it after this frame</value>
+  </data>
+  <data name="AltArrows" xml:space="preserve">
+    <value>Alt, Arrows</value>
+  </data>
+  <data name="TheCopyIsReEncodedAndLoses" xml:space="preserve">
+    <value>The copy is re-encoded, and loses its location, cover pictures, subtitles and data tracks such as GPS logs.</value>
+  </data>
+  <data name="DrawABoxOverSomethingToHide2" xml:space="preserve">
+    <value>Draw a box over something to hide first, or find faces.</value>
+  </data>
+  <data name="NoFacesOnThisFrame" xml:space="preserve">
+    <value>No faces on this frame.</value>
+  </data>
+  <data name="FoundHiddenFromThisFrameToThe" xml:space="preserve">
+    <value>{0} found, hidden from this frame to the end. Select one and press Follow face to have its box move with it.</value>
+  </data>
+  <data name="FollowingTheFace" xml:space="preserve">
+    <value>Following the face…</value>
+  </data>
+  <data name="FollowingTheFace2" xml:space="preserve">
+    <value>Following the face… {0:0%}</value>
+  </data>
+  <data name="NoFaceToFollowInThisBox" xml:space="preserve">
+    <value>No face to follow in this box. Draw it around a face, or use Find faces.</value>
+  </data>
+  <data name="FollowedToWhereTheFaceIsLost" xml:space="preserve">
+    <value>Followed to {0}, where the face is lost; the box stops there. Drag the end of its bar to go on.</value>
+  </data>
+  <data name="FollowedThroughItsWholeStretch" xml:space="preserve">
+    <value>Followed through its whole stretch.</value>
+  </data>
+  <data name="DeleteRemovesFromTheShelf" xml:space="preserve">
+    <value>Delete removes from the shelf</value>
+  </data>
+  <data name="DeleteRemovesFromTheShelfConverts" xml:space="preserve">
+    <value>Delete removes from the shelf
+{0} converts</value>
+  </data>
+  <data name="Image" xml:space="preserve">
+    <value>Image</value>
+  </data>
+  <data name="Video" xml:space="preserve">
+    <value>Video</value>
+  </data>
+  <data name="Audio" xml:space="preserve">
+    <value>Audio</value>
+  </data>
+  <data name="Document" xml:space="preserve">
+    <value>Document</value>
+  </data>
+  <data name="Files" xml:space="preserve">
+    <value>Files</value>
+  </data>
+  <data name="Archive" xml:space="preserve">
+    <value>Archive</value>
+  </data>
+  <data name="Convert" xml:space="preserve">
+    <value>Convert</value>
+  </data>
+  <data name="ConvertTo" xml:space="preserve">
+    <value>Convert to…</value>
+  </data>
+  <data name="ThereSNothingToConvertThisSelection" xml:space="preserve">
+    <value>There's nothing to convert this selection to.</value>
+  </data>
+  <data name="Tools" xml:space="preserve">
+    <value>Tools</value>
+  </data>
+  <data name="FindATool" xml:space="preserve">
+    <value>Find a tool…</value>
+  </data>
+  <data name="ThereAreNoToolsForThisSelection" xml:space="preserve">
+    <value>There are no tools for this selection.</value>
+  </data>
+  <data name="Actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="FindAnAction" xml:space="preserve">
+    <value>Find an action…</value>
+  </data>
+  <data name="ThereAreNoActionsForThisSelection" xml:space="preserve">
+    <value>There are no actions for this selection.</value>
+  </data>
+  <data name="Folder" xml:space="preserve">
+    <value>Folder</value>
+  </data>
+  <data name="File" xml:space="preserve">
+    <value>{0} file · {1}</value>
+  </data>
+  <data name="Items" xml:space="preserve">
+    <value>{0} items</value>
+  </data>
+  <data name="NothingMatches" xml:space="preserve">
+    <value>Nothing matches “{0}”.</value>
+  </data>
+  <data name="Of3" xml:space="preserve">
+    <value>{0}, {1}, {2} of {3}</value>
+  </data>
+  <data name="Items2" xml:space="preserve">
+    <value>{0} items · </value>
+  </data>
+  <data name="SavedAsACopyBesideTheOriginal" xml:space="preserve">
+    <value>Saved as a copy beside the original</value>
+  </data>
+  <data name="SavedBesideTheOriginals" xml:space="preserve">
+    <value>Saved beside the originals</value>
+  </data>
+  <data name="PickAnyColour" xml:space="preserve">
+    <value>Pick any colour…</value>
+  </data>
+  <data name="PickAnyColour2" xml:space="preserve">
+    <value>Pick any colour</value>
+  </data>
+  <data name="None" xml:space="preserve">
+    <value>None</value>
+  </data>
+  <data name="ChooseAFile" xml:space="preserve">
+    <value>Choose a file</value>
+  </data>
+  <data name="Browse" xml:space="preserve">
+    <value>Browse…</value>
+  </data>
+  <data name="Choose" xml:space="preserve">
+    <value>Choose {0}</value>
+  </data>
+  <data name="AllFiles" xml:space="preserve">
+    <value>All files|*.*</value>
+  </data>
+  <data name="End2" xml:space="preserve">
+    <value>{0}: end</value>
+  </data>
+  <data name="SuchAs0051125" xml:space="preserve">
+    <value>Such as 0:05, 1:12.5</value>
+  </data>
+  <data name="MomentToAdd" xml:space="preserve">
+    <value>{0}: moment to add</value>
+  </data>
+  <data name="Add" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="AddThisMomentToTheList" xml:space="preserve">
+    <value>Add this moment to the list</value>
+  </data>
+  <data name="MoveUp" xml:space="preserve">
+    <value>Move up</value>
+  </data>
+  <data name="MoveDown" xml:space="preserve">
+    <value>Move down</value>
+  </data>
+  <data name="MoveUp2" xml:space="preserve">
+    <value>Move {0} up</value>
+  </data>
+  <data name="MoveDown2" xml:space="preserve">
+    <value>Move {0} down</value>
+  </data>
+  <data name="ThePreviewComesBackWhenTheSettings" xml:space="preserve">
+    <value>The preview comes back when the settings marked in red are fixed.</value>
+  </data>
+  <data name="ThePreviewAppearsOnceEverySettingIs" xml:space="preserve">
+    <value>The preview appears once every setting is filled in.</value>
+  </data>
+  <data name="NoPreviewForThisFile" xml:space="preserve">
+    <value>No preview for this file.</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Of4" xml:space="preserve">
+    <value>{0} · {1} of {2}</value>
+  </data>
+  <data name="Canceled" xml:space="preserve">
+    <value>Canceled</value>
+  </data>
+  <data name="FinishedBeforeYouCanceled" xml:space="preserve">
+    <value>{0} finished before you canceled.</value>
+  </data>
+  <data name="NothingWasChanged" xml:space="preserve">
+    <value>Nothing was changed.</value>
+  </data>
+  <data name="NothingToDo" xml:space="preserve">
+    <value>Nothing to do</value>
+  </data>
+  <data name="Already" xml:space="preserve">
+    <value>Already {0}.</value>
+  </data>
+  <data name="Already2" xml:space="preserve">
+    <value> · {0} already {1}</value>
+  </data>
+  <data name="Open" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="CouldnTConvert" xml:space="preserve">
+    <value>Couldn't convert {0}</value>
+  </data>
+  <data name="DidnTWorkOn" xml:space="preserve">
+    <value>{0} didn't work on {1}</value>
+  </data>
+  <data name="OfFailed" xml:space="preserve">
+    <value>{0} of {1} failed</value>
+  </data>
+  <data name="CopyDetails" xml:space="preserve">
+    <value>Copy details</value>
+  </data>
+  <data name="ShowInFolder" xml:space="preserve">
+    <value>Show in folder</value>
+  </data>
+  <data name="TanjeloChangesApplyAtOnce" xml:space="preserve">
+    <value>Tanjelo {0} · changes apply at once</value>
+  </data>
+  <data name="DPI" xml:space="preserve">
+    <value>{0} DPI</value>
+  </data>
+  <data name="ThatSTheShelfSShortcutChoose" xml:space="preserve">
+    <value>That's the shelf's shortcut. Choose other keys.</value>
+  </data>
+  <data name="ThatSTheMenuSShortcutChoose" xml:space="preserve">
+    <value>That's the menu's shortcut. Choose other keys.</value>
+  </data>
+  <data name="ProgramsExeExe" xml:space="preserve">
+    <value>{0}|{0}|Programs (*.exe)|*.exe</value>
+  </data>
+  <data name="NotFoundAudioAndVideoConversionsNeed" xml:space="preserve">
+    <value>Not found. Audio and video conversions need it: winget install Gyan.FFmpeg.Essentials</value>
+  </data>
+  <data name="NotFoundWindowsOwnZipAndTar" xml:space="preserve">
+    <value>Not found. Windows' own zip and tar cover the rest: winget install 7zip.7zip</value>
+  </data>
+  <data name="MicrosoftOffice" xml:space="preserve">
+    <value>Microsoft Office</value>
+  </data>
+  <data name="Found" xml:space="preserve">
+    <value>Found: </value>
+  </data>
+  <data name="LibreOffice" xml:space="preserve">
+    <value>LibreOffice</value>
+  </data>
+  <data name="Office" xml:space="preserve">
+    <value>Office</value>
+  </data>
+  <data name="NotFoundWordPowerPointAndExcelFiles" xml:space="preserve">
+    <value>Not found. Word, PowerPoint and Excel files need Microsoft Office or LibreOffice.</value>
+  </data>
+  <data name="NotFoundWordEPUBAndMarkdownTo" xml:space="preserve">
+    <value>Not found. Word, EPUB and Markdown-to-DOCX need it: winget install JohnMacFarlane.Pandoc</value>
+  </data>
+  <data name="WebView2" xml:space="preserve">
+    <value>WebView2</value>
+  </data>
+  <data name="FoundVersion" xml:space="preserve">
+    <value>Found: version </value>
+  </data>
+  <data name="NotFoundMarkdownEPUBAndHTMLTo" xml:space="preserve">
+    <value>Not found. Markdown, EPUB and HTML to PDF need it: winget install Microsoft.EdgeWebView2Runtime</value>
+  </data>
+  <data name="HEIC" xml:space="preserve">
+    <value>HEIC</value>
+  </data>
+  <data name="WindowsCanWriteHEIC" xml:space="preserve">
+    <value>Windows can write HEIC</value>
+  </data>
+  <data name="HEICOutputNeedsTheHEIFAndHEVC" xml:space="preserve">
+    <value>HEIC output needs the HEIF and HEVC Video Extensions from the Microsoft Store.</value>
+  </data>
+  <data name="ThereSNoAtThatPath" xml:space="preserve">
+    <value>There's no {0} at that path. </value>
+  </data>
+  <data name="Using" xml:space="preserve">
+    <value>Using </value>
+  </data>
+  <data name="Files2" xml:space="preserve">
+    <value>{0} files</value>
+  </data>
+  <data name="WindowsDidnTAskForTheFiles" xml:space="preserve">
+    <value>Windows didn't ask for the files</value>
+  </data>
+  <data name="WindowsDidnTOpenTheShareSheet" xml:space="preserve">
+    <value>Windows didn't open the Share sheet. Try Share on the files' menu in File Explorer.</value>
+  </data>
+  <data name="ConvertWithTanjelo" xml:space="preserve">
+    <value>Convert with Tanjelo</value>
+  </data>
+  <data name="HoldCtrlAltOrWinWithThe" xml:space="preserve">
+    <value>Hold Ctrl, Alt or Win with the key, so the shortcut doesn't get in the way of typing.</value>
+  </data>
+  <data name="Converters" xml:space="preserve">
+    <value>Converters</value>
+  </data>
+  <data name="StartWithWindows" xml:space="preserve">
+    <value>Start with Windows</value>
+  </data>
+  <data name="ShowInSendToMenu" xml:space="preserve">
+    <value>Show in "Send to" menu</value>
+  </data>
+  <data name="ConvertFiles" xml:space="preserve">
+    <value>Convert files…</value>
+  </data>
+  <data name="ShowShelf" xml:space="preserve">
+    <value>Show shelf</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Settings…</value>
+  </data>
+  <data name="QuitTanjelo" xml:space="preserve">
+    <value>Quit Tanjelo</value>
+  </data>
+  <data name="TanjeloFileConverter" xml:space="preserve">
+    <value>Tanjelo file converter</value>
+  </data>
+  <data name="OrPressInFileExplorer" xml:space="preserve">
+    <value>Or press {0} in File Explorer</value>
+  </data>
+  <data name="NotFound" xml:space="preserve">
+    <value>not found</value>
+  </data>
+  <data name="ImagesAndPDFPagesBuiltIn" xml:space="preserve">
+    <value>Images and PDF pages (built in)</value>
+  </data>
+  <data name="AudioAndVideo" xml:space="preserve">
+    <value>Audio and video: </value>
+  </data>
+  <data name="FfmpegNotFound" xml:space="preserve">
+    <value>ffmpeg not found</value>
+  </data>
+  <data name="OfficeDocuments" xml:space="preserve">
+    <value>Office documents: </value>
+  </data>
+  <data name="Archives" xml:space="preserve">
+    <value>Archives: </value>
+  </data>
+  <data name="N7Zip" xml:space="preserve">
+    <value>7-Zip</value>
+  </data>
+  <data name="WindowsZipTar" xml:space="preserve">
+    <value>Windows (zip, tar)</value>
+  </data>
+  <data name="WordAndEPUB" xml:space="preserve">
+    <value>Word and EPUB: </value>
+  </data>
+  <data name="PandocNotFound" xml:space="preserve">
+    <value>pandoc not found</value>
+  </data>
+  <data name="MarkdownToPDF" xml:space="preserve">
+    <value>Markdown to PDF: </value>
+  </data>
+  <data name="WebView2NotFound" xml:space="preserve">
+    <value>WebView2 not found</value>
+  </data>
+  <data name="GitHubAnswered" xml:space="preserve">
+    <value>GitHub answered {0} {1}.</value>
+  </data>
+  <data name="GitHubDidnTAnswerInTime" xml:space="preserve">
+    <value>GitHub didn't answer in time.</value>
+  </data>
+  <data name="TodayAt" xml:space="preserve">
+    <value>today at {0:HH:mm}</value>
+  </data>
+  <data name="On" xml:space="preserve">
+    <value>on {0:d MMMM}</value>
+  </data>
+  <data name="CouldnTCheck" xml:space="preserve">
+    <value>Couldn't check {0}: {1}</value>
+  </data>
+  <data name="TanjeloIsOutChecked" xml:space="preserve">
+    <value>Tanjelo {0} is out (checked {1}).</value>
+  </data>
+  <data name="TanjeloIsTheLatestVersionChecked" xml:space="preserve">
+    <value>Tanjelo {0} is the latest version (checked {1}).</value>
+  </data>
+  <data name="TanjeloFloat" xml:space="preserve">
+    <value>Tanjelo Float</value>
+    <comment>FloatWindow.xaml</comment>
+  </data>
+  <data name="Float" xml:space="preserve">
+    <value>Float</value>
+    <comment>FloatWindow.xaml</comment>
+  </data>
+  <data name="Clear" xml:space="preserve">
+    <value>Clear</value>
+    <comment>FloatWindow.xaml</comment>
+  </data>
+  <data name="TakeEverythingOffTheShelfTheFiles" xml:space="preserve">
+    <value>Take everything off the shelf; the files stay where they are</value>
+    <comment>FloatWindow.xaml</comment>
+  </data>
+  <data name="HideTheShelfShowShelfInThe" xml:space="preserve">
+    <value>Hide the shelf; Show shelf in the tray menu brings it back</value>
+    <comment>FloatWindow.xaml</comment>
+  </data>
+  <data name="FilesOnTheShelf" xml:space="preserve">
+    <value>Files on the shelf</value>
+    <comment>FloatWindow.xaml</comment>
+  </data>
+  <data name="TakeOffTheShelf" xml:space="preserve">
+    <value>Take off the shelf</value>
+    <comment>FloatWindow.xaml</comment>
+  </data>
+  <data name="DropFilesHereToParkThem" xml:space="preserve">
+    <value>Drop files here to park them</value>
+    <comment>FloatWindow.xaml</comment>
+  </data>
+  <data name="DragThemOutToAFolderAn" xml:space="preserve">
+    <value>Drag them out to a folder, an email or a chat when you need them.</value>
+    <comment>FloatWindow.xaml</comment>
+  </data>
+  <data name="DragEverythingOnTheShelfAtOnce" xml:space="preserve">
+    <value>Drag everything on the shelf at once</value>
+    <comment>FloatWindow.xaml</comment>
+  </data>
+  <data name="All" xml:space="preserve">
+    <value>  All</value>
+    <comment>FloatWindow.xaml</comment>
+  </data>
+  <data name="Tanjelo" xml:space="preserve">
+    <value>Tanjelo</value>
+    <comment>FormatMenuWindow.xaml</comment>
+  </data>
+  <data name="TypeToFilterUpAndDownChoose" xml:space="preserve">
+    <value>Type to filter. Up and Down choose, Tab switches between Convert, Tools and Actions, and Enter runs it.</value>
+    <comment>FormatMenuWindow.xaml</comment>
+  </data>
+  <data name="WhatToInstallForMore" xml:space="preserve">
+    <value>What to install for more</value>
+    <comment>FormatMenuWindow.xaml</comment>
+  </data>
+  <data name="CancelEsc" xml:space="preserve">
+    <value>Cancel (Esc)</value>
+    <comment>OptionsWindow.xaml</comment>
+  </data>
+  <data name="AboutTheFile" xml:space="preserve">
+    <value>About the file</value>
+    <comment>OptionsWindow.xaml</comment>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Close</value>
+    <comment>ProgressToast.xaml</comment>
+  </data>
+  <data name="TanjeloSettings" xml:space="preserve">
+    <value>Tanjelo settings</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="Settings2" xml:space="preserve">
+    <value>Settings</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="ChangesApplyAtOnce" xml:space="preserve">
+    <value>Changes apply at once</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="CloseEsc" xml:space="preserve">
+    <value>Close (Esc)</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="Shortcuts" xml:space="preserve">
+    <value>Shortcuts</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="OpenTheMenu" xml:space="preserve">
+    <value>Open the menu</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="ClickHereAndPressTheKeysFor" xml:space="preserve">
+    <value>Click here and press the keys for the new shortcut</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="WorksWhileFileExplorerTheDesktopOr" xml:space="preserve">
+    <value>Works while File Explorer, the desktop or the shelf is in front. Click the box and press new keys to change it.</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="ShowOrHideTheShelf" xml:space="preserve">
+    <value>Show or hide the shelf</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="ClickHereAndPressTheKeysFor2" xml:space="preserve">
+    <value>Click here and press the keys for the new shortcut; Backspace removes it</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="RemoveTheShelfShortcut" xml:space="preserve">
+    <value>Remove the shelf shortcut</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="WorksEverywhereOffUnlessYouSetOne" xml:space="preserve">
+    <value>Works everywhere. Off unless you set one.</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="Appearance" xml:space="preserve">
+    <value>Appearance</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="Theme" xml:space="preserve">
+    <value>Theme</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="SameAsWindows" xml:space="preserve">
+    <value>Same as Windows</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="Dark" xml:space="preserve">
+    <value>Dark</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="Quality" xml:space="preserve">
+    <value>Quality</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="JPGQuality" xml:space="preserve">
+    <value>JPG quality</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="WebPQuality" xml:space="preserve">
+    <value>WebP quality</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="HEICQuality" xml:space="preserve">
+    <value>HEIC quality</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="PDFPagesAsPictures" xml:space="preserve">
+    <value>PDF pages as pictures</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="HigherNumbersLookBetterAndMakeBigger" xml:space="preserve">
+    <value>Higher numbers look better and make bigger files. Tools with their own settings, such as Compress, choose for themselves.</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="OptionalPrograms" xml:space="preserve">
+    <value>Optional programs</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="InstalledSeparatelyAndFoundAutomaticallyFormatsThat" xml:space="preserve">
+    <value>Installed separately and found automatically. Formats that need a missing one stay out of the menu.</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="FfmpegForAudioAndVideo" xml:space="preserve">
+    <value>ffmpeg, for audio and video</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="FoundAutomatically" xml:space="preserve">
+    <value>Found automatically</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="ChooseFfmpegExe" xml:space="preserve">
+    <value>Choose ffmpeg.exe</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="N7ZipFor7ZAndRARArchives" xml:space="preserve">
+    <value>7-Zip, for 7Z and RAR archives</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="Choose7zExe" xml:space="preserve">
+    <value>Choose 7z.exe</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="TheOthers" xml:space="preserve">
+    <value>The others</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="OtherOptionalPrograms" xml:space="preserve">
+    <value>Other optional programs</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="Windows" xml:space="preserve">
+    <value>Windows</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="TanjeloWaitsInTheNotificationAreaReady" xml:space="preserve">
+    <value>Tanjelo waits in the notification area, ready for the shortcut.</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="ShowInTheSendToMenu" xml:space="preserve">
+    <value>Show in the "Send to" menu</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="RightClickFilesThenSendToThen" xml:space="preserve">
+    <value>Right-click files, then Send to, then Tanjelo.</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="Updates" xml:space="preserve">
+    <value>Updates</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="CheckForANewVersionOnceA" xml:space="preserve">
+    <value>Check for a new version once a day</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="AsksGitHubForTheNumberOfThe" xml:space="preserve">
+    <value>Asks GitHub for the number of the latest version. Nothing is downloaded, and nothing about you or your files is sent.</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="KeptInSettingsJsonWhichYouCan" xml:space="preserve">
+    <value>Kept in settings.json, which you can also edit by hand</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="OpenSettingsFile" xml:space="preserve">
+    <value>Open settings file</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="Done" xml:space="preserve">
+    <value>Done</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="SeeWhatSNew" xml:space="preserve">
+    <value>See what's new</value>
+    <comment>SettingsWindow.xaml</comment>
+  </data>
+  <data name="UndoCtrlZ" xml:space="preserve">
+    <value>Undo (Ctrl+Z)</value>
+    <comment>EditorWindow.xaml</comment>
+  </data>
+  <data name="RedoCtrlY" xml:space="preserve">
+    <value>Redo (Ctrl+Y)</value>
+    <comment>EditorWindow.xaml</comment>
+  </data>
+  <data name="ZoomOutCtrl" xml:space="preserve">
+    <value>Zoom out (Ctrl+−)</value>
+    <comment>EditorWindow.xaml</comment>
+  </data>
+  <data name="ZoomInCtrl" xml:space="preserve">
+    <value>Zoom in (Ctrl++)</value>
+    <comment>EditorWindow.xaml</comment>
+  </data>
+  <data name="Fit" xml:space="preserve">
+    <value>Fit</value>
+    <comment>EditorWindow.xaml</comment>
+  </data>
+  <data name="FitThePictureCtrl0" xml:space="preserve">
+    <value>Fit the picture (Ctrl+0)</value>
+    <comment>EditorWindow.xaml</comment>
+  </data>
+  <data name="ShowEveryPixelCtrl1" xml:space="preserve">
+    <value>Show every pixel (Ctrl+1)</value>
+    <comment>EditorWindow.xaml</comment>
+  </data>
+  <data name="SaveACopyCtrlS" xml:space="preserve">
+    <value>Save a copy (Ctrl+S)</value>
+    <comment>EditorWindow.xaml</comment>
+  </data>
+  <data name="DiscardYourChanges" xml:space="preserve">
+    <value>Discard your changes?</value>
+    <comment>EditorWindow.xaml</comment>
+  </data>
+  <data name="NothingHasBeenSavedTheOriginalStays" xml:space="preserve">
+    <value>Nothing has been saved. The original stays as it is either way.</value>
+    <comment>EditorWindow.xaml</comment>
+  </data>
+  <data name="KeepEditing" xml:space="preserve">
+    <value>Keep editing</value>
+    <comment>EditorWindow.xaml</comment>
+  </data>
+  <data name="Discard" xml:space="preserve">
+    <value>Discard</value>
+    <comment>EditorWindow.xaml</comment>
+  </data>
+  <data name="Mono" xml:space="preserve">
+    <value>mono</value>
+  </data>
+  <data name="Stereo" xml:space="preserve">
+    <value>stereo</value>
+  </data>
+  <data name="Pandoc" xml:space="preserve">
+    <value>pandoc</value>
+  </data>
+</root>
