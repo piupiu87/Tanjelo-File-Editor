@@ -466,4 +466,6 @@ public static class Strings
     public static string Mono => Get();
     public static string Stereo => Get();
     public static string Pandoc => Get();
+    public static string ShowInTheWindows11Menu => Get();
+    public static string Windows11MenuHint => Get();
 }

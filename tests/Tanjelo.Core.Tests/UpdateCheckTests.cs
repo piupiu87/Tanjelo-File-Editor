@@ -179,5 +179,7 @@ public class UpdateCheckTests
     {
         public bool StartsWithWindows { get; set; }
         public bool InSendToMenu { get; set; }
+        public bool CanUseWindows11Menu { get; set; }
+        public bool InWindows11Menu { get; set; }
     }
 }

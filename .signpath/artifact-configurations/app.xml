@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- SignPath artifact configuration "app": Tanjelo's own files, as the release workflow gathers them before making the
-     zip and the installer. Each must name Tanjelo as its product and piupiu87 as its publisher, as Directory.Build.props
-     sets them. Libraries from other projects aren't signed here. -->
+<!-- SignPath artifact configuration "app": Tanjelo's own files and the Windows 11 menu entry's package, as the release
+     workflow gathers them before making the zip and the installer. Each program file must name Tanjelo as its product
+     and piupiu87 as its publisher, as Directory.Build.props sets them. Libraries from other projects aren't signed here. -->
 <artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
   <zip-file>
     <pe-file-set product-name="Tanjelo" company-name="piupiu87">
@@ -10,9 +10,15 @@
       <include path="tanj.exe" />
       <include path="tanj.dll" />
       <include path="Tanjelo.Core.dll" />
+      <include path="TanjeloMenu.dll" />
       <for-each>
         <authenticode-sign />
       </for-each>
     </pe-file-set>
+    <!-- The Windows 11 menu entry's sparse package: its Identity Publisher is the certificate's subject, which the
+         workflow takes from the SIGNPATH_CERTIFICATE_SUBJECT variable. -->
+    <msix-file path="Tanjelo.ShellMenu.msix">
+      <authenticode-sign />
+    </msix-file>
   </zip-file>
 </artifact-configuration>

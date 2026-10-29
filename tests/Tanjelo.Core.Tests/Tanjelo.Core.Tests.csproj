@@ -32,6 +32,8 @@
     <ProjectReference Include="..\..\src\Tanjelo.Core\Tanjelo.Core.csproj" />
     <!-- For the app's pure helpers, such as where the menu is placed. -->
     <ProjectReference Include="..\..\src\Tanjelo\Tanjelo.csproj" />
+    <!-- The Windows 11 menu entry's handing over of a selection; it's published natively, but builds as a library too. -->
+    <ProjectReference Include="..\..\src\Tanjelo.ShellMenu\Tanjelo.ShellMenu.csproj" />
   </ItemGroup>
 
 </Project>

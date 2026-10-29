@@ -50,6 +50,39 @@ static class ShellIntegration
         }
     }
 
+
+    // ---- The entry in the Windows 11 right-click menu: a sparse package beside the app (signed releases bring it),
+    // registered for this user while the setting is on. Its COM server, TanjeloMenu.dll, hands the selection to
+    // Tanjelo.exe. The package points at this folder, which Velopack keeps the same across updates.
+
+    const string MenuPackageName = "Tanjelo.Menu";
+
+    static string MenuPackage => Path.Combine(AppContext.BaseDirectory, "Tanjelo.ShellMenu.msix");
+
+    /// <summary>Whether this copy can add the entry: Windows 11, with the package and its DLL beside the app.</summary>
+    public static bool CanUseWindows11Menu =>
+        OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22000) && File.Exists(MenuPackage)
+        && File.Exists(Path.Combine(AppContext.BaseDirectory, "TanjeloMenu.dll"));
+
+    public static bool InWindows11Menu
+    {
+        get => CanUseWindows11Menu && RegisteredMenu() is not null;
+        set
+        {
+            if (value == InWindows11Menu) return;
+            var packages = new Windows.Management.Deployment.PackageManager();
+            // Waited for off this thread: the deployment finishes on the thread pool, which mustn't need the UI thread.
+            var result = value
+                ? Task.Run(() => packages.AddPackageByUriAsync(new Uri(MenuPackage),
+                    new Windows.Management.Deployment.AddPackageOptions { ExternalLocationUri = new Uri(AppContext.BaseDirectory) }).AsTask()).GetAwaiter().GetResult()
+                : Task.Run(() => packages.RemovePackageAsync(RegisteredMenu()!.Id.FullName).AsTask()).GetAwaiter().GetResult();
+            if (result.ExtendedErrorCode is { } error) throw new IOException(result.ErrorText, error);
+        }
+    }
+
+    static Windows.ApplicationModel.Package? RegisteredMenu() =>
+        new Windows.Management.Deployment.PackageManager().FindPackagesForUser("").FirstOrDefault(p => p.Id.Name == MenuPackageName);
+
     /// <summary>The Explorer thumbnail (or icon) for a file or folder, as Explorer would draw it.</summary>
     public static ImageSource? Thumbnail(string path, int size)
     {
@@ -147,6 +180,10 @@ interface IWindowsSettings
 {
     bool StartsWithWindows { get; set; }
     bool InSendToMenu { get; set; }
+
+    /// <summary>Whether the Windows 11 menu entry can be offered at all: Windows 11, and a signed release, which brings it.</summary>
+    bool CanUseWindows11Menu { get; }
+    bool InWindows11Menu { get; set; }
 }
 
 sealed class WindowsSettings : IWindowsSettings
@@ -161,5 +198,13 @@ sealed class WindowsSettings : IWindowsSettings
     {
         get => ShellIntegration.InSendToMenu;
         set => ShellIntegration.InSendToMenu = value;
+    }
+
+    public bool CanUseWindows11Menu => ShellIntegration.CanUseWindows11Menu;
+
+    public bool InWindows11Menu
+    {
+        get => ShellIntegration.InWindows11Menu;
+        set => ShellIntegration.InWindows11Menu = value;
     }
 }

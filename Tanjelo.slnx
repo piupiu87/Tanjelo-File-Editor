@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/tanj/tanj.csproj" />
     <Project Path="src/Tanjelo.Core/Tanjelo.Core.csproj" />
+    <Project Path="src/Tanjelo.ShellMenu/Tanjelo.ShellMenu.csproj" />
     <Project Path="src/Tanjelo/Tanjelo.csproj" />
   </Folder>
   <Folder Name="/tests/">

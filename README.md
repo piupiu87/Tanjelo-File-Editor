@@ -50,6 +50,7 @@ The app isn't code-signed yet, so the first launch may show "Windows protected y
 | File Explorer or the desktop | Select files → **Ctrl+Shift+Space** → type to filter (`mp3`, `pdf`…) → **Enter**, or click |
 | Notification area | Click the Tanjelo icon to pick files; right-click for options |
 | "Send to" menu | Turn on *Show in the "Send to" menu* in Settings, then right-click files → Send to → Tanjelo |
+| Windows 11 right-click menu | In a signed release, turn on *Show in the Windows 11 right-click menu* in Settings, then right-click files → **Tanjelo…** for the same menu as the shortcut |
 | Float shelf | Drop files on the shelf at the right edge of the screen, drag copies out later (hold Shift to move them), or press the shortcut there to convert them |
 | Command line | `tanj convert webp *.png` (see [Command line](#command-line)) |
 
@@ -287,6 +288,7 @@ SignPath; [.signpath/README.md](.signpath/README.md) says how it's set up.
 | `src/Tanjelo.Core` | Formats, the conversion engine, and one converter per engine (`Converters/`) |
 | `src/Tanjelo` | WPF tray app: hotkey, Explorer selection, the format menu, options dialogs, the editors (`Editors/`), progress cards |
 | `src/tanj` | Command-line front end |
+| `src/Tanjelo.ShellMenu` | The Windows 11 right-click menu entry: a small COM server, published with NativeAOT, and its sparse package |
 | `tests/Tanjelo.Core.Tests` | xUnit tests for the engine and every converter, and the editors' windows, rendered and driven off-screen |
 
 ## Roadmap

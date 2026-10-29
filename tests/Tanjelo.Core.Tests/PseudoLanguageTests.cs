@@ -89,6 +89,8 @@ public class PseudoLanguageTests
     {
         public bool StartsWithWindows { get; set; }
         public bool InSendToMenu { get; set; }
+        public bool CanUseWindows11Menu { get; set; }
+        public bool InWindows11Menu { get; set; }
     }
 
     [Fact]
@@ -122,7 +124,7 @@ public class PseudoLanguageTests
                 }
             }
 
-            await Check("settings", new SettingsWindow(new Settings { FloatHotkey = "Ctrl+Shift+F" }, _ => { }, new FakeWindowsSettings(), (_, _) => new Toolbox()), 600, 1700);
+            await Check("settings", new SettingsWindow(new Settings { FloatHotkey = "Ctrl+Shift+F" }, _ => { }, new FakeWindowsSettings { CanUseWindows11Menu = true }, (_, _) => new Toolbox()), 600, 1700);
             var engine = Env.Engine();
             await Check("menu", new FormatMenuWindow([photo], engine.GetMenu([photo])), 330, 700);
             var card = new ProgressToast();

@@ -35,6 +35,7 @@ ffmpeg and pandoc; Office tests skip there.
 | `src/Tanjelo.Core` | Formats (`Formats.cs`), the engine (`ConverterEngine.cs`), optional tools (`Toolbox.cs`) and one converter per engine in `Converters/` |
 | `src/Tanjelo` | The WPF tray app: hotkey, Explorer selection, the menu, options dialogs, the editors (`Editors/`), progress cards, the Share sheet, the Float shelf and the settings window |
 | `src/tanj` | The command-line front end |
+| `src/Tanjelo.ShellMenu` | The Windows 11 right-click menu entry: `TanjeloMenu.dll`, a COM server published with NativeAOT that hands the selection to Tanjelo.exe, and the sparse package (`Package/`) that registers it. Published on CI, which has the C++ tools NativeAOT needs; `dotnet build` only compiles it. It ships only in signed releases, and the `windows11-menu` CI job tries it unsigned |
 | `tests/Tanjelo.Core.Tests` | xUnit tests for the engine, every converter, the app's pure helpers, and the editors' windows (`Ui.cs` renders them off-screen) |
 | `winget/` | The winget manifests, filled in for each release by the workflow |
 

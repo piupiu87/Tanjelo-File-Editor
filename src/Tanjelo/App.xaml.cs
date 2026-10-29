@@ -52,8 +52,7 @@ public partial class App : Application
         _shelf = Shelf.Load(FloatWindow.FilePath);
         _shelf.Changed += SaveShelf;
 
-        var files = e.Args
-            .Where(a => !a.StartsWith("--", StringComparison.Ordinal))
+        var files = Selection(e.Args)
             .Select(Path.GetFullPath)
             .Where(p => File.Exists(p) || Directory.Exists(p))
             .ToList();
@@ -72,6 +71,36 @@ public partial class App : Application
             return;
         }
         StartTray(showWelcome: !e.Args.Contains("--autostart"));
+    }
+
+    /// <summary>
+    /// The files named on the command line, as "Send to" passes them, or listed in the file after <c>--paths-file</c>,
+    /// which the Windows 11 menu entry writes when the selection is too long for a command line; that file is deleted.
+    /// </summary>
+    internal static IReadOnlyList<string> Selection(IReadOnlyList<string> args)
+    {
+        var files = new List<string>();
+        for (var i = 0; i < args.Count; i++)
+        {
+            if (args[i] == "--paths-file" && i + 1 < args.Count)
+            {
+                var list = args[++i];
+                try
+                {
+                    files.AddRange(File.ReadAllLines(list).Where(line => line.Length > 0));
+                    File.Delete(list);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    Log.Write($"{list}: {ex.Message}");
+                }
+            }
+            else if (!args[i].StartsWith("--", StringComparison.Ordinal))
+            {
+                files.Add(args[i]);
+            }
+        }
+        return files;
     }
 
     void StartTray(bool showWelcome)

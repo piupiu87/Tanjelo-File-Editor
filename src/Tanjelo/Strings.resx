@@ -1425,4 +1425,10 @@
   <data name="Pandoc" xml:space="preserve">
     <value>pandoc</value>
   </data>
+  <data name="ShowInTheWindows11Menu" xml:space="preserve">
+    <value>Show in the Windows 11 right-click menu</value>
+  </data>
+  <data name="Windows11MenuHint" xml:space="preserve">
+    <value>Right-click files, then Tanjelo…, for the menu with what they can become.</value>
+  </data>
 </root>

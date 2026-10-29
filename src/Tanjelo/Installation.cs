@@ -5,8 +5,8 @@ namespace Tanjelo;
 /// <summary>
 /// What the installer's hooks do. After installing: put the install folder on the user's PATH, so <c>tanj</c> works in
 /// any terminal. Before uninstalling: take that away again, with the other things Tanjelo can add to Windows (Start with
-/// Windows and the "Send to" entry), so nothing is left behind. Settings in %APPDATA%\Tanjelo stay for a reinstall.
-/// Each hook has 30 seconds and must not show anything.
+/// Windows, the "Send to" entry and the Windows 11 menu entry), so nothing is left behind. Settings in
+/// %APPDATA%\Tanjelo stay for a reinstall. Each hook has 30 seconds and must not show anything.
 /// </summary>
 static class Installation
 {
@@ -20,6 +20,7 @@ static class Installation
         Try(() => SetUserPath(WithoutFolder(UserPath(), InstallFolder)));
         Try(() => ShellIntegration.StartsWithWindows = false);
         Try(() => ShellIntegration.InSendToMenu = false);
+        Try(() => ShellIntegration.InWindows11Menu = false);
     }
 
     /// <summary>A PATH with <paramref name="folder"/> added at the end, unless it's there already.</summary>

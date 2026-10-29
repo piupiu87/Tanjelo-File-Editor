@@ -12,6 +12,8 @@ public class SettingsWindowTests
     {
         public bool StartsWithWindows { get; set; }
         public bool InSendToMenu { get; set; }
+        public bool CanUseWindows11Menu { get; set; }
+        public bool InWindows11Menu { get; set; }
     }
 
     sealed class Harness
@@ -92,7 +94,40 @@ public class SettingsWindowTests
             w.SendToCheck.IsChecked = false;
             w.SendToCheck.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
             Assert.False(h.Windows.InSendToMenu);
+
+            // Without the Windows 11 menu's package (an unsigned build, or Windows 10) the setting isn't offered.
+            Assert.Equal(Visibility.Collapsed, w.Windows11MenuRow.Visibility);
         });
+    }
+
+    [Fact]
+    public async Task The_Windows_11_menu_entry_is_offered_when_the_package_is_there()
+    {
+        await Ui.Run(async () =>
+        {
+            var h = new Harness();
+            h.Windows.CanUseWindows11Menu = true;
+            h.Open(new Settings());
+            await Ui.Settle();
+            var w = h.Window;
+            Assert.Equal(Visibility.Visible, w.Windows11MenuRow.Visibility);
+            Assert.False(w.Windows11MenuCheck.IsChecked);
+            w.Windows11MenuCheck.IsChecked = true;
+            w.Windows11MenuCheck.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            Assert.True(h.Windows.InWindows11Menu);
+            Assert.Empty(h.Applied); // kept by Windows, not in settings.json
+        });
+    }
+
+    [Fact]
+    public void A_long_selection_arrives_in_a_file_that_is_then_deleted()
+    {
+        using var scratch = new Scratch();
+        var list = scratch.PathOf("selection.txt");
+        File.WriteAllLines(list, [@"C:\a.png", "", @"D:\folder with spaces"]);
+        Assert.Equal([@"C:\a.png", @"D:\folder with spaces", @"E:\b.pdf"], App.Selection(["--paths-file", list, "--autostart", @"E:\b.pdf"]));
+        Assert.False(File.Exists(list));
+        Assert.Equal([@"C:\x.txt"], App.Selection([@"C:\x.txt", "--paths-file", scratch.PathOf("gone.txt")]));
     }
 
     [Fact]

@@ -16,6 +16,8 @@ public class AccessibilityTests
     {
         public bool StartsWithWindows { get; set; }
         public bool InSendToMenu { get; set; }
+        public bool CanUseWindows11Menu { get; set; }
+        public bool InWindows11Menu { get; set; }
     }
 
     /// <summary>Renders the host in a contrast theme and checks its background took the theme's window colour.</summary>
@@ -44,7 +46,7 @@ public class AccessibilityTests
     {
         await Ui.Run(async () =>
         {
-            var window = new SettingsWindow(new Settings { FloatHotkey = "Ctrl+Shift+F" }, _ => { }, new FakeWindowsSettings(), (_, _) => new Toolbox());
+            var window = new SettingsWindow(new Settings { FloatHotkey = "Ctrl+Shift+F" }, _ => { }, new FakeWindowsSettings { CanUseWindows11Menu = true }, (_, _) => new Toolbox());
             window.ShowUpdate("Tanjelo 1.2.0 is out (checked today at 09:30).", UpdateCheck.ReleasesPage);
             var host = Ui.Host(window, 600, 1600);
             using var attached = A11y.Attach(host);
@@ -52,7 +54,7 @@ public class AccessibilityTests
             var order = A11y.Check(host, "settings");
             A11y.InOrder(order, window.MenuShortcut, window.ShelfShortcut, window.ClearShelfShortcut, window.ThemeSystem, window.ThemeDark,
                 window.JpegSlider, window.DpiSlider, window.FfmpegPath, window.FfmpegBrowse, window.SevenZipPath, window.StartupCheck,
-                window.SendToCheck, window.CheckUpdatesBox, window.UpdateLink, window.OpenFileButton, window.DoneButton);
+                window.SendToCheck, window.Windows11MenuCheck, window.CheckUpdatesBox, window.UpdateLink, window.OpenFileButton, window.DoneButton);
             RenderInContrast(host, "settings-contrast", Theme.Contrast.Aquatic);
             RenderInContrast(host, "settings-contrast-desert", Theme.Contrast.Desert);
         });

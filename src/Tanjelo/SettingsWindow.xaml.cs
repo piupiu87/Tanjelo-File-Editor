@@ -81,6 +81,7 @@ public partial class SettingsWindow : Window
 
         StartupCheck.Click += (_, _) => ChangeWindows(() => _windows.StartsWithWindows = StartupCheck.IsChecked == true);
         SendToCheck.Click += (_, _) => ChangeWindows(() => _windows.InSendToMenu = SendToCheck.IsChecked == true);
+        Windows11MenuCheck.Click += (_, _) => ChangeWindows(() => _windows.InWindows11Menu = Windows11MenuCheck.IsChecked == true);
         CheckUpdatesBox.Click += (_, _) => Change(s => s.CheckForUpdates = CheckUpdatesBox.IsChecked == true);
         UpdateLink.Click += (_, _) =>
         {
@@ -140,6 +141,8 @@ public partial class SettingsWindow : Window
         {
             StartupCheck.IsChecked = _windows.StartsWithWindows;
             SendToCheck.IsChecked = _windows.InSendToMenu;
+            Windows11MenuRow.Visibility = _windows.CanUseWindows11Menu ? Visibility.Visible : Visibility.Collapsed;
+            if (_windows.CanUseWindows11Menu) Windows11MenuCheck.IsChecked = _windows.InWindows11Menu;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         {
