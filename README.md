@@ -35,7 +35,7 @@ run `Tanjelo.exe`. It needs the [.NET 10 Desktop Runtime](https://dotnet.microso
 offers to install it if it's missing).
 
 The app isn't code-signed yet, so the first launch may show "Windows protected your PC". Choose
-**More info → Run anyway**.
+**More info → Run anyway**. See the [code signing policy](#code-signing-policy).
 
 ## Using it
 
@@ -158,6 +158,28 @@ Tray menu → *Edit settings…* opens `%APPDATA%\Tanjelo\settings.json`. Change
 
 The options dialogs remember each tool's last settings in `%APPDATA%\Tanjelo\tools.json`; delete it to go back to the
 defaults. Errors are logged to `%LOCALAPPDATA%\Tanjelo\log.txt`.
+
+## Privacy
+
+This program will not transfer any information to other networked systems unless specifically requested by the user or
+the person installing or operating it.
+
+Tanjelo converts and edits files on your PC. The only network use is what you ask for: when pandoc turns a Markdown or
+HTML file into DOCX or EPUB, it downloads the web pictures that file links to, so they can go inside (it never uploads
+anything), and **Share…** sends files only where you choose in Windows' Share sheet. Office, LibreOffice, ffmpeg,
+7-Zip and the WebView2 runtime run on your PC; WebView2 runs with every web address blocked.
+
+## Code signing policy
+
+Tanjelo has applied to [SignPath Foundation](https://signpath.org) for free code signing. Until that's approved,
+releases are unsigned.
+
+- **Committers and reviewers:** [piupiu87](https://github.com/piupiu87)
+- **Approvers:** [piupiu87](https://github.com/piupiu87)
+- **What's signed:** `Tanjelo.exe`, `tanj.exe`, Tanjelo's own DLLs and the installer, built by the GitHub Actions
+  release workflow from a tagged commit in this repository. Each release's signing is approved by hand. Libraries
+  from other projects keep their own signatures.
+- **Privacy:** see [Privacy](#privacy).
 
 ## Command line
 
