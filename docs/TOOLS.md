@@ -185,8 +185,9 @@ tanj convert organize-pdf --pages="3,1-2,2r90" report.pdf
 Draw boxes over anything to hide, or have the faces and the words found, on this PC. Faces are found by YuNet, a small
 face finder that Windows' own machine learning runs: side-on, tilted, dim and masked faces too, and crowds down to faces
 about 20 pixels across. On Windows 10, which can't run it, Windows' own face detection looks instead, and finds only
-upright faces facing the camera. Words are read by Windows' OCR. Every box can be moved, resized or removed before saving. Each is hidden for good, as a solid colour (the
-safest), big pixels or a strong blur, and what you see is exactly what's saved. Saved as `photo-redacted.jpg`.
+upright faces facing the camera. Words are read by Windows' OCR. Every box can be moved, resized or removed before
+saving. Each is hidden for good, as a solid colour (the safest), big pixels or a strong blur, and what you see is
+exactly what's saved. Saved as `photo-redacted.jpg`.
 
 The copy also loses the EXIF thumbnail (a small copy from before), the maker note, the location, XMP and IPTC; the
 camera, the date and the colour profile stay.
@@ -303,8 +304,8 @@ drag its ends, or press I and O, to set when it starts and stops. Saved as `clip
 - Find faces adds a box over each face on the frame showing, found as in photos. Follow face moves the selected box
   with its face through its stretch, finding the face again 15 times a second (a small face in a crowd is looked at
   enlarged), and ends it where the face is lost for half a second. It's ready once the selected box has a face in it
-  where its stretch starts. On Windows 10, Windows' own face tracker follows
-  instead, and loses faces that turn aside. Both on this PC.
+  where its stretch starts. On Windows 10, Windows' own face tracker follows instead, and loses faces that turn aside.
+  Both on this PC.
 - Hidden as for photos: a solid colour (the safest), big pixels or a strong blur. Playing or paused, each box shows
   what's saved on the frame showing, its pixels or blur made from that frame.
 - A box moved or resized by hand stays where it's put. Tab selects the next box, Delete removes one.

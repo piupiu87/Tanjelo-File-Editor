@@ -25,7 +25,7 @@ independent project, not affiliated with Tangerine.
 - **Editors** open a window for work by hand: organize PDF pages, redact faces and text in photos, annotate
   screenshots, edit photos with live sliders, and trim and bleep video and audio, or redact video, on a timeline.
 - **Actions** work on the files themselves: copy their paths, open a terminal there, share them, move them, or park
-  them on the **Float shelf** and drag them out later.
+  them on the **Float shelf** and drag copies out later.
 - **`tanj`**, the command-line tool, does all of it from scripts.
 
 ## Download
@@ -44,7 +44,7 @@ The app isn't code-signed yet, so the first launch may show "Windows protected y
 | File Explorer or the desktop | Select files → **Ctrl+Shift+Space** → type to filter (`mp3`, `pdf`…) → **Enter**, or click |
 | Notification area | Click the Tanjelo icon to pick files; right-click for options |
 | "Send to" menu | Turn on *Show in "Send to" menu* in the tray menu, then right-click files → Send to → Tanjelo |
-| Float shelf | Drop files on the shelf at the right edge of the screen, drag them out later, or press the shortcut there to convert them |
+| Float shelf | Drop files on the shelf at the right edge of the screen, drag copies out later (hold Shift to move them), or press the shortcut there to convert them |
 | Command line | `tanj convert webp *.png` (see [Command line](#command-line)) |
 
 The menu has three tabs: **Convert**, **Tools** and **Actions**. Press **Tab** (or the shortcut again) to switch, or
@@ -109,7 +109,7 @@ silence from its ends; split a PDF into pages, or merge several.
 | Editor | Works on | What you do |
 |---|---|---|
 | Organize pages… | PDF | Reorder, turn, copy, delete and add pages, shown as thumbnails |
-| Redact… | Images | Cover faces, words or any area for good; revealing metadata goes too |
+| Redact… | Images | Cover faces (side-on, masked and in crowds too), words or any area for good; revealing metadata goes too |
 | Annotate… | Images | Add arrows, shapes, text, numbered callouts, a magnifier, and pen and highlighter strokes |
 | Edit photo… | Images | Adjust light, colour, detail and effects with sliders over a live preview |
 | Trim… | Video, audio | Cut video to the exact frame, without re-encoding when the cuts fall on keyframes, and sound to the sample |
@@ -122,6 +122,8 @@ and Move to….
 ## Requirements
 
 - Windows 10 or 11 (x64) with the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
+  Redact finds and follows faces best on Windows 11; Windows 10 can't run its face finder, so there Windows' own face
+  detection finds only upright faces facing the camera.
 - Optional programs, found automatically. Formats that need a missing one just don't appear, and the tray's
   *Converters* submenu shows what was found.
   - **ffmpeg** for audio and video: `winget install Gyan.FFmpeg.Essentials`
@@ -187,7 +189,7 @@ tanj convert redact --faces --style=pixelate team.jpg
 tanj convert annotate --spec=marks.json screenshot.png
 tanj convert adjust --exposure=0.3 --clarity=20 --vibrance=25 photo.jpg
 tanj convert trim --range=0:30.033-1:00 clip.mp4
-tanj convert bleep --ranges="0:10-0:12, 0:20-0:21.5" talk.mp4
+tanj convert bleep --ranges="0:10-0:12, 0:20-0:21.5 silence" talk.mp4
 tanj convert redact --spec=boxes.json --style=blur clip.mp4
 ```
 
