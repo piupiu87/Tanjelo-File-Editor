@@ -1,0 +1,12 @@
+<Project>
+
+  <!-- PDFsharp's package carries PdfSharp.WPFonts.dll, a Segoe UI subset from an early Windows Phone SDK that isn't open
+       source. PDFsharp only needs it to draw text, which Tanjelo never does, so published apps leave it out of the
+       folder and of their .deps.json. The tests, which draw text into their fixture PDFs, keep it. -->
+  <Target Name="LeaveOutWindowsPhoneFonts" AfterTargets="ResolvePackageAssets" Condition="'$(_IsPublishing)' == 'true'">
+    <ItemGroup>
+      <RuntimeCopyLocalItems Remove="@(RuntimeCopyLocalItems)" Condition="'%(Filename)%(Extension)' == 'PdfSharp.WPFonts.dll'" />
+    </ItemGroup>
+  </Target>
+
+</Project>

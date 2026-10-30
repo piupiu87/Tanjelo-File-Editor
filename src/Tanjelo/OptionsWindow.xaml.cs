@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
@@ -72,8 +73,8 @@ public partial class OptionsWindow : Window
         Heading.Text = target.Label.TrimEnd('…');
         Subheading.Text = files.Count == 1
             ? $"{Path.GetFileName(files[0])} · {Describe.Size(new FileInfo(files[0]).Length)}"
-            : $"{files.Count} items · " + string.Join(", ", files.Take(3).Select(Path.GetFileName)) + (files.Count > 3 ? ", …" : "");
-        Note.Text = files.Count == 1 ? "Saved as a copy beside the original" : "Saved beside the originals";
+            : string.Format(Strings.Items2, files.Count) + string.Join(", ", files.Take(3).Select(Path.GetFileName)) + (files.Count > 3 ? ", …" : "");
+        Note.Text = files.Count == 1 ? Strings.SavedAsACopyBesideTheOriginal : Strings.SavedBesideTheOriginals;
         RunButton.Content = target.ConfirmText;
 
         foreach (var option in target.Options)
@@ -153,6 +154,9 @@ public partial class OptionsWindow : Window
             OptionKind.Order => OrderField(option),
             _ => TextField(option),
         };
+        // Screen readers name each field by its label, and read the hint after it.
+        if (input is not null && option.Kind != OptionKind.Toggle) AutomationProperties.SetName(input, option.Label);
+        if (input is not null && option.Hint is { } help) AutomationProperties.SetHelpText(input, help);
         row.Children.Add(view);
         if (option.Hint is { } hint && option.Kind != OptionKind.Text)
             row.Children.Add(new TextBlock
@@ -190,8 +194,8 @@ public partial class OptionsWindow : Window
             LargeChange = (option.Max - option.Min) / 10,
             Margin = new Thickness(14, 0, 0, 0),
             VerticalAlignment = VerticalAlignment.Center,
-            Focusable = false,
         };
+        AutomationProperties.SetName(slider, option.Label);
         var syncing = false;
         void FromText()
         {
@@ -275,10 +279,9 @@ public partial class OptionsWindow : Window
             CornerRadius = new CornerRadius(5),
             BorderThickness = new Thickness(1),
             BorderBrush = Brush("FieldBorder"),
-            Margin = new Thickness(0, 0, 8, 0),
-            Cursor = Cursors.Hand,
-            ToolTip = "Pick any colour…",
         };
+        var pick = new Button { Content = swatch, Style = (Style)FindResource("BareButton"), Margin = new Thickness(0, 0, 8, 0), ToolTip = Strings.PickAnyColour };
+        AutomationProperties.SetName(pick, Strings.PickAnyColour2);
         void ShowSwatch() => swatch.Background = Core.Colour.TryParse(box.Text, out var c)
             ? new SolidColorBrush(Color.FromArgb(c.A, c.R, c.G, c.B))
             : Brushes.Transparent;
@@ -288,14 +291,14 @@ public partial class OptionsWindow : Window
             Set(option.Name, box.Text);
             ShowSwatch();
         };
-        swatch.MouseLeftButtonUp += (_, _) =>
+        pick.Click += (_, _) =>
         {
             if (PickColour(box.Text) is { } picked) box.Text = picked;
         };
         ShowSwatch();
 
         var line = new StackPanel { Orientation = Orientation.Horizontal };
-        line.Children.Add(swatch);
+        line.Children.Add(pick);
         line.Children.Add(box);
         var presets = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(10, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
         foreach (var hex in Swatches)
@@ -306,15 +309,14 @@ public partial class OptionsWindow : Window
                 Width = 18,
                 Height = 18,
                 CornerRadius = new CornerRadius(9),
-                Margin = new Thickness(0, 0, 5, 0),
                 BorderThickness = new Thickness(1),
                 BorderBrush = Brush("FieldBorder"),
                 Background = new SolidColorBrush(Color.FromRgb(c.R, c.G, c.B)),
-                Cursor = Cursors.Hand,
-                ToolTip = hex,
             };
-            dot.MouseLeftButtonUp += (_, _) => box.Text = hex;
-            presets.Children.Add(dot);
+            var preset = new Button { Content = dot, Style = (Style)FindResource("BareButton"), Margin = new Thickness(0, 0, 5, 0), ToolTip = hex };
+            AutomationProperties.SetName(preset, Editors.Panels.ColourName(hex));
+            preset.Click += (_, _) => box.Text = hex;
+            presets.Children.Add(preset);
         }
         line.Children.Add(presets);
         return (line, box);
@@ -337,25 +339,30 @@ public partial class OptionsWindow : Window
     (FrameworkElement, Control?) FileField(Option option)
     {
         var box = Box();
-        box.Tag = option.Optional ? "None" : "Choose a file";
+        box.Tag = option.Optional ? Strings.None : Strings.ChooseAFile;
         box.Text = _values[option.Name];
         box.TextChanged += (_, _) => Set(option.Name, box.Text);
         // A long path shows its end, where the file's name is.
         void ShowName() => box.ScrollToHorizontalOffset(double.MaxValue);
         box.Loaded += (_, _) => ShowName();
         box.TextChanged += (_, _) => ShowName();
-        var browse = new Button { Content = "Browse…", Style = (Style)FindResource("SubtleButton") };
+        var browse = new Button { Content = Strings.Browse, Style = (Style)FindResource("SubtleButton") };
+        AutomationProperties.SetName(browse, string.Format(Strings.Choose, option.Label.ToLowerInvariant()));
         browse.Click += (_, _) =>
         {
-            var dialog = new OpenFileDialog { Title = option.Label, Filter = option.FileFilter ?? "All files|*.*" };
+            var dialog = new OpenFileDialog { Title = option.Label, Filter = option.FileFilter ?? Strings.AllFiles };
             if (File.Exists(box.Text)) dialog.InitialDirectory = Path.GetDirectoryName(Path.GetFullPath(box.Text));
             if (dialog.ShowDialog(this) == true) box.Text = dialog.FileName;
         };
-        var dock = new DockPanel();
-        DockPanel.SetDock(browse, Dock.Right);
-        dock.Children.Add(browse);
-        dock.Children.Add(box);
-        return (dock, box);
+        // The box before its button, so Tab reaches them in reading order.
+        var line = new Grid();
+        line.ColumnDefinitions.Add(new ColumnDefinition());
+        line.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        browse.Margin = new Thickness(6, 0, 0, 0);
+        Grid.SetColumn(browse, 1);
+        line.Children.Add(box);
+        line.Children.Add(browse);
+        return (line, box);
     }
 
     (FrameworkElement, Control?) TimeRangeField(Option option)
@@ -364,7 +371,8 @@ public partial class OptionsWindow : Window
         var dash = text.IndexOf('-');
         var from = Box(width: 96);
         var to = Box(width: 96);
-        (from.Tag, to.Tag) = ("Start", "End");
+        (from.Tag, to.Tag) = (Strings.Start, Strings.End);
+        AutomationProperties.SetName(to, string.Format(Strings.End2, option.Label));
         (from.Text, to.Text) = dash < 0 ? (text, "") : (text[..dash].Trim(), text[(dash + 1)..].Trim());
         void Update() => Set(option.Name, from.Text.Trim().Length == 0 && to.Text.Trim().Length == 0 ? "" : $"{from.Text.Trim()}-{to.Text.Trim()}");
         from.TextChanged += (_, _) => Update();
@@ -379,13 +387,14 @@ public partial class OptionsWindow : Window
     (FrameworkElement, Control?) TimesField(Option option)
     {
         var box = Box();
-        box.Tag = "Such as 0:05, 1:12.5";
+        box.Tag = Strings.SuchAs0051125;
         box.Text = _values[option.Name];
         box.TextChanged += (_, _) => Set(option.Name, box.Text);
 
-        var slider = new Slider { Style = (Style)FindResource("ThinSlider"), Minimum = 0, Maximum = 1, VerticalAlignment = VerticalAlignment.Center, Focusable = false };
+        var slider = new Slider { Style = (Style)FindResource("ThinSlider"), Minimum = 0, Maximum = 1, VerticalAlignment = VerticalAlignment.Center };
+        AutomationProperties.SetName(slider, string.Format(Strings.MomentToAdd, option.Label));
         var time = new TextBlock { Text = "0:00", Width = 56, Margin = new Thickness(10, 0, 4, 0), VerticalAlignment = VerticalAlignment.Center, Foreground = Brush("TextSecondary") };
-        var add = new Button { Content = "Add", Style = (Style)FindResource("SubtleButton"), ToolTip = "Add this moment to the list" };
+        var add = new Button { Content = Strings.Add, Style = (Style)FindResource("SubtleButton"), ToolTip = Strings.AddThisMomentToTheList };
         slider.ValueChanged += (_, e) =>
         {
             time.Text = OptionValues.FormatTime(e.NewValue);
@@ -400,12 +409,16 @@ public partial class OptionsWindow : Window
                 ? OptionValues.FormatTimes(times.Append(at).Distinct())
                 : $"{box.Text.TrimEnd(' ', ',')}, {OptionValues.FormatTime(at)}";
         };
-        var scrub = new DockPanel { Margin = new Thickness(0, 8, 0, 0), Visibility = Visibility.Collapsed };
-        DockPanel.SetDock(add, Dock.Right);
-        DockPanel.SetDock(time, Dock.Right);
-        scrub.Children.Add(add);
-        scrub.Children.Add(time);
+        // Slider, time, then Add, so Tab reaches them in reading order.
+        var scrub = new Grid { Margin = new Thickness(0, 8, 0, 0), Visibility = Visibility.Collapsed };
+        scrub.ColumnDefinitions.Add(new ColumnDefinition());
+        scrub.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        scrub.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        Grid.SetColumn(time, 1);
+        Grid.SetColumn(add, 2);
         scrub.Children.Add(slider);
+        scrub.Children.Add(time);
+        scrub.Children.Add(add);
         _scrubbers.Add(new Scrubber(option.Name, scrub, slider));
 
         var panel = new StackPanel();
@@ -432,8 +445,11 @@ public partial class OptionsWindow : Window
             {
                 var at = i;
                 var line = new DockPanel { Margin = new Thickness(0, 0, 0, 2), Background = Brush("Subtle") };
-                var up = new Button { Content = "", Style = (Style)FindResource("IconButton"), IsEnabled = at > 0, ToolTip = "Move up" };
-                var down = new Button { Content = "", Style = (Style)FindResource("IconButton"), IsEnabled = at < order.Count - 1, ToolTip = "Move down" };
+                var up = new Button { Content = "", Style = (Style)FindResource("IconButton"), IsEnabled = at > 0, ToolTip = Strings.MoveUp };
+                var down = new Button { Content = "", Style = (Style)FindResource("IconButton"), IsEnabled = at < order.Count - 1, ToolTip = Strings.MoveDown };
+                var name = Path.GetFileName(_files[order[at]]);
+                AutomationProperties.SetName(up, string.Format(Strings.MoveUp2, name));
+                AutomationProperties.SetName(down, string.Format(Strings.MoveDown2, name));
                 up.Click += (_, _) => Move(at, -1);
                 down.Click += (_, _) => Move(at, 1);
                 DockPanel.SetDock(down, Dock.Right);
@@ -497,8 +513,8 @@ public partial class OptionsWindow : Window
             _previewCancel?.Cancel();
             PreviewBusy.Visibility = Visibility.Collapsed;
             ShowPreview(null, red
-                ? "The preview comes back when the settings marked in red are fixed."
-                : "The preview appears once every setting is filled in.");
+                ? Strings.ThePreviewComesBackWhenTheSettings
+                : Strings.ThePreviewAppearsOnceEverySettingIs);
         }
     }
 
@@ -540,7 +556,7 @@ public partial class OptionsWindow : Window
     {
         PreviewImage.Source = preview?.Image is { } bytes ? Decode(bytes) : null;
         PreviewChecker.Visibility = PreviewImage.Source is null ? Visibility.Collapsed : Visibility.Visible;
-        PreviewMessage.Text = problem ?? (PreviewImage.Source is null && preview?.Facts.Count is null or 0 ? "No preview for this file." : "");
+        PreviewMessage.Text = problem ?? (PreviewImage.Source is null && preview?.Facts.Count is null or 0 ? Strings.NoPreviewForThisFile : "");
         // Some previews are only facts, such as an audio file's new size; then there's no picture to make room for.
         PreviewFrame.Visibility = PreviewImage.Source is null && PreviewMessage.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
         FactList.Margin = new Thickness(2, PreviewFrame.Visibility == Visibility.Visible ? 10 : 0, 2, 0);
@@ -737,7 +753,7 @@ public partial class OptionsWindow : Window
             case Key.Escape:
                 Finish(null);
                 break;
-            case Key.Enter:
+            case Key.Enter when Keyboard.FocusedElement is not System.Windows.Controls.Primitives.ButtonBase: // a focused button takes Enter itself
                 Run();
                 break;
             default:

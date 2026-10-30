@@ -13,6 +13,11 @@ Select files in File Explorer, press **Ctrl+Shift+Space**, and pick what they sh
 pointer. The result appears next to the original, which is never overwritten (`photo.png` → `photo.jpg`, then
 `photo (2).jpg`, …). Everything runs offline.
 
+<p align="center">
+  <img src="docs/images/menu.png" height="340" alt="Tanjelo's menu for lakeside.jpg, on its Tools tab: Compress, Metadata, Crop, Add background, Redact, Annotate and Edit photo, each with a short description">
+  <img src="docs/images/annotate.png" height="340" alt="The Annotate editor with a caption, an arrow pointing at the sun, two numbered callouts, a box around the trees and a magnifier on the water">
+</p>
+
 Inspired by the Tangerine converter for macOS, and named after the tangelo, a tangerine hybrid. Tanjelo is an
 independent project, not affiliated with Tangerine.
 
@@ -30,9 +35,15 @@ independent project, not affiliated with Tangerine.
 
 ## Download
 
-Get the latest `Tanjelo-<version>-win-x64.zip` from the [Releases page](../../releases/latest), unzip it anywhere, and
-run `Tanjelo.exe`. It needs the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) (Windows
-offers to install it if it's missing).
+From the [Releases page](../../releases/latest):
+
+- **`Tanjelo-<version>-Setup.exe`** installs Tanjelo for you alone, with no administrator needed: a Start menu entry,
+  `tanj` on your PATH, and an uninstaller in Settings → Apps (which keeps your settings, in case you come back). Once
+  it's listed on winget, `winget install Tanjelo` does the same.
+- **`Tanjelo-<version>-win-x64.zip`** is the same, to unzip anywhere and run `Tanjelo.exe` from, for a USB stick or
+  a PC where you'd rather not install.
+
+Both carry the .NET runtime inside, so there's nothing else to install first.
 
 The app isn't code-signed yet, so the first launch may show "Windows protected your PC". Choose
 **More info → Run anyway**. See the [code signing policy](#code-signing-policy).
@@ -43,7 +54,8 @@ The app isn't code-signed yet, so the first launch may show "Windows protected y
 |---|---|
 | File Explorer or the desktop | Select files → **Ctrl+Shift+Space** → type to filter (`mp3`, `pdf`…) → **Enter**, or click |
 | Notification area | Click the Tanjelo icon to pick files; right-click for options |
-| "Send to" menu | Turn on *Show in "Send to" menu* in the tray menu, then right-click files → Send to → Tanjelo |
+| "Send to" menu | Turn on *Show in the "Send to" menu* in Settings, then right-click files → Send to → Tanjelo |
+| Windows 11 right-click menu | In a signed release, turn on *Show in the Windows 11 right-click menu* in Settings, then right-click files → **Tanjelo…** for the same menu as the shortcut |
 | Float shelf | Drop files on the shelf at the right edge of the screen, drag copies out later (hold Shift to move them), or press the shortcut there to convert them |
 | Command line | `tanj convert webp *.png` (see [Command line](#command-line)) |
 
@@ -55,6 +67,13 @@ settings you used last time, shows a live preview where that helps, and runs on 
 open in a window of their own for one file.
 
 The shortcut is only grabbed while Explorer or the desktop is in front, so other apps keep their own Ctrl+Shift+Space.
+
+Everything works from the keyboard, with a focus ring showing where Tab has got to, and with a screen reader such as
+Narrator, which reads out the menu's entries as the arrows move and each result as it appears. With a Windows contrast
+theme on, Tanjelo uses that theme's colours.
+
+Tanjelo is in English for now. Its words are in resource files, ready to translate: [CONTRIBUTING.md](CONTRIBUTING.md#words-and-translations)
+says how to add a language.
 
 ## What converts to what
 
@@ -104,6 +123,8 @@ silence from its ends; split a PDF into pages, or merge several.
 | Make a video… | Audio | Makes a video of the sound, with a moving waveform or a still picture |
 | Channel volume… | Audio, video | Sets the left and right volume, from 0% to 400% |
 
+<p align="center"><img src="docs/images/add-background.png" width="480" alt="The Add background dialog: a preview of the picture on a diagonal gradient with space around, rounded corners and a soft shadow, beside its settings"></p>
+
 **Editors** open a window of their own, for one file:
 
 | Editor | Works on | What you do |
@@ -116,16 +137,18 @@ silence from its ends; split a PDF into pages, or merge several.
 | Bleep… | Audio, video | Cover stretches of the sound, each with a tone of its own pitch or silence, and hear them before saving |
 | Redact… | Video | Hide areas for stretches of time, found faces too, with boxes that can follow a face |
 
+<p align="center"><img src="docs/images/trim.png" width="680" alt="The Trim editor in the dark theme: a video above a timeline of thumbnails and the sound's waveform, with the part kept outlined between two handles"></p>
+
 **Actions** work with the files and folders themselves: Copy path, Copy, Open in Terminal, Share…, Float (the shelf)
 and Move to….
 
 ## Requirements
 
-- Windows 10 or 11 (x64) with the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
+- Windows 10 (version 2004 or later) or 11, x64. Nothing else is needed: the .NET runtime comes with Tanjelo.
   Redact finds and follows faces best on Windows 11; Windows 10 can't run its face finder, so there Windows' own face
   detection finds only upright faces facing the camera.
-- Optional programs, found automatically. Formats that need a missing one just don't appear, and the tray's
-  *Converters* submenu shows what was found.
+- Optional programs, found automatically. Formats that need a missing one just don't appear, and Settings and the
+  tray's *Converters* submenu show what was found.
   - **ffmpeg** for audio and video: `winget install Gyan.FFmpeg.Essentials`
   - **7-Zip** for .7z and .rar, and faster zips. Windows' built-in `tar` covers the rest.
   - **Microsoft Office** or **LibreOffice** for documents.
@@ -140,7 +163,13 @@ and Move to….
 
 ## Settings
 
-Tray menu → *Edit settings…* opens `%APPDATA%\Tanjelo\settings.json`. Changes apply as soon as you save.
+Tray menu → *Settings…* opens the settings window: the menu's and the shelf's shortcuts (click a box and press the
+keys), the theme, the quality of JPG, WebP and HEIC pictures and of PDF pages saved as pictures, where ffmpeg and 7-Zip
+are when they aren't found automatically, which optional programs were found, *Start with Windows*, the "Send to"
+entry, the Windows 11 menu entry (in signed releases) and the [update check](#privacy). Changes apply at once.
+
+The settings live in `%APPDATA%\Tanjelo\settings.json` (*Open settings file* in the window), which can still be edited
+by hand; changes apply as soon as you save it.
 
 ```json
 {
@@ -152,7 +181,8 @@ Tray menu → *Edit settings…* opens `%APPDATA%\Tanjelo\settings.json`. Change
   "heicQuality": 90,
   "pdfRenderDpi": 300,        // resolution for PDF -> image
   "ffmpegPath": null,         // only needed if ffmpeg isn't found automatically
-  "sevenZipPath": null
+  "sevenZipPath": null,
+  "checkForUpdates": false    // ask GitHub once a day whether a newer version is out
 }
 ```
 
@@ -164,15 +194,24 @@ defaults. Errors are logged to `%LOCALAPPDATA%\Tanjelo\log.txt`.
 This program will not transfer any information to other networked systems unless specifically requested by the user or
 the person installing or operating it.
 
-Tanjelo converts and edits files on your PC. The only network use is what you ask for: when pandoc turns a Markdown or
-HTML file into DOCX or EPUB, it downloads the web pictures that file links to, so they can go inside (it never uploads
-anything), and **Share…** sends files only where you choose in Windows' Share sheet. Office, LibreOffice, ffmpeg,
-7-Zip and the WebView2 runtime run on your PC; WebView2 runs with every web address blocked.
+Tanjelo converts and edits files on your PC: your files never leave it, and nothing about you or how you use Tanjelo is
+collected (no account, no telemetry, no crash reports). The only network use is what you ask for:
+
+- **The update check**, off unless you tick *Check for a new version once a day* in Settings. Then Tanjelo asks GitHub
+  (`api.github.com`) once a day for the number of the latest release, sending nothing but the request itself, and shows
+  a notice with a link to the release page when there's a newer one. It never downloads or installs anything. As with
+  any visit to a website, GitHub sees the request come from your IP address. What it found last is kept in
+  `%LOCALAPPDATA%\Tanjelo\update.json`. This is the only network request Tanjelo makes itself.
+- When **pandoc** turns a Markdown or HTML file into DOCX or EPUB, it downloads the web pictures that file links to, so
+  they can go inside (it never uploads anything).
+- **Share…** sends files only where you choose in Windows' Share sheet.
+
+Office, LibreOffice, ffmpeg, 7-Zip and the WebView2 runtime run on your PC; WebView2 runs with every web address blocked.
 
 ## Code signing policy
 
-Tanjelo has applied to [SignPath Foundation](https://signpath.org) for free code signing. Until that's approved,
-releases are unsigned.
+Releases are unsigned for now. Signing is planned through [SignPath Foundation](https://signpath.org), which signs
+open-source projects for free; this is how it will work.
 
 - **Committers and reviewers:** [piupiu87](https://github.com/piupiu87)
 - **Approvers:** [piupiu87](https://github.com/piupiu87)
@@ -242,26 +281,32 @@ The tests generate their own fixture files. Tests that need ffmpeg, 7-Zip, Offic
 runtime or an OCR language skip themselves when that isn't installed. [CONTRIBUTING.md](CONTRIBUTING.md) covers running
 one test class and adding a converter.
 
-The published apps land in `src\<project>\bin\Release\net10.0-windows10.0.19041.0\win-x64\publish\`, with the licence
-and third-party notices included. If your checkout path contains a comma, `dotnet publish -o <dir>` fails (MSBuild
+The published apps land in `src\<project>\bin\Release\net10.0-windows10.0.19041.0\win-x64\publish\`, with the .NET
+runtime, the licence and the third-party notices included; the releases copy both into one folder. If your checkout path contains a comma, `dotnet publish -o <dir>` fails (MSBuild
 reads commas as separators), so publish to the default folder and copy from there. `tools\make-icon.ps1` regenerates
 the app icon.
 
-Pushing a tag such as `v0.1.0` makes the GitHub Actions workflow build, test, smoke-test, and attach a zip to a new
-release.
+Pushing a tag such as `v1.0.0` makes the GitHub Actions workflow build, test and smoke-test; make the zip, the
+installer (with [Velopack](https://velopack.io)'s `vpk pack`) and the winget manifests (from `winget/`); install, use and
+uninstall the installer on a fresh runner with its own .NET hidden; and attach them all to a new release. Once the
+SignPath secrets are added, the same workflow has the app and the installer signed first, each approved by hand on
+SignPath; [.signpath/README.md](.signpath/README.md) says how it's set up.
 
 | Project | What's in it |
 |---|---|
 | `src/Tanjelo.Core` | Formats, the conversion engine, and one converter per engine (`Converters/`) |
 | `src/Tanjelo` | WPF tray app: hotkey, Explorer selection, the format menu, options dialogs, the editors (`Editors/`), progress cards |
 | `src/tanj` | Command-line front end |
+| `src/Tanjelo.ShellMenu` | The Windows 11 right-click menu entry: a small COM server, published with NativeAOT, and its sparse package |
 | `tests/Tanjelo.Core.Tests` | xUnit tests for the engine and every converter, and the editors' windows, rendered and driven off-screen |
 
 ## Roadmap
 
-Next up: v1.0, ready for everyone: code signing, an installer and a winget package, a settings window, and an
-accessibility pass. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are
-welcome; open an issue first for anything big, and see [CONTRIBUTING.md](CONTRIBUTING.md).
+v1.0 makes Tanjelo ready for everyone: an installer and a winget package, the .NET runtime inside, a settings window,
+an opt-in update check, an accessibility pass and text ready to translate. It ships unsigned: code signing, and the
+Windows 11 menu entry that needs it, are on hold for a later release. See [docs/ROADMAP.md](docs/ROADMAP.md) for the
+full plan. Ideas and pull requests are welcome; open an issue first for anything big, and see
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

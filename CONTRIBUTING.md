@@ -28,14 +28,26 @@ ffmpeg and pandoc; Office tests skip there.
 `tanj` is the quickest way to try a change by hand: `tanj targets <files>` shows what the menu would offer, and
 `tanj convert <key> [--name=value] <files>` runs one entry.
 
+The README's screenshots in `docs/images` come from the `ReadmeScreenshots` class, which draws its own landscape so no
+one's files or paths show. It runs only when `TANJELO_SCREENSHOTS` holds the full path of the folder to save them in;
+after changing a window they show, point it at `docs\images` and run that class.
+
 ## How the code is laid out
 
 | Project | What's in it |
 |---|---|
 | `src/Tanjelo.Core` | Formats (`Formats.cs`), the engine (`ConverterEngine.cs`), optional tools (`Toolbox.cs`) and one converter per engine in `Converters/` |
-| `src/Tanjelo` | The WPF tray app: hotkey, Explorer selection, the menu, options dialogs, the editors (`Editors/`), progress cards, the Share sheet and the Float shelf |
+| `src/Tanjelo` | The WPF tray app: hotkey, Explorer selection, the menu, options dialogs, the editors (`Editors/`), progress cards, the Share sheet, the Float shelf and the settings window |
 | `src/tanj` | The command-line front end |
+| `src/Tanjelo.ShellMenu` | The Windows 11 right-click menu entry: `TanjeloMenu.dll`, a COM server published with NativeAOT that hands the selection to Tanjelo.exe, and the sparse package (`Package/`) that registers it. Published on CI, which has the C++ tools NativeAOT needs; `dotnet build` only compiles it. It ships only in signed releases, and the `windows11-menu` CI job tries it unsigned |
 | `tests/Tanjelo.Core.Tests` | xUnit tests for the engine, every converter, the app's pure helpers, and the editors' windows (`Ui.cs` renders them off-screen) |
+| `winget/` | The winget manifests, filled in for each release by the workflow |
+
+`dotnet publish` puts the .NET runtime in with each app (`SelfContained` when publishing), and leaves out PDFsharp's
+Windows Phone font subset, which isn't open source (`Directory.Build.targets`). The installer is made on CI with
+Velopack's `vpk pack` from the published folder; `Program.Main` runs Velopack's install and uninstall hooks
+(`Installation.cs`) before the app. To try the installer, push a branch and download the `Tanjelo-release` artifact:
+installing it here changes your user's PATH, Start menu and Apps list.
 
 ## Adding a conversion or a tool
 
@@ -44,7 +56,8 @@ ffmpeg and pandoc; Office tests skip there.
    writes the result beside the input and returns its path.
 2. Name outputs with `OutputPaths.Beside` or `OutputPaths.Suffixed`, which never overwrite anything, and delete a
    half-written output if the conversion fails.
-3. Throw `ConversionException` with a message fit to show the user ("This PDF is password-protected.").
+3. Throw `ConversionException` with a message fit to show the user ("This PDF is password-protected."). Words people
+   see go in the resource files (see [Words and translations](#words-and-translations)), not in the code.
 4. When the conversion needs a program that may not be installed, find it in `Toolbox`, offer nothing without it, and
    say what to install in `HintFor`.
 5. Tools that need settings declare them with `Target.WithOptions`; the app then shows the options dialog and `tanj`
@@ -56,16 +69,41 @@ ffmpeg and pandoc; Office tests skip there.
    `ZoomCanvas.PointerDown`), and save renders in light and dark to `%TEMP%\tanjelo-tests\renders`. Audio and video
    editors derive from `TimelineEditor<T>`, which brings the player, the timeline and the keys; their tests check
    frames by number with `Scratch.Numbered` and `Inspect.WhichFrame`, and go in the `Windows player` collection,
-   which runs on its own.
+   which runs on its own. Every window is also checked with `A11y.Check` (each control named and reached by Tab) and
+   rendered in a contrast theme with `AccessibilityTests.RenderInContrast`.
 7. Add tests next to the others, using `Scratch` for fixture files and `Env.Run` to go through the engine the way the
    app does. Skip with `Assert.SkipUnless` when an optional tool is missing.
 8. Describe it in [docs/FORMATS.md](docs/FORMATS.md) or [docs/TOOLS.md](docs/TOOLS.md), add it to the short tables in
    [README.md](README.md), and list any new library in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
+## Words and translations
+
+Every word Tanjelo shows is in a resource file: the engine's (menu labels and descriptions, settings, notes and
+problems) in `src/Tanjelo.Core/Strings.resx`, the app's windows in `src/Tanjelo/Strings.resx`. Code reads them as
+`Strings.Name`, XAML as `{x:Static local:Strings.Name}`. Menu keys, settings.json, output file names and what `tanj`
+prints stay in English in the code, since scripts read them.
+
+- **A new string:** add it to the right `Strings.resx` and a line `public static string Name => Get();` to the
+  `Strings.cs` beside it (`StringsTests` checks the two match). Use `{0}`, `{1}` for what goes in, with
+  `string.Format`, and whole sentences rather than pieces joined in code; counts come in pairs such as
+  `Strings.OnePage` and `Strings.NPages` for `Describe.Count`.
+- **A new language:** copy both `Strings.resx` files to `Strings.<language>.resx` beside them (`Strings.de.resx`,
+  `Strings.pt-BR.resx`) and translate each `<value>`. Keep the `{0}` placeholders, the `|*.pdf` parts of file filters,
+  and the `, ` between keys in key lists such as `Ctrl, Arrows`. The build makes the satellite assemblies, and Tanjelo
+  shows the language Windows is set to, falling back to English for anything missing.
+- **The pseudo-language test** (`PseudoLanguageTests`) shows every window with each string bracketed, accented and a
+  third longer, in a process of its own, and fails on any text left outside the resource files or cut off at its
+  edge. Its renders are saved as `pseudo-*.png` in `%TEMP%\tanjelo-tests\renders`.
+
 ## Ground rules
 
-- **Local only.** Files never leave the computer. Nothing may fetch from or send to the network on its own.
+- **Local only.** Files never leave the computer. Nothing may fetch from or send to the network on its own; the one
+  exception is the opt-in update check (`UpdateCheck.cs`), which asks GitHub for the latest version number and nothing
+  else, and the README's Privacy section must keep saying so.
 - **Originals are never touched.** Results are new files beside the original.
+- **Accessible.** Every control has a name a screen reader can read (an icon button takes its tooltip), Tab reaches it,
+  and colours come from the theme's brushes (`Theme.cs`), so Windows' contrast themes work. Editors can do from the
+  keyboard what they do with the mouse.
 - **Licences.** Anything shipped inside the app must be MIT, BSD, Apache-2.0, or LGPL as a separate DLL. GPL tools,
   like pandoc, are only ever run as programs the user installed. Pin pre-1.0 packages to an exact version.
 - **Style.** Match the code around you: its naming, its idioms and how much it comments. Comments say why, in plain

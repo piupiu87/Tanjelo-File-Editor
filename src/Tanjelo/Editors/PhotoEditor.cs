@@ -24,10 +24,10 @@ sealed class PhotoEditor : Editor<PhotoSettings>
 
     static readonly (string Title, string[] Names)[] Groups =
     [
-        ("Light", ["exposure", "contrast", "highlights", "shadows", "whites", "blacks"]),
-        ("Colour", ["temperature", "tint", "vibrance", "saturation"]),
-        ("Detail", ["sharpness", "clarity", "noise"]),
-        ("Effects", ["dehaze", "grain", "vignette"]),
+        (Strings.Light, ["exposure", "contrast", "highlights", "shadows", "whites", "blacks"]),
+        (Strings.Colour, ["temperature", "tint", "vibrance", "saturation"]),
+        (Strings.Detail, ["sharpness", "clarity", "noise"]),
+        (Strings.Effects, ["dehaze", "grain", "vignette"]),
     ];
 
     readonly string _file;
@@ -55,13 +55,13 @@ sealed class PhotoEditor : Editor<PhotoSettings>
     {
         _file = file;
         _target = target;
-        var original = Panels.Button("", "Original", "Hold to see the photo as it was (or hold \\)", () => { });
+        var original = Panels.Button("", Strings.Original, Strings.HoldToSeeThePhotoAsIt, () => { });
         original.PreviewMouseLeftButtonDown += (_, _) => ShowOriginal(true);
         original.PreviewMouseLeftButtonUp += (_, _) => ShowOriginal(false);
         original.MouseLeave += (_, _) => ShowOriginal(false);
         _toolbar.Children.Add(original);
-        _toolbar.Children.Add(Panels.Button("", "Auto", "A starting point: exposure, whites and blacks for this photo", Auto));
-        _toolbar.Children.Add(Panels.Button("", "Reset all", "Every slider back to 0", () =>
+        _toolbar.Children.Add(Panels.Button("", Strings.Auto, Strings.AStartingPointExposureWhitesAndBlacks, Auto));
+        _toolbar.Children.Add(Panels.Button("", Strings.ResetAll, Strings.EverySliderBackTo0, () =>
         {
             if (!State.IsNone) Commit(PhotoSettings.None);
         }));
@@ -73,7 +73,7 @@ sealed class PhotoEditor : Editor<PhotoSettings>
             foreach (var name in names)
                 _panel.Children.Add(Row(options[name]));
         }
-        _panel.Children.Add(Panels.Hint("Double-click a slider to put it back to 0. Hold \\ to compare with the original.", 14));
+        _panel.Children.Add(Panels.Hint(Strings.DoubleClickASliderToPutIt, 14));
     }
 
     public override FrameworkElement Main => _canvas;
@@ -82,8 +82,8 @@ sealed class PhotoEditor : Editor<PhotoSettings>
     public override ZoomCanvas Canvas => _canvas;
     public override string Summary => _small is null ? "" : Describe.Pixels((int)Math.Round(_small.Width / _scale), (int)Math.Round(_small.Height / _scale));
 
-    public override string Status => _showingOriginal ? "The original" :
-        _lastMilliseconds > 0 ? $"Preview drawn in {_lastMilliseconds} ms · hold \\ to compare" : "Hold \\ to compare with the original";
+    public override string Status => _showingOriginal ? Strings.TheOriginal :
+        _lastMilliseconds > 0 ? string.Format(Strings.PreviewDrawnInMsHoldToCompare, _lastMilliseconds) : Strings.HoldToCompareWithTheOriginal;
 
     /// <summary>Saving all zeros would make the same photo, so it doesn't count as a change.</summary>
     public override bool Changed => base.Changed && !State.IsNone;
@@ -107,6 +107,8 @@ sealed class PhotoEditor : Editor<PhotoSettings>
             Focusable = true,
             ToolTip = option.Hint,
         }, FrameworkElement.StyleProperty, option.Min < 0 ? "CentredSlider" : "ThinSlider");
+        System.Windows.Automation.AutomationProperties.SetName(slider, option.Label);
+        if (option.Hint is { } hint) System.Windows.Automation.AutomationProperties.SetHelpText(slider, hint);
         var value = Panels.Themed(new TextBlock { FontSize = 12, HorizontalAlignment = HorizontalAlignment.Right, Text = Format(option.Name, 0) },
             TextBlock.ForegroundProperty, "TextSecondary");
         var label = new TextBlock { Text = option.Label, FontSize = 12.5 };

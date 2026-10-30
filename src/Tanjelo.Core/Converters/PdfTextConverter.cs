@@ -9,8 +9,8 @@ public sealed class PdfTextConverter : IConverter
 
     static readonly Target[] Outputs =
     [
-        new("txt", "TXT", "Text in reading order", Section.Document) { Parameters = Defaults },
-        new("md", "Markdown", "Headings, lists and paragraphs", Section.Document) { Parameters = Defaults },
+        new("txt", Strings.TXT, Strings.TextInReadingOrder, Section.Document) { Parameters = Defaults },
+        new("md", Strings.Markdown, Strings.HeadingsListsAndParagraphs, Section.Document) { Parameters = Defaults },
     ];
 
     public IEnumerable<Target> TargetsFor(string input) => Formats.Key(input) == "pdf" ? Outputs : [];
@@ -22,7 +22,7 @@ public sealed class PdfTextConverter : IConverter
     public async Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx)
     {
         if (!OptionValues.TryFlag(target.Parameter("page-breaks"), out var pageBreaks))
-            throw new ConversionException($"'page-breaks' must be true or false, not '{target.Parameter("page-breaks")}'.");
+            throw new ConversionException(string.Format(Strings.PageBreaksMustBeTrueOrFalse, target.Parameter("page-breaks")));
 
         var text = await PdfText.ReadAsync(input, ctx, ctx.Progress);
         text.EnsureText();

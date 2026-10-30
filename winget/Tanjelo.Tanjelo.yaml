@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.version.1.10.0.schema.json
+# The release workflow fills in the version, the installer's address and its SHA-256, and attaches the result to the
+# release; the user then submits it to microsoft/winget-pkgs. See README.md in this folder.
+
+PackageIdentifier: Tanjelo.Tanjelo
+PackageVersion: 1.0.0
+DefaultLocale: en-US
+ManifestType: version
+ManifestVersion: 1.10.0

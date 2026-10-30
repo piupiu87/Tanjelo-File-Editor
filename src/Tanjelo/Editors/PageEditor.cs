@@ -75,7 +75,7 @@ sealed class PageEditor : Editor<ImmutableList<PageItem>>
     readonly Canvas _marks = new() { IsHitTestVisible = false };
     readonly Shapes.Rectangle _caret = new() { Width = 3, RadiusX = 1.5, RadiusY = 1.5, Visibility = Visibility.Collapsed };
     readonly StackPanel _toolbar = new() { Orientation = Orientation.Horizontal };
-    readonly CheckBox _onlySelected = new() { Content = "Save only the selected pages", Margin = new Thickness(16, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
+    readonly CheckBox _onlySelected = new() { Content = Strings.SaveOnlyTheSelectedPages, Margin = new Thickness(16, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
     readonly Dictionary<int, Tile> _tiles = [];
     readonly List<PdfThumbnails> _sources = [];
     readonly List<string> _paths = [];
@@ -125,11 +125,11 @@ sealed class PageEditor : Editor<ImmutableList<PageItem>>
         };
         _surface.LostMouseCapture += (_, _) => CancelDrag();
 
-        AddButton("", "Left", "Turn left (Ctrl+L)", () => Turn(270), mirror: true);
-        AddButton("", "Right", "Turn right (Ctrl+R)", () => Turn(90));
-        AddButton("", "Copy", "Copy the selected pages (Ctrl+D)", Duplicate);
-        AddButton("", "Delete", "Delete the selected pages (Delete)", Delete);
-        AddButton("", "Add pages…", "Add the pages of another PDF after the selection", () => _ = PickAndInsertAsync(), always: true);
+        AddButton("", Strings.Left, Strings.TurnLeftCtrlL, () => Turn(270), mirror: true);
+        AddButton("", Strings.Right, Strings.TurnRightCtrlR, () => Turn(90));
+        AddButton("", Strings.Copy, Strings.CopyTheSelectedPagesCtrlD, Duplicate);
+        AddButton("", Strings.Delete, Strings.DeleteTheSelectedPagesDelete, Delete);
+        AddButton("", Strings.AddPages, Strings.AddThePagesOfAnotherPDFAfter, () => _ = PickAndInsertAsync(), always: true);
         _onlySelected.SetResourceReference(FrameworkElement.StyleProperty, "Check");
         _onlySelected.Checked += (_, _) => RaiseUpdated();
         _onlySelected.Unchecked += (_, _) => RaiseUpdated();
@@ -138,12 +138,12 @@ sealed class PageEditor : Editor<ImmutableList<PageItem>>
 
     public override FrameworkElement Main => _scroller;
     public override FrameworkElement Toolbar => _toolbar;
-    public override string Summary => _sources.Count > 0 ? Describe.Count(_sources[0].Count, "page") : "";
+    public override string Summary => _sources.Count > 0 ? Describe.Count(_sources[0].Count, Tanjelo.Core.Strings.OnePage, Tanjelo.Core.Strings.NPages) : "";
     public override string? Notice => _problem ?? _losses;
 
     public override string Status =>
-        Describe.Count(State.Count, "page") + (_selected.Count > 0 ? $" · {_selected.Count} selected" : "") +
-        " · Drag pages to move them; Ctrl or Shift picks several";
+        Describe.Count(State.Count, Tanjelo.Core.Strings.OnePage, Tanjelo.Core.Strings.NPages) + (_selected.Count > 0 ? string.Format(Strings.Selected, _selected.Count) : "") +
+        Strings.DragPagesToMoveThemCtrlOr;
 
     bool OnlySelected => _onlySelected.IsChecked == true && _selected.Count > 0;
 
@@ -169,7 +169,7 @@ sealed class PageEditor : Editor<ImmutableList<PageItem>>
     public override Target Result()
     {
         var pages = OnlySelected ? State.Where(p => _selected.Contains(p.Id)).ToList() : State.ToList();
-        if (pages.Count == 0) throw new ConversionException("There are no pages left to save.");
+        if (pages.Count == 0) throw new ConversionException(Strings.ThereAreNoPagesLeftToSave);
         // Other PDFs get their letters in the order their pages first appear: b, c…
         var others = pages.Where(p => p.Source > 0).Select(p => p.Source).Distinct().ToList();
         var letters = others.Select((source, i) => (source, i + 1)).ToDictionary(x => x.source, x => x.Item2);
@@ -229,7 +229,7 @@ sealed class PageEditor : Editor<ImmutableList<PageItem>>
             CornerRadius = new CornerRadius(6),
             BorderThickness = new Thickness(2),
             Child = stack,
-            ToolTip = $"{Path.GetFileName(_paths[page.Source])}, page {page.Index + 1}",
+            ToolTip = string.Format(Strings.Page, Path.GetFileName(_paths[page.Source]), page.Index + 1),
         };
         if (_pictures.TryGetValue((page.Source, page.Index), out var known)) picture.Source = known;
         return new Tile { Root = root, Paper = paper, Picture = picture, Turn = turn, Label = label };
@@ -260,6 +260,8 @@ sealed class PageEditor : Editor<ImmutableList<PageItem>>
         content.Children.Add(icon);
         content.Children.Add(new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center });
         var button = new Button { Content = content, ToolTip = tip, Margin = new Thickness(0, 0, 6, 0), IsEnabled = always };
+        System.Windows.Automation.AutomationProperties.SetName(button, text);
+        System.Windows.Automation.AutomationProperties.SetHelpText(button, tip);
         button.SetResourceReference(FrameworkElement.StyleProperty, "SubtleButton");
         button.Click += (_, _) => click();
         _toolbar.Children.Add(button);
@@ -300,7 +302,7 @@ sealed class PageEditor : Editor<ImmutableList<PageItem>>
         if (_selected.Count == 0) return;
         if (_selected.Count == State.Count)
         {
-            _problem = "A PDF needs at least one page; keep one or more.";
+            _problem = Strings.APDFNeedsAtLeastOnePage;
             RaiseUpdated();
             return;
         }
@@ -329,7 +331,7 @@ sealed class PageEditor : Editor<ImmutableList<PageItem>>
         }
         catch (Exception ex) when (ex is ConversionException or IOException or UnauthorizedAccessException)
         {
-            _problem = $"Couldn't add {Path.GetFileName(path)}: {ex.Message}";
+            _problem = string.Format(Strings.CouldnTAdd, Path.GetFileName(path), ex.Message);
             RaiseUpdated();
             return;
         }
@@ -348,7 +350,7 @@ sealed class PageEditor : Editor<ImmutableList<PageItem>>
 
     async Task PickAndInsertAsync()
     {
-        var dialog = new OpenFileDialog { Title = "Add the pages of", Filter = "PDF documents|*.pdf", InitialDirectory = Path.GetDirectoryName(_file) };
+        var dialog = new OpenFileDialog { Title = Strings.AddThePagesOf, Filter = Strings.PDFDocumentsPdf, InitialDirectory = Path.GetDirectoryName(_file) };
         if (dialog.ShowDialog(Window.GetWindow(_scroller)) == true) await InsertAsync(dialog.FileName);
     }
 

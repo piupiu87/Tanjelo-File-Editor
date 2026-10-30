@@ -17,7 +17,8 @@ sealed record TrimState(double Start, double End);
 /// </summary>
 sealed class TrimEditor : TimelineEditor<TrimState>
 {
-    readonly StackPanel _panel = new();
+    readonly StackPanel _panel = CreatePanel();
+
     readonly TextBox _from, _to;
     readonly TextBlock _length = Panels.Hint("", 8);
     readonly TextBlock _saving = Panels.Hint("", 0);
@@ -30,35 +31,37 @@ sealed class TrimEditor : TimelineEditor<TrimState>
 
     public TrimEditor(string file, Target target, Toolbox tools) : base(file, target, tools)
     {
-        _from = Field("Where the part kept starts; Enter to set it");
-        _to = Field("Where the part kept ends; Enter to set it");
-        _panel.Children.Add(Panels.Heading("Keep"));
-        _panel.Children.Add(Row("From", _from, Panels.Button("", "Start here", "Start at the playhead (I)", () => SetStart(Playhead))));
-        _panel.Children.Add(Row("To", _to, Panels.Button("", "End here", Video ? "End after the frame at the playhead (O)" : "End at the playhead (O)", SetEndHere)));
+        _from = Field(Strings.Start, Strings.WhereThePartKeptStartsEnterTo);
+        _to = Field(Strings.End, Strings.WhereThePartKeptEndsEnterTo);
+        _panel.Children.Add(Panels.Heading(Strings.Keep));
+        _panel.Children.Add(Row(Strings.From, _from, Panels.Button("", Strings.StartHere, Strings.StartAtThePlayheadI, () => SetStart(Playhead))));
+        _panel.Children.Add(Row(Strings.To, _to, Panels.Button("", Strings.EndHere, Video ? Strings.EndAfterTheFrameAtThePlayhead : Strings.EndAtThePlayheadO, SetEndHere)));
         _panel.Children.Add(_length);
         _snap = Panels.Themed(new CheckBox
         {
-            Content = "Snap to keyframes",
+            Content = Strings.SnapToKeyframes,
             Margin = new Thickness(0, 10, 0, 0),
-            ToolTip = "Dragged handles stop at keyframes, so the copy can be made without re-encoding",
+            ToolTip = Strings.DraggedHandlesStopAtKeyframesSoThe,
         }, FrameworkElement.StyleProperty, "Check");
         if (Video)
         {
-            _panel.Children.Add(Panels.Heading("Saving", 20));
+            _panel.Children.Add(Panels.Heading(Strings.Saving, 20));
             _panel.Children.Add(_saving);
             _panel.Children.Add(_snap);
         }
-        _panel.Children.Add(Panels.Heading("Keys", 20));
-        _panel.Children.Add(Panels.Keys([("I, O", Video ? "Start at the playhead, or end after its frame" : "Start or end at the playhead"), .. TimelineKeys()]));
-        _panel.Children.Add(Panels.Hint("Drag the handles at either end of the part kept. Click anywhere else to move the playhead.", 4));
+        _panel.Children.Add(Panels.Heading(Strings.Keys, 20));
+        _panel.Children.Add(Panels.Keys([(Strings.IO, Video ? Strings.StartAtThePlayheadOrEndAfter : Strings.StartOrEndAtThePlayhead), .. TimelineKeys()]));
+        _panel.Children.Add(Panels.Hint(Strings.DragTheHandlesAtEitherEndOf, 4));
 
         _kept = Panels.Themed(new TextBlock { FontSize = 12, VerticalAlignment = VerticalAlignment.Center }, TextBlock.ForegroundProperty, "TextSecondary");
         AddToTransport(_kept);
     }
 
-    TextBox Field(string tip)
+    TextBox Field(string name, string tip)
     {
         var box = Panels.Themed(new TextBox { Width = 112, ToolTip = tip, VerticalContentAlignment = VerticalAlignment.Center }, FrameworkElement.StyleProperty, "FieldBox");
+        System.Windows.Automation.AutomationProperties.SetName(box, name);
+        System.Windows.Automation.AutomationProperties.SetHelpText(box, tip);
         box.KeyDown += (_, e) =>
         {
             if (e.Key == Key.Enter) Typed(box);
@@ -73,13 +76,22 @@ sealed class TrimEditor : TimelineEditor<TrimState>
         return box;
     }
 
+    /// <summary>The settings beside the timeline; its rows share the width of their labels.</summary>
+    static StackPanel CreatePanel()
+    {
+        var panel = new StackPanel();
+        Grid.SetIsSharedSizeScope(panel, true);
+        return panel;
+    }
+
     static Grid Row(string label, TextBox box, Button button)
     {
         var row = new Grid { Margin = new Thickness(0, 0, 0, 6) };
-        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
+        // As wide as the longer label, in every row, so the boxes line up whatever the language.
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto, MinWidth = 40, SharedSizeGroup = "TrimLabel" });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        var text = new TextBlock { Text = label, VerticalAlignment = VerticalAlignment.Center, FontSize = 12.5 };
+        var text = new TextBlock { Text = label, VerticalAlignment = VerticalAlignment.Center, FontSize = 12.5, Margin = new Thickness(0, 0, 8, 0) };
         Grid.SetColumn(box, 1);
         button.Margin = new Thickness(6, 0, 0, 0);
         Grid.SetColumn(button, 2);
@@ -118,13 +130,13 @@ sealed class TrimEditor : TimelineEditor<TrimState>
     protected override string EditorStatus => !Started ? "" : !Video ? "" : Lossless switch
     {
         null => "",
-        true => "Will be saved without re-encoding",
-        false => "Will be re-encoded so the cuts are exact",
+        true => Strings.WillBeSavedWithoutReEncoding,
+        false => Strings.WillBeReEncodedSoTheCuts,
     };
 
     public override Target Result()
     {
-        if (KeepsAll(State)) throw new ConversionException("Move the start or the end first: this keeps all of it.");
+        if (KeepsAll(State)) throw new ConversionException(Strings.MoveTheStartOrTheEndFirst);
         var parameters = new Dictionary<string, string>
         {
             ["range"] = OptionValues.FormatRange(State.Start, State.End >= Duration - 0.0005 ? null : State.End),
@@ -139,13 +151,13 @@ sealed class TrimEditor : TimelineEditor<TrimState>
         if (!_to.IsKeyboardFocusWithin) _to.Text = Timecode.Format(state.End);
         var length = state.End - state.Start;
         var frames = Frames is { } index ? index.At(state.End - 1e-6) - index.At(state.Start) + 1 : 0;
-        _kept.Text = Video ? $"Keeps {Timecode.Format(length)} · {Describe.Count(frames, "frame")}" : $"Keeps {Timecode.Format(length)}";
-        _length.Text = $"{Timecode.Format(length)} of {Timecode.Format(Duration)}" + (Video ? $", {Describe.Count(frames, "frame")}" : "");
+        _kept.Text = Video ? string.Format(Strings.Keeps, Timecode.Format(length), Describe.Count(frames, Tanjelo.Core.Strings.OneFrame, Tanjelo.Core.Strings.NFrames)) : string.Format(Strings.Keeps2, Timecode.Format(length));
+        _length.Text = string.Format(Strings.Of2, Timecode.Format(length), Timecode.Format(Duration)) + (Video ? $", {Describe.Count(frames, Tanjelo.Core.Strings.OneFrame, Tanjelo.Core.Strings.NFrames)}" : "");
         _saving.Text = Lossless switch
         {
-            null => "Finding the keyframes…",
-            true => "Both cuts are on keyframes, so the copy is made without re-encoding: quick, and nothing is lost.",
-            false => "The part kept is re-encoded so each cut lands on its exact frame. To save without re-encoding, put both cuts on keyframes (the marks under the pictures), or turn on Snap to keyframes.",
+            null => Strings.FindingTheKeyframes,
+            true => Strings.BothCutsAreOnKeyframesSoThe,
+            false => Strings.ThePartKeptIsReEncodedSo,
         };
         Timeline.InvalidateVisual();
     }

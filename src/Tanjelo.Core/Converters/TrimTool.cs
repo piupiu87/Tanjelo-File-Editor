@@ -12,34 +12,34 @@ public sealed class TrimTool(Toolbox tools) : IConverter
 {
     public static readonly Choice[] Modes =
     [
-        new("auto", "Lossless when the cuts are on keyframes, otherwise exact"),
-        new("exact", "Exact: re-encode the part kept"),
-        new("lossless", "Lossless: widen the cuts to the keyframes around them"),
+        new("auto", Strings.LosslessWhenTheCutsAreOnKeyframes),
+        new("exact", Strings.ExactReEncodeThePartKept),
+        new("lossless", Strings.LosslessWidenTheCutsToTheKeyframes),
     ];
 
-    static readonly Option Range = new("range", "Keep", OptionKind.TimeRange, "")
+    static readonly Option Range = new("range", Strings.Keep, OptionKind.TimeRange, "")
     {
         Remember = false,
-        Hint = "From and to, such as 0:30.033-1:00. Each end goes to the nearest frame; leave out the end to keep the rest.",
+        Hint = Strings.FromAndToSuchAs030,
     };
 
-    static readonly Target VideoEntry = new Target("trim", "Trim…", "Frame by frame, exact times", Section.Video)
+    static readonly Target VideoEntry = new Target("trim", Strings.Trim, Strings.FrameByFrameExactTimes, Section.Video)
     {
         Kind = TargetKind.Tool,
-        Running = "Trimming…",
-        Done = "Trimmed",
-        Confirm = "Save",
+        Running = Strings.Trimming,
+        Done = Strings.Trimmed,
+        Confirm = Strings.Save,
         Editor = EditorKind.Trim,
-    }.WithOptions(Range, new Option("mode", "Cut", OptionKind.Choice, "auto") { Choices = Modes });
+    }.WithOptions(Range, new Option("mode", Strings.Cut, OptionKind.Choice, "auto") { Choices = Modes });
 
-    static readonly Target AudioEntry = new Target("trim", "Trim…", "On the sound's shape", Section.Audio)
+    static readonly Target AudioEntry = new Target("trim", Strings.Trim, Strings.OnTheSoundSShape, Section.Audio)
     {
         Kind = TargetKind.Tool,
-        Running = "Trimming…",
-        Done = "Trimmed",
-        Confirm = "Save",
+        Running = Strings.Trimming,
+        Done = Strings.Trimmed,
+        Confirm = Strings.Save,
         Editor = EditorKind.Trim,
-    }.WithOptions(Range with { Hint = "From and to, such as 0:30.5-1:00, to the millisecond; leave out the end to keep the rest." });
+    }.WithOptions(Range with { Hint = Strings.FromAndToSuchAs0302 });
 
     public IEnumerable<Target> TargetsFor(string input)
     {
@@ -51,9 +51,9 @@ public sealed class TrimTool(Toolbox tools) : IConverter
     public async Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx)
     {
         var media = await Ffmpeg.ProbeAsync(tools, input, ctx.Cancellation);
-        if (media.Duration <= 0) throw new ConversionException("Couldn't tell how long this file is.");
+        if (media.Duration <= 0) throw new ConversionException(Strings.CouldnTTellHowLongThisFile);
         if (Formats.Audio.Contains(Formats.Key(input))) return [await TrimAudioAsync(input, media, target, ctx)];
-        if (media.Video is null) throw new ConversionException("Couldn't find a picture in this video.");
+        if (media.Video is null) throw new ConversionException(Strings.CouldnTFindAPictureInThis);
         return [await TrimVideoAsync(input, media, target, ctx)];
     }
 
@@ -66,9 +66,9 @@ public sealed class TrimTool(Toolbox tools) : IConverter
         var (from, to) = target.TimeRange("range");
         var end = Math.Min(to ?? media.Duration, media.Duration);
         if (from >= media.Duration - 0.0005)
-            throw new ConversionException($"{OptionValues.FormatTime(from)} is past the end of this file, which is {OptionValues.FormatTime(media.Duration)} long.");
+            throw new ConversionException(string.Format(Strings.IsPastTheEndOfThisFile, OptionValues.FormatTime(from), OptionValues.FormatTime(media.Duration)));
         if (from <= 0.0005 && end >= media.Duration - 0.0005)
-            throw new ConversionException("That keeps all of it, so there's nothing to trim.");
+            throw new ConversionException(Strings.ThatKeepsAllOfItSoThere);
 
         var rate = media.SampleRate > 0 ? media.SampleRate : 48000;
         // Seeking a second or so ahead spares decoding everything before; the samples are then counted from there.
@@ -113,7 +113,7 @@ public sealed class TrimTool(Toolbox tools) : IConverter
     {
         var end = Math.Min(to ?? media.Duration, media.Duration);
         if (from >= media.Duration - 0.001)
-            throw new ConversionException($"{OptionValues.FormatTime(from)} is past the end of this video, which is {OptionValues.FormatTime(media.Duration)} long.");
+            throw new ConversionException(string.Format(Strings.IsPastTheEndOfThisVideo, OptionValues.FormatTime(from), OptionValues.FormatTime(media.Duration)));
         // Keyframes can be several seconds apart: look far enough around each cut to find them.
         const double around = 12;
         (double, double)[] windows = end - from < 2 * around ? [(from - around, end + around)] : [(from - around, from + around), (end - around, end + around)];
@@ -136,9 +136,9 @@ public sealed class TrimTool(Toolbox tools) : IConverter
             }
         }
         if (after <= first)
-            throw new ConversionException("Keep at least one frame: the end has to come after the start.");
+            throw new ConversionException(Strings.KeepAtLeastOneFrameTheEnd);
         if (fromStart && first == 0 && toEnd)
-            throw new ConversionException("That keeps all of it, so there's nothing to trim.");
+            throw new ConversionException(Strings.ThatKeepsAllOfItSoThere);
         var start = frames.Start(first);
         var stop = toEnd ? Math.Max(media.Duration, frames.End) : frames.Start(after);
         return new Cut(start, stop, toEnd, frames.IsKey(first), toEnd || frames.IsKey(after),
@@ -157,12 +157,12 @@ public sealed class TrimTool(Toolbox tools) : IConverter
             if (copied is not null)
             {
                 ctx.Note(mode == "lossless" && (Math.Abs(cut.Start - from) > cut.Last / 2 || (to is { } end && !cut.ToEnd && Math.Abs(cut.End - end) > cut.Last / 2))
-                    ? $"Cut at the keyframes around it, without re-encoding: {Timecode.Format(cut.Start)} to {Timecode.Format(cut.End)}"
-                    : "Copied without re-encoding: both cuts are on keyframes");
+                    ? string.Format(Strings.CutAtTheKeyframesAroundItWithout, Timecode.Format(cut.Start), Timecode.Format(cut.End))
+                    : Strings.CopiedWithoutReEncodingBothCutsAre);
                 return copied;
             }
         }
-        ctx.Note("Re-encoded, so each cut is on the exact frame");
+        ctx.Note(Strings.ReEncodedSoEachCutIsOn);
         return await EncodeAsync(input, media, cut, ctx);
     }
 

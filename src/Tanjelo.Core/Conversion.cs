@@ -65,19 +65,19 @@ public sealed record Target(string Key, string Label, string Description, Sectio
     /// </summary>
     public EditorKind? Editor { get; init; }
 
-    public string RunningText => Running ?? $"Converting to {Label}…";
-    public string DoneText => Done ?? $"Converted to {Label}";
+    public string RunningText => Running ?? string.Format(Strings.ConvertingTo, Label);
+    public string DoneText => Done ?? string.Format(Strings.ConvertedTo, Label);
     public string ConfirmText => Confirm ?? Label.TrimEnd('…');
 
     public string Parameter(string name) =>
-        Parameters.TryGetValue(name, out var value) ? value : throw new ConversionException($"{Label} needs a value for '{name}'.");
+        Parameters.TryGetValue(name, out var value) ? value : throw new ConversionException(string.Format(Strings.NeedsAValueFor, Label, name));
 
     public double Number(string name, double min, double max)
     {
         var text = Parameter(name);
         if (!double.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var value)
             || value < min || value > max)
-            throw new ConversionException($"'{name}' must be a number from {min} to {max}, not '{text}'.");
+            throw new ConversionException(string.Format(Strings.MustBeANumberFromToNot, name, min, max, text));
         return value;
     }
 
@@ -108,7 +108,7 @@ public sealed record Target(string Key, string Label, string Description, Sectio
         OptionValues.TryOrder(Checked(name, OptionKind.Order), out var order);
         if (order.Count == 0) return inputs;
         if (order.Count != inputs.Count)
-            throw new ConversionException($"{OptionLabel(name)} lists {order.Count} files, but {inputs.Count} are selected.");
+            throw new ConversionException(string.Format(Strings.ListsFilesButAreSelected, OptionLabel(name), order.Count, inputs.Count));
         return order.Select(i => inputs[i]).ToList();
     }
 
@@ -120,7 +120,7 @@ public sealed record Target(string Key, string Label, string Description, Sectio
             throw new InvalidOperationException($"{Key} has no {kind} option '{name}'.");
         var value = Parameter(name).Trim();
         if (option.Problem(value) is { } problem)
-            throw new ConversionException($"{option.Label} {problem}" + (value.Length > 0 ? $", not '{value}'." : "."));
+            throw new ConversionException($"{option.Label} {problem}" + (value.Length > 0 ? string.Format(Strings.Not, value) : "."));
         return value;
     }
 

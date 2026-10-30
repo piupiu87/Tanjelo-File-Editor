@@ -8,6 +8,18 @@
         <FontFamily x:Key="UiFont">Segoe UI Variable Text, Segoe UI</FontFamily>
         <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
 
+        <!-- The ring a control shows when the keyboard reaches it (never for a click). Controls without a style of their own
+             take it from here; FocusRing follows the theme, and the contrast themes too. -->
+        <Style x:Key="{x:Static SystemParameters.FocusVisualStyleKey}">
+            <Setter Property="Control.Template">
+                <Setter.Value>
+                    <ControlTemplate>
+                        <Rectangle Margin="-3" RadiusX="6" RadiusY="6" StrokeThickness="2" Stroke="{DynamicResource FocusRing}" SnapsToDevicePixels="True" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Borderless window with the system drop shadow and (via DWM) rounded corners. -->
         <Style x:Key="PopupWindow" TargetType="Window">
             <Setter Property="WindowStyle" Value="None" />
@@ -29,7 +41,7 @@
 
         <Style x:Key="ButtonBase" TargetType="Button">
             <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Focusable" Value="False" />
+            <Setter Property="FocusVisualStyle" Value="{DynamicResource {x:Static SystemParameters.FocusVisualStyleKey}}" />
             <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
             <Setter Property="FontSize" Value="12.5" />
             <Setter Property="Padding" Value="12,5" />
@@ -37,9 +49,13 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Chrome" CornerRadius="4" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
+                        <Grid x:Name="Chrome">
+                            <Border CornerRadius="4" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <!-- An outline only in a contrast theme, laid over so it doesn't change the button's size -->
+                            <Border CornerRadius="4" BorderThickness="1" BorderBrush="{DynamicResource ButtonBorder}" />
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="Chrome" Property="Opacity" Value="0.45" />
@@ -71,6 +87,7 @@
         </Style>
 
         <Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
+            <Setter Property="AutomationProperties.Name" Value="{Binding ToolTip, RelativeSource={RelativeSource Self}}" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
             <Setter Property="FontFamily" Value="{StaticResource IconFont}" />
@@ -94,7 +111,7 @@
             <Setter Property="BorderBrush" Value="{DynamicResource FieldBorder}" />
             <Setter Property="Padding" Value="6,0" />
             <Setter Property="Height" Value="30" />
-            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="FocusVisualStyle" Value="{DynamicResource {x:Static SystemParameters.FocusVisualStyleKey}}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
@@ -126,11 +143,11 @@
             <Setter Property="FontSize" Value="12.5" />
             <Setter Property="Margin" Value="0,0,6,6" />
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
-            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="FocusVisualStyle" Value="{DynamicResource {x:Static SystemParameters.FocusVisualStyleKey}}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="Back" CornerRadius="5" Padding="10,5" BorderThickness="1" Background="{DynamicResource Subtle}" BorderBrush="Transparent">
+                        <Border x:Name="Back" CornerRadius="5" Padding="10,5" BorderThickness="1" Background="{DynamicResource Subtle}" BorderBrush="{DynamicResource ButtonBorder}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
                         <ControlTemplate.Triggers>
@@ -140,6 +157,7 @@
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="Back" Property="Background" Value="{DynamicResource Selected}" />
                                 <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+                                <Setter TargetName="Back" Property="BorderBrush" Value="{DynamicResource SelectedBorder}" />
                             </Trigger>
                             <Trigger Property="IsKeyboardFocused" Value="True">
                                 <Setter TargetName="Back" Property="BorderBrush" Value="{DynamicResource Accent}" />
@@ -150,12 +168,46 @@
             </Setter>
         </Style>
 
+        <!-- A colour to pick, as a dot in a ring; the content is the dot. The chosen one is ringed in the accent. -->
+        <Style x:Key="Swatch" TargetType="RadioButton">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="0,0,4,4" />
+            <Setter Property="FocusVisualStyle" Value="{DynamicResource {x:Static SystemParameters.FocusVisualStyleKey}}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Ring" Padding="2" CornerRadius="99" BorderThickness="2" BorderBrush="Transparent" Background="Transparent">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Ring" Property="BorderBrush" Value="{DynamicResource Accent}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- A button that's only its content, such as a colour dot; the focus ring shows where the keyboard is. -->
+        <Style x:Key="BareButton" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{DynamicResource {x:Static SystemParameters.FocusVisualStyleKey}}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <ContentPresenter />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style x:Key="Check" TargetType="CheckBox">
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
             <Setter Property="FontSize" Value="13" />
             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
-            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="FocusVisualStyle" Value="{DynamicResource {x:Static SystemParameters.FocusVisualStyleKey}}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="CheckBox">
@@ -203,7 +255,7 @@
         <!-- Thin track, filled with the accent up to a round thumb. -->
         <Style x:Key="ThinSlider" TargetType="Slider">
             <Setter Property="IsMoveToPointEnabled" Value="True" />
-            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="FocusVisualStyle" Value="{DynamicResource {x:Static SystemParameters.FocusVisualStyleKey}}" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
                 <Setter.Value>

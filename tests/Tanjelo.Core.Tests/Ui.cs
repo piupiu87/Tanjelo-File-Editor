@@ -67,6 +67,7 @@ static class Ui
         {
             await Thread.Value.InvokeAsync(() =>
             {
+                Theme.ContrastOverride = null;
                 UseTheme("light");
                 return work();
             }).Task.Unwrap();

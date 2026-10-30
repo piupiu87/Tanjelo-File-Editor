@@ -131,7 +131,7 @@ public sealed class ConverterEngine
         {
             if (target.IsBatch)
             {
-                var label = inputs.Count == 1 ? Path.GetFileName(inputs[0]) : $"{inputs.Count} items";
+                var label = inputs.Count == 1 ? Path.GetFileName(inputs[0]) : string.Format(Strings.Items, inputs.Count);
                 var (op, own) = _batchOperations
                     .SelectMany(b => b.TargetsFor(inputs).Where(t => t.Key == target.Key).Select(t => (Op: b, Target: t)))
                     .First();
@@ -168,8 +168,8 @@ public sealed class ConverterEngine
                     if (match.Converter is null)
                     {
                         failures.Add(new Failure(input, target.Kind == TargetKind.Convert
-                            ? $"Can't convert this file to {target.Label}."
-                            : $"{target.Label} doesn't work on this file."));
+                            ? string.Format(Strings.CanTConvertThisFileTo, target.Label)
+                            : string.Format(Strings.DoesnTWorkOnThisFile, target.Label)));
                         continue;
                     }
                     var noted = ctx.NoteCount;
@@ -251,9 +251,9 @@ public sealed class ConverterEngine
     static string Describe(Exception ex) => ex switch
     {
         ConversionException => ex.Message,
-        ImageMagick.MagickException magick => $"Image error: {ImageConverter.Reason(magick)}.",
-        COMException com => $"Office reported an error: {com.Message}",
-        UnauthorizedAccessException => "Access denied. The folder may be read-only.",
+        ImageMagick.MagickException magick => string.Format(Strings.ImageError, ImageConverter.Reason(magick)),
+        COMException com => string.Format(Strings.OfficeReportedAnError, com.Message),
+        UnauthorizedAccessException => Strings.AccessDeniedTheFolderMayBeRead,
         _ => ex.Message.Split('\n')[0].Trim(),
     };
 

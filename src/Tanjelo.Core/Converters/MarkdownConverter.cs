@@ -5,11 +5,11 @@ namespace Tanjelo.Core.Converters;
 /// <summary>Markdown to a web page, a PDF or plain text, with nothing to install: Markdig, and WebView2 to print.</summary>
 public sealed class MarkdownConverter(Toolbox tools) : IConverter
 {
-    static readonly Target Html = new("html", "HTML", "Styled web page, pictures included", Section.Document);
-    static readonly Target Pdf = new("pdf", "PDF", "Printed offline by Windows' WebView2", Section.Document);
-    static readonly Target Txt = new("txt", "TXT", "The text, without the markup", Section.Document);
+    static readonly Target Html = new("html", Strings.HTML, Strings.StyledWebPagePicturesIncluded, Section.Document);
+    static readonly Target Pdf = new("pdf", Strings.PDF, Strings.PrintedOfflineByWindowsWebView2, Section.Document);
+    static readonly Target Txt = new("txt", Strings.TXT, Strings.TheTextWithoutTheMarkup, Section.Document);
 
-    public const string NoWebView2 = "Markdown to PDF needs the WebView2 Runtime: winget install Microsoft.EdgeWebView2Runtime";
+    public static string NoWebView2 => Strings.MarkdownToPDFNeedsTheWebView2Runtime;
 
     public IEnumerable<Target> TargetsFor(string input) =>
         Formats.KindOf(input) != FileKind.Markdown ? [] : tools.WebView2 is null ? [Html, Txt] : [Html, Pdf, Txt];
@@ -32,7 +32,7 @@ public sealed class MarkdownConverter(Toolbox tools) : IConverter
                 await PrintAsync(MarkdownPage.Html(markdown, input, forPrint: true), output, ctx);
                 break;
             default:
-                throw new ConversionException($"Markdown can't become {target.Label}.");
+                throw new ConversionException(string.Format(Strings.MarkdownCanTBecome, target.Label));
         }
         ctx.Progress.Report(1);
         return [output];

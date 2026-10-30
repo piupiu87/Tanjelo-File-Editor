@@ -51,12 +51,12 @@ sealed class ImageMetadata
                 case "jpg": metadata.ReadJpeg(); break;
                 case "png": metadata.ReadPng(); break;
                 case "webp": metadata.ReadWebp(); break;
-                default: throw new ConversionException($"Can't edit the metadata of .{format} files.");
+                default: throw new ConversionException(string.Format(Strings.CanTEditTheMetadataOfFiles, format));
             }
         }
         catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException or InvalidDataException)
         {
-            throw new ConversionException($"This doesn't look like a valid {format.ToUpperInvariant()} file.", ex);
+            throw new ConversionException(string.Format(Strings.ThisDoesnTLookLikeAValid2, format.ToUpperInvariant()), ex);
         }
         return metadata;
     }
@@ -294,7 +294,7 @@ sealed class ImageMetadata
         foreach (var (marker, data) in kept)
         {
             if (data.Length > 65533)
-                throw new ConversionException("The metadata is too big to fit in a JPEG.");
+                throw new ConversionException(Strings.TheMetadataIsTooBigToFit);
             output.Write([0xFF, marker]);
             output.Write([(byte)((data.Length + 2) >> 8), (byte)(data.Length + 2)]);
             output.Write(data);
@@ -501,7 +501,7 @@ sealed class ImageMetadata
         }
         else
         {
-            throw new ConversionException("This WebP file is laid out in a way Tanjelo can't add metadata to.");
+            throw new ConversionException(Strings.ThisWebPFileIsLaidOutIn);
         }
         var header = new byte[10];
         header[0] = (byte)(alpha ? 0x10 : 0);

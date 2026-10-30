@@ -14,6 +14,8 @@ namespace Tanjelo;
 /// </summary>
 public partial class App : Application
 {
+    static App() => KeyboardFocus.Install();
+
     Settings _settings = new();
     ConverterEngine? _engine;
     DateTime _engineBuilt;
@@ -21,6 +23,10 @@ public partial class App : Application
     TrayIcon? _tray;
     Mutex? _singleInstance;
     FileSystemWatcher? _settingsWatcher;
+    SettingsWindow? _settingsWindow;
+    UpdateCheck? _updates;
+    DispatcherTimer? _updateTimer;
+    bool _checkingUpdates;
     Window? _menu; // the menu, or the options dialog that follows it
     readonly List<ProgressToast> _toasts = []; // newest first; stacked upward from the bottom-right corner
     bool _oneShot;
@@ -38,14 +44,15 @@ public partial class App : Application
         Theme.Apply(Resources);
         SystemEvents.UserPreferenceChanged += (_, args) =>
         {
-            if (args.Category == UserPreferenceCategory.General) Dispatcher.BeginInvoke(() => Theme.Apply(Resources));
+            // General is the light/dark app setting; Accessibility and Color, a contrast theme going on or off.
+            if (args.Category is UserPreferenceCategory.General or UserPreferenceCategory.Accessibility or UserPreferenceCategory.Color)
+                Dispatcher.BeginInvoke(() => Theme.Apply(Resources));
         };
 
         _shelf = Shelf.Load(FloatWindow.FilePath);
         _shelf.Changed += SaveShelf;
 
-        var files = e.Args
-            .Where(a => !a.StartsWith("--", StringComparison.Ordinal))
+        var files = Selection(e.Args)
             .Select(Path.GetFullPath)
             .Where(p => File.Exists(p) || Directory.Exists(p))
             .ToList();
@@ -59,11 +66,41 @@ public partial class App : Application
         _singleInstance = new Mutex(true, @"Local\Tanjelo.Tray", out var isFirst);
         if (!isFirst)
         {
-            MessageBox.Show("Tanjelo is already running. Look for its icon in the notification area.", "Tanjelo");
+            MessageBox.Show(Strings.TanjeloIsAlreadyRunningLookForIts, "Tanjelo");
             Shutdown();
             return;
         }
         StartTray(showWelcome: !e.Args.Contains("--autostart"));
+    }
+
+    /// <summary>
+    /// The files named on the command line, as "Send to" passes them, or listed in the file after <c>--paths-file</c>,
+    /// which the Windows 11 menu entry writes when the selection is too long for a command line; that file is deleted.
+    /// </summary>
+    internal static IReadOnlyList<string> Selection(IReadOnlyList<string> args)
+    {
+        var files = new List<string>();
+        for (var i = 0; i < args.Count; i++)
+        {
+            if (args[i] == "--paths-file" && i + 1 < args.Count)
+            {
+                var list = args[++i];
+                try
+                {
+                    files.AddRange(File.ReadAllLines(list).Where(line => line.Length > 0));
+                    File.Delete(list);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    Log.Write($"{list}: {ex.Message}");
+                }
+            }
+            else if (!args[i].StartsWith("--", StringComparison.Ordinal))
+            {
+                files.Add(args[i]);
+            }
+        }
+        return files;
     }
 
     void StartTray(bool showWelcome)
@@ -79,18 +116,20 @@ public partial class App : Application
         _hotkey.Pressed += OnHotkey;
         _hotkey.ShelfPressed += ToggleShelf;
         _hotkey.AlsoIn = hwnd => _float is { IsVisible: true } shelf && hwnd == shelf.Hwnd;
-        _hotkey.Conflict += () => _tray.Notify("Shortcut unavailable", $"Another app is already using {_settings.Hotkey}. Choose a different one in Edit settings.");
+        _hotkey.Conflict += () => _tray.Notify(Strings.ShortcutUnavailable, string.Format(Strings.AnotherAppIsAlreadyUsingChooseA, _settings.Hotkey));
         ApplyHotkey();
         WatchSettings();
+        StartUpdateChecks();
 
         if (showWelcome)
-            _tray.Notify("Tanjelo is ready", $"Select files in File Explorer and press {_settings.Hotkey}.");
+            _tray.Notify(Strings.TanjeloIsReady, string.Format(Strings.SelectFilesInFileExplorerAndPress, _settings.Hotkey));
         if (_shelf.Open)
             ShowShelf();
     }
 
     void ApplyHotkey()
     {
+        _settingsWindow?.ShowShortcutProblem("");
         if (Settings.TryParseHotkey(_settings.Hotkey, out var modifiers, out var key))
         {
             _hotkey!.Set(modifiers, key);
@@ -98,16 +137,19 @@ public partial class App : Application
         }
         else
         {
-            _tray!.Notify("Shortcut not recognised", $"Couldn't read \"{_settings.Hotkey}\". Use something like Ctrl+Shift+Space.");
+            _tray!.Notify(Strings.ShortcutNotRecognised, string.Format(Strings.CouldnTReadUseSomethingLikeCtrl, _settings.Hotkey));
         }
 
         // The shelf's own shortcut is optional and works everywhere.
         if (string.IsNullOrWhiteSpace(_settings.FloatHotkey))
             _hotkey!.SetShelf(null);
         else if (!Settings.TryParseHotkey(_settings.FloatHotkey, out var shelfModifiers, out var shelfKey))
-            _tray!.Notify("Shortcut not recognised", $"Couldn't read the floatHotkey \"{_settings.FloatHotkey}\". Use something like Ctrl+Shift+F.");
+            _tray!.Notify(Strings.ShortcutNotRecognised, string.Format(Strings.CouldnTReadTheShelfShortcutUse, _settings.FloatHotkey));
         else if (!_hotkey!.SetShelf((shelfModifiers, shelfKey)))
-            _tray!.Notify("Shortcut unavailable", $"Another app is already using {_settings.FloatHotkey}. Choose a different floatHotkey in Edit settings.");
+        {
+            _tray!.Notify(Strings.ShortcutUnavailable, string.Format(Strings.AnotherAppIsAlreadyUsingChooseA2, _settings.FloatHotkey));
+            _settingsWindow?.ShowShortcutProblem(string.Format(Strings.AnotherAppIsAlreadyUsingChooseOther, _settings.FloatHotkey));
+        }
     }
 
     /// <summary>The engine, rebuilt now and then so tools installed while we run (ffmpeg, 7-Zip) are picked up.</summary>
@@ -131,7 +173,7 @@ public partial class App : Application
             // On the shelf, the shortcut converts what's selected there, or everything on it.
             files = shelf.SelectedOrAll();
             if (files.Count == 0)
-                Toast().ShowMessage("The shelf is empty", "Drop files on it first.");
+                Toast().ShowMessage(Strings.TheShelfIsEmpty, Strings.DropFilesOnItFirst);
             else
                 _ = ShowMenuAsync(files);
             return;
@@ -143,12 +185,12 @@ public partial class App : Application
         catch (Exception ex)
         {
             Log.Write(ex);
-            Toast().ShowError("Couldn't read the selection", ex.Message);
+            Toast().ShowError(Strings.CouldnTReadTheSelection, ex.Message);
             return;
         }
         if (files.Count == 0)
         {
-            Toast().ShowMessage("Nothing selected", "Select one or more files in File Explorer first.");
+            Toast().ShowMessage(Strings.NothingSelected, Strings.SelectOneOrMoreFilesInFile);
             return;
         }
         _ = ShowMenuAsync(files);
@@ -156,7 +198,7 @@ public partial class App : Application
 
     void PickFilesAndConvert()
     {
-        var dialog = new OpenFileDialog { Multiselect = true, Title = "Choose files to convert" };
+        var dialog = new OpenFileDialog { Multiselect = true, Title = Strings.ChooseFilesToConvert };
         if (dialog.ShowDialog() == true)
             _ = ShowMenuAsync(dialog.FileNames);
     }
@@ -189,7 +231,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             Log.Write(ex);
-            Toast().ShowError("Something went wrong", ex.Message);
+            Toast().ShowError(Strings.SomethingWentWrong, ex.Message);
         }
         finally
         {
@@ -260,7 +302,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             Log.Write(ex);
-            toast.ShowError("Conversion failed", ex.Message);
+            toast.ShowError(Strings.ConversionFailed, ex.Message);
         }
         finally
         {
@@ -370,12 +412,122 @@ public partial class App : Application
         if (error is not null)
         {
             Log.Write($"settings: {error}");
-            if (notify) _tray?.Notify("Settings not loaded", error);
+            if (notify) _tray?.Notify(Strings.SettingsNotLoaded, error);
         }
         return settings;
     }
 
     void OpenSettings()
+    {
+        if (_settingsWindow is { } open)
+        {
+            if (open.WindowState == WindowState.Minimized) open.WindowState = WindowState.Normal;
+            open.Activate();
+            return;
+        }
+        var window = new SettingsWindow(_settings, ChangeSettings, new WindowsSettings(), Toolbox.Detect);
+        // While a shortcut box listens, the shelf's shortcut (which works everywhere) mustn't fire instead.
+        window.ListeningForShortcut += listening =>
+        {
+            if (listening) _hotkey?.SetShelf(null);
+            else ApplyHotkey();
+        };
+        window.OpenFileClicked += OpenSettingsFile;
+        window.PageClicked += OpenPage;
+        if (_updates is not null)
+        {
+            var (text, link) = _updates.Describe();
+            window.ShowUpdate(text, link);
+        }
+        window.Closed += (_, _) => _settingsWindow = null;
+        _settingsWindow = window;
+        window.Show();
+        window.Activate();
+    }
+
+    /// <summary>A change from the settings window: applied at once and written to settings.json.</summary>
+    void ChangeSettings(Settings settings)
+    {
+        var before = _settings;
+        _settings = settings;
+        try
+        {
+            settings.Save();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Log.Write($"settings: {ex.Message}");
+            _tray?.Notify(Strings.SettingsNotSaved, ex.Message);
+        }
+        ApplySettings(before);
+    }
+
+    /// <summary>Puts new settings to work; the shortcuts are registered again only when they changed.</summary>
+    void ApplySettings(Settings before)
+    {
+        _engine = null;
+        if (before.Theme != _settings.Theme)
+        {
+            Theme.Preference = _settings.Theme;
+            Theme.Apply(Resources);
+        }
+        if (_tray is not null && (before.Hotkey != _settings.Hotkey || before.FloatHotkey != _settings.FloatHotkey))
+            ApplyHotkey();
+        if (_settings.CheckForUpdates && !before.CheckForUpdates)
+            _ = CheckForUpdatesAsync();
+    }
+
+    // ---- Update check (off unless turned on in Settings)
+
+    void StartUpdateChecks()
+    {
+        _updates = new UpdateCheck(new System.Net.Http.SocketsHttpHandler(), UpdateCheck.DefaultStatePath,
+            typeof(App).Assembly.GetName().Version ?? new Version(0, 0, 0), () => DateTimeOffset.Now);
+        // A minute after starting, so a sign-in isn't slowed and the network is up; then every hour, asking at most once a day.
+        _updateTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(1) };
+        _updateTimer.Tick += (_, _) =>
+        {
+            _updateTimer.Interval = TimeSpan.FromHours(1);
+            _ = CheckForUpdatesAsync();
+        };
+        _updateTimer.Start();
+    }
+
+    async Task CheckForUpdatesAsync()
+    {
+        if (_updates is not { } updates || _checkingUpdates || !_settings.CheckForUpdates || !updates.Due) return;
+        _checkingUpdates = true;
+        try
+        {
+            _settingsWindow?.ShowUpdate(Strings.Checking, null);
+            await updates.RunIfDueAsync(_settings.CheckForUpdates);
+            var (text, link) = updates.Describe();
+            _settingsWindow?.ShowUpdate(text, link);
+            if (updates.ShouldAnnounce)
+            {
+                updates.MarkAnnounced();
+                _tray?.Notify(string.Format(Strings.TanjeloIsOut, updates.Newer), Strings.ClickToSeeWhatSNewOn, () => OpenPage(updates.Page));
+            }
+        }
+        finally
+        {
+            _checkingUpdates = false;
+        }
+    }
+
+    static void OpenPage(string url)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        }
+        catch (Win32Exception ex)
+        {
+            Log.Write($"{url}: {ex.Message}");
+        }
+    }
+
+    void OpenSettingsFile()
     {
         if (!File.Exists(Settings.FilePath)) _settings.Save();
         try
@@ -397,11 +549,10 @@ public partial class App : Application
         debounce.Tick += (_, _) =>
         {
             debounce.Stop();
+            var before = _settings;
             _settings = LoadSettings(notify: true);
-            _engine = null;
-            Theme.Preference = _settings.Theme;
-            Theme.Apply(Resources);
-            ApplyHotkey();
+            ApplySettings(before);
+            _settingsWindow?.Show(_settings);
         };
         void Changed() => Dispatcher.BeginInvoke(() =>
         {
@@ -422,12 +573,13 @@ public partial class App : Application
     {
         Log.Write(e.Exception);
         e.Handled = true; // keep the tray app alive
-        try { Toast().ShowError("Something went wrong", e.Exception.Message); }
+        try { Toast().ShowError(Strings.SomethingWentWrong, e.Exception.Message); }
         catch (Exception ex) { Log.Write(ex); }
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _updateTimer?.Stop();
         _hotkey?.Dispose();
         _tray?.Dispose();
         _settingsWatcher?.Dispose();

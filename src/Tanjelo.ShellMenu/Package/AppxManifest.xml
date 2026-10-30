@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The sparse package that puts "Tanjelo…" in the Windows 11 right-click menu. It holds no files of its own: it's
+     registered with the install folder as its external location, where TanjeloMenu.dll and Tanjelo.exe are. The release
+     workflow sets the version and, for a signed release, the publisher, which must match the signing certificate; the
+     publisher below, with the OID Windows reserves for unsigned packages, is for the test on CI. -->
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+         xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+         xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
+         xmlns:desktop4="http://schemas.microsoft.com/appx/manifest/desktop/windows10/4"
+         xmlns:desktop5="http://schemas.microsoft.com/appx/manifest/desktop/windows10/5"
+         xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
+         xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+         IgnorableNamespaces="uap uap10 desktop4 desktop5 com rescap">
+  <Identity Name="Tanjelo.Menu" Publisher="CN=Tanjelo Test, OID.2.25.311729368913984317654407730594956997722=1"
+            Version="1.0.0.0" ProcessorArchitecture="x64" />
+  <Properties>
+    <DisplayName>Tanjelo</DisplayName>
+    <PublisherDisplayName>piupiu87</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+    <uap10:AllowExternalContent>true</uap10:AllowExternalContent>
+  </Properties>
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.22000.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+    <rescap:Capability Name="unvirtualizedResources" />
+  </Capabilities>
+  <Applications>
+    <Application Id="Tanjelo" Executable="Tanjelo.exe" uap10:TrustLevel="mediumIL" uap10:RuntimeBehavior="win32App">
+      <!-- Not in the Start menu: the installer's own shortcut is there already. -->
+      <uap:VisualElements AppListEntry="none" DisplayName="Tanjelo" Description="Convert and edit files from File Explorer"
+                          BackgroundColor="transparent" Square150x150Logo="Assets\Square150x150Logo.png"
+                          Square44x44Logo="Assets\Square44x44Logo.png" />
+      <Extensions>
+        <desktop4:Extension Category="windows.fileExplorerContextMenus">
+          <desktop4:FileExplorerContextMenus>
+            <desktop5:ItemType Type="*">
+              <desktop5:Verb Id="Tanjelo" Clsid="6E0F7A4B-2C1D-4E8A-9F3B-5A7C2D1E0B94" />
+            </desktop5:ItemType>
+            <desktop5:ItemType Type="Directory">
+              <desktop5:Verb Id="Tanjelo" Clsid="6E0F7A4B-2C1D-4E8A-9F3B-5A7C2D1E0B94" />
+            </desktop5:ItemType>
+          </desktop4:FileExplorerContextMenus>
+        </desktop4:Extension>
+        <com:Extension Category="windows.comServer">
+          <com:ComServer>
+            <!-- In a surrogate process, so a problem in the DLL can't take Explorer down -->
+            <com:SurrogateServer DisplayName="Tanjelo menu entry">
+              <com:Class Id="6E0F7A4B-2C1D-4E8A-9F3B-5A7C2D1E0B94" Path="TanjeloMenu.dll" ThreadingModel="STA" />
+            </com:SurrogateServer>
+          </com:ComServer>
+        </com:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+</Package>

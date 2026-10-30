@@ -1,7 +1,8 @@
 <Window x:Class="Tanjelo.Editors.EditorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Tanjelo" Width="1100" Height="760" MinWidth="720" MinHeight="480"
+        xmlns:local="clr-namespace:Tanjelo"
+        Title="{x:Static local:Strings.Tanjelo}" Width="1100" Height="760" MinWidth="720" MinHeight="480"
         WindowStyle="None" ResizeMode="CanResize" UseLayoutRounding="True"
         FontFamily="{StaticResource UiFont}" FontSize="13"
         Background="{DynamicResource Surface}" Foreground="{DynamicResource TextPrimary}" Opacity="0">
@@ -36,17 +37,17 @@
             </StackPanel>
             <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                 <Button x:Name="MaximizeButton" Style="{StaticResource IconButton}" Content="&#xE922;" Padding="10"
-                        WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="Maximize" />
+                        WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="{x:Static local:Strings.Maximize}" />
                 <Button x:Name="CloseButton" Style="{StaticResource IconButton}" Content="&#xE711;" Padding="10"
-                        WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="Cancel (Esc)" />
+                        WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="{x:Static local:Strings.CancelEsc}" />
             </StackPanel>
         </Grid>
 
         <!-- The editor's tools on the left, undo and redo on the right -->
         <DockPanel Grid.Row="1" Margin="14,0,14,10" LastChildFill="True">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button x:Name="UndoButton" Style="{StaticResource IconButton}" Content="&#xE7A7;" FontSize="13" Padding="8" ToolTip="Undo (Ctrl+Z)" />
-                <Button x:Name="RedoButton" Style="{StaticResource IconButton}" Content="&#xE7A6;" FontSize="13" Padding="8" ToolTip="Redo (Ctrl+Y)" />
+                <Button x:Name="UndoButton" Style="{StaticResource IconButton}" Content="&#xE7A7;" FontSize="13" Padding="8" ToolTip="{x:Static local:Strings.UndoCtrlZ}" />
+                <Button x:Name="RedoButton" Style="{StaticResource IconButton}" Content="&#xE7A6;" FontSize="13" Padding="8" ToolTip="{x:Static local:Strings.RedoCtrlY}" />
             </StackPanel>
             <ContentPresenter x:Name="ToolSlot" VerticalAlignment="Center" />
         </DockPanel>
@@ -80,24 +81,29 @@
             </ScrollViewer>
         </Grid>
 
+        <!-- The status takes the room the buttons leave, and shortens with an ellipsis rather than running under them -->
         <Grid Grid.Row="3" Margin="14,10,14,14">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <StackPanel x:Name="ZoomBar" Orientation="Horizontal" Visibility="Collapsed" Margin="0,0,14,0">
-                    <Button x:Name="ZoomOutButton" Style="{StaticResource IconButton}" Content="&#xE71F;" FontSize="12" ToolTip="Zoom out (Ctrl+−)" />
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <DockPanel VerticalAlignment="Center">
+                <StackPanel x:Name="ZoomBar" DockPanel.Dock="Left" Orientation="Horizontal" Visibility="Collapsed" Margin="0,0,14,0">
+                    <Button x:Name="ZoomOutButton" Style="{StaticResource IconButton}" Content="&#xE71F;" FontSize="12" ToolTip="{x:Static local:Strings.ZoomOutCtrl}" />
                     <TextBlock x:Name="ZoomText" Width="46" TextAlignment="Center" VerticalAlignment="Center" FontSize="12"
                                Foreground="{DynamicResource TextSecondary}" />
-                    <Button x:Name="ZoomInButton" Style="{StaticResource IconButton}" Content="&#xE8A3;" FontSize="12" ToolTip="Zoom in (Ctrl++)" />
-                    <Button x:Name="FitButton" Style="{StaticResource SubtleButton}" Content="Fit" Padding="10,4" ToolTip="Fit the picture (Ctrl+0)" />
-                    <Button x:Name="ActualButton" Style="{StaticResource SubtleButton}" Content="100%" Padding="10,4" ToolTip="Show every pixel (Ctrl+1)" />
+                    <Button x:Name="ZoomInButton" Style="{StaticResource IconButton}" Content="&#xE8A3;" FontSize="12" ToolTip="{x:Static local:Strings.ZoomInCtrl}" />
+                    <Button x:Name="FitButton" Style="{StaticResource SubtleButton}" Content="{x:Static local:Strings.Fit}" Padding="10,4" ToolTip="{x:Static local:Strings.FitThePictureCtrl0}" />
+                    <Button x:Name="ActualButton" Style="{StaticResource SubtleButton}" Content="100%" Padding="10,4" ToolTip="{x:Static local:Strings.ShowEveryPixelCtrl1}" />
                 </StackPanel>
                 <TextBlock x:Name="StatusText" FontSize="12" Foreground="{DynamicResource TextTertiary}" VerticalAlignment="Center"
                            TextTrimming="CharacterEllipsis" />
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            </DockPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="12,0,0,0">
                 <TextBlock x:Name="Note" FontSize="12" Foreground="{DynamicResource TextTertiary}" VerticalAlignment="Center" Margin="0,0,10,0"
-                           Text="Saved as a copy beside the original" />
-                <Button x:Name="CancelButton" Style="{StaticResource SubtleButton}" Content="Cancel" />
-                <Button x:Name="SaveButton" Style="{StaticResource PrimaryButton}" Content="Save" ToolTip="Save a copy (Ctrl+S)" />
+                           Text="{x:Static local:Strings.SavedAsACopyBesideTheOriginal}" />
+                <Button x:Name="CancelButton" Style="{StaticResource SubtleButton}" Content="{x:Static local:Strings.Cancel}" />
+                <Button x:Name="SaveButton" Style="{StaticResource PrimaryButton}" Content="{x:Static local:Strings.Save}" ToolTip="{x:Static local:Strings.SaveACopyCtrlS}" />
             </StackPanel>
         </Grid>
 
@@ -106,12 +112,12 @@
             <Border Width="360" Padding="20,18,16,16" CornerRadius="8" Background="{DynamicResource Surface}"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
                 <StackPanel>
-                    <TextBlock Text="Discard your changes?" FontWeight="SemiBold" FontSize="14" />
-                    <TextBlock Text="Nothing has been saved. The original stays as it is either way." Margin="0,6,0,18" FontSize="12.5"
+                    <TextBlock Text="{x:Static local:Strings.DiscardYourChanges}" FontWeight="SemiBold" FontSize="14" />
+                    <TextBlock Text="{x:Static local:Strings.NothingHasBeenSavedTheOriginalStays}" Margin="0,6,0,18" FontSize="12.5"
                                TextWrapping="Wrap" Foreground="{DynamicResource TextSecondary}" />
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button x:Name="KeepButton" Style="{StaticResource SubtleButton}" Content="Keep editing" />
-                        <Button x:Name="DiscardButton" Style="{StaticResource PrimaryButton}" Content="Discard" />
+                        <Button x:Name="KeepButton" Style="{StaticResource SubtleButton}" Content="{x:Static local:Strings.KeepEditing}" />
+                        <Button x:Name="DiscardButton" Style="{StaticResource PrimaryButton}" Content="{x:Static local:Strings.Discard}" />
                     </StackPanel>
                 </StackPanel>
             </Border>

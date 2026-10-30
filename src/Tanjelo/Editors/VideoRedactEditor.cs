@@ -57,19 +57,19 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
         CanvasPart.Tool = this;
         CanvasPart.ViewChanged += DrawFrames;
 
-        _faces = Panels.Button("", "Find faces", "Add a box over each face on the frame showing, found on this PC", () => _ = FindFacesAsync());
-        _follow = Panels.Button("", "Follow face", "Move the selected box with the face in it through its stretch, found again on this PC. Select a box with a face in it where it starts.", () => _ = FollowAsync());
+        _faces = Panels.Button("", Strings.FindFaces, Strings.AddABoxOverEachFaceOn, () => _ = FindFacesAsync());
+        _follow = Panels.Button("", Strings.FollowFace, Strings.MoveTheSelectedBoxWithTheFace, () => _ = FollowAsync());
         _faces.IsEnabled = Redaction.CanFindFaces;
         _follow.IsEnabled = false;
         ToolTipService.SetShowOnDisabled(_follow, true);
-        if (!_faces.IsEnabled) _faces.ToolTip = "Windows can't look for faces on this PC";
+        if (!_faces.IsEnabled) _faces.ToolTip = Strings.WindowsCanTLookForFacesOn;
         var find = new WrapPanel();
         find.Children.Add(_faces);
         find.Children.Add(_follow);
-        _panel.Children.Add(Panels.Heading("Find"));
+        _panel.Children.Add(Panels.Heading(Strings.Find));
         _panel.Children.Add(find);
         _panel.Children.Add(_found);
-        _panel.Children.Add(Panels.Heading("Hide with", 20));
+        _panel.Children.Add(Panels.Heading(Strings.HideWith, 20));
         var (chips, showStyle) = Panels.Chips(Redaction.Styles, "solid", style => Commit(State with { Style = style }));
         _showStyle = showStyle;
         _panel.Children.Add(chips);
@@ -81,12 +81,21 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
         _colourRow.Margin = new Thickness(0, 12, 0, 0);
         _colourRow.Children.Add(swatches);
         _panel.Children.Add(_colourRow);
-        _panel.Children.Add(Panels.Heading("Areas", 20));
-        _panel.Children.Add(Panels.Hint("Drag on the picture to draw a box, hidden from this frame to the end. Each box has a bar under the timeline: drag its ends to set when it starts and stops.", 0));
+        _panel.Children.Add(Panels.Heading(Strings.Areas, 20));
+        _panel.Children.Add(Panels.Hint(Strings.DragOnThePictureToDrawA2, 0));
         _panel.Children.Add(_count);
-        _panel.Children.Add(Panels.Heading("Keys", 20));
-        _panel.Children.Add(Panels.Keys([("I, O", "Start the selected box here, or end it after this frame"), ("Delete", "Remove the selected box"), ("Tab", "Select the next box"), .. TimelineKeys()]));
-        _panel.Children.Add(Panels.Hint("The copy is re-encoded, and loses its location, cover pictures, subtitles and data tracks such as GPS logs.", 14));
+        _panel.Children.Add(Panels.Heading(Strings.Keys, 20));
+        _panel.Children.Add(Panels.Keys(
+        [
+            (Strings.InsertN, Strings.AddABoxInTheMiddleFrom),
+            (Strings.IO, Strings.StartTheSelectedBoxHereOrEnd),
+            (Strings.Tab, Strings.SelectTheNextBox),
+            (Strings.AltArrows, Strings.MoveItAPixelWithShift10),
+            (Strings.CtrlArrows, Strings.MakeItBiggerOrSmaller),
+            (Strings.Delete, Strings.RemoveTheSelectedBox),
+            .. TimelineKeys(),
+        ]));
+        _panel.Children.Add(Panels.Hint(Strings.TheCopyIsReEncodedAndLoses, 14));
     }
 
     ZoomCanvas CanvasPart => Canvas!;
@@ -106,11 +115,11 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
     /// <summary>With no boxes there's nothing to save, whatever the style.</summary>
     public override bool Changed => base.Changed && State.Boxes.Count > 0;
 
-    protected override string EditorStatus => !Started ? "" : Describe.Count(State.Boxes.Count, "area") + (_selected is not null ? " · one selected" : "");
+    protected override string EditorStatus => !Started ? "" : Describe.Count(State.Boxes.Count, Tanjelo.Core.Strings.OneArea, Tanjelo.Core.Strings.NAreas) + Panels.Which(_selected, State.Boxes.Count);
 
     public override Target Result()
     {
-        if (State.Boxes.Count == 0) throw new ConversionException("Draw a box over something to hide first, or find faces.");
+        if (State.Boxes.Count == 0) throw new ConversionException(Strings.DrawABoxOverSomethingToHide2);
         return Entry.WithParameters(new Dictionary<string, string>
         {
             ["spec"] = VideoBoxSpec.Write(State.Boxes),
@@ -125,7 +134,7 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
         _showStyle(state.Style);
         _showColour(state.Colour);
         _colourRow.Visibility = state.Style == "solid" ? Visibility.Visible : Visibility.Collapsed;
-        _count.Text = state.Boxes.Count == 0 ? "No areas yet." : Describe.Count(state.Boxes.Count, "area") + " to hide.";
+        _count.Text = state.Boxes.Count == 0 ? Strings.NoAreasYet : Describe.Count(state.Boxes.Count, Tanjelo.Core.Strings.OneArea, Tanjelo.Core.Strings.NAreas) + Strings.ToHide;
         ShowFollow();
         Timeline.Rows = Math.Max(1, state.Boxes.Count);
         DrawCovers();
@@ -445,8 +454,19 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
                 Select(null);
                 return true;
             case Key.Tab when State.Boxes.Count > 0:
+                // Past the last box (or the first) none is selected and Tab moves on to the next control.
                 var by = modifiers.HasFlag(ModifierKeys.Shift) ? -1 : 1;
-                Select(((_selected ?? (by > 0 ? -1 : 0)) + by + State.Boxes.Count) % State.Boxes.Count);
+                var next = _selected is { } current ? current + by : by > 0 ? 0 : State.Boxes.Count - 1;
+                Select(next >= 0 && next < State.Boxes.Count ? next : null);
+                return _selected is not null;
+            case Key.Insert or Key.N when (modifiers & ~ModifierKeys.Shift) == ModifierKeys.None:
+                AddBox();
+                return true;
+            case Key.Left or Key.Right or Key.Up or Key.Down when _selected is { } s && (modifiers.HasFlag(ModifierKeys.Alt) || modifiers.HasFlag(ModifierKeys.Control)):
+                // Plain arrows step through the frames, so a box moves with Alt and the arrows and is sized with Ctrl.
+                var step = modifiers.HasFlag(ModifierKeys.Shift) ? 10 : 1;
+                var (dx, dy) = key switch { Key.Left => (-step, 0), Key.Right => (step, 0), Key.Up => (0, -step), _ => (0, step) };
+                Reshape(s, dx, dy, resize: modifiers.HasFlag(ModifierKeys.Control), repeat);
                 return true;
             case Key.I when _selected is { } s && modifiers == ModifierKeys.None:
                 var box = State.Boxes[s];
@@ -462,6 +482,29 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
         }
     }
 
+    /// <summary>A box in the middle of the frame, a quarter of its size, from the playhead to the end, for the keyboard (Insert or N).</summary>
+    internal void AddBox()
+    {
+        var (width, height) = (Media.Width, Media.Height);
+        Commit(State with { Boxes = State.Boxes.Add(new VideoBox(width * 3 / 8, height * 3 / 8, Math.Max(1, width / 4), Math.Max(1, height / 4), Playhead)) });
+        Select(State.Boxes.Count - 1);
+    }
+
+    /// <summary>Moves a box, or sizes it from its top-left corner, keeping it on the picture; a box that followed a face stops following.</summary>
+    internal void Reshape(int index, int dx, int dy, bool resize, bool repeat = false)
+    {
+        var box = State.Boxes[index];
+        var at = box.At(Playhead);
+        var (width, height) = (Media.Width, Media.Height);
+        var changed = resize
+            ? box with { X = at.X, Y = at.Y, Width = Math.Clamp(at.Width + dx, 1, Math.Max(1, width - at.X)), Height = Math.Clamp(at.Height + dy, 1, Math.Max(1, height - at.Y)), Track = null }
+            : box with { X = Math.Clamp(at.X + dx, 0, Math.Max(0, width - at.Width)), Y = Math.Clamp(at.Y + dy, 0, Math.Max(0, height - at.Height)), Width = at.Width, Height = at.Height, Track = null };
+        if (changed == box) return;
+        var next = State with { Boxes = State.Boxes.SetItem(index, changed) };
+        if (repeat) Amend(next);
+        else Commit(next);
+    }
+
     // ---- Finding and following faces
 
     internal async Task FindFacesAsync()
@@ -470,14 +513,14 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
         Pause();
         _busy = true;
         _faces.IsEnabled = _follow.IsEnabled = false;
-        _found.Text = "Looking for faces…";
+        _found.Text = Strings.LookingForFaces;
         try
         {
             var at = Frame;
             var png = await Media.FrameAsync(frames, at, 0, _closing.Token);
             using var picture = new MagickImage(png);
             var found = await Task.Run(() => Redaction.FindFacesAsync(picture));
-            _found.Text = found.Count == 0 ? "No faces on this frame." : $"{Describe.Count(found.Count, "face")} found, hidden from this frame to the end. Select one and press Follow face to have its box move with it.";
+            _found.Text = found.Count == 0 ? Strings.NoFacesOnThisFrame : string.Format(Strings.FoundHiddenFromThisFrameToThe, Describe.Count(found.Count, Tanjelo.Core.Strings.OneFace, Tanjelo.Core.Strings.NFaces));
             if (found.Count > 0)
             {
                 Commit(State with { Boxes = State.Boxes.AddRange(found.Select(f => new VideoBox(f.X, f.Y, f.Width, f.Height, frames.Start(at)))) });
@@ -578,15 +621,15 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
         _busy = true;
         _faces.IsEnabled = _follow.IsEnabled = false;
         var box = State.Boxes[index];
-        _found.Text = "Following the face…";
+        _found.Text = Strings.FollowingTheFace;
         try
         {
-            var progress = new Progress<double>(f => _found.Text = $"Following the face… {f:0%}");
+            var progress = new Progress<double>(f => _found.Text = string.Format(Strings.FollowingTheFace2, f));
             var start = box.At(box.From);
             var track = await Task.Run(() => FaceFollow.TrackAsync(_tools, File, start, box.From, End(box), progress, _closing.Token));
             if (track.Count < 2)
             {
-                _found.Text = "No face to follow in this box. Draw it around a face, or use Find faces.";
+                _found.Text = Strings.NoFaceToFollowInThisBox;
                 return;
             }
             // Where the face was lost, the box stops, a frame after it was last seen.
@@ -597,8 +640,8 @@ sealed class VideoRedactEditor : TimelineEditor<VideoRedactState>, ICanvasTool
             var bounds = followed;
             Commit(State with { Boxes = State.Boxes.SetItem(index, bounds) });
             _found.Text = lost
-                ? $"Followed to {Timecode.Format(stop)}, where the face is lost; the box stops there. Drag the end of its bar to go on."
-                : "Followed through its whole stretch.";
+                ? string.Format(Strings.FollowedToWhereTheFaceIsLost, Timecode.Format(stop))
+                : Strings.FollowedThroughItsWholeStretch;
         }
         catch (Exception ex) when (ex is ConversionException or InvalidOperationException or System.Runtime.InteropServices.COMException)
         {

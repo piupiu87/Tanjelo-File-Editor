@@ -53,7 +53,7 @@ static class ShareSheet
             manager.DataRequested += (_, e) =>
             {
                 var data = e.Request.Data;
-                data.Properties.Title = files.Count == 1 ? Path.GetFileName(files[0]) : $"{files.Count} files";
+                data.Properties.Title = files.Count == 1 ? Path.GetFileName(files[0]) : string.Format(Strings.Files2, files.Count);
                 data.SetStorageItems(items, readOnly: true);
                 requested.TrySetResult();
             };
@@ -61,7 +61,7 @@ static class ShareSheet
             DataTransferManagerInterop.ShowShareUIForWindow(hwnd);
             // A sheet that opens asks for the files at once; one that doesn't is ignored without an error.
             if (await Task.WhenAny(requested.Task, Task.Delay(TimeSpan.FromSeconds(3))) != requested.Task)
-                problem = "Windows didn't ask for the files";
+                problem = Strings.WindowsDidnTAskForTheFiles;
         }
         catch (Exception ex) when (ex is COMException or InvalidOperationException or UnauthorizedAccessException or ArgumentException)
         {
@@ -72,7 +72,7 @@ static class ShareSheet
         {
             Log.Write($"share sheet: {problem}");
             anchor.Close();
-            throw new Core.ConversionException("Windows didn't open the Share sheet. Try Share on the files' menu in File Explorer.");
+            throw new Core.ConversionException(Strings.WindowsDidnTOpenTheShareSheet);
         }
         await done.Task;
     }

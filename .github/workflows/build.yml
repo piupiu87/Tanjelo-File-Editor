@@ -10,12 +10,24 @@ on:
 permissions:
   contents: read
 
+env:
+  # Velopack's packager; the same version as the Velopack package in src/Tanjelo/Tanjelo.csproj.
+  VPK_VERSION: 1.2.161
+
 jobs:
   build:
     runs-on: windows-latest
+    # Long enough to wait for a signing request's approval.
+    timeout-minutes: 360
+    env:
+      # The switch for signing: on for a tagged release once the SignPath secrets are added (see .signpath/README.md).
+      SIGN: ${{ github.ref_type == 'tag' && secrets.SIGNPATH_API_TOKEN != '' }}
     defaults:
       run:
         shell: pwsh
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      signed: ${{ steps.version.outputs.signed }}
     steps:
       - uses: actions/checkout@v7
 
@@ -39,14 +51,22 @@ jobs:
           dotnet test --project tests/Tanjelo.Core.Tests -c Release
           if ($LASTEXITCODE -ne 0) { throw "tests failed" }
 
+      - name: Version
+        id: version
+        run: |
+          # A tag like v1.2.3 sets the version; other builds take the one in Directory.Build.props, marked as a CI build.
+          if ('${{ github.ref_type }}' -eq 'tag') { $version = '${{ github.ref_name }}'.TrimStart('v') }
+          else { $version = ([xml](Get-Content Directory.Build.props)).Project.PropertyGroup.Version + '-ci.${{ github.run_number }}' }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "signed=$env:SIGN" >> $env:GITHUB_OUTPUT
+
       - name: Publish
         run: |
-          # A tag like v1.2.3 sets the version; other builds keep the one in Directory.Build.props.
-          $extra = @()
-          if ('${{ github.ref_type }}' -eq 'tag') { $extra += "-p:Version=$('${{ github.ref_name }}'.TrimStart('v'))" }
-          dotnet publish src/Tanjelo -c Release @extra
+          # Both are published with the .NET runtime inside, into one folder that the zip and the installer are made from.
+          $version = '${{ steps.version.outputs.version }}'
+          dotnet publish src/Tanjelo -c Release "-p:Version=$version"
           if ($LASTEXITCODE -ne 0) { throw "publishing the app failed" }
-          dotnet publish src/tanj -c Release @extra
+          dotnet publish src/tanj -c Release "-p:Version=$version"
           if ($LASTEXITCODE -ne 0) { throw "publishing tanj failed" }
 
           $out = "artifacts/Tanjelo"
@@ -54,9 +74,52 @@ jobs:
           Copy-Item src/Tanjelo/bin/Release/net10.0-windows10.0.19041.0/win-x64/publish/* $out -Recurse -Force
           Copy-Item src/tanj/bin/Release/net10.0-windows10.0.19041.0/win-x64/publish/* $out -Recurse -Force
 
+      - name: Windows 11 menu entry
+        env:
+          CERTIFICATE_SUBJECT: ${{ vars.SIGNPATH_CERTIFICATE_SUBJECT }}
+        run: |
+          # TanjeloMenu.dll, published natively (NativeAOT, with the runner's C++ tools), and its sparse package. The entry
+          # ships only signed: a signed release puts both beside the app, and other builds hand them to the windows11-menu
+          # job, which tries them unsigned.
+          $version = '${{ steps.version.outputs.version }}'
+          dotnet publish src/Tanjelo.ShellMenu -c Release "-p:Version=$version"
+          if ($LASTEXITCODE -ne 0) { throw "publishing the menu entry failed" }
+          $makeappx = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Recurse -Filter makeappx.exe |
+            Where-Object { $_.Directory.Name -eq 'x64' } | Sort-Object FullName -Descending | Select-Object -First 1
+          if (-not $makeappx) { throw "makeappx.exe isn't on this runner" }
+          New-Item -ItemType Directory -Force artifacts/menu-package, artifacts/menu | Out-Null
+          Copy-Item src/Tanjelo.ShellMenu/Package/* artifacts/menu-package -Recurse
+          # A package's version is four numbers; its publisher must match the certificate that signs it.
+          $manifest = (Get-Content artifacts/menu-package/AppxManifest.xml -Raw) -creplace 'Version="1\.0\.0\.0"', "Version=""$(($version -split '-')[0]).0"""
+          if ($env:SIGN -eq 'true') {
+            if (-not $env:CERTIFICATE_SUBJECT) { throw "set the SIGNPATH_CERTIFICATE_SUBJECT variable to the signing certificate's subject" }
+            $manifest = $manifest -creplace 'Publisher="CN=Tanjelo Test[^"]*"', "Publisher=""$env:CERTIFICATE_SUBJECT"""
+          }
+          Set-Content artifacts/menu-package/AppxManifest.xml $manifest -NoNewline
+          & $makeappx.FullName pack /d artifacts/menu-package /p artifacts/menu/Tanjelo.ShellMenu.msix /nv /o
+          if ($LASTEXITCODE -ne 0) { throw "makeappx failed" }
+          Copy-Item src/Tanjelo.ShellMenu/bin/Release/net10.0-windows/win-x64/publish/TanjeloMenu.dll artifacts/menu
+          if ($env:SIGN -eq 'true') { Copy-Item artifacts/menu/* artifacts/Tanjelo }
+
+      - uses: actions/upload-artifact@v7
+        if: env.SIGN != 'true'
+        with:
+          name: Tanjelo-menu-unsigned
+          path: artifacts/menu
+
       - name: Smoke test
         working-directory: artifacts
         run: |
+          # The runtime is inside: nothing to install first.
+          foreach ($file in 'hostfxr.dll', 'coreclr.dll', 'PresentationFramework.dll', 'Velopack.dll') {
+            if (-not (Test-Path "Tanjelo/$file")) { throw "missing Tanjelo/${file}: the folder doesn't carry its own .NET" }
+          }
+          foreach ($app in 'Tanjelo', 'tanj') {
+            $config = Get-Content "Tanjelo/$app.runtimeconfig.json" | ConvertFrom-Json
+            if (-not $config.runtimeOptions.includedFrameworks) { throw "$app isn't self-contained" }
+          }
+          # Every component shipped is open source: PDFsharp's Windows Phone font subset stays out (Directory.Build.targets).
+          if (Test-Path Tanjelo/PdfSharp.WPFonts.dll) { throw "PdfSharp.WPFonts.dll was published" }
           # Exercises the published binaries: ImageMagick's native DLL, the Windows PDF renderer, Markdig, the PPTX
           # writer, and zip creation.
           $tanj = "./Tanjelo/tanj.exe"
@@ -73,31 +136,281 @@ jobs:
           }
           foreach ($file in 'Tanjelo/LICENSE.txt', 'Tanjelo/THIRD-PARTY-NOTICES.md', 'Tanjelo/licenses/ImageMagick-NOTICE.txt',
                    'Tanjelo/licenses/PdfPig-LICENSE.txt', 'Tanjelo/licenses/PdfPig-NOTICE.txt', 'Tanjelo/licenses/Markdig-LICENSE.txt',
-                   'Tanjelo/licenses/WebView2-LICENSE.txt') {
+                   'Tanjelo/licenses/WebView2-LICENSE.txt', 'Tanjelo/licenses/YuNet-LICENSE.txt', 'Tanjelo/licenses/Velopack-LICENSE.txt',
+                   'Tanjelo/licenses/dotnet-LICENSE.txt', 'Tanjelo/licenses/dotnet-runtime-THIRD-PARTY-NOTICES.txt') {
             if (-not (Test-Path $file)) { throw "missing $file" }
           }
+
+      # ---- Signing through SignPath Foundation: only for tagged releases, and only once the SignPath secrets exist, so
+      # the workflow runs the same without them. Each signing request waits for its approval on SignPath, by hand.
+
+      - name: Gather the app's own files to sign
+        if: env.SIGN == 'true'
+        run: |
+          New-Item -ItemType Directory -Force artifacts/to-sign | Out-Null
+          foreach ($file in 'Tanjelo.exe', 'Tanjelo.dll', 'tanj.exe', 'tanj.dll', 'Tanjelo.Core.dll', 'TanjeloMenu.dll', 'Tanjelo.ShellMenu.msix') {
+            Copy-Item "artifacts/Tanjelo/$file" artifacts/to-sign
+          }
+
+      - name: Upload them for signing
+        id: upload-unsigned-app
+        if: env.SIGN == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: unsigned-app
+          path: artifacts/to-sign
+
+      - name: Sign the app
+        if: env.SIGN == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+          organization-id: '${{ secrets.SIGNPATH_ORGANIZATION_ID }}'
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'Tanjelo-File-Editor' }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG || 'release-signing' }}
+          artifact-configuration-slug: 'app'
+          github-artifact-id: '${{ steps.upload-unsigned-app.outputs.artifact-id }}'
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 18000
+          output-artifact-directory: 'artifacts/signed-app'
+
+      - name: Put the signed files in place
+        if: env.SIGN == 'true'
+        run: |
+          foreach ($file in Get-ChildItem artifacts/signed-app -File) {
+            Copy-Item $file.FullName artifacts/Tanjelo -Force
+            $signature = Get-AuthenticodeSignature "artifacts/Tanjelo/$($file.Name)"
+            if ($signature.Status -ne 'Valid') { throw "$($file.Name) isn't signed: $($signature.StatusMessage)" }
+          }
+
+      - name: Package
+        run: |
+          # The zip for portable use, and Tanjelo-<version>-Setup.exe: a per-user install with a Start menu entry and an
+          # uninstaller, made by Velopack from the same folder.
+          $version = '${{ steps.version.outputs.version }}'
+          New-Item -ItemType Directory -Force artifacts/release | Out-Null
+          Compress-Archive -Path artifacts/Tanjelo/* -DestinationPath "artifacts/release/Tanjelo-$version-win-x64.zip"
+          dotnet tool install --global vpk --version $env:VPK_VERSION
+          if ($LASTEXITCODE -ne 0) { throw "installing vpk failed" }
+          vpk pack --packId Tanjelo --packVersion $version --packDir artifacts/Tanjelo --mainExe Tanjelo.exe `
+            --packTitle Tanjelo --packAuthors piupiu87 --icon src/Tanjelo/Assets/app.ico --shortcuts StartMenuRoot `
+            --noPortable --outputDir artifacts/velopack
+          if ($LASTEXITCODE -ne 0) { throw "vpk pack failed" }
+          $setup = Get-ChildItem artifacts/velopack -Filter *-Setup.exe | Select-Object -First 1
+          if (-not $setup) { throw "vpk made no installer" }
+          Move-Item $setup.FullName "artifacts/release/Tanjelo-$version-Setup.exe"
+
+      - name: Upload the installer for signing
+        id: upload-unsigned-installer
+        if: env.SIGN == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: unsigned-installer
+          path: artifacts/release/*-Setup.exe
+
+      - name: Sign the installer
+        if: env.SIGN == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+          organization-id: '${{ secrets.SIGNPATH_ORGANIZATION_ID }}'
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'Tanjelo-File-Editor' }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG || 'release-signing' }}
+          artifact-configuration-slug: 'installer'
+          github-artifact-id: '${{ steps.upload-unsigned-installer.outputs.artifact-id }}'
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 18000
+          output-artifact-directory: 'artifacts/signed-installer'
+
+      - name: Put the signed installer in place
+        if: env.SIGN == 'true'
+        run: |
+          $setup = Get-ChildItem artifacts/signed-installer -Filter *-Setup.exe | Select-Object -First 1
+          if (-not $setup) { throw "SignPath sent back no installer" }
+          Copy-Item $setup.FullName artifacts/release -Force
+          $signature = Get-AuthenticodeSignature "artifacts/release/$($setup.Name)"
+          if ($signature.Status -ne 'Valid') { throw "the installer isn't signed: $($signature.StatusMessage)" }
+
+      - name: winget manifests
+        run: |
+          # winget/ holds the manifests with a placeholder; this release's get its version, installer and SHA-256.
+          $version = '${{ steps.version.outputs.version }}'
+          $hash = (Get-FileHash "artifacts/release/Tanjelo-$version-Setup.exe" -Algorithm SHA256).Hash
+          $out = "artifacts/winget/manifests/t/Tanjelo/Tanjelo/$version"
+          New-Item -ItemType Directory -Force $out | Out-Null
+          foreach ($file in Get-ChildItem winget -Filter *.yaml) {
+            $text = (Get-Content $file.FullName -Raw) `
+              -replace 'PackageVersion: .*', "PackageVersion: $version" `
+              -replace 'download/v[^/]+/Tanjelo-[^/]+-Setup\.exe', "download/v$version/Tanjelo-$version-Setup.exe" `
+              -replace 'InstallerSha256: .*', "InstallerSha256: $hash" `
+              -replace 'releases/tag/v.*', "releases/tag/v$version"
+            Set-Content (Join-Path $out $file.Name) $text -NoNewline
+          }
+          if (Get-Command winget -ErrorAction SilentlyContinue) {
+            winget validate --manifest $out
+            if ($LASTEXITCODE -ne 0) { throw "winget validate failed" }
+          } else {
+            Write-Warning "winget isn't on this runner, so the manifests weren't validated here"
+          }
+          Compress-Archive -Path artifacts/winget/manifests -DestinationPath artifacts/release/winget-manifests.zip
 
       - uses: actions/upload-artifact@v7
         with:
           name: Tanjelo-win-x64
           path: artifacts/Tanjelo
 
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Tanjelo-release
+          path: artifacts/release
+
+  installer:
+    # Installs the way a user would, on a runner whose own .NET is hidden away, uses it, and uninstalls it, checking
+    # nothing is left behind.
+    needs: build
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: Tanjelo-release
+          path: release
+
+      - name: Hide the runner's .NET
+        run: |
+          # PowerShell 7 brings its own runtime, so these steps still run; Tanjelo has only the one it carries.
+          Rename-Item "$env:ProgramFiles\dotnet" dotnet-hidden
+          if (Get-Command dotnet -ErrorAction SilentlyContinue) { throw "dotnet is still on the PATH" }
+
+      - name: Install silently
+        run: |
+          $setup = Get-ChildItem release -Filter *-Setup.exe | Select-Object -First 1
+          # Waits for the installer alone: -Wait would wait for the Tanjelo it starts, too.
+          $run = Start-Process $setup.FullName -ArgumentList '--silent' -PassThru
+          $null = $run.Handle
+          if (-not $run.WaitForExit(300000)) { throw "the installer took more than 5 minutes" }
+          if ($run.ExitCode -ne 0) { throw "the installer failed with exit code $($run.ExitCode)" }
+          $root = "$env:LOCALAPPDATA\Tanjelo"
+          foreach ($file in "$root\current\Tanjelo.exe", "$root\current\tanj.exe", "$root\Update.exe") {
+            if (-not (Test-Path $file)) { throw "missing $file" }
+          }
+          if (-not (Test-Path "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Tanjelo.lnk")) { throw "no Start menu entry" }
+          $entry = Get-ItemProperty HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Tanjelo -ErrorAction Stop
+          if (-not $entry.UninstallString) { throw "no uninstaller in Apps & features" }
+          Write-Host "Apps & features: $($entry.DisplayName) $($entry.DisplayVersion) by $($entry.Publisher)"
+          if ([Environment]::GetEnvironmentVariable('PATH', 'User') -notlike "*$root\current*") { throw "tanj isn't on the user's PATH" }
+
+      - name: Smoke test the installed copy
+        run: |
+          # The PATH a terminal opened after installing would have.
+          $env:PATH = [Environment]::GetEnvironmentVariable('PATH', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH', 'User')
+          tanj tools
+          if ($LASTEXITCODE -ne 0) { throw "tanj tools failed" }
+          Add-Type -AssemblyName System.Drawing
+          $bitmap = [System.Drawing.Bitmap]::new(64, 48)
+          [System.Drawing.Graphics]::FromImage($bitmap).Clear([System.Drawing.Color]::Orange)
+          $bitmap.Save("$PWD/smoke.png")
+          $bitmap.Dispose()
+          foreach ($step in @(@('jpg', 'smoke.png'), @('pdf', 'smoke.png'), @('png', 'smoke.pdf'))) {
+            tanj convert $step[0] $step[1]
+            if ($LASTEXITCODE -ne 0) { throw "tanj convert $($step -join ' ') failed" }
+          }
+          # The app itself starts too, with only the .NET it carries: still running a few seconds later. (If the installer
+          # already started it, this one says so and waits, which counts as well.)
+          $app = Start-Process "$env:LOCALAPPDATA\Tanjelo\current\Tanjelo.exe" -PassThru
+          Start-Sleep 8
+          if ($app.HasExited) { throw "Tanjelo.exe exited with code $($app.ExitCode)" }
+
+      - name: Uninstall
+        run: |
+          # The installer starts the app when it's done; the uninstaller is run as Apps & features would run it.
+          Get-Process Tanjelo -ErrorAction SilentlyContinue | Stop-Process -Force
+          $root = "$env:LOCALAPPDATA\Tanjelo"
+          $run = Start-Process "$root\Update.exe" -ArgumentList '--silent', 'uninstall' -PassThru
+          $null = $run.Handle
+          if (-not $run.WaitForExit(300000)) { throw "the uninstaller took more than 5 minutes" }
+          if ($run.ExitCode -ne 0) { throw "the uninstaller failed with exit code $($run.ExitCode)" }
+          # Update.exe removes itself just after it exits.
+          for ($i = 0; $i -lt 60 -and (Test-Path $root); $i++) { Start-Sleep 1 }
+          $left = @()
+          if (Test-Path $root) { $left += "${root}: $((Get-ChildItem $root -Recurse -Name) -join ', ')" }
+          if (Test-Path "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Tanjelo.lnk") { $left += 'the Start menu entry' }
+          if (Test-Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Tanjelo) { $left += 'the Apps & features entry' }
+          if ([Environment]::GetEnvironmentVariable('PATH', 'User') -like "*$root*") { $left += 'the PATH entry' }
+          if ((Get-ItemProperty HKCU:\Software\Microsoft\Windows\CurrentVersion\Run -ErrorAction SilentlyContinue).Tanjelo) { $left += 'Start with Windows' }
+          if (Test-Path "$env:APPDATA\Microsoft\Windows\SendTo\Tanjelo.lnk") { $left += 'the Send to entry' }
+          if ($left) { throw "left behind: $($left -join '; ')" }
+
+  windows11-menu:
+    # The Windows 11 menu entry, unsigned, as Windows allows only for testing: in developer mode on the administrator
+    # runner, its package is registered with the published app as its external location, and the entry is created and
+    # invoked as Explorer would, then the package is removed. Signed releases carry the entry; they skip this.
+    needs: build
+    if: needs.build.outputs.signed != 'true'
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: Tanjelo-win-x64
+          path: app
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: Tanjelo-menu-unsigned
+          path: app
+
+      - name: Register the entry unsigned
+        run: |
+          $unlock = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock'
+          New-Item -Force $unlock | Out-Null
+          Set-ItemProperty $unlock AllowDevelopmentWithoutDevLicense 1 -Type DWord
+          Add-AppxPackage -Path app/Tanjelo.ShellMenu.msix -ExternalLocation (Resolve-Path app).Path -AllowUnsigned
+          $package = Get-AppxPackage Tanjelo.Menu
+          if (-not $package) { throw "the package isn't registered" }
+          Write-Host "$($package.PackageFullName), from $($package.InstallLocation)"
+
+      - name: Create and invoke the entry
+        env:
+          TANJELO_MENU_REGISTERED: '1'
+        run: |
+          dotnet build tests/Tanjelo.Core.Tests -c Release
+          if ($LASTEXITCODE -ne 0) { throw "building the tests failed" }
+          tests/Tanjelo.Core.Tests/bin/Release/net10.0-windows10.0.19041.0/Tanjelo.Core.Tests.exe -class Tanjelo.Core.Tests.Windows11MenuTests
+          if ($LASTEXITCODE -ne 0) { throw "the menu entry didn't work" }
+
+      - name: Remove the entry
+        run: |
+          Get-AppxPackage Tanjelo.Menu | Remove-AppxPackage
+          if (Get-AppxPackage Tanjelo.Menu) { throw "the package is still registered" }
+
   release:
     if: github.ref_type == 'tag'
-    needs: build
+    needs: [build, installer]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/download-artifact@v8
         with:
-          name: Tanjelo-win-x64
-          path: Tanjelo
+          name: Tanjelo-release
+          path: release
 
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          zip_name="Tanjelo-${GITHUB_REF_NAME#v}-win-x64.zip"
-          (cd Tanjelo && zip -r "../$zip_name" .)
-          gh release create "$GITHUB_REF_NAME" "$zip_name" --repo "$GITHUB_REPOSITORY" --title "Tanjelo $GITHUB_REF_NAME" --generate-notes
+          notes="Install with **Tanjelo-${GITHUB_REF_NAME#v}-Setup.exe** (per user, no administrator needed, with a Start menu entry and an uninstaller), or unzip the zip anywhere and run Tanjelo.exe. The .NET runtime is inside both. winget-manifests.zip is for microsoft/winget-pkgs.
+
+          See the [Code signing policy](https://github.com/${GITHUB_REPOSITORY}#code-signing-policy) and the [Privacy](https://github.com/${GITHUB_REPOSITORY}#privacy) statement."
+          gh release create "$GITHUB_REF_NAME" release/* --repo "$GITHUB_REPOSITORY" --title "Tanjelo $GITHUB_REF_NAME" --notes "$notes" --generate-notes

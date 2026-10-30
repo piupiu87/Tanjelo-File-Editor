@@ -14,20 +14,20 @@ namespace Tanjelo.Core.Converters;
 /// </summary>
 public sealed class PandocConverter(Toolbox tools) : IConverter
 {
-    public const string NoPandoc = "Word and EPUB conversions need pandoc: winget install JohnMacFarlane.Pandoc";
+    public static string NoPandoc => Strings.WordAndEPUBConversionsNeedPandocWinget;
 
     static readonly TimeSpan Timeout = TimeSpan.FromMinutes(5);
 
     static Target T(string key, string label, string description) => new(key, label, description, Section.Document);
 
-    static readonly Target Docx = T("docx", "DOCX", "Word document, via pandoc");
-    static readonly Target Epub = T("epub", "EPUB", "E-book, via pandoc");
-    static readonly Target Markdown = T("md", "Markdown", "Pictures in a folder beside it");
-    static readonly Target Txt = T("txt", "TXT", "The text, via pandoc");
-    static readonly Target Html = T("html", "HTML", "One web page, pictures included");
-    static readonly Target Pdf = T("pdf", "PDF", "Printed offline by Windows' WebView2");
-    static readonly Target PdfEpub = T("epub", "EPUB", "E-book of the text and headings only");
-    static readonly Target PageMarkdown = T("md", "Markdown", "The page as Markdown, via pandoc");
+    static readonly Target Docx = T("docx", Strings.DOCX, Strings.WordDocumentViaPandoc);
+    static readonly Target Epub = T("epub", Strings.EPUB, Strings.EBookViaPandoc);
+    static readonly Target Markdown = T("md", Strings.Markdown, Strings.PicturesInAFolderBesideIt);
+    static readonly Target Txt = T("txt", Strings.TXT, Strings.TheTextViaPandoc);
+    static readonly Target Html = T("html", Strings.HTML, Strings.OneWebPagePicturesIncluded);
+    static readonly Target Pdf = T("pdf", Strings.PDF, Strings.PrintedOfflineByWindowsWebView2);
+    static readonly Target PdfEpub = T("epub", Strings.EPUB, Strings.EBookOfTheTextAndHeadings);
+    static readonly Target PageMarkdown = T("md", Strings.Markdown, Strings.ThePageAsMarkdownViaPandoc);
 
     // Plain Markdown pictures: no sizes, no figure wrappers, and no chapter divs or anchor spans from EPUBs.
     const string PlainMarkdownFilter = """
@@ -120,7 +120,7 @@ public sealed class PandocConverter(Toolbox tools) : IConverter
                 await File.WriteAllTextAsync(markdown, text.ToMarkdown(pageBreaks: false), new UTF8Encoding(false), ctx.Cancellation);
                 return new Source(markdown, "commonmark_x", text.FirstHeading ?? name);
             default:
-                throw new ConversionException("pandoc can't read this file.");
+                throw new ConversionException(Strings.PandocCanTReadThisFile);
         }
     }
 
@@ -236,12 +236,12 @@ public sealed class PandocConverter(Toolbox tools) : IConverter
         }
         catch (OperationCanceledException) when (!ctx.Cancellation.IsCancellationRequested)
         {
-            throw new ConversionException("pandoc took more than 5 minutes, so it was stopped.");
+            throw new ConversionException(Strings.PandocTookMoreThan5MinutesSo);
         }
         if (result.ExitCode != 0)
         {
             var reason = result.LastError;
-            throw new ConversionException("pandoc couldn't convert this file: " + (reason.StartsWith("pandoc: ", StringComparison.Ordinal) ? reason[8..] : reason));
+            throw new ConversionException(Strings.PandocCouldnTConvertThisFile + (reason.StartsWith("pandoc: ", StringComparison.Ordinal) ? reason[8..] : reason));
         }
     }
 

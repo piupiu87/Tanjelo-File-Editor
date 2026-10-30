@@ -373,30 +373,30 @@ public sealed class AdjustTool : IConverter
     static Option Slider(string name, string label, double min = -100, double max = 100, string? hint = null) =>
         new(name, label, OptionKind.Number, "0") { Min = min, Max = max, Slider = true, Remember = false, Hint = hint };
 
-    static readonly Target Entry = new Target("adjust", "Edit photo…", "Light, colour and detail", Section.Image)
+    static readonly Target Entry = new Target("adjust", Strings.EditPhoto, Strings.LightColourAndDetail, Section.Image)
     {
         Kind = TargetKind.Tool,
-        Running = "Developing…",
-        Done = "Photo edited",
-        Confirm = "Save",
+        Running = Strings.Developing,
+        Done = Strings.PhotoEdited,
+        Confirm = Strings.Save,
         Editor = EditorKind.Photo,
     }.WithOptions(
-        new Option("exposure", "Exposure", OptionKind.Number, "0") { Min = -3, Max = 3, Unit = "stops", Slider = true, Remember = false },
-        Slider("contrast", "Contrast"),
-        Slider("highlights", "Highlights"),
-        Slider("shadows", "Shadows"),
-        Slider("whites", "Whites"),
-        Slider("blacks", "Blacks"),
-        Slider("temperature", "Temperature", hint: "Warmer above 0, cooler below."),
-        Slider("tint", "Tint", hint: "Magenta above 0, green below."),
-        Slider("vibrance", "Vibrance", hint: "Strengthens muted colours more than strong ones."),
-        Slider("saturation", "Saturation"),
-        Slider("sharpness", "Sharpness", 0),
-        Slider("clarity", "Clarity", 0),
-        Slider("noise", "Noise reduction", 0),
-        Slider("dehaze", "Dehaze", 0),
-        Slider("grain", "Grain", 0),
-        Slider("vignette", "Vignette", hint: "Darker corners above 0, lighter below."));
+        new Option("exposure", Strings.Exposure, OptionKind.Number, "0") { Min = -3, Max = 3, Unit = "stops", Slider = true, Remember = false },
+        Slider("contrast", Strings.Contrast),
+        Slider("highlights", Strings.Highlights),
+        Slider("shadows", Strings.Shadows),
+        Slider("whites", Strings.Whites),
+        Slider("blacks", Strings.Blacks),
+        Slider("temperature", Strings.Temperature, hint: Strings.WarmerAbove0CoolerBelow),
+        Slider("tint", Strings.Tint, hint: Strings.MagentaAbove0GreenBelow),
+        Slider("vibrance", Strings.Vibrance, hint: Strings.StrengthensMutedColoursMoreThanStrongOnes),
+        Slider("saturation", Strings.Saturation),
+        Slider("sharpness", Strings.Sharpness, 0),
+        Slider("clarity", Strings.Clarity, 0),
+        Slider("noise", Strings.NoiseReduction, 0),
+        Slider("dehaze", Strings.Dehaze, 0),
+        Slider("grain", Strings.Grain, 0),
+        Slider("vignette", Strings.Vignette, hint: Strings.DarkerCornersAbove0LighterBelow));
 
     public IEnumerable<Target> TargetsFor(string input) =>
         Formats.Images.Contains(Formats.Key(input)) && Formats.Key(input) is not ("svg" or "ico" or "gif") ? [Entry] : [];
@@ -404,7 +404,7 @@ public sealed class AdjustTool : IConverter
     public Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx) => Task.Run<IReadOnlyList<string>>(() =>
     {
         var settings = PhotoSettings.From(target);
-        if (settings.IsNone) throw new ConversionException("Every setting is at 0, so the photo would come out the same.");
+        if (settings.IsNone) throw new ConversionException(Strings.EverySettingIsAt0SoThe);
         using var frames = ImageConverter.Read(input);
         var image = frames[0];
         image.AutoOrient();

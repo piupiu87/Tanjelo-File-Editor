@@ -9,36 +9,36 @@ namespace Tanjelo.Core.Converters;
 /// </summary>
 public sealed class MetadataTool(Toolbox tools) : IConverter, IPreviewer
 {
-    static readonly Option Title = new("title", "Title", OptionKind.Text, "") { Optional = true, Remember = false, Hint = "New title; empty keeps the current one" };
+    static readonly Option Title = new("title", Strings.Title, OptionKind.Text, "") { Optional = true, Remember = false, Hint = Strings.NewTitleEmptyKeepsTheCurrentOne };
 
     static Option Author(string label) =>
-        new("author", label, OptionKind.Text, "") { Optional = true, Remember = false, Hint = $"New {label.ToLowerInvariant()}; empty keeps the current one" };
+        new("author", label, OptionKind.Text, "") { Optional = true, Remember = false, Hint = string.Format(Strings.NewEmptyKeepsTheCurrentOne, label.ToLowerInvariant()) };
 
-    static readonly Option Location = new("location", "Remove the location", OptionKind.Toggle, "true")
+    static readonly Option Location = new("location", Strings.RemoveTheLocation, OptionKind.Toggle, "true")
     {
-        Hint = "Where it was taken, as phones and cameras record it.",
+        Hint = Strings.WhereItWasTakenAsPhonesAnd,
     };
 
-    static readonly Option Camera = new("camera", "Remove camera details", OptionKind.Toggle, "false") { Hint = "Make, model, lens and serial numbers." };
+    static readonly Option Camera = new("camera", Strings.RemoveCameraDetails, OptionKind.Toggle, "false") { Hint = Strings.MakeModelLensAndSerialNumbers };
 
-    static readonly Option Everything = new("all", "Remove everything else", OptionKind.Toggle, "false")
+    static readonly Option Everything = new("all", Strings.RemoveEverythingElse, OptionKind.Toggle, "false")
     {
-        Hint = "Dates, software, comments and the rest. Anything typed above is still saved.",
+        Hint = Strings.DatesSoftwareCommentsAndTheRestAnything,
     };
 
     static Target Metadata(Section section, params Option[] options) =>
-        new Target("metadata", "Metadata…", "View, edit or remove", section)
+        new Target("metadata", Strings.Metadata, Strings.ViewEditOrRemove, section)
         {
             Kind = TargetKind.Tool,
-            Running = "Saving metadata…",
-            Done = "Saved with new metadata",
-            Confirm = "Save copy",
+            Running = Strings.SavingMetadata,
+            Done = Strings.SavedWithNewMetadata,
+            Confirm = Strings.SaveCopy,
         }.WithOptions(options);
 
-    static readonly Target ImageTarget = Metadata(Section.Image, Title, Author("Author"), Location, Camera, Everything);
-    static readonly Target VideoTarget = Metadata(Section.Video, Title, Author("Artist"), Location, Everything);
-    static readonly Target AudioTarget = Metadata(Section.Audio, Title, Author("Artist"), Everything);
-    static readonly Target PdfTarget = Metadata(Section.Document, Title, Author("Author"), Everything);
+    static readonly Target ImageTarget = Metadata(Section.Image, Title, Author(Strings.Author), Location, Camera, Everything);
+    static readonly Target VideoTarget = Metadata(Section.Video, Title, Author(Strings.Artist), Location, Everything);
+    static readonly Target AudioTarget = Metadata(Section.Audio, Title, Author(Strings.Artist), Everything);
+    static readonly Target PdfTarget = Metadata(Section.Document, Title, Author(Strings.Author), Everything);
 
     public IEnumerable<Target> TargetsFor(string input)
     {
@@ -58,7 +58,7 @@ public sealed class MetadataTool(Toolbox tools) : IConverter, IPreviewer
         return new MetadataEdit(Text("title"), Text("author"), Flag("location"), Flag("camera"), Flag("all"));
     }
 
-    const string NothingToDo = "There's nothing to change: none of the metadata to remove is there, and no new title or author was given.";
+    static string NothingToDo => Strings.ThereSNothingToChangeNoneOf;
 
     public async Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx)
     {
@@ -187,15 +187,15 @@ public sealed class MetadataTool(Toolbox tools) : IConverter, IPreviewer
 
     static List<(string Label, string? Value)> Fields(ImageMetadata m) =>
     [
-        ("Title", m.Title),
-        ("Author", m.Author),
-        ("Camera", m.Camera),
-        ("Location", m.Location),
-        ("Taken", m.Taken),
-        ("Software", m.Software),
-        ("Comment", m.Comment),
-        ("Other", m.OtherExif > 0 ? $"{m.OtherExif} more EXIF fields" : null),
-        ("XMP", m.Xmp is null ? null : "present"),
+        (Strings.Title, m.Title),
+        (Strings.Author, m.Author),
+        (Strings.Camera, m.Camera),
+        (Strings.Location, m.Location),
+        (Strings.Taken, m.Taken),
+        (Strings.Software, m.Software),
+        (Strings.Comment, m.Comment),
+        (Strings.Other, m.OtherExif > 0 ? string.Format(Strings.MoreEXIFFields, m.OtherExif) : null),
+        (Strings.XMP, m.Xmp is null ? null : "present"),
     ];
 
     static List<(string Label, string? Value)> PdfFields(PdfDocument document)
@@ -203,13 +203,13 @@ public sealed class MetadataTool(Toolbox tools) : IConverter, IPreviewer
         string? Get(string name) => document.Info.Elements.GetString(name) is { Length: > 0 } value ? value : null;
         return
         [
-            ("Title", Get("/Title")),
-            ("Author", Get("/Author")),
-            ("Subject", Get("/Subject")),
-            ("Keywords", Get("/Keywords")),
-            ("Made with", Get("/Creator")),
-            ("Producer", Get("/Producer")),
-            ("Created", Get("/CreationDate") is { } created ? PdfDate(created) : null),
+            (Strings.Title, Get("/Title")),
+            (Strings.Author, Get("/Author")),
+            (Strings.Subject, Get("/Subject")),
+            (Strings.Keywords, Get("/Keywords")),
+            (Strings.MadeWith, Get("/Creator")),
+            (Strings.Producer, Get("/Producer")),
+            (Strings.Created, Get("/CreationDate") is { } created ? PdfDate(created) : null),
             // No line for XMP: PDFsharp writes a fresh XMP copy of the information above whenever it saves.
         ];
     }
@@ -254,15 +254,15 @@ public sealed class MetadataTool(Toolbox tools) : IConverter, IPreviewer
             && k is not ("major_brand" or "minor_version" or "compatible_brands"));
         return
         [
-            ("Title", Get("title")),
-            ("Artist", Get("artist")),
-            ("Album", Get("album")),
-            ("Date", Get("date") ?? Get("creation_time")),
-            ("Location", LocationTags.Select(Get).FirstOrDefault(v => v is not null) is { } place ? Iso6709(place) : null),
-            ("Camera", string.Join(" ", new[] { Get("com.apple.quicktime.make"), Get("com.apple.quicktime.model") }.OfType<string>()) is { Length: > 0 } c ? c : null),
-            ("Comment", Get("comment")),
-            ("Made with", Get("encoder")),
-            ("Other", others > 0 ? $"{others} more tags" : null),
+            (Strings.Title, Get("title")),
+            (Strings.Artist, Get("artist")),
+            (Strings.Album, Get("album")),
+            (Strings.Date, Get("date") ?? Get("creation_time")),
+            (Strings.Location, LocationTags.Select(Get).FirstOrDefault(v => v is not null) is { } place ? Iso6709(place) : null),
+            (Strings.Camera, string.Join(" ", new[] { Get("com.apple.quicktime.make"), Get("com.apple.quicktime.model") }.OfType<string>()) is { Length: > 0 } c ? c : null),
+            (Strings.Comment, Get("comment")),
+            (Strings.MadeWith, Get("encoder")),
+            (Strings.Other, others > 0 ? string.Format(Strings.MoreTags, others) : null),
         ];
     }
 
@@ -276,12 +276,12 @@ public sealed class MetadataTool(Toolbox tools) : IConverter, IPreviewer
             if (old is null && now is null) continue;
             facts.Add(new Fact(label, (old, now) switch
             {
-                (null, _) => $"{now} (new)",
-                (_, null) => $"{old} → removed",
+                (null, _) => string.Format(Strings.New, now),
+                (_, null) => string.Format(Strings.Removed, old),
                 _ when old == now => old,
                 _ => $"{old} → {now}",
             }));
         }
-        return facts.Count > 0 ? facts : [new Fact("Metadata", "None found")];
+        return facts.Count > 0 ? facts : [new Fact(Strings.Metadata2, Strings.NoneFound)];
     }
 }

@@ -42,7 +42,7 @@ public partial class FloatWindow : Window
         var area = SystemParameters.WorkArea;
         (Left, Top) = (area.Right - Width - 12, area.Top + area.Height / 3); // until its height is known
         // "from the shelf", so nobody fears Delete will delete the file itself.
-        KeysText.Text = hotkey is null ? "Delete removes from the shelf" : $"Delete removes from the shelf\n{hotkey} converts";
+        KeysText.Text = hotkey is null ? Strings.DeleteRemovesFromTheShelf : string.Format(Strings.DeleteRemovesFromTheShelfConverts, hotkey);
         Refresh();
         _shelf.Changed += () => Dispatcher.BeginInvoke(Refresh);
 

@@ -60,7 +60,13 @@ abstract class Editor
     public abstract Target Result();
 
     /// <summary>A key pressed while the window is active; true when the editor used it.</summary>
-    public virtual bool OnKey(KeyEventArgs e) => false;
+    public virtual bool OnKey(KeyEventArgs e) => Press(e.Key == Key.System ? e.SystemKey : e.Key, Keyboard.Modifiers, e.IsRepeat);
+
+    /// <summary>A key pressed with these modifiers, as <see cref="OnKey"/> passes it on; true when used. Tests press keys here.</summary>
+    public virtual bool Press(Key key, ModifierKeys modifiers = ModifierKeys.None, bool repeat = false) => false;
+
+    /// <summary>What a screen reader calls the canvas or timeline, and the keys it takes, for its help text.</summary>
+    public virtual (string Name, string Keys) Spoken => (Strings.Picture, "");
 
     /// <summary>The window closed: let go of players and delete temporary files.</summary>
     public virtual void Close() { }

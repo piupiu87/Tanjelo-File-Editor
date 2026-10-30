@@ -111,16 +111,25 @@ A shared timeline first, then the editors that use it.
 - [x] Bleep sections of audio or video with a tone or silence (M)
 - [x] Redact areas of a video, each with its own time range (L)
 
-## v1.0: ready for everyone
+## v1.0.0: ready for everyone
 
-- [ ] Code signing, so downloads don't trigger "Windows protected your PC" (SignPath Foundation offers free signing for open-source projects) (M)
-- [ ] Installer with a Start menu entry and clean uninstall (M)
-- [ ] winget package: `winget install Tanjelo` (S)
-- [ ] Entry in the Windows 11 right-click menu (needs a packaged app) (M/L)
-- [ ] Settings window, so nobody has to edit JSON (M)
-- [ ] Update check, off by default so the app stays offline unless you opt in (S)
-- [ ] Accessibility pass: screen-reader names, full keyboard use, high-contrast themes (M)
-- [ ] Translations: move UI text into resource files (M)
+- [x] Settings window, so nobody has to edit JSON (M)
+- [x] Update check, off by default so the app stays offline unless you opt in (S)
+- [x] Accessibility pass: screen-reader names, full keyboard use, high-contrast themes (M)
+- [x] Translations: move UI text into resource files (M). English only so far; CONTRIBUTING says how to add a language.
+- [x] Installer with a Start menu entry and clean uninstall (M)
+- [x] winget package: `winget install Tanjelo` (S). The manifests come with each release, for a pull request to
+  microsoft/winget-pkgs.
+
+v1.0 ships unsigned, so the first launch may show "Windows protected your PC" until signing comes.
+
+## Signed releases (on hold)
+
+- [ ] Code signing, so downloads don't trigger "Windows protected your PC" (SignPath Foundation offers free signing for
+  open-source projects) (M). The release workflow's signing steps are written and stay off until the SignPath secrets
+  are added ([.signpath/README.md](../.signpath/README.md)).
+- [ ] Entry in the Windows 11 right-click menu (needs a signed package) (M/L). Built and tried unsigned on CI; it ships
+  with the first signed release.
 
 ## Later, if there's demand
 
@@ -131,7 +140,7 @@ A shared timeline first, then the editors that use it.
 
 - [x] CONTRIBUTING.md: building, running tests, and how to add a converter (S)
 - [x] Issue templates: bug reports that ask for `tanj tools` output, and feature requests (S)
-- [ ] Screenshots or a short GIF in the README (S)
+- [x] Screenshots in the README, made off-screen by `ReadmeScreenshots` (S)
 
 ## Not planned
 

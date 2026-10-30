@@ -104,7 +104,7 @@ static class YuNet
     /// <summary>YuNet set up once, to look at one picture after another, such as the frames of a video.</summary>
     internal sealed class Finder : IDisposable
     {
-        readonly LearningModelSession _session = new(Model.Value ?? throw new ConversionException("Windows can't run the face finder on this PC."),
+        readonly LearningModelSession _session = new(Model.Value ?? throw new ConversionException(Strings.WindowsCanTRunTheFaceFinder),
             new LearningModelDevice(LearningModelDeviceKind.Cpu));
 
         /// <summary>The faces in a picture of blue, green and red bytes, each once, in its pixels.</summary>

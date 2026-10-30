@@ -61,8 +61,8 @@ public class BleepEditorTests
                 Assert.Equal(1, editor.Selected);
                 Assert.Equal([new Bleep(1.2, 2.0), new Bleep(2.0, 3.0, Tone: false)], editor.Current.Bleeps);
 
-                // The first one higher.
-                editor.Press(Key.Tab);
+                // The first one higher (Shift+Tab goes back from the second).
+                editor.Press(Key.Tab, ModifierKeys.Shift);
                 Assert.Equal(0, editor.Selected);
                 editor.SetPitch(2000);
                 Assert.Equal(new Bleep(1.2, 2.0, Pitch: 2000), editor.Current.Bleeps[0]);
@@ -188,6 +188,7 @@ public class BleepEditorTests
                 Assert.False(sound.Playing);
 
                 // With no stretches left, the video's own sound plays again.
+                editor.Press(Key.Escape);
                 editor.Press(Key.Tab);
                 editor.Press(Key.Delete);
                 await editor.SoundReady;

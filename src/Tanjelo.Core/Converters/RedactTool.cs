@@ -19,7 +19,7 @@ public readonly record struct RedactBox(int X, int Y, int Width, int Height)
             var numbers = part.Split(',', StringSplitOptions.TrimEntries);
             var values = numbers.Select(n => int.TryParse(n, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var v) ? v : (int?)null).ToList();
             if (values.Count != 4 || values.Any(v => v is null) || values[2] < 1 || values[3] < 1)
-                throw new ConversionException($"Couldn't read '{part}' as an area. Write each as x,y,width,height in pixels, such as 10,20,200,80.");
+                throw new ConversionException(string.Format(Strings.CouldnTReadAsAnAreaWrite, part));
             boxes.Add(new RedactBox(values[0]!.Value, values[1]!.Value, values[2]!.Value, values[3]!.Value));
         }
         return boxes;
@@ -51,7 +51,7 @@ public readonly record struct RedactBox(int X, int Y, int Width, int Height)
 /// </summary>
 public static class Redaction
 {
-    public static readonly Choice[] Styles = [new("solid", "Solid"), new("pixelate", "Pixelate"), new("blur", "Blur")];
+    public static readonly Choice[] Styles = [new("solid", Strings.Solid), new("pixelate", Strings.Pixelate), new("blur", Strings.Blur)];
 
     /// <summary>Replaces each area's pixels. Blocks and blurs are sized from the area, so a smaller copy looks the same.</summary>
     public static void Apply(IMagickImage<byte> image, IEnumerable<RedactBox> boxes, string style, Colour colour)
@@ -155,7 +155,7 @@ public static class Redaction
                 // Should Windows' machine learning fail on this picture, its face detection still looks.
             }
         }
-        if (!WindowsFindsFaces) throw new ConversionException("Windows can't look for faces on this PC.");
+        if (!WindowsFindsFaces) throw new ConversionException(Strings.WindowsCanTLookForFacesOn);
         using var copy = picture.Clone();
         // Faces up to about 2,500 pixels across are found, so very large photos are looked at smaller.
         var scale = Fit(copy, largest: 2560, smallest: 0);
@@ -233,23 +233,23 @@ public static class Redaction
 /// </summary>
 public sealed class RedactTool : IConverter
 {
-    static readonly Target Entry = new Target("redact", "Redact…", "Faces, text or any area", Section.Image)
+    static readonly Target Entry = new Target("redact", Strings.Redact, Strings.FacesTextOrAnyArea, Section.Image)
     {
         Kind = TargetKind.Tool,
-        Running = "Redacting…",
-        Done = "Redacted",
-        Confirm = "Save",
+        Running = Strings.Redacting,
+        Done = Strings.Redacted,
+        Confirm = Strings.Save,
         Editor = EditorKind.Redact,
     }.WithOptions(
-        new Option("boxes", "Areas", OptionKind.Text, "") { Optional = true, Remember = false, Hint = "x,y,width,height in pixels, separated by semicolons." },
-        new Option("faces", "Find faces", OptionKind.Toggle, "false") { Hint = "Found on this PC." },
-        new Option("text", "Find text", OptionKind.Toggle, "false") { Hint = "Every word Windows' OCR reads." },
-        new Option("style", "Style", OptionKind.Choice, "solid")
+        new Option("boxes", Strings.Areas, OptionKind.Text, "") { Optional = true, Remember = false, Hint = Strings.XYWidthHeightInPixelsSeparated },
+        new Option("faces", Strings.FindFaces, OptionKind.Toggle, "false") { Hint = Strings.FoundOnThisPC },
+        new Option("text", Strings.FindText, OptionKind.Toggle, "false") { Hint = Strings.EveryWordWindowsOCRReads },
+        new Option("style", Strings.Style, OptionKind.Choice, "solid")
         {
             Choices = Redaction.Styles,
-            Hint = "Solid is the safest. Pixelate and blur are strong here, but a light blur can sometimes be undone.",
+            Hint = Strings.SolidIsTheSafestPixelateAndBlur,
         },
-        new Option("colour", "Colour", OptionKind.Colour, "#000000") { ShownWhen = new("style", "solid") });
+        new Option("colour", Strings.Colour, OptionKind.Colour, "#000000") { ShownWhen = new("style", "solid") });
 
     public IEnumerable<Target> TargetsFor(string input) =>
         Formats.Images.Contains(Formats.Key(input)) && Formats.Key(input) is not ("svg" or "ico") ? [Entry] : [];
@@ -262,25 +262,25 @@ public sealed class RedactTool : IConverter
         image.AutoOrient();
         var (width, height) = ((int)image.Width, (int)image.Height);
         if (boxes.FirstOrDefault(b => b.Within(width, height) is null) is { Width: > 0 } outside)
-            throw new ConversionException($"The area {RedactBox.FormatAll([outside])} is outside the {Describe.Pixels(width, height)} picture.");
+            throw new ConversionException(string.Format(Strings.TheAreaIsOutsideThePicture, RedactBox.FormatAll([outside]), Describe.Pixels(width, height)));
 
         if (target.Flag("faces"))
         {
             var faces = await Redaction.FindFacesAsync(image);
             boxes.AddRange(faces);
-            ctx.Note(faces.Count == 0 ? "No faces were found" : Describe.Count(faces.Count, "face") + " found");
+            ctx.Note(faces.Count == 0 ? Strings.NoFacesWereFound : Describe.Count(faces.Count, Strings.OneFace, Strings.NFaces) + Strings.Found);
         }
         if (target.Flag("text"))
         {
             var words = await Redaction.FindTextAsync(image)
-                ?? throw new ConversionException("Finding text needs an OCR language. " + PdfText.NoOcrHint[(PdfText.NoOcrHint.IndexOf('.') + 2)..]);
+                ?? throw new ConversionException(Strings.FindingTextNeedsAnOCRLanguage + PdfText.NoOcrHint[(PdfText.NoOcrHint.IndexOf('.') + 2)..]);
             boxes.AddRange(words);
-            ctx.Note(words.Count == 0 ? "No text was found" : Describe.Count(words.Count, "word") + " found");
+            ctx.Note(words.Count == 0 ? Strings.NoTextWasFound : Describe.Count(words.Count, Strings.OneWord, Strings.NWords) + Strings.Found);
         }
         if (boxes.Count == 0)
             throw new ConversionException(target.Flag("faces") || target.Flag("text")
-                ? "Nothing was found to redact, so no copy was saved."
-                : "There's nothing to redact: give the areas, or find faces or text.");
+                ? Strings.NothingWasFoundToRedactSoNo
+                : Strings.ThereSNothingToRedactGiveThe);
         ctx.Cancellation.ThrowIfCancellationRequested();
 
         Redaction.Apply(image, boxes, target.Choice("style"), target.Colour("colour"));

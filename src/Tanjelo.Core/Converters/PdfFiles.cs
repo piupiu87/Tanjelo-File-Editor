@@ -20,11 +20,11 @@ static class PdfFiles
         }
         catch (PdfReaderException ex) when (ex.Message.Contains("password", StringComparison.OrdinalIgnoreCase))
         {
-            throw new ConversionException("This PDF is password-protected.", ex);
+            throw new ConversionException(Strings.ThisPDFIsPasswordProtected, ex);
         }
         catch (Exception ex) when (ex is not (IOException or UnauthorizedAccessException or OperationCanceledException))
         {
-            throw new ConversionException("This doesn't look like a valid PDF.", ex);
+            throw new ConversionException(Strings.ThisDoesnTLookLikeAValid3, ex);
         }
     }
 

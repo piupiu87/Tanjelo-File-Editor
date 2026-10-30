@@ -13,29 +13,29 @@ public sealed class BackgroundTool : IConverter, IPreviewer
 {
     internal const string Pictures = "Pictures|*.png;*.jpg;*.jpeg;*.webp;*.avif;*.heic;*.bmp;*.gif;*.tif;*.tiff|All files|*.*";
 
-    static readonly Target Entry = new Target("background", "Add background…", "Colour, gradient or picture", Section.Image)
+    static readonly Target Entry = new Target("background", Strings.AddBackground, Strings.ColourGradientOrPicture, Section.Image)
     {
         Kind = TargetKind.Tool,
-        Running = "Adding a background…",
-        Done = "Background added",
-        Confirm = "Add background",
+        Running = Strings.AddingABackground,
+        Done = Strings.BackgroundAdded,
+        Confirm = Strings.AddBackground2,
     }.WithOptions(
-        new Option("fill", "Background", OptionKind.Choice, "gradient") { Choices = [new("colour", "Colour"), new("gradient", "Gradient"), new("image", "Picture")] },
-        new Option("colour", "Colour", OptionKind.Colour, "#F3EFEA") { ShownWhen = new("fill", "colour", "gradient") },
-        new Option("colour2", "Fading to", OptionKind.Colour, "#F97A3D") { ShownWhen = new("fill", "gradient") },
-        new Option("direction", "Direction", OptionKind.Choice, "diagonal")
+        new Option("fill", Strings.Background, OptionKind.Choice, "gradient") { Choices = [new("colour", Strings.Colour), new("gradient", Strings.Gradient), new("image", Strings.Picture)] },
+        new Option("colour", Strings.Colour, OptionKind.Colour, "#F3EFEA") { ShownWhen = new("fill", "colour", "gradient") },
+        new Option("colour2", Strings.FadingTo, OptionKind.Colour, "#F97A3D") { ShownWhen = new("fill", "gradient") },
+        new Option("direction", Strings.Direction, OptionKind.Choice, "diagonal")
         {
-            Choices = [new("down", "Top to bottom"), new("right", "Left to right"), new("diagonal", "Diagonal")],
+            Choices = [new("down", Strings.TopToBottom), new("right", Strings.LeftToRight), new("diagonal", Strings.Diagonal)],
             ShownWhen = new("fill", "gradient"),
         },
-        new Option("image", "Picture", OptionKind.File, "") { FileFilter = Pictures, ShownWhen = new("fill", "image"), Hint = "Fills the background, cut to fit." },
-        new Option("padding", "Space around", OptionKind.Number, "8") { Min = 0, Max = 50, Whole = true, Unit = "%", Slider = true },
-        new Option("radius", "Rounded corners", OptionKind.Number, "3") { Min = 0, Max = 50, Whole = true, Unit = "%", Slider = true },
-        new Option("shadow", "Shadow", OptionKind.Choice, "soft") { Choices = [new("none", "None"), new("soft", "Soft"), new("strong", "Strong")] },
-        new Option("shape", "Shape", OptionKind.Choice, "fit")
+        new Option("image", Strings.Picture, OptionKind.File, "") { FileFilter = Pictures, ShownWhen = new("fill", "image"), Hint = Strings.FillsTheBackgroundCutToFit },
+        new Option("padding", Strings.SpaceAround, OptionKind.Number, "8") { Min = 0, Max = 50, Whole = true, Unit = "%", Slider = true },
+        new Option("radius", Strings.RoundedCorners, OptionKind.Number, "3") { Min = 0, Max = 50, Whole = true, Unit = "%", Slider = true },
+        new Option("shadow", Strings.Shadow, OptionKind.Choice, "soft") { Choices = [new("none", Strings.None), new("soft", Strings.Soft), new("strong", Strings.Strong)] },
+        new Option("shape", Strings.Shape, OptionKind.Choice, "fit")
         {
-            Choices = [new("fit", "Fit the picture"), new("1:1", "1:1"), new("4:5", "4:5"), new("16:9", "16:9"), new("9:16", "9:16")],
-            Hint = "Fit keeps the same space on every side; a ratio adds more where it's needed.",
+            Choices = [new("fit", Strings.FitThePicture), new("1:1", "1:1"), new("4:5", "4:5"), new("16:9", "16:9"), new("9:16", "9:16")],
+            Hint = Strings.FitKeepsTheSameSpaceOnEvery,
         });
 
     public IEnumerable<Target> TargetsFor(string input) => Formats.Images.Contains(Formats.Key(input)) && Formats.Key(input) != "ico" ? [Entry] : [];
@@ -76,7 +76,7 @@ public sealed class BackgroundTool : IConverter, IPreviewer
         var (canvasWidth, canvasHeight) = Canvas(width, height, target);
         return new Preview(result.ToByteArray(MagickFormat.Png),
         [
-            new Fact("Size", $"{Describe.Pixels(width, height)} → {Describe.Pixels(canvasWidth, canvasHeight)}"),
+            new Fact(Strings.Size, $"{Describe.Pixels(width, height)} → {Describe.Pixels(canvasWidth, canvasHeight)}"),
         ]);
     }, ctx.Cancellation);
 
@@ -147,7 +147,7 @@ public sealed class BackgroundTool : IConverter, IPreviewer
                 settings.SetDefine("gradient:angle", target.Choice("direction") switch { "down" => "180", "right" => "90", _ => "135" });
                 return new MagickImage($"gradient:{Hex(target.Colour("colour"))}-{Hex(target.Colour("colour2"))}", settings);
             case "image":
-                var path = target.File("image") ?? throw new ConversionException("Choose a picture for the background.");
+                var path = target.File("image") ?? throw new ConversionException(Strings.ChooseAPictureForTheBackground);
                 using (var frames = ImageConverter.Read(path))
                 {
                     var backdrop = frames[0].Clone();

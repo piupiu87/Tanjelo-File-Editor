@@ -73,9 +73,10 @@ sealed class BleepEditor : TimelineEditor<BleepState>
             IsSnapToTickEnabled = true,
             TickFrequency = 50,
         }, FrameworkElement.StyleProperty, "ThinSlider");
+        System.Windows.Automation.AutomationProperties.SetName(_pitch, Strings.Pitch);
         _pitchValue = Panels.Themed(new TextBlock { FontSize = 12, HorizontalAlignment = HorizontalAlignment.Right }, TextBlock.ForegroundProperty, "TextSecondary");
         var top = new Grid();
-        top.Children.Add(new TextBlock { Text = "Pitch", FontSize = 12.5 });
+        top.Children.Add(new TextBlock { Text = Strings.Pitch, FontSize = 12.5 });
         top.Children.Add(_pitchValue);
         _pitchRow.Children.Add(top);
         _pitchRow.Children.Add(_pitch);
@@ -83,28 +84,31 @@ sealed class BleepEditor : TimelineEditor<BleepState>
         _pitch.PreviewMouseLeftButtonUp += (_, _) => _pitchDragging = false;
         _pitch.ValueChanged += (_, e) =>
         {
-            _pitchValue.Text = $"{e.NewValue:0} Hz";
+            _pitchValue.Text = string.Format(Strings.Hz, e.NewValue);
             if (_showing || !Started) return;
             SetCover(true, (int)e.NewValue, gesture: _pitchDragging);
             _pitchDragging = Mouse.LeftButton == MouseButtonState.Pressed;
         };
         _panel.Children.Add(_pitchRow);
 
-        _actions.Children.Add(Panels.Button("", "Hear it", "Play this stretch with a second either side, with the bleep in (H)", () => _ = HearAsync()));
-        _actions.Children.Add(Panels.Button("", "Remove", "Remove this stretch (Delete)", RemoveSelected));
+        _actions.Children.Add(Panels.Button("", Strings.HearIt, Strings.PlayThisStretchWithASecondEither, () => _ = HearAsync()));
+        _actions.Children.Add(Panels.Button("", Strings.Remove, Strings.RemoveThisStretchDelete, RemoveSelected));
         _panel.Children.Add(_actions);
         _panel.Children.Add(_coverHint);
 
-        _panel.Children.Add(Panels.Heading("Stretches", 20));
+        _panel.Children.Add(Panels.Heading(Strings.Stretches, 20));
         _panel.Children.Add(_list);
         _panel.Children.Add(_hearing);
-        _panel.Children.Add(Panels.Heading("Keys", 20));
+        _panel.Children.Add(Panels.Heading(Strings.Keys, 20));
         _panel.Children.Add(Panels.Keys(
         [
-            ("H", "Hear the selected stretch"),
-            ("I, O", "Start or end the selected stretch at the playhead, or mark a new one"),
-            ("Tab", "Select the next stretch"),
-            ("Delete", "Remove the selected stretch"),
+            ("H", Strings.HearTheSelectedStretch),
+            (Strings.IO, Strings.StartOrEndTheSelectedStretchAt),
+            (Strings.InsertN, Strings.MarkASecondFromThePlayhead),
+            (Strings.Tab, Strings.SelectTheNextStretch),
+            (Strings.Alt, Strings.MoveItAFrameWithShiftA),
+            (Strings.Ctrl, Strings.MoveItsEnd),
+            (Strings.Delete, Strings.RemoveTheSelectedStretch),
             .. TimelineKeys(),
         ]));
     }
@@ -132,11 +136,11 @@ sealed class BleepEditor : TimelineEditor<BleepState>
     public override bool Changed => base.Changed && State.Bleeps.Count > 0;
 
     protected override string EditorStatus => !Started ? "" :
-        (State.Bleeps.Count == 1 ? "1 stretch" : $"{State.Bleeps.Count} stretches") + (_selected is not null ? " · one selected" : "");
+        (State.Bleeps.Count == 1 ? Strings.N1Stretch : string.Format(Strings.Stretches2, State.Bleeps.Count)) + Panels.Which(_selected, State.Bleeps.Count);
 
     public override Target Result()
     {
-        if (State.Bleeps.Count == 0) throw new ConversionException("Mark a stretch to bleep first: drag on the shape of the sound.");
+        if (State.Bleeps.Count == 0) throw new ConversionException(Strings.MarkAStretchToBleepFirstDrag);
         return Entry.WithParameters(new Dictionary<string, string>
         {
             ["ranges"] = BleepTool.FormatBleeps(State.Bleeps),
@@ -161,22 +165,22 @@ sealed class BleepEditor : TimelineEditor<BleepState>
         if (_selected is { } i)
         {
             var bleep = State.Bleeps[i];
-            _coverHeading.Text = $"Stretch {i + 1}";
-            _selectedTimes.Text = $"{Timecode.Format(bleep.Start)} to {Timecode.Format(bleep.End)} · {bleep.End - bleep.Start:0.000} s, covered with:";
-            _coverHint.Text = "New stretches are covered the same way.";
+            _coverHeading.Text = string.Format(Strings.Stretch, i + 1);
+            _selectedTimes.Text = string.Format(Strings.ToSCoveredWith, Timecode.Format(bleep.Start), Timecode.Format(bleep.End), bleep.End - bleep.Start);
+            _coverHint.Text = Strings.NewStretchesAreCoveredTheSameWay;
         }
         else
         {
-            _coverHeading.Text = "New stretches";
-            _selectedTimes.Text = "Covered with:";
+            _coverHeading.Text = Strings.NewStretches;
+            _selectedTimes.Text = Strings.CoveredWith;
             _coverHint.Text = State.Bleeps.Count == 0
-                ? "Drag on the shape of the sound to mark a stretch."
-                : "Click a stretch to change its cover or hear it, or drag on the sound to mark another.";
+                ? Strings.DragOnTheShapeOfTheSound
+                : Strings.ClickAStretchToChangeItsCover;
         }
         _showSound(tone ? "tone" : "silence");
         _pitchRow.Visibility = tone ? Visibility.Visible : Visibility.Collapsed;
         _pitch.Value = pitch;
-        _pitchValue.Text = $"{pitch} Hz";
+        _pitchValue.Text = string.Format(Strings.Hz2, pitch);
         _actions.Visibility = _selected is null ? Visibility.Collapsed : Visibility.Visible;
         ShowList();
         _showing = false;
@@ -188,7 +192,7 @@ sealed class BleepEditor : TimelineEditor<BleepState>
         _list.Children.Clear();
         if (State.Bleeps.Count == 0)
         {
-            _list.Children.Add(Panels.Hint("None yet.", 0));
+            _list.Children.Add(Panels.Hint(Strings.NoneYet, 0));
             return;
         }
         for (var i = 0; i < State.Bleeps.Count; i++)
@@ -210,7 +214,7 @@ sealed class BleepEditor : TimelineEditor<BleepState>
             var item = new Border { Child = row, Padding = new Thickness(8, 5, 8, 5), Margin = new Thickness(0, 0, 0, 2), CornerRadius = new CornerRadius(4), Cursor = Cursors.Hand };
             if (i == _selected) item.SetResourceReference(Border.BackgroundProperty, "Selected");
             else item.Background = Brushes.Transparent;
-            item.ToolTip = "Select this stretch and go to it";
+            item.ToolTip = Strings.SelectThisStretchAndGoToIt;
             item.MouseLeftButtonUp += (_, _) =>
             {
                 Select(index);
@@ -272,7 +276,7 @@ sealed class BleepEditor : TimelineEditor<BleepState>
             if (Preview is not FramePlayer || _decoded is null)
             {
                 _hearing.Text = State.Bleeps.Count == 0 ? "" :
-                    "Windows can't play this file here, so the bleeps can't be heard before saving. They're saved all the same.";
+                    Strings.WindowsCanTPlayThisFileHere;
                 return;
             }
             var bleeps = State.Bleeps;
@@ -282,7 +286,7 @@ sealed class BleepEditor : TimelineEditor<BleepState>
                 await UseSoundAsync(null);
                 return;
             }
-            if (!_decoded.IsCompleted) _hearing.Text = "Getting the sound ready to bleep…";
+            if (!_decoded.IsCompleted) _hearing.Text = Strings.GettingTheSoundReadyToBleep;
             var sound = await _decoded;
             if (version != _version) return;
             var made = await Task.Run(() => sound.Write(bleeps));
@@ -296,13 +300,13 @@ sealed class BleepEditor : TimelineEditor<BleepState>
             if (_made is { } before) _ = Task.Delay(1000).ContinueWith(_ => OutputPaths.TryDelete(before), TaskScheduler.Default);
             _made = made;
             _hearing.Text = playing
-                ? "Ready: what plays has the bleeps in. Press Hear it, or play from anywhere."
-                : "Couldn't play the sound with the bleeps in. They're saved all the same.";
+                ? Strings.ReadyWhatPlaysHasTheBleepsIn
+                : Strings.CouldnTPlayTheSoundWithThe;
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             if (ex is not ConversionException) Log.Write(ex);
-            _hearing.Text = "Couldn't make the sound with the bleeps in: " + ex.Message;
+            _hearing.Text = Strings.CouldnTMakeTheSoundWithThe + ex.Message;
         }
         finally
         {
@@ -329,7 +333,7 @@ sealed class BleepEditor : TimelineEditor<BleepState>
         var bleep = State.Bleeps[s];
         await SoundReady;
         if (!PlayBetween(bleep.Start - Around, bleep.End + Around))
-            _hearing.Text = "Windows can't play this file here, so the bleeps can't be heard before saving. They're saved all the same.";
+            _hearing.Text = Strings.WindowsCanTPlayThisFileHere;
     }
 
     // ---- Marking stretches on the sound
@@ -463,8 +467,18 @@ sealed class BleepEditor : TimelineEditor<BleepState>
                 Select(null);
                 return true;
             case Key.Tab when State.Bleeps.Count > 0:
+                // Past the last stretch (or the first) none is selected and Tab moves on to the next control.
                 var by = modifiers.HasFlag(ModifierKeys.Shift) ? -1 : 1;
-                Select(((_selected ?? (by > 0 ? -1 : 0)) + by + State.Bleeps.Count) % State.Bleeps.Count);
+                var next = _selected is { } current ? current + by : by > 0 ? 0 : State.Bleeps.Count - 1;
+                Select(next >= 0 && next < State.Bleeps.Count ? next : null);
+                return _selected is not null;
+            case Key.Insert or Key.N when modifiers == ModifierKeys.None:
+                Select(null);
+                SetEnd(true, Math.Round(Playhead, 3));
+                return true;
+            case Key.Left or Key.Right when _selected is { } s && (modifiers.HasFlag(ModifierKeys.Alt) || modifiers.HasFlag(ModifierKeys.Control)):
+                // Plain arrows move the playhead, so a stretch moves with Alt and the arrows, and its end with Ctrl.
+                Shift(s, key == Key.Left ? -1 : 1, modifiers.HasFlag(ModifierKeys.Shift), endOnly: modifiers.HasFlag(ModifierKeys.Control), repeat);
                 return true;
             case Key.H when modifiers == ModifierKeys.None && _selected is not null:
                 _ = HearAsync();
@@ -475,6 +489,22 @@ sealed class BleepEditor : TimelineEditor<BleepState>
             default:
                 return false;
         }
+    }
+
+    /// <summary>Moves a stretch, or only its end, by a frame (a hundredth of a second in sound) or by a second, from the keyboard.</summary>
+    internal void Shift(int index, int direction, bool bySecond, bool endOnly, bool repeat = false)
+    {
+        var bleep = State.Bleeps[index];
+        var step = bySecond ? 1 : Frames is { } frames ? frames.Stop(frames.At(bleep.Start)) - frames.Start(frames.At(bleep.Start)) : 0.01;
+        var by = direction * step;
+        var moved = endOnly
+            ? bleep with { End = Math.Clamp(SnapCut(bleep.End + by), bleep.Start + Shortest, Duration) }
+            : bleep with { Start = SnapCut(Math.Clamp(bleep.Start + by, 0, Duration - (bleep.End - bleep.Start))), End = SnapCut(Math.Clamp(bleep.End + by, bleep.End - bleep.Start, Duration)) };
+        if (moved == bleep) return;
+        var (settled, kept) = Settle(State.Bleeps.SetItem(index, moved), index);
+        _selected = kept;
+        if (repeat) Amend(State with { Bleeps = settled });
+        else Commit(State with { Bleeps = settled });
     }
 
     /// <summary>Starts or ends the selected stretch at a time; with none selected, marks a second's stretch from or to there.</summary>
@@ -546,7 +576,7 @@ sealed class BleepEditor : TimelineEditor<BleepState>
             }
             // What covers it, written on it where there's room, or just its sign.
             var glyph = new FormattedText(bleep.Tone ? "" : "", CultureInfo.InvariantCulture, FlowDirection.LeftToRight, icons, 12, view.Accent, dpi);
-            var label = new FormattedText(bleep.Tone ? $"{bleep.Pitch} Hz" : "Silence", CultureInfo.InvariantCulture, FlowDirection.LeftToRight, words, 11, view.Accent, dpi);
+            var label = new FormattedText(bleep.Tone ? string.Format(Strings.Hz2, bleep.Pitch) : Strings.Silence, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, words, 11, view.Accent, dpi);
             if (x1 - x0 >= glyph.Width + label.Width + 14)
             {
                 dc.DrawText(glyph, new Point(x0 + 5, soundTop + 4));

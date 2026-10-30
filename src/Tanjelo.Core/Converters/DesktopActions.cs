@@ -17,28 +17,28 @@ public sealed class DesktopActions(IDesktopActions? desktop) : IBatchOperation
     {
         // The Share sheet takes files only.
         if (inputs.All(File.Exists))
-            yield return new Target("share", "Share…", "Windows Share and Nearby Sharing", Section.File)
+            yield return new Target("share", Strings.Share, Strings.WindowsShareAndNearbySharing, Section.File)
             {
                 IsBatch = true,
                 Kind = TargetKind.Action,
                 Quiet = true,
-                Running = "Opening Share…",
-                Done = "Shared",
+                Running = Strings.OpeningShare,
+                Done = Strings.Shared,
             };
-        yield return new Target("float", "Float", "Park on the shelf, drag out later", Section.File)
+        yield return new Target("float", Strings.Float, Strings.ParkOnTheShelfDragOutLater, Section.File)
         {
             IsBatch = true,
             Kind = TargetKind.Action,
             Quiet = true,
-            Running = "Floating…",
-            Done = "Floated",
+            Running = Strings.Floating,
+            Done = Strings.Floated,
         };
     }
 
     public async Task<IReadOnlyList<string>> RunAsync(IReadOnlyList<string> inputs, Target target, JobContext ctx)
     {
         if (desktop is null)
-            throw new ConversionException($"{target.Label.TrimEnd('…')} needs the Tanjelo app: select the files in File Explorer and press its shortcut.");
+            throw new ConversionException(string.Format(Strings.NeedsTheTanjeloAppSelectTheFiles, target.Label.TrimEnd('…')));
         var paths = inputs.Select(p => Path.GetFullPath(p).TrimEnd('\\', '/')).ToList();
         if (target.Key == "share") await desktop.ShareAsync(paths);
         else await desktop.FloatAsync(paths);

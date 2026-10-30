@@ -16,29 +16,29 @@ public sealed class CompressTool(Toolbox tools) : IConverter, IPreviewer
     static readonly HashSet<string> Images = ["jpg", "png", "webp", "avif", "heic", "bmp", "tiff"];
 
     static Target Compress(Section section, bool dimensions) =>
-        new Target("compress", "Compress…", "To a size or a percentage", section)
+        new Target("compress", Strings.Compress, Strings.ToASizeOrAPercentage, section)
         {
             Kind = TargetKind.Tool,
-            Running = "Compressing…",
-            Done = "Compressed",
+            Running = Strings.Compressing,
+            Done = Strings.Compressed,
         }.WithOptions(
         [
-            new("mode", "Compress to", OptionKind.Choice, "percent") { Choices = [new("percent", "Percentage"), new("size", "Target size")] },
-            new("percent", "Percentage of the original size", OptionKind.Number, "50")
+            new("mode", Strings.CompressTo, OptionKind.Choice, "percent") { Choices = [new("percent", Strings.Percentage), new("size", Strings.TargetSize)] },
+            new("percent", Strings.PercentageOfTheOriginalSize, OptionKind.Number, "50")
             {
                 Min = 5, Max = 95, Whole = true, Unit = "%", Slider = true, ShownWhen = new("mode", "percent"),
             },
-            new("size", "Target size", OptionKind.Number, "1")
+            new("size", Strings.TargetSize, OptionKind.Number, "1")
             {
-                Min = 0.01, Max = 100_000, Unit = "MB", ShownWhen = new("mode", "size"), Hint = "Each file ends up at most this size.",
+                Min = 0.01, Max = 100_000, Unit = Strings.MB, ShownWhen = new("mode", "size"), Hint = Strings.EachFileEndsUpAtMostThis,
             },
             .. dimensions
                 ? new[]
                 {
-                    new Option("scale", "Dimensions", OptionKind.Number, "100")
+                    new Option("scale", Strings.Dimensions, OptionKind.Number, "100")
                     {
                         Min = 10, Max = 100, Whole = true, Unit = "%", Slider = true,
-                        Hint = "100% keeps the width and height. Smaller dimensions keep more of the quality.",
+                        Hint = Strings.N100KeepsTheWidthAndHeightSmaller,
                     },
                 }
                 : [],
@@ -89,14 +89,14 @@ public sealed class CompressTool(Toolbox tools) : IConverter, IPreviewer
                 picture.Resize((uint)request.MaxSize, (uint)request.MaxSize);
             return new Preview(picture.ToByteArray(MagickFormat.Png),
             [
-                new("Now", $"{Describe.Size(original)} · {Describe.Pixels((int)before.Width, (int)before.Height)}"),
-                new("After", $"{Describe.Size(result.Bytes.Length)} · {Describe.Pixels(result.Width, result.Height)} ({Percent(result.Bytes.Length, original)})"),
-                new("Saved as", $"{result.Ext.ToUpperInvariant()}, {result.How}"),
+                new(Strings.Now, $"{Describe.Size(original)} · {Describe.Pixels((int)before.Width, (int)before.Height)}"),
+                new(Strings.After, $"{Describe.Size(result.Bytes.Length)} · {Describe.Pixels(result.Width, result.Height)} ({Percent(result.Bytes.Length, original)})"),
+                new(Strings.SavedAs, $"{result.Ext.ToUpperInvariant()}, {result.How}"),
             ]);
         }
 
         var media = await Ffmpeg.ProbeAsync(tools, input, ctx.Cancellation);
-        var now = new Fact("Now", $"{Describe.Size(original)} · {Describe.Length(media.Duration)}" + (media.Bitrate > 0 ? $" · {Describe.Rate(media.Bitrate)}" : ""));
+        var now = new Fact(Strings.Now, $"{Describe.Size(original)} · {Describe.Length(media.Duration)}" + (media.Bitrate > 0 ? $" · {Describe.Rate(media.Bitrate)}" : ""));
         if (Formats.Videos.Contains(Formats.Key(input)))
         {
             var plan = PlanVideo(media, original, target);
@@ -104,9 +104,9 @@ public sealed class CompressTool(Toolbox tools) : IConverter, IPreviewer
             return new Preview(frame,
             [
                 now,
-                new("After", $"about {Describe.Size(plan.Goal)} ({Percent(plan.Goal, original)}), MP4"),
-                new("Video", $"{Describe.Rate(plan.VideoKbps * 1000)}" + (plan.Width > 0 ? $" · {Describe.Pixels(plan.Width, plan.Height)}" : "")),
-                new("Sound", plan.AudioKbps > 0 ? $"{Describe.Rate(plan.AudioKbps * 1000)} AAC" : "None"),
+                new(Strings.After, string.Format(Strings.AboutMP4, Describe.Size(plan.Goal), Percent(plan.Goal, original))),
+                new(Strings.Video, $"{Describe.Rate(plan.VideoKbps * 1000)}" + (plan.Width > 0 ? $" · {Describe.Pixels(plan.Width, plan.Height)}" : "")),
+                new(Strings.Sound, plan.AudioKbps > 0 ? string.Format(Strings.AAC, Describe.Rate(plan.AudioKbps * 1000)) : Strings.None),
             ]);
         }
         var audio = PlanAudio(input, media, original, target);
@@ -114,8 +114,8 @@ public sealed class CompressTool(Toolbox tools) : IConverter, IPreviewer
         return new Preview(null,
         [
             now,
-            new("After", $"about {Describe.Size(estimate)} ({Percent(estimate, original)})"),
-            new("Saved as", $"{audio.Ext.ToUpperInvariant()}, {Describe.Rate(audio.Kbps * 1000)}"),
+            new(Strings.After, string.Format(Strings.About, Describe.Size(estimate), Percent(estimate, original))),
+            new(Strings.SavedAs, $"{audio.Ext.ToUpperInvariant()}, {Describe.Rate(audio.Kbps * 1000)}"),
         ]);
     }
 
@@ -126,7 +126,7 @@ public sealed class CompressTool(Toolbox tools) : IConverter, IPreviewer
             ? (long)(target.Number("size") * Megabyte)
             : (long)(original * target.Number("percent") / 100);
         if (goal >= original)
-            throw new ConversionException($"It's already {Describe.Size(original)}, which is under the target.");
+            throw new ConversionException(string.Format(Strings.ItSAlreadyWhichIsUnderThe, Describe.Size(original)));
         return goal;
     }
 
@@ -166,7 +166,7 @@ public sealed class CompressTool(Toolbox tools) : IConverter, IPreviewer
             if (bytes.Length <= goal)
                 return new ImageResult(bytes, key, (int)image.Width, (int)image.Height, how);
             if (attempt == 10 || Math.Min(image.Width, image.Height) <= 16)
-                throw new ConversionException($"Couldn't get this image down to {Describe.Size(goal)}.");
+                throw new ConversionException(string.Format(Strings.CouldnTGetThisImageDownTo, Describe.Size(goal)));
             var factor = Math.Clamp(Math.Sqrt((double)goal / bytes.Length) * 0.95, 0.3, 0.9);
             image.Resize(new Percentage(factor * 100));
         }
@@ -194,9 +194,9 @@ public sealed class CompressTool(Toolbox tools) : IConverter, IPreviewer
                 high = q - 1;
             }
         }
-        if (best is not null) return (best, $"quality {quality}");
+        if (best is not null) return (best, string.Format(Strings.Quality, quality));
         image.Quality = 5;
-        return (image.ToByteArray(format), "quality 5");
+        return (image.ToByteArray(format), Strings.Quality5);
     }
 
     /// <summary>PNG is lossless, so it shrinks by packing tighter, then by using at most 256 colours.</summary>
@@ -204,11 +204,11 @@ public sealed class CompressTool(Toolbox tools) : IConverter, IPreviewer
     {
         image.Settings.SetDefine(MagickFormat.Png, "compression-level", "9");
         var packed = image.ToByteArray(MagickFormat.Png);
-        if (packed.Length <= goal) return (packed, "all colours");
+        if (packed.Length <= goal) return (packed, Strings.AllColours);
         using var reduced = image.Clone();
         reduced.Quantize(new QuantizeSettings { Colors = 256, DitherMethod = DitherMethod.FloydSteinberg });
         reduced.Settings.SetDefine(MagickFormat.Png, "compression-level", "9");
-        return (reduced.ToByteArray(MagickFormat.Png), "256 colours");
+        return (reduced.ToByteArray(MagickFormat.Png), Strings.N256Colours);
     }
 
     internal sealed record VideoPlan(long Goal, int VideoKbps, int AudioKbps, int Width, int Height, string Filter);
@@ -217,7 +217,7 @@ public sealed class CompressTool(Toolbox tools) : IConverter, IPreviewer
     static VideoPlan PlanVideo(MediaInfo media, long original, Target target)
     {
         if (media.Duration <= 0)
-            throw new ConversionException("Couldn't tell how long this video is.");
+            throw new ConversionException(Strings.CouldnTTellHowLongThisVideo);
         var goal = Goal(target, original);
         var total = Math.Max(0, goal - 16384) * 8 / media.Duration / 1000 * 0.96;
         var audio = media.Audio is null ? 0 : total >= 1500 ? 160 : total >= 400 ? 128 : total >= 200 ? 96 : 64;
@@ -225,7 +225,7 @@ public sealed class CompressTool(Toolbox tools) : IConverter, IPreviewer
         if (video < 50)
         {
             var least = (long)((50 + audio) * 1000 / 8.0 * media.Duration / 0.96) + 16384;
-            throw new ConversionException($"{Describe.Size(goal)} is too small for {Describe.Length(media.Duration)} of video; it needs at least {Describe.Size(least)}.");
+            throw new ConversionException(string.Format(Strings.IsTooSmallForOfVideoIt, Describe.Size(goal), Describe.Length(media.Duration), Describe.Size(least)));
         }
         var scale = Scale(target);
         var text = scale.ToString("0.###", CultureInfo.InvariantCulture);
@@ -258,7 +258,7 @@ public sealed class CompressTool(Toolbox tools) : IConverter, IPreviewer
             if (attempt == 2 || kbps < 50)
             {
                 OutputPaths.TryDelete(output);
-                throw new ConversionException($"Couldn't get this video down to {Describe.Size(plan.Goal)}; it came out at {Describe.Size(size)}.");
+                throw new ConversionException(string.Format(Strings.CouldnTGetThisVideoDownTo, Describe.Size(plan.Goal), Describe.Size(size)));
             }
         }
     }
@@ -269,7 +269,7 @@ public sealed class CompressTool(Toolbox tools) : IConverter, IPreviewer
     static AudioPlan PlanAudio(string input, MediaInfo media, long original, Target target)
     {
         if (media.Duration <= 0)
-            throw new ConversionException("Couldn't tell how long this file is.");
+            throw new ConversionException(Strings.CouldnTTellHowLongThisFile);
         var goal = Goal(target, original);
         var key = Formats.Key(input) is "mp3" or "m4a" or "aac" or "ogg" or "opus" or "wma" ? Formats.Key(input) : "mp3";
         var (codec, least, most) = key switch
@@ -288,7 +288,7 @@ public sealed class CompressTool(Toolbox tools) : IConverter, IPreviewer
         if (kbps < least)
         {
             var size = (long)(least * 1000 / 8.0 * media.Duration / 0.97) + 4096;
-            throw new ConversionException($"{Describe.Size(goal)} is too small for {Describe.Length(media.Duration)} of {key.ToUpperInvariant()}; it needs at least {Describe.Size(size)}.");
+            throw new ConversionException(string.Format(Strings.IsTooSmallForOfItNeeds, Describe.Size(goal), Describe.Length(media.Duration), key.ToUpperInvariant(), Describe.Size(size)));
         }
         return new AudioPlan(key, kbps, ["-c:a", codec, "-b:a", $"{kbps}k"]);
     }

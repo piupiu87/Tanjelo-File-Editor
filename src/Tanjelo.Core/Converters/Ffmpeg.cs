@@ -55,7 +55,7 @@ static class Ffmpeg
         "opus" => ["-c:a", "libopus", "-b:a", "160k"],
         "aiff" => ["-c:a", "pcm_s16be"],
         "wma" => ["-c:a", "wmav2", "-b:a", "192k"],
-        _ => throw new ConversionException($"Can't write .{key} audio."),
+        _ => throw new ConversionException(string.Format(Strings.CanTWriteAudio, key)),
     };
 
     /// <summary>
@@ -99,7 +99,7 @@ static class Ffmpeg
                 "-pix_fmt", "yuv420p", .. Vf(even: false), "-c:a", "libopus", "-b:a", "128k"],
             "avi" => ["-c:v", "mpeg4", "-vtag", "xvid", "-q:v", "3", .. Vf(even: false), "-c:a", "libmp3lame", "-q:a", "3"],
             "wmv" => ["-c:v", "wmv2", "-q:v", "3", "-pix_fmt", "yuv420p", .. Vf(even: true), "-c:a", "wmav2", "-b:a", "192k"],
-            _ => throw new ConversionException($"Can't write .{key} video."),
+            _ => throw new ConversionException(string.Format(Strings.CanTWriteVideo, key)),
         };
     }
 
@@ -113,7 +113,7 @@ static class Ffmpeg
                 "format=duration,start_time,bit_rate:format_tags:stream=codec_type,codec_name,width,height,channels,channel_layout,sample_rate,bit_rate," +
                 "r_frame_rate,pix_fmt:stream_side_data=rotation:stream_disposition=attached_pic", "-of", "json", input], ct);
         if (result.ExitCode != 0)
-            throw new ConversionException($"ffmpeg can't read this file: {result.LastError}");
+            throw new ConversionException(string.Format(Strings.FfmpegCanTReadThisFile, result.LastError));
 
         using var json = JsonDocument.Parse(result.StdOut);
         string? video = null, audio = null, layout = null, pixels = null;
@@ -205,7 +205,7 @@ static class Ffmpeg
                 progress.Report(microseconds / 1_000_000.0 / duration);
         }, onStdErr: onLog);
         if (result.ExitCode != 0)
-            throw new ConversionException($"ffmpeg failed: {result.LastError}");
+            throw new ConversionException(string.Format(Strings.FfmpegFailed, result.LastError));
     }
 
     /// <summary>
@@ -237,7 +237,7 @@ static class Ffmpeg
         }
         catch (System.ComponentModel.Win32Exception ex)
         {
-            throw new ConversionException($"Couldn't start {Path.GetFileName(exe)}: {ex.Message}", ex);
+            throw new ConversionException(string.Format(Strings.CouldnTStart, Path.GetFileName(exe), ex.Message), ex);
         }
         process.StandardInput.Close();
         process.BeginErrorReadLine();
@@ -257,12 +257,12 @@ static class Ffmpeg
             // A reader that gave up leaves the program writing to a pipe nobody empties.
             try { process.Kill(entireProcessTree: true); } catch (InvalidOperationException) { }
             if (ct.IsCancellationRequested) throw new OperationCanceledException(ct);
-            if (ex is IOException) throw new ConversionException($"ffmpeg failed: {last}", ex);
+            if (ex is IOException) throw new ConversionException(string.Format(Strings.FfmpegFailed, last), ex);
             throw;
         }
         process.WaitForExit();
         if (process.ExitCode != 0)
-            throw new ConversionException($"ffmpeg failed: {last}");
+            throw new ConversionException(string.Format(Strings.FfmpegFailed, last));
     }
 
     /// <summary>Reads exactly <paramref name="buffer"/>'s length; false at the end of the stream.</summary>
@@ -304,7 +304,7 @@ static class Ffmpeg
                 throw;
             }
         }
-        throw lastError ?? new ConversionException("ffmpeg had nothing to do.");
+        throw lastError ?? new ConversionException(Strings.FfmpegHadNothingToDo);
     }
 
     /// <summary>
@@ -322,7 +322,7 @@ static class Ffmpeg
         await RunRawAsync(tools, ["-ss", Time(seconds), "-i", input, "-map", "0:v:0", "-frames:v", "1", .. vf, "-update", "1", output],
             0, new ActionProgress<double>(_ => { }), ct);
         if (!File.Exists(output))
-            throw new ConversionException($"There's no picture at {OptionValues.FormatTime(seconds)}.");
+            throw new ConversionException(string.Format(Strings.ThereSNoPictureAt, OptionValues.FormatTime(seconds)));
         return await File.ReadAllBytesAsync(output, ct);
     }
 

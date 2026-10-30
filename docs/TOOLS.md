@@ -147,6 +147,9 @@ work from "Send to" too.
 - Undo and redo with Ctrl+Z and Ctrl+Y.
 - Save (Ctrl+S) writes a copy beside the original; Cancel asks first when something changed.
 - Every edit can also be made with `tanj`.
+- Everything works from the keyboard. Tab goes through the buttons and sliders and onto the picture or timeline,
+  where it goes through the boxes, marks or stretches before moving on; each editor's panel lists its keys. A
+  screen reader hears what's selected as it changes.
 
 ### Audio and video editors share a timeline
 
@@ -186,7 +189,8 @@ Draw boxes over anything to hide, or have the faces and the words found, on this
 face finder that Windows' own machine learning runs: side-on, tilted, dim and masked faces too, and crowds down to faces
 about 20 pixels across. On Windows 10, which can't run it, Windows' own face detection looks instead, and finds only
 upright faces facing the camera. Words are read by Windows' OCR. Every box can be moved, resized or removed before
-saving. Each is hidden for good, as a solid colour (the safest), big pixels or a strong blur, and what you see is
+saving. From the keyboard, Insert or N adds a box in the middle, Tab selects the next, the arrows move it and Ctrl
+with the arrows sizes it. Each is hidden for good, as a solid colour (the safest), big pixels or a strong blur, and what you see is
 exactly what's saved. Saved as `photo-redacted.jpg`.
 
 The copy also loses the EXIF thumbnail (a small copy from before), the maker note, the location, XMP and IPTC; the
@@ -208,7 +212,8 @@ loupe) and a freehand pen and highlighter, each in a colour and a line width; te
 new callout or magnifier starts as big as the last one was made. Saved as `photo-annotated.jpg`.
 
 - Marks stay editable until saving: pick one to move it, pull its handles, restyle or delete it, or double-click text
-  to change it.
+  to change it. From the keyboard, Insert or Enter adds a mark with the tool in use in the middle, Tab
+  selects the next, the arrows move it and Ctrl with the arrows makes it bigger or smaller.
 - Each tool shows its key on its button (V select, A arrow, L line, R rectangle, E ellipse, T text, N callout,
   M magnifier, P pen, H highlighter), and the panel lists the rest.
 - Shift keeps lines to 45° and boxes square, and draws the pen and highlighter straight from where it went down,
@@ -281,7 +286,8 @@ Silence. Saved as `talk-bleeped.mp4`.
   to hear in moments, however long the file. A video's picture plays from the file itself, with the bleeped sound in
   step beside it.
 - I and O set the selected stretch's ends at the playhead, or mark a second's stretch when none is selected; Tab selects
-  the next one and Delete removes it. A stretch drawn over another covered the same way joins it; over one covered
+  the next one and Delete removes it. Insert or N marks a second from the playhead, Alt+← and Alt+→ move the selected
+  stretch (a second with Shift) and Ctrl+← and Ctrl+→ move its end. A stretch drawn over another covered the same way joins it; over one covered
   differently, it takes that part.
 - Bleeps start and stop within about a millisecond and a half of their times; everywhere else the sound is left exactly
   as it was. A video's picture is copied, not re-encoded; only its sound is.
@@ -308,7 +314,9 @@ drag its ends, or press I and O, to set when it starts and stops. Saved as `clip
   Both on this PC.
 - Hidden as for photos: a solid colour (the safest), big pixels or a strong blur. Playing or paused, each box shows
   what's saved on the frame showing, its pixels or blur made from that frame.
-- A box moved or resized by hand stays where it's put. Tab selects the next box, Delete removes one.
+- A box moved or resized by hand stays where it's put. Tab selects the next box, Delete removes one. Insert or N adds a
+  box in the middle from the playhead on, Alt and the arrows move it and Ctrl and the arrows size it (plain arrows step
+  through the frames).
 - The picture is re-encoded and the sound copied. The copy loses its location, cover pictures, subtitles and data
   tracks such as a camera's GPS log.
 
@@ -351,6 +359,6 @@ references, not copies, so files that were moved or deleted drop off.
 - Press the Tanjelo shortcut on the shelf to convert what's selected there (or everything on it).
 - **Delete** or × takes an item off the shelf, **Clear** takes them all; the files themselves stay where they are.
 - It doesn't take the focus when it appears and stays out of Alt+Tab and the taskbar. × or **Esc** hides it, and
-  *Show shelf* in the tray menu brings it back. Set `floatHotkey` in the [settings](../README.md#settings) to show or
-  hide it with a shortcut of its own.
+  *Show shelf* in the tray menu brings it back. Give it a shortcut of its own in [Settings](../README.md#settings)
+  (`floatHotkey` in settings.json) to show or hide it from anywhere.
 - The list survives a restart, in `%APPDATA%\Tanjelo\float.json`.

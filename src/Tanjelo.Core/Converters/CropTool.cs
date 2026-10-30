@@ -15,39 +15,39 @@ public static class Crop
 
     static readonly Choice[] Positions =
     [
-        new("center", "Centre"), new("top", "Top"), new("bottom", "Bottom"), new("left", "Left"), new("right", "Right"),
-        new("top-left", "Top left"), new("top-right", "Top right"), new("bottom-left", "Bottom left"), new("bottom-right", "Bottom right"),
-        new("custom", "Exact offset"),
+        new("center", Strings.Centre), new("top", Strings.Top), new("bottom", Strings.Bottom), new("left", Strings.Left), new("right", Strings.Right),
+        new("top-left", Strings.TopLeft), new("top-right", Strings.TopRight), new("bottom-left", Strings.BottomLeft), new("bottom-right", Strings.BottomRight),
+        new("custom", Strings.ExactOffset),
     ];
 
     /// <summary>The crop settings shared by pictures and video.</summary>
     public static Option[] Options =>
     [
-        new("mode", "Crop to", OptionKind.Choice, "aspect")
+        new("mode", Strings.CropTo, OptionKind.Choice, "aspect")
         {
-            Choices = [new("aspect", "Aspect ratio"), new("pixels", "Exact size"), new("free", "Free")],
-            Hint = "Or drag the box on the picture, which switches to Free.",
+            Choices = [new("aspect", Strings.AspectRatio), new("pixels", Strings.ExactSize), new("free", Strings.Free)],
+            Hint = Strings.OrDragTheBoxOnThePicture,
         },
-        new("aspect", "Aspect ratio", OptionKind.Choice, "1:1") { Choices = Ratios.Select(r => new Choice(r, r)).ToArray(), ShownWhen = new("mode", "aspect") },
-        new("lock", "Shape", OptionKind.Choice, "free")
+        new("aspect", Strings.AspectRatio, OptionKind.Choice, "1:1") { Choices = Ratios.Select(r => new Choice(r, r)).ToArray(), ShownWhen = new("mode", "aspect") },
+        new("lock", Strings.Shape, OptionKind.Choice, "free")
         {
-            Choices = [new("free", "Any"), .. Ratios.Select(r => new Choice(r, r))],
+            Choices = [new("free", Strings.Any), .. Ratios.Select(r => new Choice(r, r))],
             ShownWhen = new("mode", "free"),
-            Hint = "Drag inside the box to move it, pull its edges or corners to resize it, or drag outside it to draw a new one.",
+            Hint = Strings.DragInsideTheBoxToMoveIt,
         },
-        new("width", "Width", OptionKind.Number, "1080") { Min = 1, Max = 100_000, Whole = true, Unit = "px", ShownWhen = new("mode", "pixels", "free") },
-        new("height", "Height", OptionKind.Number, "1080")
+        new("width", Strings.Width, OptionKind.Number, "1080") { Min = 1, Max = 100_000, Whole = true, Unit = "px", ShownWhen = new("mode", "pixels", "free") },
+        new("height", Strings.Height, OptionKind.Number, "1080")
         {
             Min = 1, Max = 100_000, Whole = true, Unit = "px", ShownWhen = new("mode", "pixels", "free"),
-            Hint = "Larger than the picture? It's cut to fit.",
+            Hint = Strings.LargerThanThePictureItSCut,
         },
-        new("position", "Keep", OptionKind.Choice, "center") { Choices = Positions, ShownWhen = new("mode", "aspect", "pixels") },
+        new("position", Strings.Keep, OptionKind.Choice, "center") { Choices = Positions, ShownWhen = new("mode", "aspect", "pixels") },
         // Offsets belong to one picture, so they aren't carried over to the next.
-        new("x", "From the left", OptionKind.Number, "0")
+        new("x", Strings.FromTheLeft, OptionKind.Number, "0")
         {
             Min = 0, Max = 100_000, Whole = true, Unit = "px", Remember = false, ShownWhen = new("position", "custom") { Or = new("mode", "free") },
         },
-        new("y", "From the top", OptionKind.Number, "0")
+        new("y", Strings.FromTheTop, OptionKind.Number, "0")
         {
             Min = 0, Max = 100_000, Whole = true, Unit = "px", Remember = false, ShownWhen = new("position", "custom") { Or = new("mode", "free") },
         },
@@ -78,7 +78,7 @@ public static class Crop
             (w, h) = (Round(Math.Min(target.Number("width"), width)), Round(Math.Min(target.Number("height"), height)));
         }
         if (w < 2 || h < 2)
-            throw new ConversionException("That leaves too little of the picture.");
+            throw new ConversionException(Strings.ThatLeavesTooLittleOfThePicture);
 
         var position = target.Choice("position");
         int x = position switch
@@ -116,7 +116,7 @@ public static class Crop
         }
         var box = new Box(Round(x), Round(y), Round(w), Round(h));
         if (box.Width < 2 || box.Height < 2)
-            throw new ConversionException("That leaves too little of the picture.");
+            throw new ConversionException(Strings.ThatLeavesTooLittleOfThePicture);
         return box;
     }
 
@@ -145,19 +145,19 @@ public static class Crop
 
     internal static IReadOnlyList<Fact> Facts(Box box, int width, int height) =>
     [
-        new("Keeps", $"{Describe.Pixels(box.Width, box.Height)}, from {box.X}, {box.Y}"),
-        new("Of", Describe.Pixels(width, height)),
+        new(Strings.Keeps, string.Format(Strings.From, Describe.Pixels(box.Width, box.Height), box.X, box.Y)),
+        new(Strings.Of, Describe.Pixels(width, height)),
     ];
 }
 
 /// <summary>Crops pictures, animations included, after turning them the way they're meant to be seen.</summary>
 public sealed class CropImageTool : IConverter, IPreviewer
 {
-    static readonly Target Entry = new Target("crop", "Crop…", "Aspect ratio, size or free", Section.Image)
+    static readonly Target Entry = new Target("crop", Strings.Crop, Strings.AspectRatioSizeOrFree, Section.Image)
     {
         Kind = TargetKind.Tool,
-        Running = "Cropping…",
-        Done = "Cropped",
+        Running = Strings.Cropping,
+        Done = Strings.Cropped,
     }.WithOptions(Crop.Options);
 
     public IEnumerable<Target> TargetsFor(string input) =>
@@ -218,11 +218,11 @@ public sealed class CropImageTool : IConverter, IPreviewer
 /// </summary>
 public sealed class CropVideoTool(Toolbox tools) : IConverter, IPreviewer
 {
-    static readonly Target Entry = new Target("crop", "Crop…", "Aspect ratio, size or free", Section.Video)
+    static readonly Target Entry = new Target("crop", Strings.Crop, Strings.AspectRatioSizeOrFree, Section.Video)
     {
         Kind = TargetKind.Tool,
-        Running = "Cropping…",
-        Done = "Cropped",
+        Running = Strings.Cropping,
+        Done = Strings.Cropped,
     }.WithOptions(Crop.Options);
 
     public IEnumerable<Target> TargetsFor(string input) =>
@@ -233,7 +233,7 @@ public sealed class CropVideoTool(Toolbox tools) : IConverter, IPreviewer
         var media = await Ffmpeg.ProbeAsync(tools, input, ctx.Cancellation);
         var box = BoxFor(media, target);
         if (box.Width == media.Width && box.Height == media.Height)
-            throw new ConversionException("That keeps the whole picture, so there's nothing to crop.");
+            throw new ConversionException(Strings.ThatKeepsTheWholePictureSoThere);
 
         var key = Ffmpeg.CanEncodeVideo(Formats.Key(input)) ? Formats.Key(input) : "mp4";
         var output = OutputPaths.Suffixed(input, "cropped", key);
@@ -255,7 +255,7 @@ public sealed class CropVideoTool(Toolbox tools) : IConverter, IPreviewer
     static Crop.Box BoxFor(MediaInfo media, Target target)
     {
         if (media.Video is null || media.Width <= 0 || media.Height <= 0)
-            throw new ConversionException("Couldn't tell how big this video's picture is.");
+            throw new ConversionException(Strings.CouldnTTellHowBigThisVideo);
         return Crop.Compute(media.Width, media.Height, target, even: true);
     }
 

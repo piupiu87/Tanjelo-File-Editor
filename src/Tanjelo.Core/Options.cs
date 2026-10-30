@@ -87,28 +87,28 @@ public sealed record Option(string Name, string Label, OptionKind Kind, string D
         switch (Kind)
         {
             case OptionKind.Number:
-                var range = $"{OptionValues.Format(Min)} to {OptionValues.Format(Max)}";
+                var range = string.Format(Strings.To, OptionValues.Format(Min), OptionValues.Format(Max));
                 if (!OptionValues.TryNumber(value, out var number) || number < Min || number > Max)
-                    return Whole ? $"must be a whole number from {range}" : $"must be a number from {range}";
-                return Whole && number != Math.Floor(number) ? $"must be a whole number from {range}" : null;
+                    return Whole ? string.Format(Strings.MustBeAWholeNumberFrom, range) : string.Format(Strings.MustBeANumberFrom, range);
+                return Whole && number != Math.Floor(number) ? string.Format(Strings.MustBeAWholeNumberFrom, range) : null;
             case OptionKind.Choice:
-                return Choices.Any(c => c.Value == value) ? null : "must be one of " + string.Join(", ", Choices.Select(c => c.Value));
+                return Choices.Any(c => c.Value == value) ? null : Strings.MustBeOneOf + string.Join(", ", Choices.Select(c => c.Value));
             case OptionKind.Toggle:
-                return OptionValues.TryFlag(value, out _) ? null : "must be true or false";
+                return OptionValues.TryFlag(value, out _) ? null : Strings.MustBeTrueOrFalse;
             case OptionKind.Colour:
-                return Colour.TryParse(value, out _) ? null : "must be a colour such as #FF8800";
+                return Colour.TryParse(value, out _) ? null : Strings.MustBeAColourSuchAsFF8800;
             case OptionKind.File:
-                if (value.Length == 0) return Optional ? null : "is needed";
-                return File.Exists(value) ? null : "must be a file that exists";
+                if (value.Length == 0) return Optional ? null : Strings.IsNeeded;
+                return File.Exists(value) ? null : Strings.MustBeAFileThatExists;
             case OptionKind.TimeRange:
-                return OptionValues.TryRange(value, out _) ? null : "must be a time range such as 0:30-1:45";
+                return OptionValues.TryRange(value, out _) ? null : Strings.MustBeATimeRangeSuchAs;
             case OptionKind.Times:
-                if (!OptionValues.TryTimes(value, out var times)) return "must be times such as 0:05, 1:12.5";
-                return times.Count == 0 && !Optional ? "needs at least one time" : null;
+                if (!OptionValues.TryTimes(value, out var times)) return Strings.MustBeTimesSuchAs005;
+                return times.Count == 0 && !Optional ? Strings.NeedsAtLeastOneTime : null;
             case OptionKind.Order:
-                return OptionValues.TryOrder(value, out _) ? null : "must list each file once, such as 2,1,3";
+                return OptionValues.TryOrder(value, out _) ? null : Strings.MustListEachFileOnceSuchAs;
             default:
-                return value.Length == 0 && !Optional ? "is needed" : null;
+                return value.Length == 0 && !Optional ? Strings.IsNeeded : null;
         }
     }
 }

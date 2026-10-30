@@ -79,6 +79,7 @@ public class VideoRedactEditorTests
                 Assert.Empty(result.Failures);
                 Assert.Equal(["1 area hidden"], result.Notes);
 
+                editor.Press(Key.Escape);
                 editor.Press(Key.Tab);
                 editor.Press(Key.Delete);
                 Assert.Empty(editor.Current.Boxes);
@@ -233,7 +234,7 @@ public class VideoRedactEditorTests
                 await editor.FaceLook;
                 Assert.False(editor.CanFollowNow);
 
-                editor.Press(Key.Tab);
+                editor.Press(Key.Tab, ModifierKeys.Shift);
                 Assert.Equal(0, editor.Selected);
                 await editor.FaceLook;
                 Assert.True(editor.CanFollowNow);

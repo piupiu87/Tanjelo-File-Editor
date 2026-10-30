@@ -11,6 +11,9 @@ static class Native
     public const uint SWP_NOSIZE = 0x1, SWP_NOZORDER = 0x4, SWP_NOACTIVATE = 0x10;
     public const uint MONITOR_DEFAULTTONEAREST = 2;
     public const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20, DWMWA_WINDOW_CORNER_PREFERENCE = 33, DWMWCP_ROUND = 2;
+    public const int WM_SETTINGCHANGE = 0x001A;
+    public const uint SMTO_ABORTIFHUNG = 0x2;
+    public static readonly IntPtr HWND_BROADCAST = new(0xFFFF);
 
     [StructLayout(LayoutKind.Sequential)]
     public struct POINT { public int X, Y; }
@@ -25,6 +28,10 @@ static class Native
         public RECT rcMonitor, rcWork;
         public uint dwFlags;
     }
+
+    /// <summary>Tells every window a setting changed, such as the PATH, without waiting on one that hangs.</summary>
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern IntPtr SendMessageTimeout(IntPtr hwnd, int msg, IntPtr wParam, string lParam, uint flags, uint timeout, out IntPtr result);
 
     public delegate void WinEventProc(IntPtr hook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint thread, uint time);
 
