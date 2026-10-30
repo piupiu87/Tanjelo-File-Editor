@@ -28,6 +28,10 @@ ffmpeg and pandoc; Office tests skip there.
 `tanj` is the quickest way to try a change by hand: `tanj targets <files>` shows what the menu would offer, and
 `tanj convert <key> [--name=value] <files>` runs one entry.
 
+The README's screenshots in `docs/images` come from the `ReadmeScreenshots` class, which draws its own landscape so no
+one's files or paths show. It runs only when `TANJELO_SCREENSHOTS` holds the full path of the folder to save them in;
+after changing a window they show, point it at `docs\images` and run that class.
+
 ## How the code is laid out
 
 | Project | What's in it |

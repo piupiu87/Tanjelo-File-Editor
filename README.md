@@ -13,6 +13,11 @@ Select files in File Explorer, press **Ctrl+Shift+Space**, and pick what they sh
 pointer. The result appears next to the original, which is never overwritten (`photo.png` → `photo.jpg`, then
 `photo (2).jpg`, …). Everything runs offline.
 
+<p align="center">
+  <img src="docs/images/menu.png" height="340" alt="Tanjelo's menu for lakeside.jpg, on its Tools tab: Compress, Metadata, Crop, Add background, Redact, Annotate and Edit photo, each with a short description">
+  <img src="docs/images/annotate.png" height="340" alt="The Annotate editor with a caption, an arrow pointing at the sun, two numbered callouts, a box around the trees and a magnifier on the water">
+</p>
+
 Inspired by the Tangerine converter for macOS, and named after the tangelo, a tangerine hybrid. Tanjelo is an
 independent project, not affiliated with Tangerine.
 
@@ -118,6 +123,8 @@ silence from its ends; split a PDF into pages, or merge several.
 | Make a video… | Audio | Makes a video of the sound, with a moving waveform or a still picture |
 | Channel volume… | Audio, video | Sets the left and right volume, from 0% to 400% |
 
+<p align="center"><img src="docs/images/add-background.png" width="480" alt="The Add background dialog: a preview of the picture on a diagonal gradient with space around, rounded corners and a soft shadow, beside its settings"></p>
+
 **Editors** open a window of their own, for one file:
 
 | Editor | Works on | What you do |
@@ -129,6 +136,8 @@ silence from its ends; split a PDF into pages, or merge several.
 | Trim… | Video, audio | Cut video to the exact frame, without re-encoding when the cuts fall on keyframes, and sound to the sample |
 | Bleep… | Audio, video | Cover stretches of the sound, each with a tone of its own pitch or silence, and hear them before saving |
 | Redact… | Video | Hide areas for stretches of time, found faces too, with boxes that can follow a face |
+
+<p align="center"><img src="docs/images/trim.png" width="680" alt="The Trim editor in the dark theme: a video above a timeline of thumbnails and the sound's waveform, with the part kept outlined between two handles"></p>
 
 **Actions** work with the files and folders themselves: Copy path, Copy, Open in Terminal, Share…, Float (the shelf)
 and Move to….
@@ -201,8 +210,8 @@ Office, LibreOffice, ffmpeg, 7-Zip and the WebView2 runtime run on your PC; WebV
 
 ## Code signing policy
 
-Tanjelo has applied to [SignPath Foundation](https://signpath.org) for free code signing. Until that's approved,
-releases are unsigned.
+Releases are unsigned for now. Signing is planned through [SignPath Foundation](https://signpath.org), which signs
+open-source projects for free; this is how it will work.
 
 - **Committers and reviewers:** [piupiu87](https://github.com/piupiu87)
 - **Approvers:** [piupiu87](https://github.com/piupiu87)
@@ -294,9 +303,10 @@ SignPath; [.signpath/README.md](.signpath/README.md) says how it's set up.
 ## Roadmap
 
 v1.0 makes Tanjelo ready for everyone: an installer and a winget package, the .NET runtime inside, a settings window,
-an opt-in update check, an accessibility pass and text ready to translate. Code signing and the Windows 11 menu entry
-follow once SignPath Foundation approves the signing. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are
-welcome; open an issue first for anything big, and see [CONTRIBUTING.md](CONTRIBUTING.md).
+an opt-in update check, an accessibility pass and text ready to translate. It ships unsigned: code signing, and the
+Windows 11 menu entry that needs it, are on hold for a later release. See [docs/ROADMAP.md](docs/ROADMAP.md) for the
+full plan. Ideas and pull requests are welcome; open an issue first for anything big, and see
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

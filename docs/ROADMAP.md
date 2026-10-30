@@ -120,9 +120,16 @@ A shared timeline first, then the editors that use it.
 - [x] Installer with a Start menu entry and clean uninstall (M)
 - [x] winget package: `winget install Tanjelo` (S). The manifests come with each release, for a pull request to
   microsoft/winget-pkgs.
-- [ ] Code signing, so downloads don't trigger "Windows protected your PC" (SignPath Foundation offers free signing for open-source projects) (M). The release workflow is ready and signs once SignPath approves; if that comes after v1.0, v1.1 brings it.
-- [ ] Entry in the Windows 11 right-click menu (needs a signed package) (M/L). Built and tried on CI; it ships with
-  the first signed release.
+
+v1.0 ships unsigned, so the first launch may show "Windows protected your PC" until signing comes.
+
+## Signed releases (on hold)
+
+- [ ] Code signing, so downloads don't trigger "Windows protected your PC" (SignPath Foundation offers free signing for
+  open-source projects) (M). The release workflow's signing steps are written and stay off until the SignPath secrets
+  are added ([.signpath/README.md](../.signpath/README.md)).
+- [ ] Entry in the Windows 11 right-click menu (needs a signed package) (M/L). Built and tried unsigned on CI; it ships
+  with the first signed release.
 
 ## Later, if there's demand
 
@@ -133,7 +140,7 @@ A shared timeline first, then the editors that use it.
 
 - [x] CONTRIBUTING.md: building, running tests, and how to add a converter (S)
 - [x] Issue templates: bug reports that ask for `tanj tools` output, and feature requests (S)
-- [ ] Screenshots or a short GIF in the README (S)
+- [x] Screenshots in the README, made off-screen by `ReadmeScreenshots` (S)
 
 ## Not planned
 
