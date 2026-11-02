@@ -672,6 +672,9 @@
   <data name="AnotherAppIsUsingTheClipboardTry" xml:space="preserve">
     <value>Another app is using the clipboard. Try again in a moment.</value>
   </data>
+  <data name="ThePictureOnTheClipboardIsTooLarge" xml:space="preserve">
+    <value>The picture on the clipboard is too large: {0} × {1} pixels is over 250 megapixels.</value>
+  </data>
   <data name="CopyPath" xml:space="preserve">
     <value>Copy path</value>
   </data>

@@ -216,13 +216,6 @@ public class ShelfTests
         });
     }
 
-    sealed class FakeClipboard : Tanjelo.Core.Converters.IClipboard
-    {
-        public IReadOnlyList<string>? Files { get; private set; }
-        public void SetText(string text) { }
-        public void SetFiles(IReadOnlyList<string> paths) => Files = paths;
-    }
-
     static ListBoxItem Container(ListBox list, int index) => (ListBoxItem)list.ItemContainerGenerator.ContainerFromIndex(index);
 
     static void Press(UIElement element) => LeftMouseButton(element, Mouse.PreviewMouseDownEvent, Mouse.MouseDownEvent);

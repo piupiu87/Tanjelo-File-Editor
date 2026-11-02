@@ -11,10 +11,25 @@ public interface IClipboard
 
     /// <summary>Puts files on the clipboard the way Explorer's Copy does, ready to paste.</summary>
     void SetFiles(IReadOnlyList<string> paths);
+
+    /// <summary>
+    /// Puts a picture on the clipboard for chats, documents and Paint (as a PNG and as bitmaps) and, alongside, the file
+    /// itself for Explorer.
+    /// </summary>
+    void SetPicture(string file);
+
+    /// <summary>What's on the clipboard that Tanjelo can use. Throws <see cref="ConversionException"/> when another app holds it.</summary>
+    ClipboardData Read();
+
+    /// <summary>A number that changes each time anything is copied.</summary>
+    uint Sequence { get; }
 }
 
 public sealed class WindowsClipboard : IClipboard
 {
+    /// <summary>WPF's name for CF_DIBV5, which it has none of its own for; asking by number first ties the name to it.</summary>
+    static readonly string DibV5 = DataFormats.GetDataFormat((int)ClipboardData.CF_DIBV5).Name;
+
     public void SetText(string text) => OnStaThread(() => Clipboard.SetDataObject(new DataObject(DataFormats.UnicodeText, text), copy: true));
 
     public void SetFiles(IReadOnlyList<string> paths) => OnStaThread(() =>
@@ -26,14 +41,108 @@ public sealed class WindowsClipboard : IClipboard
         Clipboard.SetDataObject(data, copy: true);
     });
 
+    public void SetPicture(string file)
+    {
+        var data = PictureData(file); // decoded here, off the clipboard's thread
+        OnStaThread(() => Clipboard.SetDataObject(data, copy: true));
+    }
+
+    /// <summary>What <see cref="SetPicture"/> puts on the clipboard: PNG, CF_DIBV5, CF_DIB, and the file to paste as a copy.</summary>
+    public static DataObject PictureData(string file)
+    {
+        var (png, dibV5, dib) = ClipboardPicture.ClipboardFormats(file);
+        var data = new DataObject();
+        // Stored as they are: WPF would otherwise offer bitmap formats made from them that it can't make from bytes.
+        data.SetData("PNG", new MemoryStream(png), autoConvert: false);
+        data.SetData(DibV5, new MemoryStream(dibV5), autoConvert: false);
+        data.SetData(DataFormats.Dib, new MemoryStream(dib), autoConvert: false);
+        data.SetData(DataFormats.FileDrop, new[] { Path.GetFullPath(file) });
+        data.SetData("Preferred DropEffect", new MemoryStream(BitConverter.GetBytes(1)));
+        return data;
+    }
+
+    public uint Sequence => GetClipboardSequenceNumber();
+
+    public ClipboardData Read() => OnStaThread(() =>
+    {
+        // Another app may have it open for a moment, as every app does while it copies.
+        for (var attempt = 1; !OpenClipboard(IntPtr.Zero); attempt++)
+        {
+            if (attempt == 5) throw new ConversionException(Strings.AnotherAppIsUsingTheClipboardTry);
+            Thread.Sleep(50);
+        }
+        try
+        {
+            // The bytes are copied out and the clipboard closed at once; the picture is decoded afterwards. Only what
+            // wins is read, since asking an app for a format it renders late makes it do the work there and then.
+            var formats = new List<uint>();
+            for (var format = EnumClipboardFormats(0); format != 0; format = EnumClipboardFormats(format))
+                formats.Add(format);
+            var files = formats.Contains(ClipboardData.CF_HDROP) ? DroppedFiles() : [];
+            if (files.Any(p => File.Exists(p) || Directory.Exists(p)))
+                return new ClipboardData { Files = files };
+            var pngFormat = RegisterClipboardFormat("PNG");
+            var png = formats.Contains(pngFormat) ? Bytes(pngFormat) : null;
+            if (png is not null && ClipboardPicture.IsPng(png))
+                return new ClipboardData { Files = files, Png = png };
+            var own = ClipboardData.OwnBitmap(formats);
+            return new ClipboardData { Files = files, Png = png, Bitmap = own == 0 ? null : Bytes(own) };
+        }
+        finally
+        {
+            CloseClipboard();
+        }
+    });
+
+    static byte[]? Bytes(uint format)
+    {
+        var handle = GetClipboardData(format);
+        if (handle == IntPtr.Zero) return null;
+        var size = (long)GlobalSize(handle);
+        var pointer = GlobalLock(handle);
+        if (pointer == IntPtr.Zero || size is <= 0 or > int.MaxValue) return null;
+        try
+        {
+            var bytes = new byte[size];
+            Marshal.Copy(pointer, bytes, 0, bytes.Length);
+            return bytes;
+        }
+        finally
+        {
+            GlobalUnlock(handle);
+        }
+    }
+
+    static List<string> DroppedFiles()
+    {
+        var drop = GetClipboardData(ClipboardData.CF_HDROP);
+        var files = new List<string>();
+        if (drop == IntPtr.Zero) return files;
+        var count = DragQueryFile(drop, uint.MaxValue, null, 0);
+        for (uint i = 0; i < count; i++)
+        {
+            var name = new char[DragQueryFile(drop, i, null, 0) + 1];
+            if (DragQueryFile(drop, i, name, (uint)name.Length) > 0)
+                files.Add(new string(name, 0, name.Length - 1));
+        }
+        return files;
+    }
+
     // The clipboard needs a single-threaded apartment, and the engine runs on the thread pool. copy: true flushes
     // the data to the clipboard, so it stays there after this thread, or the whole program, has exited.
-    static void OnStaThread(Action action)
+    static void OnStaThread(Action action) => OnStaThread(() =>
+    {
+        action();
+        return true;
+    });
+
+    static T OnStaThread<T>(Func<T> work)
     {
         Exception? error = null;
+        T result = default!;
         var thread = new Thread(() =>
         {
-            try { action(); }
+            try { result = work(); }
             catch (Exception ex) { error = ex; }
         });
         thread.SetApartmentState(ApartmentState.STA);
@@ -43,7 +152,38 @@ public sealed class WindowsClipboard : IClipboard
             throw new ConversionException(Strings.AnotherAppIsUsingTheClipboardTry, error);
         if (error is not null)
             throw error;
+        return result;
     }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    static extern bool OpenClipboard(IntPtr owner);
+
+    [DllImport("user32.dll")]
+    static extern bool CloseClipboard();
+
+    [DllImport("user32.dll")]
+    static extern uint EnumClipboardFormats(uint format);
+
+    [DllImport("user32.dll")]
+    static extern IntPtr GetClipboardData(uint format);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    static extern uint RegisterClipboardFormat(string name);
+
+    [DllImport("user32.dll")]
+    static extern uint GetClipboardSequenceNumber();
+
+    [DllImport("kernel32.dll")]
+    static extern IntPtr GlobalLock(IntPtr memory);
+
+    [DllImport("kernel32.dll")]
+    static extern bool GlobalUnlock(IntPtr memory);
+
+    [DllImport("kernel32.dll")]
+    static extern UIntPtr GlobalSize(IntPtr memory);
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    static extern uint DragQueryFile(IntPtr drop, uint index, char[]? file, uint size);
 }
 
 /// <summary>Actions that work on the selection itself, for files and folders alike.</summary>

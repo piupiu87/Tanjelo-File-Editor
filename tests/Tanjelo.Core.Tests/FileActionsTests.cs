@@ -4,15 +4,6 @@ namespace Tanjelo.Core.Tests;
 
 public class FileActionsTests
 {
-    /// <summary>Records what would have gone on the clipboard, so the tests leave the real one alone.</summary>
-    sealed class FakeClipboard : IClipboard
-    {
-        public string? Text { get; private set; }
-        public IReadOnlyList<string>? Files { get; private set; }
-        public void SetText(string text) => Text = text;
-        public void SetFiles(IReadOnlyList<string> paths) => Files = paths;
-    }
-
     readonly FakeClipboard _clipboard = new();
 
     ConverterEngine Engine() => new(Env.Tools, null, [new MoveToFolderAction()], [new ClipboardActions(_clipboard), new OpenTerminalAction(Env.Tools)]);
