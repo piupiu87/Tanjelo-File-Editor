@@ -104,6 +104,26 @@ public sealed class ClipboardPicture
         return new ClipboardPicture(EncodePng(pixels, width, height, opaque), width, height);
     }
 
+    /// <summary>Entries that make no sense for a file Tanjelo holds in its own folder rather than one of the user's.</summary>
+    static readonly HashSet<string> NotForHeldFiles = ["copy-path", "copy-files", "open-terminal", "move-to", "metadata"];
+
+    /// <summary>
+    /// The menu for a picture taken from the clipboard: every picture entry, but no archives, and no Copy path, Copy,
+    /// Open in Terminal, Move to… or Metadata…, which would work on Tanjelo's own copy; and, with
+    /// <paramref name="saveHere"/> (the folder in front when the shortcut was pressed), Save in "Folder" after Save to….
+    /// </summary>
+    public static MenuModel ForMenu(MenuModel menu, string? saveHere)
+    {
+        var targets = new List<Target>();
+        foreach (var target in menu.Targets.Where(t => t.Section != Section.Archive && !NotForHeldFiles.Contains(t.Key)))
+        {
+            targets.Add(target);
+            if (target.Key == "save-to" && saveHere is not null)
+                targets.Add(Converters.SaveToFolderAction.In(target, saveHere));
+        }
+        return menu with { Targets = targets };
+    }
+
     static void CheckSize(int width, int height)
     {
         if ((long)width * height > MaxPixels)

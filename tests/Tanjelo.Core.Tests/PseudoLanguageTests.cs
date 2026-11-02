@@ -106,7 +106,7 @@ public class PseudoLanguageTests
         var clip = Env.HasFfmpeg ? scratch.Numbered("clip.mp4", seconds: 2) : null;
         var tone = Env.HasFfmpeg ? scratch.Tone("tone.wav") : null;
         // Names, sizes and numbers that come from the files and settings rather than the resource files.
-        string[] data = ["photo.png", "second.png", "report.pdf", "Ctrl+Shift+Space", "Ctrl+Shift+F", "photo.jpg", "a.png", "b.png"];
+        string[] data = ["photo.png", "second.png", "report.pdf", "Ctrl+Shift+Space", "Ctrl+Shift+F", "Ctrl+Shift+V", "photo.jpg", "a.png", "b.png"];
         var problems = new List<string>();
         await Ui.Run(async () =>
         {
@@ -124,12 +124,17 @@ public class PseudoLanguageTests
                 }
             }
 
-            await Check("settings", new SettingsWindow(new Settings { FloatHotkey = "Ctrl+Shift+F" }, _ => { }, new FakeWindowsSettings { CanUseWindows11Menu = true }, (_, _) => new Toolbox()), 600, 1700);
+            await Check("settings", new SettingsWindow(new Settings { FloatHotkey = "Ctrl+Shift+F", ClipboardHotkey = "Ctrl+Shift+V" }, _ => { }, new FakeWindowsSettings { CanUseWindows11Menu = true }, (_, _) => new Toolbox()), 600, 1700);
             var engine = Env.Engine();
             await Check("menu", new FormatMenuWindow([photo], engine.GetMenu([photo])), 330, 700);
             var card = new ProgressToast();
             card.ShowResult(Env.Offered(engine, "jpg", [photo]), [photo], new BatchResult([photo], [], [], false));
             await Check("card", card, 360, 200);
+            var onShelf = new ProgressToast();
+            onShelf.ShowResult(Env.Offered(engine, "jpg", [photo]), [photo], new BatchResult([photo], [], [], false), onShelf: true);
+            await Check("card-shelf", onShelf, 360, 200);
+            await Check("menu-clipboard", new FormatMenuWindow([second], ClipboardPicture.ForMenu(engine.GetMenu([second]), scratch.Dir), null,
+                (Tanjelo.Strings.ClipboardPicture, string.Format(Tanjelo.Strings.PngSize, 320, 240))), 330, 700);
             // With a picture from the clipboard, which says it's not saved yet.
             var clipboardFolder = new ClipboardFolder(scratch.PathOf("Clipboard"), () => DateTime.Now);
             var shelf = new Shelf(clipboardFolder);

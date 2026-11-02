@@ -63,6 +63,11 @@ public sealed class WindowsClipboard : IClipboard
 
     public uint Sequence => GetClipboardSequenceNumber();
 
+    /// <summary>Whether copied files or a picture are on the clipboard, asked without opening it, as the tray menu opens.</summary>
+    public static bool HasPictureOrFiles() =>
+        new[] { ClipboardData.CF_HDROP, ClipboardData.CF_DIBV5, ClipboardData.CF_DIB, ClipboardData.CF_BITMAP, RegisterClipboardFormat("PNG") }
+            .Any(IsClipboardFormatAvailable);
+
     public ClipboardData Read() => OnStaThread(() =>
     {
         // Another app may have it open for a moment, as every app does while it copies.
@@ -172,6 +177,9 @@ public sealed class WindowsClipboard : IClipboard
 
     [DllImport("user32.dll")]
     static extern uint GetClipboardSequenceNumber();
+
+    [DllImport("user32.dll")]
+    static extern bool IsClipboardFormatAvailable(uint format);
 
     [DllImport("kernel32.dll")]
     static extern IntPtr GlobalLock(IntPtr memory);

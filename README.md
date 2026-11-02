@@ -57,6 +57,7 @@ The app isn't code-signed yet, so the first launch may show "Windows protected y
 | "Send to" menu | Turn on *Show in the "Send to" menu* in Settings, then right-click files → Send to → Tanjelo |
 | Windows 11 right-click menu | In a signed release, turn on *Show in the Windows 11 right-click menu* in Settings, then right-click files → **Tanjelo…** for the same menu as the shortcut |
 | Float shelf | Drop files on the shelf at the right edge of the screen, or press **Ctrl+V** there to park copied files or a picture; drag copies out later (hold Shift to move them), or press the shortcut there to convert them; right-click them to copy them, save copies or show them in their folder |
+| Screenshots and copied pictures | With nothing selected, press **Ctrl+Shift+Space** in Explorer or on the desktop for the menu for the picture on the clipboard; or give it a shortcut of its own in Settings that works in every app, or right-click the tray icon → *Clipboard picture…*. The picture and its results wait on the shelf, in Tanjelo's own folder, until you save or drag them where you want them (see [clipboard pictures](docs/TOOLS.md#clipboard-pictures)) |
 | Command line | `tanj convert webp *.png` (see [Command line](#command-line)) |
 
 The menu has three tabs: **Convert**, **Tools** and **Actions**. Press **Tab** (or the shortcut again) to switch, or
@@ -163,8 +164,8 @@ Save to… (a copy in a folder you pick) and Move to….
 
 ## Settings
 
-Tray menu → *Settings…* opens the settings window: the menu's and the shelf's shortcuts (click a box and press the
-keys), the theme, the quality of JPG, WebP and HEIC pictures and of PDF pages saved as pictures, where ffmpeg and 7-Zip
+Tray menu → *Settings…* opens the settings window: the shortcuts for the menu, the shelf and the clipboard picture's
+menu (click a box and press the keys), the theme, the quality of JPG, WebP and HEIC pictures and of PDF pages saved as pictures, where ffmpeg and 7-Zip
 are when they aren't found automatically, which optional programs were found, *Start with Windows*, the "Send to"
 entry, the Windows 11 menu entry (in signed releases) and the [update check](#privacy). Changes apply at once.
 
@@ -175,6 +176,7 @@ by hand; changes apply as soon as you save it.
 {
   "hotkey": "Ctrl+Shift+Space",
   "floatHotkey": null,        // e.g. "Ctrl+Shift+F" to show or hide the Float shelf from anywhere
+  "clipboardHotkey": null,    // e.g. "Ctrl+Shift+V" for the clipboard picture's menu from anywhere
   "theme": "system",          // "system", "light" or "dark"
   "jpegQuality": 90,
   "webpQuality": 90,

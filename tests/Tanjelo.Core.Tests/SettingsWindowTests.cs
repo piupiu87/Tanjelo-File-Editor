@@ -187,6 +187,45 @@ public class SettingsWindowTests
     }
 
     [Fact]
+    public async Task The_clipboard_menu_s_shortcut_is_optional_and_can_t_be_another_s()
+    {
+        await Ui.Run(async () =>
+        {
+            var h = new Harness();
+            h.Open(new Settings { FloatHotkey = "Ctrl+Shift+F" });
+            await Ui.Settle();
+            var w = h.Window;
+            Assert.Equal("", w.ClipboardShortcut.Text);
+            Assert.False(w.ClearClipboardShortcut.IsEnabled);
+
+            w.ClipboardShortcut.Press(Key.V, ModifierKeys.Control | ModifierKeys.Shift);
+            Assert.Equal("Ctrl+Shift+V", h.Last.ClipboardHotkey);
+            Assert.Equal("Ctrl+Shift+F", h.Last.FloatHotkey);
+            Assert.True(w.ClearClipboardShortcut.IsEnabled);
+
+            // The menu's and the shelf's keys are taken; the clipboard menu's are taken for them too.
+            var count = h.Applied.Count;
+            w.ClipboardShortcut.Press(Key.F, ModifierKeys.Control | ModifierKeys.Shift);
+            Assert.Contains("shelf's shortcut", w.ShortcutProblem.Text);
+            w.ClipboardShortcut.Press(Key.Space, ModifierKeys.Control | ModifierKeys.Shift);
+            Assert.Contains("menu's shortcut", w.ShortcutProblem.Text);
+            w.ShelfShortcut.Press(Key.V, ModifierKeys.Control | ModifierKeys.Shift);
+            Assert.Contains("clipboard menu's shortcut", w.ShortcutProblem.Text);
+            Assert.Equal(count, h.Applied.Count);
+            Assert.Equal("Ctrl+Shift+V", w.ClipboardShortcut.Text);
+
+            w.ClearClipboardShortcut.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            Assert.Null(h.Last.ClipboardHotkey);
+            Assert.False(w.ClearClipboardShortcut.IsEnabled);
+
+            // Edited by hand, it shows up.
+            w.Show(new Settings { ClipboardHotkey = "Alt+F3" });
+            Assert.Equal("Alt+F3", w.ClipboardShortcut.Text);
+            Assert.True(w.ClearClipboardShortcut.IsEnabled);
+        });
+    }
+
+    [Fact]
     public async Task Program_paths_are_checked_as_they_are_typed_and_hand_edits_show_up()
     {
         using var scratch = new Scratch();

@@ -51,7 +51,15 @@ public partial class ProgressToast : Window
         if (!Bar.IsIndeterminate) Bar.Value = progress.Fraction;
     }
 
-    public void ShowResult(Target target, IReadOnlyList<string> inputs, BatchResult result)
+    /// <summary>Where Save as… on a card saves copies; returns the copies, or none when canceled. Tests answer instead of the dialogs.</summary>
+    internal Func<IReadOnlyList<string>, IReadOnlyList<string>> SaveCopies { get; set; } =
+        paths => Tanjelo.SaveCopies.Save(paths, Tanjelo.SaveCopies.AskFileName, Tanjelo.SaveCopies.AskFolder);
+
+    /// <param name="onShelf">
+    /// The results are on the shelf, in Tanjelo's own folder, as results of a picture from the clipboard are: the card
+    /// offers to save copies rather than to show a folder that isn't the user's.
+    /// </param>
+    public void ShowResult(Target target, IReadOnlyList<string> inputs, BatchResult result, bool onShelf = false)
     {
         var outputs = result.Outputs;
         var failures = result.Failures;
@@ -74,11 +82,12 @@ public partial class ProgressToast : Window
         }
         else if (failures.Count == 0)
         {
-            var detail = outputs.Count == 1 ? Path.GetFileName(outputs[0]) : Describe.Count(outputs.Count, Tanjelo.Core.Strings.OneFile, Tanjelo.Core.Strings.NFiles);
+            var detail = onShelf ? Strings.OnTheShelf
+                : outputs.Count == 1 ? Path.GetFileName(outputs[0]) : Describe.Count(outputs.Count, Tanjelo.Core.Strings.OneFile, Tanjelo.Core.Strings.NFiles);
             if (result.Skipped.Count > 0) detail += string.Format(Strings.Already2, result.Skipped.Count, target.Label);
             foreach (var note in result.Notes) detail += " · " + note;
             (string, Action)? open = outputs.Count == 1 ? (Strings.Open, () => Open(outputs[0])) : null;
-            Finish(Mood.Success, target.DoneText, detail, Reveal(outputs), open, TimeSpan.FromSeconds(7));
+            Finish(Mood.Success, target.DoneText, detail, onShelf ? Save(outputs) : Reveal(outputs), open, TimeSpan.FromSeconds(7));
         }
         else
         {
@@ -143,6 +152,20 @@ public partial class ProgressToast : Window
     {
         Native.RevealInExplorer(outputs);
         Close();
+    });
+
+    /// <summary>Save as… for one result, Save to… for several: copies where the user chooses.</summary>
+    (string, Action) Save(IReadOnlyList<string> outputs) => (outputs.Count == 1 && File.Exists(outputs[0]) ? Strings.SaveAs : Strings.SaveTo, () =>
+    {
+        _autoClose.Stop(); // not while the dialog is open
+        try
+        {
+            if (SaveCopies(outputs).Count > 0) Close();
+        }
+        catch (Exception ex) when (ex is ConversionException or IOException or UnauthorizedAccessException)
+        {
+            ShowError(Strings.CouldnTSaveACopy, ex.Message);
+        }
     });
 
     void Open(string path)

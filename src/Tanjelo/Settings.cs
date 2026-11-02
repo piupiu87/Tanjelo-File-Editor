@@ -12,6 +12,9 @@ sealed class Settings
 
     /// <summary>Shows or hides the Float shelf from anywhere, such as "Ctrl+Shift+F"; off (null) by default.</summary>
     public string? FloatHotkey { get; set; }
+
+    /// <summary>Opens the menu for the picture or files on the clipboard from anywhere, such as "Ctrl+Shift+V"; off (null) by default.</summary>
+    public string? ClipboardHotkey { get; set; }
     public string Theme { get; set; } = "system"; // "system", "light" or "dark"
     public int JpegQuality { get; set; } = 90;
     public int WebpQuality { get; set; } = 90;

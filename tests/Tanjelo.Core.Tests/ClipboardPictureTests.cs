@@ -312,7 +312,7 @@ public class ClipboardPictureTests
     }
 
     /// <summary>A packed bitmap: its header, what follows the header (masks or a palette), then the rows.</summary>
-    static byte[] Dib(int headerSize, int width, int height, int bits, int compression, byte[] rows,
+    internal static byte[] Dib(int headerSize, int width, int height, int bits, int compression, byte[] rows,
         uint[]? headerMasks = null, uint[]? after = null, int colorsUsed = 0)
     {
         var header = new byte[headerSize];

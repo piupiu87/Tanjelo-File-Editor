@@ -54,8 +54,43 @@
   <data name="NothingSelected" xml:space="preserve">
     <value>Nothing selected</value>
   </data>
-  <data name="SelectOneOrMoreFilesInFile" xml:space="preserve">
-    <value>Select one or more files in File Explorer first.</value>
+  <data name="SelectFilesOrCopyAPictureFirst" xml:space="preserve">
+    <value>Select files, or copy a picture, first.</value>
+  </data>
+  <data name="NothingOnTheClipboard" xml:space="preserve">
+    <value>Nothing on the clipboard</value>
+  </data>
+  <data name="CopyAPictureOrFilesFirst" xml:space="preserve">
+    <value>Copy a picture or files first.</value>
+  </data>
+  <data name="CouldnTReadTheClipboard" xml:space="preserve">
+    <value>Couldn't read the clipboard</value>
+  </data>
+  <data name="ClipboardPicture" xml:space="preserve">
+    <value>Clipboard picture</value>
+    <comment>FormatMenuWindow: the heading of the menu for a picture on the clipboard</comment>
+  </data>
+  <data name="PngSize" xml:space="preserve">
+    <value>PNG · {0} × {1}</value>
+  </data>
+  <data name="ClipboardPictureMenu" xml:space="preserve">
+    <value>Clipboard picture…</value>
+    <comment>Tray menu</comment>
+  </data>
+  <data name="OnTheShelf" xml:space="preserve">
+    <value>On the shelf</value>
+  </data>
+  <data name="CouldnTSaveACopy" xml:space="preserve">
+    <value>Couldn't save a copy</value>
+  </data>
+  <data name="CouldnTReadTheClipboardShortcutUse" xml:space="preserve">
+    <value>Couldn't read the clipboard shortcut "{0}". Use something like Ctrl+Shift+V.</value>
+  </data>
+  <data name="AnotherAppIsAlreadyUsingChooseAClipboard" xml:space="preserve">
+    <value>Another app is already using {0}. Choose a different clipboard shortcut in Settings.</value>
+  </data>
+  <data name="AnotherAppIsAlreadyUsingChooseOtherClipboard" xml:space="preserve">
+    <value>Another app is already using {0}. Choose other keys for the clipboard menu.</value>
   </data>
   <data name="ChooseFilesToConvert" xml:space="preserve">
     <value>Choose files to convert</value>
@@ -1232,7 +1267,7 @@
     <comment>SettingsWindow.xaml</comment>
   </data>
   <data name="WorksWhileFileExplorerTheDesktopOr" xml:space="preserve">
-    <value>Works while File Explorer, the desktop or the shelf is in front. Click the box and press new keys to change it.</value>
+    <value>Works while File Explorer, the desktop or the shelf is in front; with nothing selected, it's for the picture or files on the clipboard. Click the box and press new keys to change it.</value>
     <comment>SettingsWindow.xaml</comment>
   </data>
   <data name="ShowOrHideTheShelf" xml:space="preserve">
@@ -1477,5 +1512,17 @@
   </data>
   <data name="SavedIn" xml:space="preserve">
     <value>Saved in {0}</value>
+  </data>
+  <data name="OpenTheMenuForTheClipboardPicture" xml:space="preserve">
+    <value>Open the menu for the clipboard picture</value>
+  </data>
+  <data name="RemoveTheClipboardShortcut" xml:space="preserve">
+    <value>Remove the clipboard shortcut</value>
+  </data>
+  <data name="ClipboardShortcutHint" xml:space="preserve">
+    <value>Works everywhere. Off unless you set one. Press it right after Win+Shift+S to use the screenshot.</value>
+  </data>
+  <data name="ThatSTheClipboardShortcutChoose" xml:space="preserve">
+    <value>That's the clipboard menu's shortcut. Choose other keys.</value>
   </data>
 </root>

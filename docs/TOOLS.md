@@ -18,6 +18,7 @@ Each tool has a key for `tanj` (shown in brackets below), and its settings are p
   [Edit photo](#edit-photo-adjust), [Trim](#trim-trim), [Bleep](#bleep-bleep), [Redact video](#redact-video-redact)
 - [Actions](#actions)
 - [Float shelf](#float-shelf)
+- [Clipboard pictures](#clipboard-pictures)
 
 ## Quick tools
 
@@ -340,7 +341,7 @@ Actions work with the selected files and folders themselves:
 | Open in Terminal | Opens Windows Terminal (or PowerShell) in each selected folder, or in the folder holding the selected files |
 | Share… | Opens the Windows Share sheet for the selected files, next to the pointer: email, apps, nearby PCs and phones. Nearby Sharing appears there when it's turned on in Windows' settings |
 | Float | Parks the selection on the Float shelf (below) |
-| Save to… | Copies the selection into a folder you pick and leaves it where it is; names already taken there get " (2)" |
+| Save to… | Copies the selection into a folder you pick and leaves it where it is; names already taken there get " (2)". For a [picture from the clipboard](#clipboard-pictures), **Save in "Folder"** copies it straight into the folder open in Explorer, or the desktop |
 | Move to… | Moves the selection into a folder you pick; names already taken there get " (2)" |
 
 Share and Float need the app; `tanj` lists them but says so when they're run.
@@ -374,3 +375,32 @@ shortcuts. The shelf holds references to your files, not copies, so files that w
   *Show shelf* in the tray menu brings it back. Give it a shortcut of its own in [Settings](../README.md#settings)
   (`floatHotkey` in settings.json) to show or hide it from anywhere.
 - The list survives a restart, in `%APPDATA%\Tanjelo\float.json`.
+
+## Clipboard pictures
+
+A screenshot from Snipping Tool or **Win+Shift+S**, or a picture copied in a browser or an Office app, can be
+converted and edited straight from the clipboard, without saving it first.
+
+| Way in | What happens |
+|---|---|
+| **Ctrl+Shift+Space** with nothing selected, in File Explorer or on the desktop | The menu for the picture on the clipboard, or for the files copied there |
+| Its own shortcut, set in [Settings](../README.md#settings) (`clipboardHotkey` in settings.json) | The same menu, from any app: the way in right after Win+Shift+S |
+| Tray menu → *Clipboard picture…* | The same menu; greyed out while the clipboard holds no picture or files |
+| **Ctrl+V** on the [Float shelf](#float-shelf) | Parks the picture on the shelf |
+
+The menu says *Clipboard picture* and the picture's size, and has every picture entry: the conversions (no PNG: it's
+one already), Compress, Crop, Add background, Redact, Annotate, Edit photo, text by OCR, Share, Float and Save to….
+From an Explorer window or the desktop it also has **Save in "Folder"**, which copies the picture into that folder.
+Copy path, Copy, Open in Terminal, Move to…, Metadata… and the archives are left out.
+
+Where the files go:
+
+- The picture is kept in Tanjelo's own folder, `%LOCALAPPDATA%\Tanjelo\Clipboard`, and named the way Windows names
+  screenshots: `Screenshot 2026-11-02 143005.png`. Pick something and it's parked on the shelf; press **Esc** and
+  nothing is left behind.
+- Results go beside it, with the usual names (`Screenshot 2026-11-02 143005-annotated.png`), are parked on the shelf
+  too, and the shelf appears. Their card has **Open** and **Save as…**.
+- Nothing reaches your own folders until you put it there: drag it out of the shelf, use Save as…, Save to… or
+  Save in "Folder", or paste it. Pictures stay in Tanjelo's folder as long as they're on the shelf, and go to the
+  Recycle Bin when taken off it.
+- Copied files (Ctrl+C in Explorer) act like a selection instead: results go beside them in their own folders.

@@ -84,7 +84,8 @@ public partial class FormatMenuWindow : Window
     bool _closing;
 
     /// <param name="hotkey">The global shortcut. Pressing it again while the menu is open switches tabs.</param>
-    public FormatMenuWindow(IReadOnlyList<string> files, MenuModel menu, (ModifierKeys, Key)? hotkey = null)
+    /// <param name="heading">Words for the top of the menu instead of the file's name and size, such as for the clipboard picture.</param>
+    public FormatMenuWindow(IReadOnlyList<string> files, MenuModel menu, (ModifierKeys, Key)? hotkey = null, (string Text, string Detail)? heading = null)
     {
         InitializeComponent();
         _hotkey = hotkey;
@@ -104,6 +105,7 @@ public partial class FormatMenuWindow : Window
         _view.Filter = item => ((Entry)item).Target.Kind == _tab.Kind && Matches((Entry)item);
 
         DescribeSelection(files);
+        if (heading is { } words) (Heading.Text, Subheading.Text) = words;
         HintList.ItemsSource = menu.Hints;
         if (menu.Targets.Count == 0)
             Search.IsEnabled = false;

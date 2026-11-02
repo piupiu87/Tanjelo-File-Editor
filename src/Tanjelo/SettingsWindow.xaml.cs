@@ -51,14 +51,16 @@ public partial class SettingsWindow : Window
         Subheading.Text = string.Format(Strings.TanjeloChangesApplyAtOnce, Version);
         Height = Math.Min(Height, SystemParameters.WorkArea.Height - 40);
 
-        MenuShortcut.Recorded += shortcut => SetShortcut(menu: true, shortcut);
-        ShelfShortcut.Recorded += shortcut => SetShortcut(menu: false, shortcut);
-        foreach (var box in new[] { MenuShortcut, ShelfShortcut })
+        MenuShortcut.Recorded += shortcut => SetShortcut(Shortcut.Menu, shortcut);
+        ShelfShortcut.Recorded += shortcut => SetShortcut(Shortcut.Shelf, shortcut);
+        ClipboardShortcut.Recorded += shortcut => SetShortcut(Shortcut.Clipboard, shortcut);
+        foreach (var box in new[] { MenuShortcut, ShelfShortcut, ClipboardShortcut })
         {
             box.Listening += listening => ListeningForShortcut?.Invoke(listening);
             box.Hint += ShowShortcutProblem;
         }
-        ClearShelfShortcut.Click += (_, _) => SetShortcut(menu: false, null);
+        ClearShelfShortcut.Click += (_, _) => SetShortcut(Shortcut.Shelf, null);
+        ClearClipboardShortcut.Click += (_, _) => SetShortcut(Shortcut.Clipboard, null);
 
         ThemeSystem.Checked += (_, _) => Change(s => s.Theme = "system");
         ThemeLight.Checked += (_, _) => Change(s => s.Theme = "light");
@@ -116,7 +118,9 @@ public partial class SettingsWindow : Window
         {
             if (MenuShortcut.Shortcut != settings.Hotkey && !MenuShortcut.IsKeyboardFocused) MenuShortcut.Shortcut = settings.Hotkey;
             if (ShelfShortcut.Shortcut != Blank(settings.FloatHotkey) && !ShelfShortcut.IsKeyboardFocused) ShelfShortcut.Shortcut = settings.FloatHotkey;
+            if (ClipboardShortcut.Shortcut != Blank(settings.ClipboardHotkey) && !ClipboardShortcut.IsKeyboardFocused) ClipboardShortcut.Shortcut = settings.ClipboardHotkey;
             ClearShelfShortcut.IsEnabled = ShelfShortcut.Shortcut is not null;
+            ClearClipboardShortcut.IsEnabled = ClipboardShortcut.Shortcut is not null;
             var theme = settings.Theme.ToLowerInvariant();
             (theme == "dark" ? ThemeDark : theme == "light" ? ThemeLight : ThemeSystem).IsChecked = true;
             JpegSlider.Value = Math.Clamp(settings.JpegQuality, 1, 100);
@@ -170,29 +174,57 @@ public partial class SettingsWindow : Window
         };
     }
 
-    void SetShortcut(bool menu, string? shortcut)
+    enum Shortcut { Menu, Shelf, Clipboard }
+
+    ShortcutBox Box(Shortcut which) => which switch
     {
-        var box = menu ? MenuShortcut : ShelfShortcut;
-        var current = menu ? _settings.Hotkey : Blank(_settings.FloatHotkey);
-        var other = menu ? Blank(_settings.FloatHotkey) : _settings.Hotkey;
-        if (shortcut is null && menu)
+        Shortcut.Menu => MenuShortcut,
+        Shortcut.Shelf => ShelfShortcut,
+        _ => ClipboardShortcut,
+    };
+
+    static string? Keys(Settings settings, Shortcut which) => which switch
+    {
+        Shortcut.Menu => settings.Hotkey,
+        Shortcut.Shelf => Blank(settings.FloatHotkey),
+        _ => Blank(settings.ClipboardHotkey),
+    };
+
+    /// <summary>A shortcut recorded in its box, or removed with null; the menu's can't be removed, and no two can be the same.</summary>
+    void SetShortcut(Shortcut which, string? shortcut)
+    {
+        var box = Box(which);
+        var current = Keys(_settings, which);
+        if (shortcut is null && which == Shortcut.Menu)
         {
             box.Shortcut = current;
             return;
         }
-        if (shortcut is not null && string.Equals(shortcut, other, StringComparison.OrdinalIgnoreCase))
+        var taken = Enum.GetValues<Shortcut>().Where(o => o != which).Cast<Shortcut?>()
+            .FirstOrDefault(o => string.Equals(shortcut, Keys(_settings, o!.Value), StringComparison.OrdinalIgnoreCase));
+        if (shortcut is not null && taken is { } other)
         {
-            ShowShortcutProblem(menu ? Strings.ThatSTheShelfSShortcutChoose : Strings.ThatSTheMenuSShortcutChoose);
+            ShowShortcutProblem(other switch
+            {
+                Shortcut.Menu => Strings.ThatSTheMenuSShortcutChoose,
+                Shortcut.Shelf => Strings.ThatSTheShelfSShortcutChoose,
+                _ => Strings.ThatSTheClipboardShortcutChoose,
+            });
             box.Shortcut = current;
             return;
         }
         box.Shortcut = shortcut;
         ClearShelfShortcut.IsEnabled = ShelfShortcut.Shortcut is not null;
+        ClearClipboardShortcut.IsEnabled = ClipboardShortcut.Shortcut is not null;
         ShowShortcutProblem("");
         Change(s =>
         {
-            if (menu) s.Hotkey = shortcut!;
-            else s.FloatHotkey = shortcut;
+            switch (which)
+            {
+                case Shortcut.Menu: s.Hotkey = shortcut!; break;
+                case Shortcut.Shelf: s.FloatHotkey = shortcut; break;
+                default: s.ClipboardHotkey = shortcut; break;
+            }
         });
     }
 

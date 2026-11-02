@@ -33,7 +33,18 @@ public static class Strings
     public static string DropFilesOnItFirst => Get();
     public static string CouldnTReadTheSelection => Get();
     public static string NothingSelected => Get();
-    public static string SelectOneOrMoreFilesInFile => Get();
+    public static string SelectFilesOrCopyAPictureFirst => Get();
+    public static string NothingOnTheClipboard => Get();
+    public static string CopyAPictureOrFilesFirst => Get();
+    public static string CouldnTReadTheClipboard => Get();
+    public static string ClipboardPicture => Get();
+    public static string PngSize => Get();
+    public static string ClipboardPictureMenu => Get();
+    public static string OnTheShelf => Get();
+    public static string CouldnTSaveACopy => Get();
+    public static string CouldnTReadTheClipboardShortcutUse => Get();
+    public static string AnotherAppIsAlreadyUsingChooseAClipboard => Get();
+    public static string AnotherAppIsAlreadyUsingChooseOtherClipboard => Get();
     public static string ChooseFilesToConvert => Get();
     public static string SomethingWentWrong => Get();
     public static string ConversionFailed => Get();
@@ -483,4 +494,8 @@ public static class Strings
     public static string ThereSNoPictureOrFilesOnTheClipboard => Get();
     public static string SavedAs => Get();
     public static string SavedIn => Get();
+    public static string OpenTheMenuForTheClipboardPicture => Get();
+    public static string RemoveTheClipboardShortcut => Get();
+    public static string ClipboardShortcutHint => Get();
+    public static string ThatSTheClipboardShortcutChoose => Get();
 }
