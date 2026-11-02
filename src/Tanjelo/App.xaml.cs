@@ -537,11 +537,14 @@ public partial class App : Application
         else ShowShelf();
     }
 
-    /// <summary>Sends files Tanjelo held to the Recycle Bin, off the UI thread, so they can still be got back.</summary>
+    /// <summary>
+    /// Sends files Tanjelo held to the Recycle Bin, so they can still be got back: off the UI thread, on one of the
+    /// single-threaded apartments the shell expects.
+    /// </summary>
     static void Recycle(IReadOnlyList<string> paths)
     {
         if (paths.Count == 0) return;
-        Task.Run(() =>
+        var thread = new Thread(() =>
         {
             try
             {
@@ -551,7 +554,13 @@ public partial class App : Application
             {
                 Log.Write(ex.Message);
             }
-        });
+        })
+        {
+            IsBackground = true,
+            Name = "Recycle Bin",
+        };
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
     }
 
     void SaveShelf()

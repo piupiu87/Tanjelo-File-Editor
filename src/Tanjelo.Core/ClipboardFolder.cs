@@ -40,10 +40,13 @@ public sealed class ClipboardFolder
         }
     }
 
+    /// <summary>How many of the newest pictures of the same size are compared, so a shelf of hundreds of screenshots stays quick.</summary>
+    const int Compared = 20;
+
     /// <summary>
     /// Saves the picture copied as <paramref name="sequence"/> (the clipboard's number for it), named as Windows names
-    /// screenshots, and returns the file and whether it's new. The same copy saved before, or a picture here with the
-    /// same pixels, is that file again rather than "(2)".
+    /// screenshots, and returns the file and whether it's new. The same copy saved before, or one of the newest pictures
+    /// here with the same pixels, is that file again rather than "(2)".
     /// </summary>
     public (string File, bool New) Save(ClipboardPicture picture, uint sequence)
     {
@@ -53,8 +56,11 @@ public sealed class ClipboardFolder
                 return (saved.File, false);
             Directory.CreateDirectory(Path);
             var hash = Hash(picture.Png);
-            var same = Directory.EnumerateFiles(Path, "*.png")
-                .FirstOrDefault(f => SizeOf(f) == (picture.Width, picture.Height) && HashOf(f)?.AsSpan().SequenceEqual(hash) == true);
+            var same = new DirectoryInfo(Path).EnumerateFiles("*.png")
+                .OrderByDescending(f => f.LastWriteTimeUtc)
+                .Where(f => SizeOf(f.FullName) == (picture.Width, picture.Height))
+                .Take(Compared)
+                .FirstOrDefault(f => HashOf(f.FullName)?.AsSpan().SequenceEqual(hash) == true)?.FullName;
             var name = string.Format(System.Globalization.CultureInfo.InvariantCulture, Strings.ScreenshotFileName, _now());
             var file = same ?? OutputPaths.Unique(Path, name, "png");
             if (same is null)
