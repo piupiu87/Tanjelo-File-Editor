@@ -679,6 +679,12 @@
     <value>Screenshot {0:yyyy-MM-dd HHmmss}</value>
     <comment>A picture taken from the clipboard, named as Windows names screenshots; .png is added</comment>
   </data>
+  <data name="NoPictureOrFilesOnTheClipboard" xml:space="preserve">
+    <value>No picture or files on the clipboard.</value>
+  </data>
+  <data name="ClipboardPictureNote" xml:space="preserve">
+    <value>clipboard picture: PNG {0} × {1}</value>
+  </data>
   <data name="CopyPath" xml:space="preserve">
     <value>Copy path</value>
   </data>

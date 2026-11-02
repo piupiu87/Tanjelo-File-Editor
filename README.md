@@ -277,6 +277,16 @@ tanj convert redact --spec=boxes.json --style=blur clip.mp4
 When a conversion has something to add, such as how many scanned pages were read with OCR, `tanj` prints it on a
 `note` line and the app adds it to the result card.
 
+`--clipboard` in place of the files works on the files copied to the clipboard, or on the picture there, such as a
+screenshot. The picture's results are written in the current folder, and the clipboard is left as it is.
+
+```
+tanj targets --clipboard                            # what the picture on the clipboard can become
+tanj convert jpg --clipboard                        # a screenshot as a JPG here
+tanj convert txt --clipboard                        # the text in it, read with OCR
+tanj convert save-to --folder=D:\Shots --clipboard  # the screenshot itself, saved in D:\Shots
+```
+
 ## Office automation
 
 Office sometimes stops on prompts that its "no alerts" setting doesn't cover. Tanjelo handles this:

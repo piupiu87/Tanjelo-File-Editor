@@ -24,4 +24,8 @@
     <ProjectReference Include="..\Tanjelo.Core\Tanjelo.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Tanjelo.Core.Tests" />
+  </ItemGroup>
+
 </Project>

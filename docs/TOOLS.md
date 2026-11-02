@@ -421,3 +421,13 @@ Where the files go:
 Every card for a result that wrote files has **Copy**, whatever the files were, with the same rule: a picture as a
 picture, a text file as its text, the rest as files. **Ctrl+C** on the shelf puts one picture on the clipboard as a
 picture too.
+
+With `tanj`, `--clipboard` takes the place of the files: `tanj targets --clipboard`, `tanj options <key> --clipboard`
+and `tanj convert <key> [--name=value...] --clipboard`. Copied files are worked on where they are. A picture is saved
+in a scratch folder, its results are moved into the current folder (names already taken get " (2)") and a `note` line
+gives its size; `tanj` doesn't change the clipboard. With nothing usable there, it says so and exits with 2.
+
+```
+tanj convert annotate --spec=marks.json --clipboard
+tanj convert save-to --folder=D:\Shots --clipboard
+```

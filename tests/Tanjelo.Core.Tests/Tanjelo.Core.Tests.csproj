@@ -34,6 +34,8 @@
     <ProjectReference Include="..\..\src\Tanjelo\Tanjelo.csproj" />
     <!-- The Windows 11 menu entry's handing over of a selection; it's published natively, but builds as a library too. -->
     <ProjectReference Include="..\..\src\Tanjelo.ShellMenu\Tanjelo.ShellMenu.csproj" />
+    <!-- tanj's own helpers, such as reading the clipboard for it. -->
+    <ProjectReference Include="..\..\src\tanj\tanj.csproj" />
   </ItemGroup>
 
 </Project>

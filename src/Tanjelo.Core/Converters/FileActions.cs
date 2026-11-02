@@ -352,7 +352,15 @@ public sealed class MoveToFolderAction : IConverter
         var chosen = target.Parameter("folder");
         if (chosen.Length == 0)
             throw new ConversionException(Strings.ChooseAFolderToMoveTo);
-        var destination = Path.GetFullPath(chosen);
+        var output = MoveInto(input, chosen, ctx.Cancellation);
+        ctx.Progress.Report(1);
+        return [output];
+    }, ctx.Cancellation);
+
+    /// <summary>Moves a file or folder into <paramref name="folder"/> under a name not yet taken there, and returns where it went.</summary>
+    public static string MoveInto(string input, string folder, CancellationToken ct = default)
+    {
+        var destination = Path.GetFullPath(folder);
         if (!Directory.Exists(destination))
             throw new ConversionException(Strings.ThatFolderDoesnTExist);
 
@@ -369,10 +377,9 @@ public sealed class MoveToFolderAction : IConverter
         else if (string.Equals(Path.GetPathRoot(source), Path.GetPathRoot(output), StringComparison.OrdinalIgnoreCase))
             Directory.Move(source, output);
         else
-            MoveAcrossDrives(source, output, ctx.Cancellation);
-        ctx.Progress.Report(1);
-        return [output];
-    }, ctx.Cancellation);
+            MoveAcrossDrives(source, output, ct);
+        return output;
+    }
 
     /// <summary>The name a file can take in <paramref name="destination"/>, keeping its extension exactly as written.</summary>
     internal static string FreeFileName(string source, string destination)
