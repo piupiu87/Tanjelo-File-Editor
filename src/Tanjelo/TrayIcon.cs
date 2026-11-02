@@ -8,11 +8,15 @@ namespace Tanjelo;
 sealed class TrayIcon : IDisposable
 {
     readonly Forms.NotifyIcon _icon;
-    readonly Forms.ToolStripMenuItem _hotkeyItem, _toolsItem, _startupItem, _sendToItem;
+    readonly Forms.ToolStripMenuItem _hotkeyItem, _toolsItem, _startupItem, _sendToItem, _clipboardItem;
     Action? _clicked; // for the notice showing now
 
     public event Action? ConvertFilesClicked;
     public event Action? ShowShelfClicked;
+    public event Action? ClipboardClicked;
+
+    /// <summary>Whether there's a picture or copied files on the clipboard, asked each time the menu opens.</summary>
+    public Func<bool>? HasClipboardInput { get; set; }
     public event Action? SettingsClicked;
     public event Action? QuitClicked;
 
@@ -22,6 +26,7 @@ sealed class TrayIcon : IDisposable
         _toolsItem = new Forms.ToolStripMenuItem(Strings.Converters);
         _startupItem = new Forms.ToolStripMenuItem(Strings.StartWithWindows) { CheckOnClick = true };
         _sendToItem = new Forms.ToolStripMenuItem(Strings.ShowInSendToMenu) { CheckOnClick = true };
+        _clipboardItem = new Forms.ToolStripMenuItem(Strings.ClipboardPictureMenu, null, (_, _) => ClipboardClicked?.Invoke());
         _startupItem.Click += (_, _) => Toggle(() => ShellIntegration.StartsWithWindows = _startupItem.Checked);
         _sendToItem.Click += (_, _) => Toggle(() => ShellIntegration.InSendToMenu = _sendToItem.Checked);
 
@@ -34,6 +39,7 @@ sealed class TrayIcon : IDisposable
         [
             convert,
             _hotkeyItem,
+            _clipboardItem,
             new Forms.ToolStripMenuItem(Strings.ShowShelf, null, (_, _) => ShowShelfClicked?.Invoke()),
             new Forms.ToolStripSeparator(),
             _toolsItem,
@@ -47,6 +53,7 @@ sealed class TrayIcon : IDisposable
         {
             _startupItem.Checked = ShellIntegration.StartsWithWindows;
             _sendToItem.Checked = ShellIntegration.InSendToMenu;
+            _clipboardItem.Enabled = HasClipboardInput?.Invoke() == true;
         };
 
         _icon = new Forms.NotifyIcon
@@ -65,6 +72,9 @@ sealed class TrayIcon : IDisposable
     }
 
     public void SetHotkey(string hotkey) => _hotkeyItem.Text = string.Format(Strings.OrPressInFileExplorer, hotkey);
+
+    /// <summary>Shows the clipboard menu's own shortcut beside its entry, or nothing when there's none.</summary>
+    public void SetClipboardHotkey(string? hotkey) => _clipboardItem.ShortcutKeyDisplayString = hotkey;
 
     public void SetTools(Toolbox tools)
     {

@@ -20,6 +20,7 @@ public partial class App : Application
     ConverterEngine? _engine;
     DateTime _engineBuilt;
     HotkeyManager? _hotkey;
+    ClipboardWatcher? _watcher;
     TrayIcon? _tray;
     Mutex? _singleInstance;
     FileSystemWatcher? _settingsWatcher;
@@ -30,6 +31,9 @@ public partial class App : Application
     Window? _menu; // the menu, or the options dialog that follows it
     readonly List<ProgressToast> _toasts = []; // newest first; stacked upward from the bottom-right corner
     bool _oneShot;
+    readonly IClipboard _clipboard = new WindowsClipboard();
+    readonly ClipboardFolder _clipboardFolder = new(ClipboardFolder.DefaultPath, () => DateTime.Now);
+    readonly Dictionary<string, int> _picturesInMenus = new(StringComparer.OrdinalIgnoreCase); // clipboard pictures saved for a menu that's open
     Shelf _shelf = new();
     FloatWindow? _float;
     int _sharing; // Share sheets still using the files
@@ -49,7 +53,7 @@ public partial class App : Application
                 Dispatcher.BeginInvoke(() => Theme.Apply(Resources));
         };
 
-        _shelf = Shelf.Load(FloatWindow.FilePath);
+        _shelf = Shelf.Load(FloatWindow.FilePath, _clipboardFolder, Recycle);
         _shelf.Changed += SaveShelf;
 
         var files = Selection(e.Args)
@@ -108,18 +112,26 @@ public partial class App : Application
         _tray = new TrayIcon();
         _tray.ConvertFilesClicked += PickFilesAndConvert;
         _tray.ShowShelfClicked += ShowShelf;
+        _tray.ClipboardClicked += () => _ = OpenClipboardMenuAsync(null);
+        _tray.HasClipboardInput = WindowsClipboard.HasPictureOrFiles;
         _tray.SettingsClicked += OpenSettings;
         _tray.QuitClicked += () => Shutdown();
         _tray.SetTools(Engine().Tools);
 
         _hotkey = new HotkeyManager();
-        _hotkey.Pressed += OnHotkey;
+        _hotkey.Pressed += () => _ = OnHotkeyAsync();
         _hotkey.ShelfPressed += ToggleShelf;
+        _hotkey.ClipboardPressed += OnClipboardHotkey;
         _hotkey.AlsoIn = hwnd => _float is { IsVisible: true } shelf && hwnd == shelf.Hwnd;
         _hotkey.Conflict += () => _tray.Notify(Strings.ShortcutUnavailable, string.Format(Strings.AnotherAppIsAlreadyUsingChooseA, _settings.Hotkey));
         ApplyHotkey();
         WatchSettings();
         StartUpdateChecks();
+        _watcher = new ClipboardWatcher { Enabled = _settings.ParkScreenshots };
+        _watcher.Screenshot += change => _ = ParkScreenshotAsync(change);
+        // Only here, in the one copy of Tanjelo in the tray: pictures left in its folder by a crash, or by a menu closed
+        // with Esc, belong to no shelf. Another copy, such as one started from "Send to", leaves them alone.
+        Recycle(_clipboardFolder.Orphans(_shelf.Items));
 
         if (showWelcome)
             _tray.Notify(Strings.TanjeloIsReady, string.Format(Strings.SelectFilesInFileExplorerAndPress, _settings.Hotkey));
@@ -140,15 +152,26 @@ public partial class App : Application
             _tray!.Notify(Strings.ShortcutNotRecognised, string.Format(Strings.CouldnTReadUseSomethingLikeCtrl, _settings.Hotkey));
         }
 
-        // The shelf's own shortcut is optional and works everywhere.
-        if (string.IsNullOrWhiteSpace(_settings.FloatHotkey))
-            _hotkey!.SetShelf(null);
-        else if (!Settings.TryParseHotkey(_settings.FloatHotkey, out var shelfModifiers, out var shelfKey))
-            _tray!.Notify(Strings.ShortcutNotRecognised, string.Format(Strings.CouldnTReadTheShelfShortcutUse, _settings.FloatHotkey));
-        else if (!_hotkey!.SetShelf((shelfModifiers, shelfKey)))
+        // The shelf's and the clipboard menu's own shortcuts are optional and work everywhere.
+        ApplyGlobal(HotkeyManager.Global.Shelf, _settings.FloatHotkey,
+            Strings.CouldnTReadTheShelfShortcutUse, Strings.AnotherAppIsAlreadyUsingChooseA2, Strings.AnotherAppIsAlreadyUsingChooseOther);
+        ApplyGlobal(HotkeyManager.Global.Clipboard, _settings.ClipboardHotkey,
+            Strings.CouldnTReadTheClipboardShortcutUse, Strings.AnotherAppIsAlreadyUsingChooseAClipboard, Strings.AnotherAppIsAlreadyUsingChooseOtherClipboard);
+        _tray!.SetClipboardHotkey(string.IsNullOrWhiteSpace(_settings.ClipboardHotkey) ? null : _settings.ClipboardHotkey);
+    }
+
+    /// <param name="unreadable">What the tray says when the keys can't be read.</param>
+    /// <param name="taken">What the tray says when another app has the keys, and <paramref name="takenHere"/> what the settings window says.</param>
+    void ApplyGlobal(HotkeyManager.Global which, string? keys, string unreadable, string taken, string takenHere)
+    {
+        if (string.IsNullOrWhiteSpace(keys))
+            _hotkey!.SetGlobal(which, null);
+        else if (!Settings.TryParseHotkey(keys, out var modifiers, out var key))
+            _tray!.Notify(Strings.ShortcutNotRecognised, string.Format(unreadable, keys));
+        else if (!_hotkey!.SetGlobal(which, (modifiers, key)))
         {
-            _tray!.Notify(Strings.ShortcutUnavailable, string.Format(Strings.AnotherAppIsAlreadyUsingChooseA2, _settings.FloatHotkey));
-            _settingsWindow?.ShowShortcutProblem(string.Format(Strings.AnotherAppIsAlreadyUsingChooseOther, _settings.FloatHotkey));
+            _tray!.Notify(Strings.ShortcutUnavailable, string.Format(taken, keys));
+            _settingsWindow?.ShowShortcutProblem(string.Format(takenHere, keys));
         }
     }
 
@@ -164,23 +187,24 @@ public partial class App : Application
         return _engine;
     }
 
-    void OnHotkey()
+    async Task OnHotkeyAsync()
     {
-        IReadOnlyList<string> files;
         var foreground = Native.GetForegroundWindow();
         if (_float is { IsVisible: true } shelf && foreground == shelf.Hwnd)
         {
             // On the shelf, the shortcut converts what's selected there, or everything on it.
-            files = shelf.SelectedOrAll();
-            if (files.Count == 0)
+            var parked = shelf.SelectedOrAll();
+            if (parked.Count == 0)
                 Toast().ShowMessage(Strings.TheShelfIsEmpty, Strings.DropFilesOnItFirst);
             else
-                _ = ShowMenuAsync(files);
+                await ShowMenuAsync(parked);
             return;
         }
+        IReadOnlyList<string> files;
+        string? folder;
         try
         {
-            files = ExplorerSelection.Get(foreground);
+            (files, folder) = ExplorerSelection.GetWithFolder(foreground);
         }
         catch (Exception ex)
         {
@@ -188,13 +212,90 @@ public partial class App : Application
             Toast().ShowError(Strings.CouldnTReadTheSelection, ex.Message);
             return;
         }
-        if (files.Count == 0)
+        // With nothing selected, it's for the picture or the files on the clipboard.
+        if (files.Count > 0)
+            await ShowMenuAsync(files);
+        else
+            await OpenClipboardMenuAsync(folder, Strings.NothingSelected, Strings.SelectFilesOrCopyAPictureFirst);
+    }
+
+    /// <summary>The clipboard menu's own shortcut, from any app; in Explorer or on the desktop, its folder is offered to save in.</summary>
+    void OnClipboardHotkey()
+    {
+        string? folder = null;
+        var foreground = Native.GetForegroundWindow();
+        try
         {
-            Toast().ShowMessage(Strings.NothingSelected, Strings.SelectOneOrMoreFilesInFile);
+            if (ExplorerSelection.IsFileWindow(foreground)) folder = ExplorerSelection.GetWithFolder(foreground).Folder;
+        }
+        catch (Exception ex)
+        {
+            Log.Write(ex); // the menu just goes without Save in "Folder"
+        }
+        _ = OpenClipboardMenuAsync(folder);
+    }
+
+    /// <summary>
+    /// The menu for what's on the clipboard: copied files act like a selection, and a picture gets a menu of its own.
+    /// </summary>
+    /// <param name="folderInFront">The folder Save in "Folder" saves in, when the shortcut came from Explorer or the desktop.</param>
+    async Task OpenClipboardMenuAsync(string? folderInFront, string? emptyHeading = null, string? emptyDetail = null)
+    {
+        ClipboardInput input;
+        uint sequence;
+        try
+        {
+            sequence = _clipboard.Sequence;
+            input = await Task.Run(() => ClipboardInput.Choose([], folderInFront, _clipboard.Read()));
+        }
+        catch (Exception ex) when (ex is ConversionException or ImageMagick.MagickException)
+        {
+            Toast().ShowError(Strings.CouldnTReadTheClipboard, ex.Message);
             return;
         }
-        _ = ShowMenuAsync(files);
+        if (input.Files.Count > 0)
+            await ShowMenuAsync(input.Files);
+        else if (input.Picture is { } picture)
+            await ShowPictureMenuAsync(picture, sequence, input.SaveHere);
+        else
+            Toast().ShowMessage(emptyHeading ?? Strings.NothingOnTheClipboard, input.Problem ?? emptyDetail ?? Strings.CopyAPictureOrFilesFirst);
     }
+
+    /// <summary>
+    /// The menu for a picture on the clipboard. It's saved in Tanjelo's folder first, so the menu can show it, but goes on
+    /// the shelf only once something is picked: Esc leaves nothing behind.
+    /// </summary>
+    async Task ShowPictureMenuAsync(ClipboardPicture picture, uint sequence, string? saveHere)
+    {
+        string file;
+        bool isNew;
+        try
+        {
+            (file, isNew) = await Task.Run(() => _clipboardFolder.Save(picture, sequence));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Log.Write(ex);
+            Toast().ShowError(Strings.CouldnTReadTheClipboard, ex.Message);
+            return;
+        }
+        _picturesInMenus[file] = _picturesInMenus.GetValueOrDefault(file) + 1;
+        try
+        {
+            await ShowMenuAsync([file], new PictureMenu(picture, saveHere));
+        }
+        finally
+        {
+            // Dismissed, or replaced by another menu: a picture saved just for this menu goes, unless another menu
+            // shows it now or it's on the shelf.
+            if (--_picturesInMenus[file] == 0) _picturesInMenus.Remove(file);
+            if (isNew && !_picturesInMenus.ContainsKey(file) && !_shelf.Contains(file))
+                OutputPaths.TryDelete(file);
+        }
+    }
+
+    /// <summary>The menu shows a picture from the clipboard: its own heading, its own entries, and picking parks it.</summary>
+    sealed record PictureMenu(ClipboardPicture Picture, string? SaveHere);
 
     void PickFilesAndConvert()
     {
@@ -203,7 +304,7 @@ public partial class App : Application
             _ = ShowMenuAsync(dialog.FileNames);
     }
 
-    async Task ShowMenuAsync(IReadOnlyList<string> files)
+    async Task ShowMenuAsync(IReadOnlyList<string> files, PictureMenu? picture = null)
     {
         try
         {
@@ -215,10 +316,20 @@ public partial class App : Application
             var model = engine.GetMenu(files);
             // Editors work on one file at a time; tanj can still apply the same edits to several.
             if (files.Count > 1) model = model with { Targets = model.Targets.Where(t => t.Editor is null).ToList() };
-            var menu = new FormatMenuWindow(files, model, hotkey);
+            if (picture is not null) model = ClipboardPicture.ForMenu(model, picture.SaveHere);
+            var menu = new FormatMenuWindow(files, model, hotkey, picture is null ? null
+                : (Strings.ClipboardPicture, string.Format(Strings.PngSize, picture.Picture.Width, picture.Picture.Height)));
             _menu = menu;
             var target = await menu.PickAsync();
             if (_menu == menu) _menu = null;
+            var parked = picture is not null && target is not null;
+            if (parked)
+            {
+                // Picked: the picture goes on the shelf, used now, and stays there even if the editor or dialog is
+                // canceled. Its results are likely to take its place on the clipboard.
+                _shelf.Add(files);
+                _shelf.MarkUsed(files);
+            }
             if (target?.Editor is not null)
                 target = await EditAsync(engine, files[0], target);
             if (target?.FolderPrompt is not null)
@@ -227,6 +338,8 @@ public partial class App : Application
                 target = await AskForOptionsAsync(engine, files, target);
             if (target is not null)
                 await ConvertAsync(engine, files, target);
+            if (parked)
+                ShowShelf(); // without taking the focus, so what was parked can be seen and dragged out
         }
         catch (Exception ex)
         {
@@ -297,7 +410,18 @@ public partial class App : Application
         {
             var result = await Task.Run(() => engine.RunAsync(files, target, progress, cancel.Token));
             foreach (var failure in result.Failures) Log.Write($"{target.Key}: {failure.Input}: {failure.Message}");
-            toast.ShowResult(target, files, result);
+            _shelf.MarkUsed(files);
+            // Results of pictures the shelf holds are written beside them, in Tanjelo's folder, so they're parked too.
+            var held = result.Outputs.Where(_shelf.Holds).ToList();
+            if (held.Count > 0)
+            {
+                _shelf.Add(held);
+                ShowShelf();
+            }
+            var onShelf = held.Count > 0 && held.Count == result.Outputs.Count;
+            // ...and go back on the clipboard, where the picture came from, ready to paste.
+            var copied = onShelf && result.Failures.Count == 0 && _settings.CopyClipboardResults && await CopyResultsAsync(held);
+            toast.ShowResult(target, files, result, onShelf, copied);
         }
         catch (Exception ex)
         {
@@ -307,6 +431,21 @@ public partial class App : Application
         finally
         {
             toast.CancelRequested -= cancel.Cancel;
+        }
+    }
+
+    /// <summary>Puts results on the clipboard off the UI thread, since a picture is made into bitmaps first; false if that failed.</summary>
+    async Task<bool> CopyResultsAsync(IReadOnlyList<string> results)
+    {
+        try
+        {
+            await Task.Run(() => ClipboardResults.Copy(_clipboard, results));
+            return true;
+        }
+        catch (Exception ex) when (ex is ConversionException or IOException or UnauthorizedAccessException)
+        {
+            Log.Write($"clipboard: {ex.Message}");
+            return false;
         }
     }
 
@@ -345,6 +484,36 @@ public partial class App : Application
             Shutdown();
     }
 
+    // ---- Screenshots, parked on the shelf as they're taken
+
+    /// <summary>
+    /// Saves the screenshot on the clipboard in Tanjelo's folder and parks it, in place of the one before when it's that one
+    /// edited in Snipping Tool, then shows the shelf without taking the focus.
+    /// </summary>
+    async Task ParkScreenshotAsync(ClipboardChange change)
+    {
+        try
+        {
+            // The picture, even when the tool put a file there too.
+            var picture = await Task.Run(() => ClipboardPicture.Choose(_clipboard.Read() with { Files = [] }).Picture);
+            if (picture is null)
+            {
+                Log.Write($"clipboard: no picture in a screenshot from {change.Owner ?? "Print Screen"}");
+                return;
+            }
+            var (file, _) = await Task.Run(() => _clipboardFolder.Save(picture, change.Sequence));
+            var replaced = _watcher!.Decisions.Replaces(change, file, picture.Width, picture.Height, DateTime.Now,
+                p => _shelf.Contains(p) && !_shelf.IsUsed(p));
+            if (replaced is null || !_shelf.Replace(replaced, file)) _shelf.Add([file]);
+            ShowShelf();
+            _float!.ShowNotice(Strings.ScreenshotParkedOnTheShelf);
+        }
+        catch (Exception ex)
+        {
+            Log.Write(ex); // nobody asked for this, so a problem goes in the log rather than on a card
+        }
+    }
+
     // ---- Float shelf and Share
 
     FloatWindow ShelfWindow()
@@ -366,6 +535,32 @@ public partial class App : Application
     {
         if (_float?.IsVisible == true) _float.Hide();
         else ShowShelf();
+    }
+
+    /// <summary>
+    /// Sends files Tanjelo held to the Recycle Bin, so they can still be got back: off the UI thread, on one of the
+    /// single-threaded apartments the shell expects.
+    /// </summary>
+    static void Recycle(IReadOnlyList<string> paths)
+    {
+        if (paths.Count == 0) return;
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                Native.Recycle(paths);
+            }
+            catch (Exception ex)
+            {
+                Log.Write(ex); // a thread of its own: anything thrown here would end the app
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "Recycle Bin",
+        };
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
     }
 
     void SaveShelf()
@@ -426,11 +621,11 @@ public partial class App : Application
             return;
         }
         var window = new SettingsWindow(_settings, ChangeSettings, new WindowsSettings(), Toolbox.Detect);
-        // While a shortcut box listens, the shelf's shortcut (which works everywhere) mustn't fire instead.
+        // While a shortcut box listens, the shortcuts that work everywhere mustn't fire instead.
         window.ListeningForShortcut += listening =>
         {
-            if (listening) _hotkey?.SetShelf(null);
-            else ApplyHotkey();
+            if (!listening) ApplyHotkey();
+            else foreach (var which in Enum.GetValues<HotkeyManager.Global>()) _hotkey?.SetGlobal(which, null);
         };
         window.OpenFileClicked += OpenSettingsFile;
         window.PageClicked += OpenPage;
@@ -471,8 +666,9 @@ public partial class App : Application
             Theme.Preference = _settings.Theme;
             Theme.Apply(Resources);
         }
-        if (_tray is not null && (before.Hotkey != _settings.Hotkey || before.FloatHotkey != _settings.FloatHotkey))
+        if (_tray is not null && (before.Hotkey != _settings.Hotkey || before.FloatHotkey != _settings.FloatHotkey || before.ClipboardHotkey != _settings.ClipboardHotkey))
             ApplyHotkey();
+        if (_watcher is not null) _watcher.Enabled = _settings.ParkScreenshots;
         if (_settings.CheckForUpdates && !before.CheckForUpdates)
             _ = CheckForUpdatesAsync();
     }
@@ -581,6 +777,7 @@ public partial class App : Application
     {
         _updateTimer?.Stop();
         _hotkey?.Dispose();
+        _watcher?.Dispose();
         _tray?.Dispose();
         _settingsWatcher?.Dispose();
         _singleInstance?.Dispose();

@@ -92,7 +92,23 @@
                             AutomationProperties.Name="{x:Static local:Strings.RemoveTheShelfShortcut}" />
                 </StackPanel>
                 <TextBlock x:Name="ShelfShortcutHint" Style="{StaticResource Hint}" Text="{x:Static local:Strings.WorksEverywhereOffUnlessYouSetOne}" />
+
+                <TextBlock x:Name="ClipboardShortcutLabel" Text="{x:Static local:Strings.OpenTheMenuForTheClipboardPicture}" Style="{StaticResource Label}" Margin="0,14,0,6" />
+                <StackPanel Orientation="Horizontal">
+                    <local:ShortcutBox x:Name="ClipboardShortcut" Style="{StaticResource FieldBox}" Width="220" Optional="True" Tag="{x:Static local:Strings.None}"
+                                       AutomationProperties.LabeledBy="{Binding ElementName=ClipboardShortcutLabel}"
+                                       AutomationProperties.HelpText="{x:Static local:Strings.ClickHereAndPressTheKeysFor2}" />
+                    <Button x:Name="ClearClipboardShortcut" Style="{StaticResource SubtleButton}" Content="{x:Static local:Strings.Remove}" Margin="8,0,0,0"
+                            AutomationProperties.Name="{x:Static local:Strings.RemoveTheClipboardShortcut}" />
+                </StackPanel>
+                <TextBlock x:Name="ClipboardShortcutHint" Style="{StaticResource Hint}" Text="{x:Static local:Strings.ClipboardShortcutHint}" />
                 <TextBlock x:Name="ShortcutProblem" Style="{StaticResource Problem}" Visibility="Collapsed" />
+
+                <TextBlock Text="{x:Static local:Strings.Clipboard}" Style="{StaticResource SectionHeading}" />
+                <CheckBox x:Name="ParkScreenshotsCheck" Style="{StaticResource Check}" Content="{x:Static local:Strings.ParkScreenshotsOnTheShelf}" />
+                <TextBlock Style="{StaticResource Hint}" Margin="27,2,0,10" Text="{x:Static local:Strings.ParkScreenshotsHint}" />
+                <CheckBox x:Name="CopyResultsCheck" Style="{StaticResource Check}" Content="{x:Static local:Strings.PutResultsBackOnTheClipboard}" />
+                <TextBlock Style="{StaticResource Hint}" Margin="27,2,0,0" Text="{x:Static local:Strings.PutResultsBackOnTheClipboardHint}" />
 
                 <TextBlock Text="{x:Static local:Strings.Appearance}" Style="{StaticResource SectionHeading}" />
                 <TextBlock x:Name="ThemeLabel" Text="{x:Static local:Strings.Theme}" Style="{StaticResource Label}" />

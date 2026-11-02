@@ -12,6 +12,9 @@ sealed class Settings
 
     /// <summary>Shows or hides the Float shelf from anywhere, such as "Ctrl+Shift+F"; off (null) by default.</summary>
     public string? FloatHotkey { get; set; }
+
+    /// <summary>Opens the menu for the picture or files on the clipboard from anywhere, such as "Ctrl+Shift+V"; off (null) by default.</summary>
+    public string? ClipboardHotkey { get; set; }
     public string Theme { get; set; } = "system"; // "system", "light" or "dark"
     public int JpegQuality { get; set; } = 90;
     public int WebpQuality { get; set; } = 90;
@@ -22,6 +25,12 @@ sealed class Settings
 
     /// <summary>Whether to ask GitHub once a day if a newer Tanjelo is out; off unless turned on.</summary>
     public bool CheckForUpdates { get; set; }
+
+    /// <summary>Whether screenshots from Snipping Tool, Win+Shift+S and Print Screen are parked on the shelf as they're taken.</summary>
+    public bool ParkScreenshots { get; set; } = true;
+
+    /// <summary>Whether results of a picture from the clipboard are put on the clipboard as they're made, ready to paste.</summary>
+    public bool CopyClipboardResults { get; set; } = true;
 
     public static string FilePath { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tanjelo", "settings.json");

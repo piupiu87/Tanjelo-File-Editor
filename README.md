@@ -29,8 +29,10 @@ independent project, not affiliated with Tangerine.
   PDFs, join videos, save frames, remove the location and other metadata, and more.
 - **Editors** open a window for work by hand: organize PDF pages, redact faces and text in photos, annotate
   screenshots, edit photos with live sliders, and trim and bleep video and audio, or redact video, on a timeline.
-- **Actions** work on the files themselves: copy their paths, open a terminal there, share them, move them, or park
-  them on the **Float shelf** and drag copies out later.
+- **Actions** work on the files themselves: copy their paths, open a terminal there, share them, copy or move them to a
+  folder, or park them on the **Float shelf** and drag copies out later.
+- **Clipboard pictures**: screenshots wait on the shelf as they're taken, and the picture on the clipboard can be
+  converted or edited without saving it first, with the results back on the clipboard, ready to paste.
 - **`tanj`**, the command-line tool, does all of it from scripts.
 
 ## Download
@@ -56,7 +58,8 @@ The app isn't code-signed yet, so the first launch may show "Windows protected y
 | Notification area | Click the Tanjelo icon to pick files; right-click for options |
 | "Send to" menu | Turn on *Show in the "Send to" menu* in Settings, then right-click files → Send to → Tanjelo |
 | Windows 11 right-click menu | In a signed release, turn on *Show in the Windows 11 right-click menu* in Settings, then right-click files → **Tanjelo…** for the same menu as the shortcut |
-| Float shelf | Drop files on the shelf at the right edge of the screen, drag copies out later (hold Shift to move them), or press the shortcut there to convert them; right-click them to copy them or show them in their folder |
+| Float shelf | Drop files on the shelf at the right edge of the screen, or press **Ctrl+V** there to park copied files or a picture; double-click one to open it, drag copies out later (hold Shift to move them), or press the shortcut there to convert them; right-click them to copy them, save copies or show them in their folder |
+| Screenshots and copied pictures | Every screenshot from Snipping Tool, **Win+Shift+S** or Print Screen is parked on the shelf as it's taken. With nothing selected, press **Ctrl+Shift+Space** in Explorer or on the desktop for the menu for the picture on the clipboard; or give it a shortcut of its own in Settings that works in every app, or right-click the tray icon → *Clipboard picture…*. The picture and its results wait on the shelf, in Tanjelo's own folder, until you save or drag them where you want them (see [clipboard pictures](docs/TOOLS.md#clipboard-pictures)) |
 | Command line | `tanj convert webp *.png` (see [Command line](#command-line)) |
 
 The menu has three tabs: **Convert**, **Tools** and **Actions**. Press **Tab** (or the shortcut again) to switch, or
@@ -65,6 +68,10 @@ just type: `mute` finds the Mute tool from any tab.
 Tools whose names end in "…" need a few settings first, so they open a small options dialog: it starts from the
 settings you used last time, shows a live preview where that helps, and runs on **Enter** (**Esc** cancels). Editors
 open in a window of their own for one file.
+
+A card at the bottom right shows each result, with **Copy** (a picture goes on the clipboard as a picture, a text file
+as its text, anything else as files to paste), **Open** and **Show in folder**. Results of a picture from the clipboard
+go back on the clipboard by themselves.
 
 The shortcut is only grabbed while Explorer or the desktop is in front, so other apps keep their own Ctrl+Shift+Space.
 
@@ -139,8 +146,8 @@ silence from its ends; split a PDF into pages, or merge several.
 
 <p align="center"><img src="docs/images/trim.png" width="680" alt="The Trim editor in the dark theme: a video above a timeline of thumbnails and the sound's waveform, with the part kept outlined between two handles"></p>
 
-**Actions** work with the files and folders themselves: Copy path, Copy, Open in Terminal, Share…, Float (the shelf)
-and Move to….
+**Actions** work with the files and folders themselves: Copy path, Copy, Open in Terminal, Share…, Float (the shelf),
+Save to… (a copy in a folder you pick) and Move to….
 
 ## Requirements
 
@@ -163,10 +170,12 @@ and Move to….
 
 ## Settings
 
-Tray menu → *Settings…* opens the settings window: the menu's and the shelf's shortcuts (click a box and press the
-keys), the theme, the quality of JPG, WebP and HEIC pictures and of PDF pages saved as pictures, where ffmpeg and 7-Zip
-are when they aren't found automatically, which optional programs were found, *Start with Windows*, the "Send to"
-entry, the Windows 11 menu entry (in signed releases) and the [update check](#privacy). Changes apply at once.
+Tray menu → *Settings…* opens the settings window: the shortcuts for the menu, the shelf and the clipboard picture's
+menu (click a box and press the keys), *Park screenshots on the shelf* (see [Privacy](#privacy)) and *Put results back
+on the clipboard*, the theme, the quality of JPG, WebP and HEIC pictures and of PDF pages saved as pictures, where
+ffmpeg and 7-Zip are when they aren't found automatically, which optional programs were found, *Start with Windows*,
+the "Send to" entry, the Windows 11 menu entry (in signed releases) and the [update check](#privacy). Changes apply at
+once.
 
 The settings live in `%APPDATA%\Tanjelo\settings.json` (*Open settings file* in the window), which can still be edited
 by hand; changes apply as soon as you save it.
@@ -175,6 +184,7 @@ by hand; changes apply as soon as you save it.
 {
   "hotkey": "Ctrl+Shift+Space",
   "floatHotkey": null,        // e.g. "Ctrl+Shift+F" to show or hide the Float shelf from anywhere
+  "clipboardHotkey": null,    // e.g. "Ctrl+Shift+V" for the clipboard picture's menu from anywhere
   "theme": "system",          // "system", "light" or "dark"
   "jpegQuality": 90,
   "webpQuality": 90,
@@ -182,7 +192,9 @@ by hand; changes apply as soon as you save it.
   "pdfRenderDpi": 300,        // resolution for PDF -> image
   "ffmpegPath": null,         // only needed if ffmpeg isn't found automatically
   "sevenZipPath": null,
-  "checkForUpdates": false    // ask GitHub once a day whether a newer version is out
+  "checkForUpdates": false,   // ask GitHub once a day whether a newer version is out
+  "parkScreenshots": true,    // park screenshots on the shelf as they're taken
+  "copyClipboardResults": true // results of a clipboard picture go back on the clipboard
 }
 ```
 
@@ -207,6 +219,16 @@ collected (no account, no telemetry, no crash reports). The only network use is 
 - **Share…** sends files only where you choose in Windows' Share sheet.
 
 Office, LibreOffice, ffmpeg, 7-Zip and the WebView2 runtime run on your PC; WebView2 runs with every web address blocked.
+
+**The clipboard.** To park screenshots on the shelf as they're taken, Tanjelo is told by Windows each time something
+is copied. It looks only at which app copied it (Snipping Tool, the Win+Shift+S overlay, or Print Screen) and, for
+those, at the list of formats; what was copied is read only when it's a screenshot. Copies that password managers mark
+as not for clipboard watchers or for clipboard history are left alone, and so is anything copied by other apps. The
+screenshots are saved in `%LOCALAPPDATA%\Tanjelo\Clipboard` while they're on the shelf, go to the Recycle Bin when taken
+off it, and are never uploaded. Turn off *Park screenshots on the shelf* in Settings and Tanjelo stops listening
+altogether; the clipboard is then read only when you ask, with the shortcut, the tray or Ctrl+V on the shelf. A picture
+from another app that Tanjelo leaves alone is noted in its log by that app's name, so the list of screenshot apps can be
+fixed.
 
 ## Code signing policy
 
@@ -257,6 +279,16 @@ tanj convert redact --spec=boxes.json --style=blur clip.mp4
 When a conversion has something to add, such as how many scanned pages were read with OCR, `tanj` prints it on a
 `note` line and the app adds it to the result card.
 
+`--clipboard` in place of the files works on the files copied to the clipboard, or on the picture there, such as a
+screenshot. The picture's results are written in the current folder, and the clipboard is left as it is.
+
+```
+tanj targets --clipboard                            # what the picture on the clipboard can become
+tanj convert jpg --clipboard                        # a screenshot as a JPG here
+tanj convert txt --clipboard                        # the text in it, read with OCR
+tanj convert save-to --folder=D:\Shots --clipboard  # the screenshot itself, saved in D:\Shots
+```
+
 ## Office automation
 
 Office sometimes stops on prompts that its "no alerts" setting doesn't cover. Tanjelo handles this:
@@ -302,10 +334,11 @@ SignPath; [.signpath/README.md](.signpath/README.md) says how it's set up.
 
 ## Roadmap
 
-v1.0 makes Tanjelo ready for everyone: an installer and a winget package, the .NET runtime inside, a settings window,
-an opt-in update check, an accessibility pass and text ready to translate. It ships unsigned: code signing, and the
-Windows 11 menu entry that needs it, are on hold for a later release. See [docs/ROADMAP.md](docs/ROADMAP.md) for the
-full plan. Ideas and pull requests are welcome; open an issue first for anything big, and see
+v1.0 made Tanjelo ready for everyone: an installer and a winget package, the .NET runtime inside, a settings window,
+an opt-in update check, an accessibility pass and text ready to translate. v1.1 brings clipboard pictures: screenshots
+parked on the shelf as they're taken, a menu for the picture on the clipboard, results back on the clipboard, Save to…,
+and `tanj --clipboard`. Releases ship unsigned: code signing, and the Windows 11 menu entry that needs it, are on hold
+for a later release. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are welcome; open an issue first for anything big, and see
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License

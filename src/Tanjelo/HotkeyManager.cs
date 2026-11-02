@@ -9,13 +9,17 @@ namespace Tanjelo;
 /// </summary>
 sealed class HotkeyManager : IDisposable
 {
-    const int HotkeyId = 0xC1E, ShelfHotkeyId = 0xC1F;
+    const int HotkeyId = 0xC1E;
+
+    /// <summary>The optional shortcuts that work in every app, each with its own hotkey number.</summary>
+    public enum Global { Shelf = 0xC1F, Clipboard = 0xC20 }
 
     readonly HwndSource _window;
     readonly Native.WinEventProc _onForegroundChanged; // held so the GC can't collect the callback
     readonly IntPtr _hook;
+    readonly HashSet<Global> _globals = [];
     uint _modifiers, _key;
-    bool _registered, _reportedConflict, _shelfRegistered;
+    bool _registered, _reportedConflict;
 
     public event Action? Pressed;
 
@@ -24,6 +28,9 @@ sealed class HotkeyManager : IDisposable
 
     /// <summary>The optional shortcut that shows or hides the Float shelf, which works everywhere.</summary>
     public event Action? ShelfPressed;
+
+    /// <summary>The optional shortcut that opens the menu for the clipboard picture, which works everywhere.</summary>
+    public event Action? ClipboardPressed;
 
     /// <summary>Other windows the shortcut works in besides File Explorer and the desktop, such as the Float shelf.</summary>
     public Func<IntPtr, bool>? AlsoIn { get; set; }
@@ -46,14 +53,14 @@ sealed class HotkeyManager : IDisposable
         Update(Native.GetForegroundWindow());
     }
 
-    /// <summary>Sets the shelf's shortcut, or removes it with null. Returns false if another program owns those keys.</summary>
-    public bool SetShelf((ModifierKeys Modifiers, Key Key)? shortcut)
+    /// <summary>Sets one of the shortcuts that work everywhere, or removes it with null. Returns false if another program owns those keys.</summary>
+    public bool SetGlobal(Global which, (ModifierKeys Modifiers, Key Key)? shortcut)
     {
-        if (_shelfRegistered) Native.UnregisterHotKey(_window.Handle, ShelfHotkeyId);
-        _shelfRegistered = false;
+        if (_globals.Remove(which)) Native.UnregisterHotKey(_window.Handle, (int)which);
         if (shortcut is not { } keys) return true;
-        _shelfRegistered = Native.RegisterHotKey(_window.Handle, ShelfHotkeyId, Modifiers(keys.Modifiers) | Native.MOD_NOREPEAT, (uint)KeyInterop.VirtualKeyFromKey(keys.Key));
-        return _shelfRegistered;
+        var registered = Native.RegisterHotKey(_window.Handle, (int)which, Modifiers(keys.Modifiers) | Native.MOD_NOREPEAT, (uint)KeyInterop.VirtualKeyFromKey(keys.Key));
+        if (registered) _globals.Add(which);
+        return registered;
     }
 
     static uint Modifiers(ModifierKeys modifiers) =>
@@ -95,10 +102,15 @@ sealed class HotkeyManager : IDisposable
             handled = true;
             Pressed?.Invoke();
         }
-        else if (msg == Native.WM_HOTKEY && wParam.ToInt32() == ShelfHotkeyId)
+        else if (msg == Native.WM_HOTKEY && wParam.ToInt32() == (int)Global.Shelf)
         {
             handled = true;
             ShelfPressed?.Invoke();
+        }
+        else if (msg == Native.WM_HOTKEY && wParam.ToInt32() == (int)Global.Clipboard)
+        {
+            handled = true;
+            ClipboardPressed?.Invoke();
         }
         return IntPtr.Zero;
     }
@@ -106,7 +118,7 @@ sealed class HotkeyManager : IDisposable
     public void Dispose()
     {
         Unregister();
-        SetShelf(null);
+        foreach (var which in _globals.ToList()) SetGlobal(which, null);
         Native.UnhookWinEvent(_hook);
         _window.Dispose();
     }

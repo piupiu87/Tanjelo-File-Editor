@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -12,27 +13,33 @@ namespace Tanjelo;
 
 /// <summary>
 /// The Float shelf: an always-on-top panel at the right edge of the screen where files are parked by dropping them on
-/// it, and dragged out again later. It holds references, not copies, and takes no focus when it appears.
+/// it or pasting them, and dragged out again later. It points at the user's files, holds pictures pasted from the
+/// clipboard in Tanjelo's own folder, and takes no focus when it appears.
 /// </summary>
 public partial class FloatWindow : Window
 {
     public static string FilePath { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tanjelo", "float.json");
 
-    public sealed class Item(string path)
+    /// <param name="held">Whether the shelf holds the file itself, a picture from the clipboard not saved anywhere yet.</param>
+    public sealed class Item(string path, bool held)
     {
         ImageSource? _thumbnail;
         public string Path { get; } = path;
+        public bool Held { get; } = held;
         public string Name => System.IO.Path.GetFileName(Path) is { Length: > 0 } name ? name : Path;
-        public string Folder => System.IO.Path.GetDirectoryName(Path) ?? "";
+        public string Folder => Held ? Strings.NotSavedYet : System.IO.Path.GetDirectoryName(Path) ?? "";
+        public string Spoken => Held ? string.Format(Strings.NotSavedYetName, Name) : Name;
         public ImageSource? Thumbnail => _thumbnail ??= ShellIntegration.Thumbnail(Path, 64);
     }
 
     readonly Shelf _shelf;
+    readonly string? _hotkey;
     readonly IClipboard _clipboard;
     readonly Action<IReadOnlyList<string>> _reveal;
     readonly ObservableCollection<Item> _items = [];
     readonly DispatcherTimer _prune = new() { Interval = TimeSpan.FromSeconds(3) };
+    readonly DispatcherTimer _noticeTimer = new() { Interval = TimeSpan.FromSeconds(6) };
     Point? _pressedAt;
     Item? _pressedOn;
     Item? _narrowTo;
@@ -43,19 +50,19 @@ public partial class FloatWindow : Window
     {
         InitializeComponent();
         _shelf = shelf;
+        _hotkey = hotkey;
         _clipboard = clipboard ?? new WindowsClipboard();
         _reveal = reveal ?? Native.RevealInExplorer;
         List.ItemsSource = _items;
         var area = SystemParameters.WorkArea;
         (Left, Top) = (area.Right - Width - 12, area.Top + area.Height / 3); // until its height is known
-        // "from the shelf", so nobody fears Delete will delete the file itself.
-        KeysText.Text = hotkey is null ? Strings.DeleteRemovesFromTheShelf : string.Format(Strings.DeleteRemovesFromTheShelfConverts, hotkey);
         Refresh();
         _shelf.Changed += () => Dispatcher.BeginInvoke(Refresh);
 
         ClearButton.Click += (_, _) => _shelf.Clear();
         HideButton.Click += (_, _) => Hide();
         _prune.Tick += (_, _) => _shelf.Prune(); // files moved or deleted elsewhere drop off
+        _noticeTimer.Tick += (_, _) => ShowNotice(null);
         IsVisibleChanged += (_, _) =>
         {
             if (IsVisible) _prune.Start();
@@ -78,7 +85,11 @@ public partial class FloatWindow : Window
         List.PreviewMouseMove += OnMove;
         List.PreviewMouseLeftButtonUp += OnRelease;
         // A right-click selects the file under it unless it's selected already, so there's always something to act on.
-        List.ContextMenuOpening += (_, e) => e.Handled = List.SelectedItems.Count == 0;
+        List.ContextMenuOpening += (_, e) =>
+        {
+            e.Handled = List.SelectedItems.Count == 0;
+            if (!e.Handled) ShowMenuItems();
+        };
         DragAll.MouseLeftButtonDown += (_, e) =>
         {
             e.Handled = true;
@@ -88,6 +99,15 @@ public partial class FloatWindow : Window
     }
 
     public IntPtr Hwnd => new WindowInteropHelper(this).Handle;
+
+    /// <summary>Where Save as… asks to save one file; null when canceled. Tests answer instead of the dialog.</summary>
+    internal Func<string, string?> AskForFileName { get; set; } = SaveCopies.AskFileName;
+
+    /// <summary>Which folder Save to… copies into; null when canceled.</summary>
+    internal Func<string?> AskForFolder { get; set; } = SaveCopies.AskFolder;
+
+    /// <summary>Opens a file in its app, or a folder in Explorer, as Explorer's double-click does. Tests record instead.</summary>
+    internal Action<string> OpenFile { get; set; } = path => Process.Start(new ProcessStartInfo(path) { UseShellExecute = true })?.Dispose();
 
     /// <summary>The selected files, or all of them when none is selected: what the hotkey converts.</summary>
     public IReadOnlyList<string> SelectedOrAll()
@@ -102,7 +122,7 @@ public partial class FloatWindow : Window
         var kept = _items.ToDictionary(i => i.Path, StringComparer.OrdinalIgnoreCase);
         _items.Clear();
         foreach (var path in _shelf.Items)
-            _items.Add(kept.GetValueOrDefault(path) ?? new Item(path));
+            _items.Add(kept.GetValueOrDefault(path) ?? new Item(path, _shelf.Holds(path)));
         foreach (var item in _items.Where(i => selected.Contains(i.Path)))
             List.SelectedItems.Add(item);
 
@@ -113,6 +133,17 @@ public partial class FloatWindow : Window
         ClearButton.IsEnabled = !empty;
         CountText.Text = empty ? "" : $"  {_items.Count}";
         List.MaxHeight = SystemParameters.WorkArea.Height * 0.6;
+
+        // "from the shelf", so nobody fears Delete will delete the file itself; pictures not saved anywhere are the exception.
+        var held = _items.Any(i => i.Held);
+        KeysText.Text = (held, _hotkey) switch
+        {
+            (false, null) => Strings.DeleteRemovesFromTheShelf,
+            (false, { } keys) => string.Format(Strings.DeleteRemovesFromTheShelfConverts, keys),
+            (true, null) => Strings.DeleteTakesItOffTheShelfPicturesNot,
+            (true, { } keys) => string.Format(Strings.DeleteTakesItOffTheShelfPicturesNotConverts, keys),
+        };
+        ClearButton.ToolTip = held ? Strings.TakeEverythingOffTheShelfPictures : Strings.TakeEverythingOffTheShelfTheFiles;
     }
 
     /// <summary>At the right edge of the screen, halfway down.</summary>
@@ -141,6 +172,50 @@ public partial class FloatWindow : Window
     }
 
     void Highlight(bool on) => DropZone.BorderBrush = (Brush)FindResource(on ? "Accent" : "FieldBorder");
+
+    /// <summary>
+    /// Ctrl+V: copied files are parked as references, as a drop parks them; a picture is saved in Tanjelo's folder and
+    /// parked there. The clipboard is read and the picture saved off the UI thread.
+    /// </summary>
+    internal async Task PasteAsync()
+    {
+        try
+        {
+            var sequence = _clipboard.Sequence;
+            var content = await Task.Run(() => ClipboardPicture.Choose(_clipboard.Read()));
+            if (content.Files.Count > 0)
+            {
+                _shelf.Add(content.Files);
+                ShowNotice(Strings.ParkedOnTheShelf);
+            }
+            else if (content.Picture is { } picture && _shelf.Folder is { } folder)
+            {
+                var (file, _) = await Task.Run(() => folder.Save(picture, sequence));
+                _shelf.Add([file]);
+                ShowNotice(Strings.ParkedOnTheShelf);
+            }
+            else
+            {
+                ShowNotice(content.Problem ?? Strings.ThereSNoPictureOrFilesOnTheClipboard);
+            }
+        }
+        catch (Exception ex) when (ex is ConversionException or IOException or UnauthorizedAccessException or ImageMagick.MagickException)
+        {
+            Log.Write(ex);
+            ShowNotice(ex.Message);
+        }
+    }
+
+    /// <summary>Shows a line under the shelf for a few seconds, read out too, or hides it with null.</summary>
+    internal void ShowNotice(string? text)
+    {
+        _noticeTimer.Stop();
+        Notice.Text = text ?? "";
+        Notice.Visibility = text is null ? Visibility.Collapsed : Visibility.Visible;
+        if (text is null) return;
+        Speech.Announce(Notice, text);
+        _noticeTimer.Start();
+    }
 
     void OnPress(object sender, MouseButtonEventArgs e)
     {
@@ -182,14 +257,32 @@ public partial class FloatWindow : Window
     /// <summary>The selected files, in the shelf's order: what dragging a selected file, Copy and Show in folder act on.</summary>
     IReadOnlyList<string> Selected() => _items.Where(List.SelectedItems.Contains).Select(i => i.Path).ToList();
 
-    /// <summary>Puts the selected files on the clipboard, to paste as copies, as Explorer's Copy does.</summary>
+    /// <summary>
+    /// The right-click menu for what's selected: Save as… for one file and Save to… otherwise, and Show in folder only
+    /// for files in the user's folders, since the rest are in Tanjelo's own.
+    /// </summary>
+    internal void ShowMenuItems()
+    {
+        var selected = _items.Where(List.SelectedItems.Contains).ToList();
+        var saveAs = selected is [{ } one] && File.Exists(one.Path);
+        SaveAsItem.Visibility = saveAs ? Visibility.Visible : Visibility.Collapsed;
+        SaveToItem.Visibility = saveAs ? Visibility.Collapsed : Visibility.Visible;
+        ShowInFolderItem.Visibility = selected.Any(i => !i.Held) ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    /// <summary>
+    /// Puts the selected files on the clipboard, to paste as copies, as Explorer's Copy does; one picture goes on as a
+    /// picture too, to paste into a chat or a document.
+    /// </summary>
     void CopySelected()
     {
         var paths = Selected();
         if (paths.Count == 0) return;
         try
         {
-            _clipboard.SetFiles(paths);
+            if (paths is [var one] && ClipboardResults.IsPicture(one)) ClipboardResults.Copy(_clipboard, paths);
+            else _clipboard.SetFiles(paths);
+            _shelf.MarkUsed(paths);
         }
         catch (ConversionException ex)
         {
@@ -200,7 +293,7 @@ public partial class FloatWindow : Window
     /// <summary>Opens the folder of each selected file in Explorer with the file selected there, a window per folder.</summary>
     void ShowSelectedInFolder()
     {
-        foreach (var inFolder in Selected().GroupBy(p => Path.GetDirectoryName(p) ?? p, StringComparer.OrdinalIgnoreCase))
+        foreach (var inFolder in Selected().Where(p => !_shelf.Holds(p)).GroupBy(p => Path.GetDirectoryName(p) ?? p, StringComparer.OrdinalIgnoreCase))
         {
             try
             {
@@ -213,9 +306,59 @@ public partial class FloatWindow : Window
         }
     }
 
+    /// <summary>Save as… or Save to…: copies of the selected files where the user chooses; the shelf keeps its own.</summary>
+    void SaveSelected()
+    {
+        var paths = Selected();
+        try
+        {
+            var saved = SaveCopies.Save(paths, AskForFileName, AskForFolder);
+            if (saved.Count == 0) return;
+            _shelf.MarkUsed(paths);
+            ShowNotice(saved.Count == 1
+                ? string.Format(Strings.SavedAs, Path.GetFileName(saved[0]))
+                : string.Format(Strings.SavedIn, Path.GetFileName(Path.GetDirectoryName(saved[0]))));
+        }
+        catch (Exception ex) when (ex is ConversionException or IOException or UnauthorizedAccessException)
+        {
+            Log.Write(ex);
+            ShowNotice(ex.Message);
+        }
+    }
+
+    /// <summary>Opens each file in its app and each folder in Explorer; one that's gone or has no app says so under the shelf.</summary>
+    void OpenItems(IReadOnlyList<string> paths)
+    {
+        foreach (var path in paths)
+        {
+            try
+            {
+                OpenFile(path);
+            }
+            catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException)
+            {
+                Log.Write($"{path}: {ex.Message}");
+                ShowNotice(ex.Message);
+                _shelf.Prune(); // a file moved or deleted since drops off
+            }
+        }
+    }
+
+    void OnItemDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        // Not on the × button, where two quick clicks are only quick.
+        if (e.ChangedButton != MouseButton.Left || e.OriginalSource is DependencyObject d && IsInButton(d)) return;
+        if (((FrameworkElement)sender).DataContext is Item item) OpenItems([item.Path]);
+        e.Handled = true;
+    }
+
+    void OnOpen(object sender, RoutedEventArgs e) => OpenItems(Selected());
+
     void OnShowInFolder(object sender, RoutedEventArgs e) => ShowSelectedInFolder();
 
     void OnCopy(object sender, RoutedEventArgs e) => CopySelected();
+
+    void OnSave(object sender, RoutedEventArgs e) => SaveSelected();
 
     void OnTakeOff(object sender, RoutedEventArgs e) => _shelf.Remove(Selected());
 
@@ -231,6 +374,7 @@ public partial class FloatWindow : Window
         {
             _draggingOut = false;
         }
+        _shelf.MarkUsed(paths);
         // Explorer reports a move as "none" when it moves within a drive, so look at the files themselves.
         _shelf.Prune();
     }
@@ -254,20 +398,32 @@ public partial class FloatWindow : Window
 
     void OnKey(object sender, KeyEventArgs e)
     {
-        switch (e.Key)
+        if (Press(e.Key, Keyboard.Modifiers)) e.Handled = true;
+    }
+
+    /// <summary>A key going down with these modifiers held; returns whether the shelf used it.</summary>
+    internal bool Press(Key key, ModifierKeys modifiers)
+    {
+        switch (key)
         {
+            // Only in the list: on Clear or ×, Enter presses the button.
+            case Key.Enter when List.IsKeyboardFocusWithin && List.SelectedItems.Count > 0 && modifiers == ModifierKeys.None:
+                OpenItems(Selected());
+                return true;
             case Key.Delete when List.SelectedItems.Count > 0:
                 _shelf.Remove(Selected());
-                e.Handled = true;
-                break;
-            case Key.C when Keyboard.Modifiers == ModifierKeys.Control && List.SelectedItems.Count > 0:
+                return true;
+            case Key.C when modifiers == ModifierKeys.Control && List.SelectedItems.Count > 0:
                 CopySelected();
-                e.Handled = true;
-                break;
+                return true;
+            case Key.V when modifiers == ModifierKeys.Control:
+                _ = PasteAsync();
+                return true;
             case Key.Escape:
                 Hide();
-                e.Handled = true;
-                break;
+                return true;
+            default:
+                return false;
         }
     }
 

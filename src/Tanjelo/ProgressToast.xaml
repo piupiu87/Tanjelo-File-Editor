@@ -22,10 +22,13 @@
             <TextBlock x:Name="Detail" FontSize="12" Margin="0,2,0,0" Foreground="{DynamicResource TextSecondary}"
                        TextWrapping="Wrap" MaxHeight="52" TextTrimming="CharacterEllipsis" />
             <ProgressBar x:Name="Bar" Style="{StaticResource ThinProgress}" Margin="0,10,6,2" IsIndeterminate="True" />
-            <StackPanel x:Name="Actions" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,4,0" Visibility="Collapsed">
-                <Button x:Name="SecondaryButton" Style="{StaticResource SubtleButton}" Visibility="Collapsed" />
-                <Button x:Name="PrimaryButton" Style="{StaticResource PrimaryButton}" Visibility="Collapsed" />
-            </StackPanel>
+            <!-- Up to three buttons, which wrap onto another line rather than being cut when their words are long -->
+            <WrapPanel x:Name="Actions" HorizontalAlignment="Right" Margin="0,8,4,0" Visibility="Collapsed">
+                <Button x:Name="CopyButton" Style="{StaticResource SubtleButton}" Visibility="Collapsed" Margin="6,4,0,0"
+                        Content="{x:Static local:Strings.Copy}" ToolTip="{x:Static local:Strings.PutTheResultOnTheClipboard}" />
+                <Button x:Name="SecondaryButton" Style="{StaticResource SubtleButton}" Visibility="Collapsed" Margin="6,4,0,0" />
+                <Button x:Name="PrimaryButton" Style="{StaticResource PrimaryButton}" Visibility="Collapsed" Margin="6,4,0,0" />
+            </WrapPanel>
         </StackPanel>
 
         <Button x:Name="CloseButton" Grid.Column="2" Style="{StaticResource IconButton}" Content="&#xE711;"

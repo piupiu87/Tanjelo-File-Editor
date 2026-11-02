@@ -1,10 +1,13 @@
+using Tanj;
 using Tanjelo.Core;
+using Tanjelo.Core.Converters;
 
 // tanj: command-line front end to the same engine the tray app uses.
 //   tanj tools                                 show which external tools were found
 //   tanj targets <files...>                    list what the selection can become, and the tools and actions for it
 //   tanj options <key> <files...>              explain the settings a tool takes
 //   tanj convert <key> [--name=value] <files>  run one of those, writing outputs next to the inputs
+// --clipboard in place of the files works on the files copied to the clipboard, or the picture on it.
 
 if (args.Length == 0 || args[0] is "-h" or "--help" or "help")
 {
@@ -17,6 +20,9 @@ if (args.Length == 0 || args[0] is "-h" or "--help" or "help")
 
         --name=value overrides a tool's setting, e.g. tanj convert split-video-2 --parts=5 clip.mp4
         tanj options explains the settings of tools that ask for them, such as compress.
+
+        --clipboard in place of the files works on the files copied to the clipboard, or on the picture there, such
+        as a screenshot; the picture's results are written in the current folder, e.g. tanj convert jpg --clipboard
         """);
     return 0;
 }
@@ -28,8 +34,12 @@ System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = System.Globaliz
     System.Globalization.CultureInfo.InvariantCulture;
 ExitGuard.EndWhenMainReturns();
 var engine = new ConverterEngine(Toolbox.Detect());
+// Taken out before the settings are read, so it isn't refused as one; the clipboard is read only when it's there.
+(args, var fromClipboard) = ClipboardRun.Take(args);
+using var clipboard = new ClipboardRun(new WindowsClipboard());
+var least = fromClipboard ? 0 : 1; // how many files at the least
 
-switch (args[0])
+switch (args.FirstOrDefault())
 {
     case "tools":
         var t = engine.Tools;
@@ -45,10 +55,10 @@ switch (args[0])
         Console.WriteLine($"OCR         {(t.Ocr ? "Windows OCR" : "-")}");
         return 0;
 
-    case "targets" when args.Length > 1:
+    case "targets" when args.Length >= 1 + least:
     {
         if (Inputs(args[1..]) is not { } selection) return 2;
-        var menu = engine.GetMenu(selection);
+        var menu = Menu(selection);
         foreach (var group in menu.Targets.GroupBy(x => (x.Kind, x.Section)).OrderBy(g => g.Key.Kind))
         {
             Console.WriteLine($"{group.Key.Kind} / {group.Key.Section}");
@@ -60,10 +70,12 @@ switch (args[0])
         }
         foreach (var hint in menu.Hints)
             Console.WriteLine($"note: {hint}");
+        if (clipboard.Picture is { } picture)
+            Console.WriteLine($"note: {string.Format(Strings.ClipboardPictureNote, picture.Width, picture.Height)}");
         return 0;
     }
 
-    case "options" when args.Length > 2:
+    case "options" when args.Length >= 2 + least:
     {
         if (Inputs(args[2..]) is not { } selection) return 2;
         var target = Find(args[1], selection);
@@ -97,7 +109,7 @@ switch (args[0])
         return 0;
     }
 
-    case "convert" when args.Length > 2:
+    case "convert" when args.Length >= 2 + least:
     {
         var options = args[2..].TakeWhile(a => a.StartsWith("--", StringComparison.Ordinal)).ToList();
         if (Inputs(args[(2 + options.Count)..]) is not { } inputs) return 2;
@@ -148,7 +160,20 @@ switch (args[0])
         var watch = System.Diagnostics.Stopwatch.StartNew();
         var result = await engine.RunAsync(inputs, target, progress, cancel.Token);
         Console.Error.WriteLine();
-        foreach (var output in result.Outputs)
+        var outputs = result.Outputs;
+        if (clipboard.Scratch is { } scratch)
+        {
+            try
+            {
+                outputs = ClipboardRun.MoveOut(outputs, scratch, Directory.GetCurrentDirectory());
+            }
+            catch (Exception ex) when (ex is ConversionException or IOException or UnauthorizedAccessException)
+            {
+                Console.Error.WriteLine($"The results couldn't be moved into this folder: {ex.Message}");
+                return 1;
+            }
+        }
+        foreach (var output in outputs)
             Console.WriteLine($"ok    {output}");
         if (target.Kind == TargetKind.Action && result.Outputs.Count == 0 && result.Failures.Count == 0 && !result.Canceled)
             Console.WriteLine($"ok    {target.DoneText}");
@@ -158,6 +183,8 @@ switch (args[0])
             Console.WriteLine($"skip  {skipped} (already {target.Label})");
         foreach (var note in result.Notes)
             Console.WriteLine($"note  {note}");
+        if (clipboard.Picture is { } picture)
+            Console.WriteLine($"note  {string.Format(Strings.ClipboardPictureNote, picture.Width, picture.Height)}");
         if (result.Canceled)
             Console.WriteLine("canceled");
         Console.Error.WriteLine($"{watch.Elapsed.TotalSeconds:0.0}s");
@@ -172,17 +199,41 @@ switch (args[0])
 static string ShownWhen(Condition condition) =>
     $"--{condition.Name}={string.Join("|", condition.Values)}" + (condition.Or is { } or ? " or " + ShownWhen(or) : "");
 
+// The menu for a picture from the clipboard is the app's: nothing that would work on tanj's scratch copy of it.
+MenuModel Menu(IReadOnlyList<string> inputs) =>
+    clipboard.Picture is null ? engine.GetMenu(inputs) : ClipboardPicture.ForMenu(engine.GetMenu(inputs), saveHere: null);
+
 Target? Find(string key, IReadOnlyList<string> inputs)
 {
-    var target = engine.GetMenu(inputs).Targets.FirstOrDefault(x => string.Equals(x.Key, key, StringComparison.OrdinalIgnoreCase));
+    var target = Menu(inputs).Targets.FirstOrDefault(x => string.Equals(x.Key, key, StringComparison.OrdinalIgnoreCase));
     if (target is null)
         Console.Error.WriteLine($"'{key}' isn't available for this selection. Run: tanj targets <files>");
     return target;
 }
 
-// The full paths, or null (with the reason printed) when one is missing or none were given.
-static List<string>? Inputs(string[] paths)
+// The full paths, or null (with the reason printed) when one is missing or none were given. With --clipboard, the
+// files copied there, or the picture saved in a scratch folder.
+List<string>? Inputs(string[] paths)
 {
+    if (fromClipboard)
+    {
+        if (paths.Length > 0)
+        {
+            Console.Error.WriteLine($"Give the files or {ClipboardRun.Switch}, not both.");
+            return null;
+        }
+        try
+        {
+            var read = clipboard.Read(out var problem);
+            if (read is null) Console.Error.WriteLine(problem);
+            return read?.ToList();
+        }
+        catch (ConversionException ex)
+        {
+            Console.Error.WriteLine(ex.Message);
+            return null;
+        }
+    }
     if (paths.Length == 0)
     {
         Console.Error.WriteLine("No files given.");

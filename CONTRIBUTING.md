@@ -32,12 +32,18 @@ The README's screenshots in `docs/images` come from the `ReadmeScreenshots` clas
 one's files or paths show. It runs only when `TANJELO_SCREENSHOTS` holds the full path of the folder to save them in;
 after changing a window they show, point it at `docs\images` and run that class.
 
+The tests leave the real clipboard and the Recycle Bin alone: they use `FakeClipboard`, a clipboard folder in their
+scratch folder and a recycle callback that only records. One test reads and writes the real clipboard, overwriting
+what's on it, and runs only when `TANJELO_REAL_CLIPBOARD` is `1`; run it
+(`-method "Tanjelo.Core.Tests.ClipboardPictureTests.On_the_real_clipboard_a_picture_goes_on_and_reads_back"`) after
+changing how the clipboard is read or written.
+
 ## How the code is laid out
 
 | Project | What's in it |
 |---|---|
 | `src/Tanjelo.Core` | Formats (`Formats.cs`), the engine (`ConverterEngine.cs`), optional tools (`Toolbox.cs`) and one converter per engine in `Converters/` |
-| `src/Tanjelo` | The WPF tray app: hotkey, Explorer selection, the menu, options dialogs, the editors (`Editors/`), progress cards, the Share sheet, the Float shelf and the settings window |
+| `src/Tanjelo` | The WPF tray app: hotkey, Explorer selection, the menu, options dialogs, the editors (`Editors/`), progress cards, the Share sheet, the Float shelf, the clipboard watcher and the settings window |
 | `src/tanj` | The command-line front end |
 | `src/Tanjelo.ShellMenu` | The Windows 11 right-click menu entry: `TanjeloMenu.dll`, a COM server published with NativeAOT that hands the selection to Tanjelo.exe, and the sparse package (`Package/`) that registers it. Published on CI, which has the C++ tools NativeAOT needs; `dotnet build` only compiles it. It ships only in signed releases, and the `windows11-menu` CI job tries it unsigned |
 | `tests/Tanjelo.Core.Tests` | xUnit tests for the engine, every converter, the app's pure helpers, and the editors' windows (`Ui.cs` renders them off-screen) |

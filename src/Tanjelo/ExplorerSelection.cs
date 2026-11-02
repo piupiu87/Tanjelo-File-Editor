@@ -13,18 +13,24 @@ static class ExplorerSelection
     public static bool IsExplorer(string className) => className is "CabinetWClass" or "ExploreWClass";
     public static bool IsFileWindow(IntPtr hwnd) => Native.ClassName(hwnd) is var c && (IsDesktop(c) || IsExplorer(c));
 
-    public static IReadOnlyList<string> Get(IntPtr hwnd)
+    public static IReadOnlyList<string> Get(IntPtr hwnd) => GetWithFolder(hwnd).Files;
+
+    /// <summary>
+    /// The selected files and the folder they're in: the folder open in the Explorer window, or the desktop. The folder
+    /// is null when it isn't one a file can be saved in, such as This PC, a zip or a CD.
+    /// </summary>
+    public static (IReadOnlyList<string> Files, string? Folder) GetWithFolder(IntPtr hwnd)
     {
         var className = Native.ClassName(hwnd);
         if (IsDesktop(className)) return FromDesktop();
         if (IsExplorer(className)) return FromWindow(hwnd);
-        return [];
+        return ([], null);
     }
 
     static IShellWindows ShellWindows() =>
         (IShellWindows)Activator.CreateInstance(Type.GetTypeFromCLSID(ShellWindowsClsid)!)!;
 
-    static IReadOnlyList<string> FromWindow(IntPtr hwnd)
+    static (IReadOnlyList<string>, string?) FromWindow(IntPtr hwnd)
     {
         // Windows 11 tabs share one top-level window; the first ShellTabWindowClass child is the visible tab.
         var activeTab = Native.FindWindowEx(hwnd, IntPtr.Zero, "ShellTabWindowClass", null);
@@ -38,7 +44,7 @@ static class ExplorerSelection
                 dynamic browser = window;
                 if (new IntPtr(Convert.ToInt64(browser.HWND)) != hwnd) continue;
                 if (activeTab != IntPtr.Zero && TabOf(window) is var tab && tab != IntPtr.Zero && tab != activeTab) continue;
-                return Paths(browser.Document.SelectedItems());
+                return (Paths(browser.Document.SelectedItems()), Writable(FolderOf(browser.Document)));
             }
             catch (COMException) { continue; } // windows can close or navigate while we enumerate
             finally
@@ -46,14 +52,40 @@ static class ExplorerSelection
                 Marshal.ReleaseComObject(window);
             }
         }
-        return [];
+        return ([], null);
     }
 
-    static IReadOnlyList<string> FromDesktop()
+    static (IReadOnlyList<string>, string?) FromDesktop()
     {
         object location = CSIDL_DESKTOP, root = null!;
         dynamic desktop = ShellWindows().FindWindowSW(ref location, ref root, SWC_DESKTOP, out _, SWFO_NEEDDISPATCH);
-        return Paths(desktop.Document.SelectedItems());
+        return (Paths(desktop.Document.SelectedItems()), Writable(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory)));
+    }
+
+    static string? FolderOf(dynamic view)
+    {
+        try
+        {
+            return view.Folder.Self.Path;
+        }
+        catch (Exception ex) when (ex is COMException or Microsoft.CSharp.RuntimeBinder.RuntimeBinderException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>The folder, if a file can be saved there: not a virtual folder such as This PC ("::{…}") or a CD.</summary>
+    static string? Writable(string? folder)
+    {
+        if (string.IsNullOrEmpty(folder) || !Path.IsPathFullyQualified(folder) || !Directory.Exists(folder)) return null;
+        try
+        {
+            return new DriveInfo(folder).DriveType == DriveType.CDRom ? null : folder;
+        }
+        catch (ArgumentException)
+        {
+            return folder; // a network share, which DriveInfo doesn't take
+        }
     }
 
     static IntPtr TabOf(object browser)

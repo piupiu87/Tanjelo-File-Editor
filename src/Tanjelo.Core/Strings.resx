@@ -672,6 +672,19 @@
   <data name="AnotherAppIsUsingTheClipboardTry" xml:space="preserve">
     <value>Another app is using the clipboard. Try again in a moment.</value>
   </data>
+  <data name="ThePictureOnTheClipboardIsTooLarge" xml:space="preserve">
+    <value>The picture on the clipboard is too large: {0} × {1} pixels is over 250 megapixels.</value>
+  </data>
+  <data name="ScreenshotFileName" xml:space="preserve">
+    <value>Screenshot {0:yyyy-MM-dd HHmmss}</value>
+    <comment>A picture taken from the clipboard, named as Windows names screenshots; .png is added</comment>
+  </data>
+  <data name="NoPictureOrFilesOnTheClipboard" xml:space="preserve">
+    <value>No picture or files on the clipboard.</value>
+  </data>
+  <data name="ClipboardPictureNote" xml:space="preserve">
+    <value>clipboard picture: PNG {0} × {1}</value>
+  </data>
   <data name="CopyPath" xml:space="preserve">
     <value>Copy path</value>
   </data>
@@ -749,6 +762,30 @@
   </data>
   <data name="AFolderCanTBeMovedInto" xml:space="preserve">
     <value>A folder can't be moved into itself.</value>
+  </data>
+  <data name="SaveTo" xml:space="preserve">
+    <value>Save to…</value>
+  </data>
+  <data name="CopyIntoAFolderYouPick" xml:space="preserve">
+    <value>Copy into a folder you pick</value>
+  </data>
+  <data name="Saving" xml:space="preserve">
+    <value>Saving…</value>
+  </data>
+  <data name="Saved" xml:space="preserve">
+    <value>Saved</value>
+  </data>
+  <data name="SaveToWhichFolder" xml:space="preserve">
+    <value>Save to which folder?</value>
+  </data>
+  <data name="SaveIn" xml:space="preserve">
+    <value>Save in "{0}"</value>
+  </data>
+  <data name="ChooseAFolderToSaveTo" xml:space="preserve">
+    <value>Choose a folder to save to.</value>
+  </data>
+  <data name="AFolderCanTBeCopiedIntoItself" xml:space="preserve">
+    <value>A folder can't be copied into itself.</value>
   </data>
   <data name="CopiedToButSomeOfTheOriginal" xml:space="preserve">
     <value>Copied to {0}, but some of the original folder couldn't be deleted: {1}</value>

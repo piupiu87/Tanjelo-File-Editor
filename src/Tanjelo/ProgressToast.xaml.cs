@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Threading;
 using Tanjelo.Core;
+using Tanjelo.Core.Converters;
 
 namespace Tanjelo;
 
@@ -12,6 +13,7 @@ public partial class ProgressToast : Window
     readonly DispatcherTimer _autoClose = new();
     bool _finished;
     Action? _primary, _secondary;
+    IReadOnlyList<string> _toCopy = [];
 
     /// <summary>The user pressed Cancel (or closed the card) while work was running.</summary>
     public event Action? CancelRequested;
@@ -27,6 +29,7 @@ public partial class ProgressToast : Window
         };
         PrimaryButton.Click += (_, _) => _primary?.Invoke();
         SecondaryButton.Click += (_, _) => _secondary?.Invoke();
+        CopyButton.Click += (_, _) => CopyResults();
         _autoClose.Tick += (_, _) =>
         {
             if (IsMouseOver) return; // keep it while the user is reading or reaching for a button
@@ -51,7 +54,19 @@ public partial class ProgressToast : Window
         if (!Bar.IsIndeterminate) Bar.Value = progress.Fraction;
     }
 
-    public void ShowResult(Target target, IReadOnlyList<string> inputs, BatchResult result)
+    /// <summary>Where Save as… on a card saves copies; returns the copies, or none when canceled. Tests answer instead of the dialogs.</summary>
+    internal Func<IReadOnlyList<string>, IReadOnlyList<string>> SaveCopies { get; set; } =
+        paths => Tanjelo.SaveCopies.Save(paths, Tanjelo.SaveCopies.AskFileName, Tanjelo.SaveCopies.AskFolder);
+
+    /// <summary>The clipboard Copy and Copy details put things on; tests give a fake one.</summary>
+    internal IClipboard Clipboard { get; set; } = new WindowsClipboard();
+
+    /// <param name="onShelf">
+    /// The results are on the shelf, in Tanjelo's own folder, as results of a picture from the clipboard are: the card
+    /// offers to save copies rather than to show a folder that isn't the user's.
+    /// </param>
+    /// <param name="copied">The results were put on the clipboard already, as those of a picture from the clipboard are.</param>
+    public void ShowResult(Target target, IReadOnlyList<string> inputs, BatchResult result, bool onShelf = false, bool copied = false)
     {
         var outputs = result.Outputs;
         var failures = result.Failures;
@@ -74,11 +89,13 @@ public partial class ProgressToast : Window
         }
         else if (failures.Count == 0)
         {
-            var detail = outputs.Count == 1 ? Path.GetFileName(outputs[0]) : Describe.Count(outputs.Count, Tanjelo.Core.Strings.OneFile, Tanjelo.Core.Strings.NFiles);
+            var detail = onShelf ? copied ? Strings.OnTheShelfCopiedToTheClipboard : Strings.OnTheShelf
+                : outputs.Count == 1 ? Path.GetFileName(outputs[0]) : Describe.Count(outputs.Count, Tanjelo.Core.Strings.OneFile, Tanjelo.Core.Strings.NFiles);
             if (result.Skipped.Count > 0) detail += string.Format(Strings.Already2, result.Skipped.Count, target.Label);
             foreach (var note in result.Notes) detail += " · " + note;
             (string, Action)? open = outputs.Count == 1 ? (Strings.Open, () => Open(outputs[0])) : null;
-            Finish(Mood.Success, target.DoneText, detail, Reveal(outputs), open, TimeSpan.FromSeconds(7));
+            Finish(Mood.Success, target.DoneText, detail, onShelf ? Save(outputs) : Reveal(outputs), open, TimeSpan.FromSeconds(7),
+                copy: copied ? null : outputs);
         }
         else
         {
@@ -107,8 +124,12 @@ public partial class ProgressToast : Window
 
     enum Mood { Info, Success, Failure }
 
-    void Finish(Mood mood, string heading, string detail, (string, Action)? primary, (string, Action)? secondary, TimeSpan? autoClose)
+    /// <param name="copy">Results the Copy button puts on the clipboard; no button without them.</param>
+    void Finish(Mood mood, string heading, string detail, (string, Action)? primary, (string, Action)? secondary, TimeSpan? autoClose,
+        IReadOnlyList<string>? copy = null)
     {
+        _toCopy = copy ?? [];
+        CopyButton.Visibility = copy is null ? Visibility.Collapsed : Visibility.Visible;
         _finished = true;
         Heading.Text = heading;
         Detail.Text = detail;
@@ -136,13 +157,43 @@ public partial class ProgressToast : Window
         PrimaryButton.Visibility = primary is null ? Visibility.Collapsed : Visibility.Visible;
         SecondaryButton.Content = secondary?.Label;
         SecondaryButton.Visibility = secondary is null ? Visibility.Collapsed : Visibility.Visible;
-        Actions.Visibility = primary is null && secondary is null ? Visibility.Collapsed : Visibility.Visible;
+        Actions.Visibility = primary is null && secondary is null && CopyButton.Visibility != Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    /// <summary>The Copy button: one picture goes on the clipboard as a picture, one text file as its text, the rest as files.</summary>
+    void CopyResults()
+    {
+        try
+        {
+            ClipboardResults.Copy(Clipboard, _toCopy);
+            CopyButton.Visibility = Visibility.Collapsed;
+            Detail.Text += " · " + Strings.CopiedToTheClipboard;
+            Speech.Announce(Card, Strings.CopiedToTheClipboard);
+        }
+        catch (Exception ex) when (ex is ConversionException or IOException or UnauthorizedAccessException)
+        {
+            ShowError(Strings.CouldnTCopy, ex.Message);
+        }
     }
 
     (string, Action) Reveal(IReadOnlyList<string> outputs) => (Strings.ShowInFolder, () =>
     {
         Native.RevealInExplorer(outputs);
         Close();
+    });
+
+    /// <summary>Save as… for one result, Save to… for several: copies where the user chooses.</summary>
+    (string, Action) Save(IReadOnlyList<string> outputs) => (outputs.Count == 1 && File.Exists(outputs[0]) ? Strings.SaveAs : Strings.SaveTo, () =>
+    {
+        _autoClose.Stop(); // not while the dialog is open
+        try
+        {
+            if (SaveCopies(outputs).Count > 0) Close();
+        }
+        catch (Exception ex) when (ex is ConversionException or IOException or UnauthorizedAccessException)
+        {
+            ShowError(Strings.CouldnTSaveACopy, ex.Message);
+        }
     });
 
     void Open(string path)

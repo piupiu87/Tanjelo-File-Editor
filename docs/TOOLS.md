@@ -18,6 +18,7 @@ Each tool has a key for `tanj` (shown in brackets below), and its settings are p
   [Edit photo](#edit-photo-adjust), [Trim](#trim-trim), [Bleep](#bleep-bleep), [Redact video](#redact-video-redact)
 - [Actions](#actions)
 - [Float shelf](#float-shelf)
+- [Clipboard pictures](#clipboard-pictures)
 
 ## Quick tools
 
@@ -340,27 +341,96 @@ Actions work with the selected files and folders themselves:
 | Open in Terminal | Opens Windows Terminal (or PowerShell) in each selected folder, or in the folder holding the selected files |
 | Share… | Opens the Windows Share sheet for the selected files, next to the pointer: email, apps, nearby PCs and phones. Nearby Sharing appears there when it's turned on in Windows' settings |
 | Float | Parks the selection on the Float shelf (below) |
+| Save to… | Copies the selection into a folder you pick and leaves it where it is; names already taken there get " (2)". For a [picture from the clipboard](#clipboard-pictures), **Save in "Folder"** copies it straight into the folder open in Explorer, or the desktop |
 | Move to… | Moves the selection into a folder you pick; names already taken there get " (2)" |
 
 Share and Float need the app; `tanj` lists them but says so when they're run.
 
 ```
+tanj convert save-to --folder=D:\Backup report.pdf
 tanj convert move-to --folder=D:\Archive *.jpg
 ```
 
 ## Float shelf
 
 A small panel that stays on top at the right edge of the screen, for files you'll want again in a moment. Drop files
-or folders on it from anywhere, or pick **Float** on the Actions tab, and drag them out later into a folder, an email
-or a chat: one, several (select them first) or all of them with **All**. Dragging out copies the files, even to a
-folder on the same drive; hold Shift as you drop to move them instead, or Alt to make shortcuts. The shelf holds
-references, not copies, so files that were moved or deleted drop off.
+or folders on it from anywhere, pick **Float** on the Actions tab, or click it and press **Ctrl+V**, and drag them out
+later into a folder, an email or a chat: one, several (select them first) or all of them with **All**. Dragging out
+copies the files, even to a folder on the same drive; hold Shift as you drop to move them instead, or Alt to make
+shortcuts. The shelf holds references to your files, not copies, so files that were moved or deleted drop off.
 
+- **Ctrl+V** parks what's on the clipboard: copied files as they are, as a drop does, or a picture, such as a
+  screenshot, which is saved in Tanjelo's own folder.
+- Pictures from the clipboard say *Not saved yet* where other files show their folder. They're kept in
+  `%LOCALAPPDATA%\Tanjelo\Clipboard` for as long as they're on the shelf, and reach your own folders only when you
+  drag one out or save a copy.
+- Double-click a file, or select it and press **Enter**, to open it in its app (a picture not saved yet opens too,
+  in whatever opens pictures); a folder opens in Explorer.
 - Press the Tanjelo shortcut on the shelf to convert what's selected there (or everything on it).
-- Right-click a file, or one of several selected, for **Show in folder** (Explorer opens each one's folder with it
-  selected), **Copy** (**Ctrl+C**, to paste the files somewhere else) and **Take off the shelf**.
-- **Delete** or × takes an item off the shelf, **Clear** takes them all; the files themselves stay where they are.
+- Right-click a file, or one of several selected, for **Open**, **Show in folder** (Explorer opens each one's folder
+  with it selected; not for pictures not saved yet), **Copy** (**Ctrl+C**, to paste the files somewhere else),
+  **Save as…** for one file (a copy where you choose, starting in Pictures) or **Save to…** for several (copies in a
+  folder you pick; names already taken there get " (2)"), and **Take off the shelf**. Saving copies; the shelf keeps
+  its own.
+- **Delete** or × takes an item off the shelf, **Clear** takes them all. Your files stay where they are; pictures not
+  saved go to the Recycle Bin, so they can still be got back.
 - It doesn't take the focus when it appears and stays out of Alt+Tab and the taskbar. × or **Esc** hides it, and
   *Show shelf* in the tray menu brings it back. Give it a shortcut of its own in [Settings](../README.md#settings)
   (`floatHotkey` in settings.json) to show or hide it from anywhere.
 - The list survives a restart, in `%APPDATA%\Tanjelo\float.json`.
+
+## Clipboard pictures
+
+A screenshot from Snipping Tool or **Win+Shift+S**, or a picture copied in a browser or an Office app, can be
+converted and edited straight from the clipboard, without saving it first.
+
+| Way in | What happens |
+|---|---|
+| Every screenshot | Parked on the [Float shelf](#float-shelf) as it's taken, from Snipping Tool, **Win+Shift+S** or Print Screen, and the shelf appears without taking the focus. Turn it off with *Park screenshots on the shelf* in Settings (`parkScreenshots`) |
+| **Ctrl+Shift+Space** with nothing selected, in File Explorer or on the desktop | The menu for the picture on the clipboard, or for the files copied there |
+| Its own shortcut, set in [Settings](../README.md#settings) (`clipboardHotkey` in settings.json) | The same menu, from any app: the way in right after Win+Shift+S |
+| Tray menu → *Clipboard picture…* | The same menu; greyed out while the clipboard holds no picture or files |
+| **Ctrl+V** on the [Float shelf](#float-shelf) | Parks the picture on the shelf |
+
+The menu says *Clipboard picture* and the picture's size, and has every picture entry: the conversions (no PNG: it's
+one already), Compress, Crop, Add background, Redact, Annotate, Edit photo, text by OCR, Share, Float and Save to….
+From an Explorer window or the desktop it also has **Save in "Folder"**, which copies the picture into that folder.
+Copy path, Copy, Open in Terminal, Move to…, Metadata… and the archives are left out.
+
+Screenshots are read once the clipboard has been left alone for a second, since tools put a picture there in several
+steps. Snipping Tool copies its picture again after each edit when *Automatically copy changes* is on: a picture from
+the same tool within 30 seconds, at the same size, takes the place of the one before as long as that one hasn't been
+dragged, copied, saved, edited or converted yet, so the shelf gets one item rather than one for every stroke. The same
+picture pasted twice is the same file. Only the app that copied something, and for those three the list of formats,
+is looked at to spot a screenshot: see [Privacy](../README.md#privacy).
+
+Where the files go:
+
+- The picture is kept in Tanjelo's own folder, `%LOCALAPPDATA%\Tanjelo\Clipboard`, and named the way Windows names
+  screenshots: `Screenshot 2026-11-02 143005.png`. Pick something and it's parked on the shelf; press **Esc** and
+  nothing is left behind.
+- Results go beside it, with the usual names (`Screenshot 2026-11-02 143005-annotated.png`), are parked on the shelf
+  too, and the shelf appears. Their card has **Open** and **Save as…**.
+- Results go back on the clipboard, ready to paste: one picture as a picture (with its file, for pasting into a
+  folder), one text file, such as the text read by OCR, as its text, and anything else, such as a PDF or several
+  pictures, as files. *Put results back on the clipboard* in Settings (`copyClipboardResults`) turns that off; the card
+  then has **Copy** instead.
+- Nothing reaches your own folders until you put it there: drag it out of the shelf, use Save as…, Save to… or
+  Save in "Folder", or paste it. Pictures stay in Tanjelo's folder as long as they're on the shelf, and go to the
+  Recycle Bin when taken off it.
+- Copied files (Ctrl+C in Explorer) act like a selection instead: results go beside them in their own folders, and
+  nothing goes back on the clipboard by itself.
+
+Every card for a result that wrote files has **Copy**, whatever the files were, with the same rule: a picture as a
+picture, a text file as its text, the rest as files. **Ctrl+C** on the shelf puts one picture on the clipboard as a
+picture too.
+
+With `tanj`, `--clipboard` takes the place of the files: `tanj targets --clipboard`, `tanj options <key> --clipboard`
+and `tanj convert <key> [--name=value...] --clipboard`. Copied files are worked on where they are. A picture is saved
+in a scratch folder, its results are moved into the current folder (names already taken get " (2)") and a `note` line
+gives its size; `tanj` doesn't change the clipboard. With nothing usable there, it says so and exits with 2.
+
+```
+tanj convert annotate --spec=marks.json --clipboard
+tanj convert save-to --folder=D:\Shots --clipboard
+```

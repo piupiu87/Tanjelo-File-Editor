@@ -239,6 +239,10 @@ public static class Strings
     public static string FfmpegHadNothingToDo => Get();
     public static string ThereSNoPictureAt => Get();
     public static string AnotherAppIsUsingTheClipboardTry => Get();
+    public static string ThePictureOnTheClipboardIsTooLarge => Get();
+    public static string ScreenshotFileName => Get();
+    public static string NoPictureOrFilesOnTheClipboard => Get();
+    public static string ClipboardPictureNote => Get();
     public static string CopyPath => Get();
     public static string CopyPaths => Get();
     public static string FullPathAsText => Get();
@@ -265,6 +269,14 @@ public static class Strings
     public static string ThatFolderDoesnTExist => Get();
     public static string ItSAlreadyInThatFolder => Get();
     public static string AFolderCanTBeMovedInto => Get();
+    public static string SaveTo => Get();
+    public static string CopyIntoAFolderYouPick => Get();
+    public static string Saving => Get();
+    public static string Saved => Get();
+    public static string SaveToWhichFolder => Get();
+    public static string SaveIn => Get();
+    public static string ChooseAFolderToSaveTo => Get();
+    public static string AFolderCanTBeCopiedIntoItself => Get();
     public static string CopiedToButSomeOfTheOriginal => Get();
     public static string HEICOutputNeedsTheHEIFImageExtensions => Get();
     public static string WebView2StoppedRespondingWhilePrinting => Get();
