@@ -353,15 +353,23 @@ tanj convert move-to --folder=D:\Archive *.jpg
 ## Float shelf
 
 A small panel that stays on top at the right edge of the screen, for files you'll want again in a moment. Drop files
-or folders on it from anywhere, or pick **Float** on the Actions tab, and drag them out later into a folder, an email
-or a chat: one, several (select them first) or all of them with **All**. Dragging out copies the files, even to a
-folder on the same drive; hold Shift as you drop to move them instead, or Alt to make shortcuts. The shelf holds
-references, not copies, so files that were moved or deleted drop off.
+or folders on it from anywhere, pick **Float** on the Actions tab, or click it and press **Ctrl+V**, and drag them out
+later into a folder, an email or a chat: one, several (select them first) or all of them with **All**. Dragging out
+copies the files, even to a folder on the same drive; hold Shift as you drop to move them instead, or Alt to make
+shortcuts. The shelf holds references to your files, not copies, so files that were moved or deleted drop off.
 
+- **Ctrl+V** parks what's on the clipboard: copied files as they are, as a drop does, or a picture, such as a
+  screenshot, which is saved in Tanjelo's own folder.
+- Pictures from the clipboard say *Not saved yet* where other files show their folder. They're kept in
+  `%LOCALAPPDATA%\Tanjelo\Clipboard` for as long as they're on the shelf, and reach your own folders only when you
+  drag one out or save a copy.
 - Press the Tanjelo shortcut on the shelf to convert what's selected there (or everything on it).
 - Right-click a file, or one of several selected, for **Show in folder** (Explorer opens each one's folder with it
-  selected), **Copy** (**Ctrl+C**, to paste the files somewhere else) and **Take off the shelf**.
-- **Delete** or × takes an item off the shelf, **Clear** takes them all; the files themselves stay where they are.
+  selected; not for pictures not saved yet), **Copy** (**Ctrl+C**, to paste the files somewhere else), **Save as…**
+  for one file (a copy where you choose, starting in Pictures) or **Save to…** for several (copies in a folder you pick;
+  names already taken there get " (2)"), and **Take off the shelf**. Saving copies; the shelf keeps its own.
+- **Delete** or × takes an item off the shelf, **Clear** takes them all. Your files stay where they are; pictures not
+  saved go to the Recycle Bin, so they can still be got back.
 - It doesn't take the focus when it appears and stays out of Alt+Tab and the taskbar. × or **Esc** hides it, and
   *Show shelf* in the tray menu brings it back. Give it a shortcut of its own in [Settings](../README.md#settings)
   (`floatHotkey` in settings.json) to show or hide it from anywhere.

@@ -675,6 +675,10 @@
   <data name="ThePictureOnTheClipboardIsTooLarge" xml:space="preserve">
     <value>The picture on the clipboard is too large: {0} × {1} pixels is over 250 megapixels.</value>
   </data>
+  <data name="ScreenshotFileName" xml:space="preserve">
+    <value>Screenshot {0:yyyy-MM-dd HHmmss}</value>
+    <comment>A picture taken from the clipboard, named as Windows names screenshots; .png is added</comment>
+  </data>
   <data name="CopyPath" xml:space="preserve">
     <value>Copy path</value>
   </data>

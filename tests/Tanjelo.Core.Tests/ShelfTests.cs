@@ -109,6 +109,193 @@ public class ShelfTests
         Assert.False(Shelf.Load(file).Open);
     }
 
+    /// <summary>A shelf holding pictures in a scratch clipboard folder, which records what it would send to the Recycle Bin.</summary>
+    static (Shelf Shelf, ClipboardFolder Folder, List<string> Recycled) Holding(Scratch scratch)
+    {
+        var folder = new ClipboardFolder(scratch.PathOf("Clipboard"), () => ClipboardFolderTests.Taken);
+        Directory.CreateDirectory(folder.Path);
+        var recycled = new List<string>();
+        return (new Shelf(folder, recycled.AddRange), folder, recycled);
+    }
+
+    static string Held(ClipboardFolder folder, string name)
+    {
+        var path = Path.Combine(folder.Path, name);
+        File.WriteAllText(path, name);
+        return path;
+    }
+
+    [Fact]
+    public void Pictures_the_shelf_holds_go_to_the_Recycle_Bin_when_taken_off_and_other_files_stay_where_they_are()
+    {
+        using var scratch = new Scratch();
+        var (shelf, folder, recycled) = Holding(scratch);
+        var (one, two, three) = (Held(folder, "1.png"), Held(folder, "2.png"), Held(folder, "3.png"));
+        var mine = scratch.Text("mine.txt", "x");
+        shelf.Add([one, mine, two, three]);
+
+        Assert.True(shelf.Holds(one));
+        Assert.False(shelf.Holds(mine));
+        shelf.Remove([one, mine]);
+        Assert.Equal([one], recycled);
+        shelf.Clear();
+        Assert.Equal([one, two, three], recycled);
+        Assert.True(File.Exists(mine));
+    }
+
+    [Fact]
+    public void A_picture_copied_again_takes_the_place_of_the_one_before()
+    {
+        using var scratch = new Scratch();
+        var (shelf, folder, recycled) = Holding(scratch);
+        var a = scratch.Text("a.txt", "a");
+        var b = scratch.Text("b.txt", "b");
+        var (before, after) = (Held(folder, "shot.png"), Held(folder, "shot (2).png"));
+        shelf.Add([a, before, b]);
+        var changes = 0;
+        shelf.Changed += () => changes++;
+
+        Assert.True(shelf.Replace(before, after));
+        Assert.Equal([a, after, b], shelf.Items);
+        Assert.Equal([before], recycled);
+        Assert.Equal(1, changes);
+        Assert.False(shelf.Replace(before, a));   // no longer there
+    }
+
+    [Fact]
+    public void Used_marks_last_while_the_item_is_on_the_shelf()
+    {
+        using var scratch = new Scratch();
+        var (shelf, folder, _) = Holding(scratch);
+        var (one, two) = (Held(folder, "1.png"), Held(folder, "2.png"));
+        shelf.Add([one, two]);
+
+        shelf.MarkUsed([one.ToUpperInvariant()]);
+        Assert.True(shelf.IsUsed(one));
+        Assert.False(shelf.IsUsed(two));
+        shelf.Remove([one]);
+        shelf.Add([one]);
+        Assert.False(shelf.IsUsed(one));
+    }
+
+    [Fact]
+    public void After_a_restart_held_pictures_come_back_and_only_those_no_shelf_lists_are_left_over()
+    {
+        using var scratch = new Scratch();
+        var (shelf, folder, _) = Holding(scratch);
+        var listed = Held(folder, "listed.png");
+        var orphan = Held(folder, "orphan.png");
+        shelf.Add([listed]);
+        var file = scratch.PathOf("float.json");
+        shelf.Save(file);
+
+        var recycled = new List<string>();
+        var loaded = Shelf.Load(file, folder, recycled.AddRange);
+
+        Assert.Equal([listed], loaded.Items);
+        Assert.Empty(recycled);
+        Assert.Equal([orphan], folder.Orphans(loaded.Items));
+    }
+
+    [Fact]
+    public async Task Pictures_not_saved_yet_say_so_and_their_menu_saves_copies_and_sends_them_to_the_Recycle_Bin()
+    {
+        using var scratch = new Scratch();
+        var (shelf, folder, recycled) = Holding(scratch);
+        var (held, _) = folder.Save(ClipboardFolderTests.Picture(scratch, "shot.png", System.Drawing.Color.SteelBlue, 40, 30), 1);
+        var mine = scratch.Image("mine.png");
+        var saved = scratch.Folder("Saved");
+        await Ui.Run(async () =>
+        {
+            shelf.Add([held, mine]);
+            var revealed = new List<IReadOnlyList<string>>();
+            var window = new FloatWindow(shelf, "Ctrl+Shift+Space", new FakeClipboard(), revealed.Add)
+            {
+                AskForFileName = _ => Path.Combine(saved, "renamed.png"),
+                AskForFolder = () => saved,
+            };
+            var host = Ui.Host(window, 248, 320);
+            await Ui.Settle();
+            var list = window.List;
+
+            var item = (FloatWindow.Item)list.Items[0];
+            Assert.Equal("Not saved yet", item.Folder);
+            Assert.Equal("Screenshot 2026-11-02 143005.png, not saved yet", item.Spoken);
+            Assert.Equal(Path.GetDirectoryName(mine), ((FloatWindow.Item)list.Items[1]).Folder);
+            Assert.Contains("Recycle Bin", window.KeysText.Text);
+            Assert.Contains("Recycle Bin", (string)window.ClearButton.ToolTip);
+            Ui.Render(host, "shelf-held-light");
+            Ui.UseTheme("dark", host);
+            Ui.Render(host, "shelf-held-dark");
+            AccessibilityTests.RenderInContrast(host, "shelf-held-contrast", Theme.Contrast.Aquatic);
+
+            // One picture not saved yet: Save as…, and no Show in folder, which would open Tanjelo's own folder.
+            list.SelectedItems.Add(list.Items[0]);
+            window.ShowMenuItems();
+            Assert.Equal([Tanjelo.Strings.Copy, Tanjelo.Strings.SaveAs, Tanjelo.Strings.TakeOffTheShelf], Visible(window.ItemMenu));
+            Click(window.SaveAsItem);
+            Assert.Equal(File.ReadAllBytes(held), File.ReadAllBytes(Path.Combine(saved, "renamed.png")));
+            Assert.Equal([held, mine], shelf.Items);   // the shelf keeps its own
+            Assert.True(shelf.IsUsed(held));
+            Assert.Equal("Saved as renamed.png", window.Notice.Text);
+
+            // With a file of the user's too: Save to… a folder, and Show in folder for that one only.
+            list.SelectedItems.Add(list.Items[1]);
+            window.ShowMenuItems();
+            Assert.Equal([Tanjelo.Strings.ShowInFolder, Tanjelo.Strings.Copy, Tanjelo.Strings.SaveTo, Tanjelo.Strings.TakeOffTheShelf], Visible(window.ItemMenu));
+            Click(window.SaveToItem);
+            Assert.Equal(["mine.png", "renamed.png", "Screenshot 2026-11-02 143005.png"], Directory.GetFiles(saved).Select(Path.GetFileName).Order());
+            Click(window.ShowInFolderItem);
+            Assert.Equal([[mine]], revealed.Select(r => r.ToArray()));
+            var menu = window.ItemMenu;
+            (menu.Width, menu.Height) = (240, 190);
+            Ui.Render(menu, "shelf-held-menu-light");
+
+            Click(window.TakeOffItem);
+            Assert.Empty(shelf.Items);
+            Assert.Equal([held], recycled);   // the picture, not the user's file
+            Assert.True(File.Exists(mine));
+        });
+    }
+
+    [Fact]
+    public async Task Ctrl_V_parks_a_picture_from_the_clipboard_and_copied_files_where_they_are()
+    {
+        using var scratch = new Scratch();
+        var (shelf, folder, _) = Holding(scratch);
+        var png = File.ReadAllBytes(scratch.TransparentPng("logo.png", 40));
+        var mine = scratch.Image("mine.png");
+        await Ui.Run(async () =>
+        {
+            var clipboard = new FakeClipboard { Data = new ClipboardData { Png = png }, Sequence = 4 };
+            var window = new FloatWindow(shelf, null, clipboard);
+            var host = Ui.Host(window, 248, 260);
+            await Ui.Settle();
+            Ui.Render(host, "shelf-empty-light");   // where to drop, or what to press
+
+            await window.PasteAsync();
+            var parked = Assert.Single(shelf.Items);
+            Assert.Equal(folder.Path, Path.GetDirectoryName(parked));
+            Assert.Equal(png, File.ReadAllBytes(parked));
+            Assert.Equal("Parked on the shelf", window.Notice.Text);
+
+            await window.PasteAsync();   // the same copy again
+            Assert.Single(shelf.Items);
+
+            clipboard.Data = new ClipboardData { Files = [mine], Png = png };
+            await window.PasteAsync();
+            Assert.Equal([parked, mine], shelf.Items);
+
+            clipboard.Data = ClipboardData.Empty;
+            await window.PasteAsync();
+            Assert.Equal("There's no picture or files on the clipboard.", window.Notice.Text);
+            Assert.Equal(2, shelf.Items.Count);
+        });
+    }
+
+    static List<string> Visible(ContextMenu menu) =>
+        menu.Items.OfType<MenuItem>().Where(i => i.Visibility == Visibility.Visible).Select(i => (string)i.Header).ToList();
+
     [Fact]
     public async Task Dragging_out_copies_even_within_a_drive_unless_Shift_moves_or_Alt_makes_shortcuts()
     {
@@ -197,12 +384,12 @@ public class ShelfTests
             Assert.Equal([[a], [c]], revealed.Select(r => r.ToArray()));   // a window for each folder
 
             // The menu, as it shows: the window's words, the keys, and the theme's colours.
-            Assert.Equal([Tanjelo.Strings.ShowInFolder, Tanjelo.Strings.Copy, Tanjelo.Strings.TakeOffTheShelf],
-                window.ItemMenu.Items.OfType<MenuItem>().Select(i => (string)i.Header));
+            window.ShowMenuItems();
+            Assert.Equal([Tanjelo.Strings.ShowInFolder, Tanjelo.Strings.Copy, Tanjelo.Strings.SaveTo, Tanjelo.Strings.TakeOffTheShelf], Visible(window.ItemMenu));
             Assert.Equal("Ctrl+C", window.CopyItem.InputGestureText);
             // Laid out on its own, as in its popup: a menu can't go inside anything else.
             var menu = window.ItemMenu;
-            (menu.Width, menu.Height) = (240, 150);
+            (menu.Width, menu.Height) = (240, 190);
             typeof(MenuItem).GetProperty(nameof(MenuItem.IsHighlighted))!.SetValue(window.CopyItem, true); // as under the pointer
             var light = Ui.Render(menu, "shelf-menu-light");
             Ui.UseTheme("dark", menu);

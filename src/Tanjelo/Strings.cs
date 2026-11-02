@@ -469,4 +469,18 @@ public static class Strings
     public static string Pandoc => Get();
     public static string ShowInTheWindows11Menu => Get();
     public static string Windows11MenuHint => Get();
+    public static string NotSavedYet => Get();
+    public static string NotSavedYetName => Get();
+    public static string SaveAs => Get();
+    public static string SaveTo => Get();
+    public static string SaveACopy => Get();
+    public static string FileOfThisType => Get();
+    public static string DeleteTakesItOffTheShelfPicturesNot => Get();
+    public static string DeleteTakesItOffTheShelfPicturesNotConverts => Get();
+    public static string TakeEverythingOffTheShelfPictures => Get();
+    public static string OrPressCtrlVToPasteAPicture => Get();
+    public static string ParkedOnTheShelf => Get();
+    public static string ThereSNoPictureOrFilesOnTheClipboard => Get();
+    public static string SavedAs => Get();
+    public static string SavedIn => Get();
 }

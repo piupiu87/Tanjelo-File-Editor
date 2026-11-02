@@ -130,9 +130,12 @@ public class PseudoLanguageTests
             var card = new ProgressToast();
             card.ShowResult(Env.Offered(engine, "jpg", [photo]), [photo], new BatchResult([photo], [], [], false));
             await Check("card", card, 360, 200);
-            var shelf = new Shelf();
-            shelf.Add([photo, second]);
-            await Check("shelf", new FloatWindow(shelf, "Ctrl+Shift+Space"), 248, 300);
+            // With a picture from the clipboard, which says it's not saved yet.
+            var clipboardFolder = new ClipboardFolder(scratch.PathOf("Clipboard"), () => DateTime.Now);
+            var shelf = new Shelf(clipboardFolder);
+            shelf.Add([photo, second, clipboardFolder.Save(ClipboardPicture.FromPng(File.ReadAllBytes(second))!, 1).File]);
+            await Check("shelf", new FloatWindow(shelf, "Ctrl+Shift+Space"), 248, 360);
+            await Check("shelf-empty", new FloatWindow(new Shelf(), null), 248, 300);
             foreach (var files in new[] { new[] { photo }, [photo, second] })
                 foreach (var target in engine.GetMenu(files).Targets.Where(t => t.Options.Count > 0 && t.Editor is null))
                     await Check("options-" + target.Key + (files.Length > 1 ? "-2" : ""), new OptionsWindow(engine, files, target, new Dictionary<string, string>()), 720, 1000);

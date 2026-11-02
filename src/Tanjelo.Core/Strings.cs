@@ -240,6 +240,7 @@ public static class Strings
     public static string ThereSNoPictureAt => Get();
     public static string AnotherAppIsUsingTheClipboardTry => Get();
     public static string ThePictureOnTheClipboardIsTooLarge => Get();
+    public static string ScreenshotFileName => Get();
     public static string CopyPath => Get();
     public static string CopyPaths => Get();
     public static string FullPathAsText => Get();

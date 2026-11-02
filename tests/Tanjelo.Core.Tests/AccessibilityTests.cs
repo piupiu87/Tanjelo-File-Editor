@@ -184,12 +184,14 @@ public class AccessibilityTests
         using var scratch = new Scratch();
         var a = scratch.Image("a.png");
         var b = scratch.Image("b.png");
+        var folder = new ClipboardFolder(scratch.PathOf("Clipboard"), () => new DateTime(2026, 11, 2, 14, 30, 5));
+        var (held, _) = folder.Save(ClipboardPicture.FromPng(File.ReadAllBytes(b))!, 1);
         await Ui.Run(async () =>
         {
-            var shelf = new Shelf();
-            shelf.Add([a, b]);
+            var shelf = new Shelf(folder);
+            shelf.Add([a, b, held]);
             var window = new FloatWindow(shelf, "Ctrl+Shift+Space");
-            var host = Ui.Host(window, 248, 260);
+            var host = Ui.Host(window, 248, 320);
             using var attached = A11y.Attach(host);
             await Ui.Settle();
             // Tab reaches the list once; the arrows go through its files and Delete takes one off.
@@ -197,6 +199,8 @@ public class AccessibilityTests
             A11y.InOrder(order, window.ClearButton, window.HideButton);
             var item = (ListBoxItem)window.List.ItemContainerGenerator.ContainerFromIndex(0);
             Assert.Equal("a.png", AutomationProperties.GetName(item));
+            var picture = (ListBoxItem)window.List.ItemContainerGenerator.ContainerFromIndex(2);
+            Assert.Equal("Screenshot 2026-11-02 143005.png, not saved yet", AutomationProperties.GetName(picture));
             RenderInContrast(host, "shelf-contrast", Theme.Contrast.Desert);
         });
     }

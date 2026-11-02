@@ -1434,4 +1434,48 @@
   <data name="Windows11MenuHint" xml:space="preserve">
     <value>Right-click files, then Tanjelo…, for the menu with what they can become.</value>
   </data>
+  <data name="NotSavedYet" xml:space="preserve">
+    <value>Not saved yet</value>
+    <comment>FloatWindow: a picture from the clipboard, kept in Tanjelo's folder, shown where other files show theirs</comment>
+  </data>
+  <data name="NotSavedYetName" xml:space="preserve">
+    <value>{0}, not saved yet</value>
+  </data>
+  <data name="SaveAs" xml:space="preserve">
+    <value>Save as…</value>
+  </data>
+  <data name="SaveTo" xml:space="preserve">
+    <value>Save to…</value>
+  </data>
+  <data name="SaveACopy" xml:space="preserve">
+    <value>Save a copy</value>
+  </data>
+  <data name="FileOfThisType" xml:space="preserve">
+    <value>{0} file|*{1}|All files|*.*</value>
+  </data>
+  <data name="DeleteTakesItOffTheShelfPicturesNot" xml:space="preserve">
+    <value>Delete takes it off the shelf; pictures not saved go to the Recycle Bin</value>
+  </data>
+  <data name="DeleteTakesItOffTheShelfPicturesNotConverts" xml:space="preserve">
+    <value>Delete takes it off the shelf; pictures not saved go to the Recycle Bin
+{0} converts</value>
+  </data>
+  <data name="TakeEverythingOffTheShelfPictures" xml:space="preserve">
+    <value>Take everything off the shelf; pictures not saved go to the Recycle Bin, other files stay where they are</value>
+  </data>
+  <data name="OrPressCtrlVToPasteAPicture" xml:space="preserve">
+    <value>or press Ctrl+V to paste a picture</value>
+  </data>
+  <data name="ParkedOnTheShelf" xml:space="preserve">
+    <value>Parked on the shelf</value>
+  </data>
+  <data name="ThereSNoPictureOrFilesOnTheClipboard" xml:space="preserve">
+    <value>There's no picture or files on the clipboard.</value>
+  </data>
+  <data name="SavedAs" xml:space="preserve">
+    <value>Saved as {0}</value>
+  </data>
+  <data name="SavedIn" xml:space="preserve">
+    <value>Saved in {0}</value>
+  </data>
 </root>

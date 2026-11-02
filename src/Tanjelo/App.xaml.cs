@@ -30,6 +30,7 @@ public partial class App : Application
     Window? _menu; // the menu, or the options dialog that follows it
     readonly List<ProgressToast> _toasts = []; // newest first; stacked upward from the bottom-right corner
     bool _oneShot;
+    readonly ClipboardFolder _clipboardFolder = new(ClipboardFolder.DefaultPath, () => DateTime.Now);
     Shelf _shelf = new();
     FloatWindow? _float;
     int _sharing; // Share sheets still using the files
@@ -49,7 +50,7 @@ public partial class App : Application
                 Dispatcher.BeginInvoke(() => Theme.Apply(Resources));
         };
 
-        _shelf = Shelf.Load(FloatWindow.FilePath);
+        _shelf = Shelf.Load(FloatWindow.FilePath, _clipboardFolder, Recycle);
         _shelf.Changed += SaveShelf;
 
         var files = Selection(e.Args)
@@ -120,6 +121,9 @@ public partial class App : Application
         ApplyHotkey();
         WatchSettings();
         StartUpdateChecks();
+        // Only here, in the one copy of Tanjelo in the tray: pictures left in its folder by a crash, or by a menu closed
+        // with Esc, belong to no shelf. Another copy, such as one started from "Send to", leaves them alone.
+        Recycle(_clipboardFolder.Orphans(_shelf.Items));
 
         if (showWelcome)
             _tray.Notify(Strings.TanjeloIsReady, string.Format(Strings.SelectFilesInFileExplorerAndPress, _settings.Hotkey));
@@ -366,6 +370,23 @@ public partial class App : Application
     {
         if (_float?.IsVisible == true) _float.Hide();
         else ShowShelf();
+    }
+
+    /// <summary>Sends files Tanjelo held to the Recycle Bin, off the UI thread, so they can still be got back.</summary>
+    static void Recycle(IReadOnlyList<string> paths)
+    {
+        if (paths.Count == 0) return;
+        Task.Run(() =>
+        {
+            try
+            {
+                Native.Recycle(paths);
+            }
+            catch (IOException ex)
+            {
+                Log.Write(ex.Message);
+            }
+        });
     }
 
     void SaveShelf()

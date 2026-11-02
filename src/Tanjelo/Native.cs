@@ -166,6 +166,40 @@ static class Native
         return stream.ToArray();
     }
 
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    struct SHFILEOPSTRUCT
+    {
+        public IntPtr hwnd;
+        public uint wFunc;
+        public string pFrom;
+        public string? pTo;
+        public ushort fFlags;
+        public bool fAnyOperationsAborted;
+        public IntPtr hNameMappings;
+        public string? lpszProgressTitle;
+    }
+
+    const uint FO_DELETE = 3;
+    const ushort FOF_SILENT = 0x4, FOF_NOCONFIRMATION = 0x10, FOF_ALLOWUNDO = 0x40, FOF_NOERRORUI = 0x400, FOF_NOCONFIRMMKDIR = 0x200;
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    static extern int SHFileOperation(ref SHFILEOPSTRUCT operation);
+
+    /// <summary>Sends files and folders to the Recycle Bin in one go, without asking or showing progress.</summary>
+    public static void Recycle(IReadOnlyList<string> paths)
+    {
+        var existing = paths.Where(p => File.Exists(p) || Directory.Exists(p)).ToList();
+        if (existing.Count == 0) return;
+        var operation = new SHFILEOPSTRUCT
+        {
+            wFunc = FO_DELETE,
+            pFrom = string.Join('\0', existing) + '\0', // the list ends with two nulls; the marshaller adds the second
+            fFlags = FOF_ALLOWUNDO | FOF_SILENT | FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_NOCONFIRMMKDIR,
+        };
+        var result = SHFileOperation(ref operation);
+        if (result != 0) throw new IOException($"The Recycle Bin refused {existing[0]} (error {result:X}).");
+    }
+
     /// <summary>Opens (or reuses) an Explorer window on the folder with all the given items selected.</summary>
     public static void RevealInExplorer(IReadOnlyList<string> paths)
     {
