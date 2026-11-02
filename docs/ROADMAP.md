@@ -13,6 +13,8 @@ Every feature should keep these true:
 
 - **Local only.** Files never leave the computer.
 - **Originals are never touched.** Results are new files beside the original (`photo (2).jpg`, never an overwrite).
+  Pictures taken from the clipboard live in Tanjelo's own folder while they're on the shelf; they reach your folders
+  only when you save, drag or paste them.
 - **One gesture.** Select, press the hotkey, pick. A dialog appears only when a tool can't work without input, and it
   opens with sensible defaults and remembers the last choice.
 - **Optional tools stay optional.** ffmpeg, 7-Zip, Office, pandoc and similar are installed separately. When one is
@@ -111,7 +113,7 @@ A shared timeline first, then the editors that use it.
 - [x] Bleep sections of audio or video with a tone or silence (M)
 - [x] Redact areas of a video, each with its own time range (L)
 
-## v1.0.0: ready for everyone
+## v1.0.0: ready for everyone (released)
 
 - [x] Settings window, so nobody has to edit JSON (M)
 - [x] Update check, off by default so the app stays offline unless you opt in (S)
@@ -122,6 +124,18 @@ A shared timeline first, then the editors that use it.
   microsoft/winget-pkgs.
 
 v1.0 ships unsigned, so the first launch may show "Windows protected your PC" until signing comes.
+
+## v1.1.0: clipboard pictures
+
+Screenshots and copied pictures, used without saving them first.
+
+- [x] Shelf: drag several selected files together, Ctrl+C, Show in folder (S) (PR #6)
+- [ ] Read pictures from the clipboard: PNG, and bitmaps with transparency; copied files act like a selection (M)
+- [ ] Screenshots parked on the shelf as they're taken; Ctrl+V on the shelf; held pictures go to the Recycle Bin when taken off (M)
+- [ ] Menu for the clipboard picture: from the shortcut with nothing selected, its own shortcut, or the tray (M)
+- [ ] Results back on the clipboard, and a Copy button on every result (S)
+- [ ] Save to… and Save in "Folder" actions (S)
+- [ ] `tanj --clipboard` (S)
 
 ## Signed releases (on hold)
 
