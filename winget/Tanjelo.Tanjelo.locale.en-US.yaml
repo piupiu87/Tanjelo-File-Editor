@@ -12,7 +12,7 @@ PackageUrl: https://github.com/piupiu87/Tanjelo-File-Editor
 License: MIT
 LicenseUrl: https://github.com/piupiu87/Tanjelo-File-Editor/blob/main/LICENSE
 ShortDescription: Convert and edit files straight from File Explorer, offline.
-Description: |-
+Description: >-
   Select files in File Explorer, press Ctrl+Shift+Space, and pick what they should become from the menu at the mouse
   pointer. Tanjelo converts images, PDFs, video, audio, Office documents, Markdown, EPUB and archives, has tools such as
   compress, crop and redact, and editors for PDF pages, photos and video. Results go beside the original, which is never

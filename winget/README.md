@@ -12,8 +12,10 @@ To publish a release on winget, submit those files as a pull request to
 your own GitHub account (or with `wingetcreate submit`). Microsoft's checks install it on a clean machine before the
 pull request is merged.
 
-Check the files here with:
+winget reads every file in the folder it's given, this README too, so to check the files here, copy them out first:
 
 ```
-winget validate --manifest winget
+$dir = New-Item -ItemType Directory -Force "$env:TEMP\tanjelo-winget"
+Copy-Item winget\*.yaml $dir
+winget validate --manifest $dir.FullName
 ```
