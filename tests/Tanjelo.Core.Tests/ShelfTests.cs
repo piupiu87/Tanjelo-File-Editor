@@ -1,5 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace Tanjelo.Core.Tests;
 
@@ -139,6 +141,107 @@ public class ShelfTests
         Assert.All(Directory.GetFiles(shortcuts), f => Assert.Equal(".lnk", Path.GetExtension(f)));
         Assert.Equal(["a.txt", "b.txt"], Directory.GetFiles(shortcuts).Select(f => Path.GetFileName(ShortcutTarget(f))).Order());
     }
+
+    [Fact]
+    public async Task A_press_on_one_of_several_selected_files_keeps_them_all_to_drag_until_it_s_let_go()
+    {
+        using var scratch = new Scratch();
+        var files = new[] { scratch.Text("a.txt", "a"), scratch.Text("b.txt", "b"), scratch.Text("c.txt", "c") };
+        await Ui.Run(async () =>
+        {
+            var shelf = new Shelf();
+            shelf.Add(files);
+            var window = new FloatWindow(shelf, null);
+            var host = Ui.Host(window, 248, 300);
+            using var attached = A11y.Attach(host); // so the files can take the focus, as a click gives it
+            await Ui.Settle();
+            var list = window.List;
+            list.SelectedItems.Add(list.Items[0]);
+            list.SelectedItems.Add(list.Items[2]);
+
+            Press(Container(list, 2));
+            Assert.Equal([list.Items[0], list.Items[2]], list.SelectedItems.Cast<object>());
+            Release(Container(list, 2));
+            Assert.Equal([list.Items[2]], list.SelectedItems.Cast<object>());
+
+            // Any other file is selected alone as it's pressed.
+            Press(Container(list, 1));
+            Assert.Equal([list.Items[1]], list.SelectedItems.Cast<object>());
+            Release(Container(list, 1));
+        });
+    }
+
+    [Fact]
+    public async Task The_right_click_menu_copies_shows_and_takes_off_the_selected_files()
+    {
+        using var scratch = new Scratch();
+        var a = scratch.Text("a.txt", "a");
+        var b = scratch.Text("b.txt", "b");
+        var c = Path.Combine(scratch.Folder("other", "c.txt"), "c.txt");
+        await Ui.Run(async () =>
+        {
+            var shelf = new Shelf();
+            shelf.Add([a, b, c]);
+            var clipboard = new FakeClipboard();
+            var revealed = new List<IReadOnlyList<string>>();
+            var window = new FloatWindow(shelf, null, clipboard, revealed.Add);
+            var host = Ui.Host(window, 248, 300);
+            await Ui.Settle();
+            var list = window.List;
+            list.SelectedItems.Add(list.Items[2]);
+            list.SelectedItems.Add(list.Items[0]);
+
+            Click(window.CopyItem);
+            Assert.Equal([a, c], clipboard.Files);           // in the shelf's order
+            Click(window.ShowInFolderItem);
+            Assert.Equal([[a], [c]], revealed.Select(r => r.ToArray()));   // a window for each folder
+
+            // The menu, as it shows: the window's words, the keys, and the theme's colours.
+            Assert.Equal([Tanjelo.Strings.ShowInFolder, Tanjelo.Strings.Copy, Tanjelo.Strings.TakeOffTheShelf],
+                window.ItemMenu.Items.OfType<MenuItem>().Select(i => (string)i.Header));
+            Assert.Equal("Ctrl+C", window.CopyItem.InputGestureText);
+            // Laid out on its own, as in its popup: a menu can't go inside anything else.
+            var menu = window.ItemMenu;
+            (menu.Width, menu.Height) = (240, 150);
+            typeof(MenuItem).GetProperty(nameof(MenuItem.IsHighlighted))!.SetValue(window.CopyItem, true); // as under the pointer
+            var light = Ui.Render(menu, "shelf-menu-light");
+            Ui.UseTheme("dark", menu);
+            Ui.Render(menu, "shelf-menu-dark");
+            Ui.UseTheme("light", menu);
+            Assert.True(Ui.Near(Ui.Colour("Surface"), Ui.Pixel(light, 120, 6)));
+
+            Click(window.TakeOffItem);
+            Assert.Equal([b], shelf.Items);
+            Assert.True(File.Exists(a) && File.Exists(c));   // only off the shelf
+        });
+    }
+
+    sealed class FakeClipboard : Tanjelo.Core.Converters.IClipboard
+    {
+        public IReadOnlyList<string>? Files { get; private set; }
+        public void SetText(string text) { }
+        public void SetFiles(IReadOnlyList<string> paths) => Files = paths;
+    }
+
+    static ListBoxItem Container(ListBox list, int index) => (ListBoxItem)list.ItemContainerGenerator.ContainerFromIndex(index);
+
+    static void Press(UIElement element) => LeftMouseButton(element, Mouse.PreviewMouseDownEvent, Mouse.MouseDownEvent);
+
+    static void Release(UIElement element) => LeftMouseButton(element, Mouse.PreviewMouseUpEvent, Mouse.MouseUpEvent);
+
+    /// <summary>
+    /// The left button going down or up on an element, as the input system raises it: the tunnelling event, then the
+    /// bubbling one unless that was handled. Each element on the way raises its own ...LeftButton... event from them.
+    /// </summary>
+    static void LeftMouseButton(UIElement element, RoutedEvent preview, RoutedEvent main)
+    {
+        var first = new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left) { RoutedEvent = preview };
+        element.RaiseEvent(first);
+        if (!first.Handled)
+            element.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left) { RoutedEvent = main });
+    }
+
+    static void Click(MenuItem item) => item.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
 
     static string ShortcutTarget(string shortcut)
     {

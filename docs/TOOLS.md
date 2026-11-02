@@ -357,6 +357,8 @@ folder on the same drive; hold Shift as you drop to move them instead, or Alt to
 references, not copies, so files that were moved or deleted drop off.
 
 - Press the Tanjelo shortcut on the shelf to convert what's selected there (or everything on it).
+- Right-click a file, or one of several selected, for **Show in folder** (Explorer opens each one's folder with it
+  selected), **Copy** (**Ctrl+C**, to paste the files somewhere else) and **Take off the shelf**.
 - **Delete** or × takes an item off the shelf, **Clear** takes them all; the files themselves stay where they are.
 - It doesn't take the focus when it appears and stays out of Alt+Tab and the taskbar. × or **Esc** hides it, and
   *Show shelf* in the tray menu brings it back. Give it a shortcut of its own in [Settings](../README.md#settings)

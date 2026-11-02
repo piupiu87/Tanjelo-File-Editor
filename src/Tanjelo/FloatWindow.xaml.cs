@@ -6,6 +6,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Tanjelo.Core;
+using Tanjelo.Core.Converters;
 
 namespace Tanjelo;
 
@@ -28,16 +29,22 @@ public partial class FloatWindow : Window
     }
 
     readonly Shelf _shelf;
+    readonly IClipboard _clipboard;
+    readonly Action<IReadOnlyList<string>> _reveal;
     readonly ObservableCollection<Item> _items = [];
     readonly DispatcherTimer _prune = new() { Interval = TimeSpan.FromSeconds(3) };
     Point? _pressedAt;
     Item? _pressedOn;
+    Item? _narrowTo;
     bool _draggingOut;
 
-    public FloatWindow(Shelf shelf, string? hotkey)
+    /// <param name="reveal">Opens a folder in Explorer with the given files in it selected.</param>
+    public FloatWindow(Shelf shelf, string? hotkey, IClipboard? clipboard = null, Action<IReadOnlyList<string>>? reveal = null)
     {
         InitializeComponent();
         _shelf = shelf;
+        _clipboard = clipboard ?? new WindowsClipboard();
+        _reveal = reveal ?? Native.RevealInExplorer;
         List.ItemsSource = _items;
         var area = SystemParameters.WorkArea;
         (Left, Top) = (area.Right - Width - 12, area.Top + area.Height / 3); // until its height is known
@@ -69,6 +76,9 @@ public partial class FloatWindow : Window
         Drop += OnDrop;
         List.PreviewMouseLeftButtonDown += OnPress;
         List.PreviewMouseMove += OnMove;
+        List.PreviewMouseLeftButtonUp += OnRelease;
+        // A right-click selects the file under it unless it's selected already, so there's always something to act on.
+        List.ContextMenuOpening += (_, e) => e.Handled = List.SelectedItems.Count == 0;
         DragAll.MouseLeftButtonDown += (_, e) =>
         {
             e.Handled = true;
@@ -136,6 +146,15 @@ public partial class FloatWindow : Window
     {
         _pressedOn = (ItemsControl.ContainerFromElement(List, (DependencyObject)e.OriginalSource) as ListBoxItem)?.DataContext as Item;
         _pressedAt = _pressedOn is null || e.OriginalSource is DependencyObject d && IsInButton(d) ? null : e.GetPosition(List);
+        // The list would select just the pressed file at once, so a press on one of several selected files keeps them,
+        // as Explorer does, to be dragged out together. Let go without dragging and it's the only one selected.
+        _narrowTo = null;
+        if (_pressedAt is not null && _pressedOn is { } item && List.SelectedItems.Count > 1 && List.SelectedItems.Contains(item)
+            && (Keyboard.Modifiers & (ModifierKeys.Control | ModifierKeys.Shift)) == 0)
+        {
+            _narrowTo = item;
+            e.Handled = true;
+        }
     }
 
     void OnMove(object sender, MouseEventArgs e)
@@ -145,12 +164,60 @@ public partial class FloatWindow : Window
         if (Math.Abs(moved.X) < SystemParameters.MinimumHorizontalDragDistance && Math.Abs(moved.Y) < SystemParameters.MinimumVerticalDragDistance)
             return;
         _pressedAt = null;
+        _narrowTo = null;
         // Dragging a selected item takes the whole selection along; any other item goes alone.
-        var paths = List.SelectedItems.Contains(item)
-            ? _items.Where(List.SelectedItems.Contains).Select(i => i.Path).ToList()
-            : [item.Path];
-        DragOut(paths);
+        DragOut(List.SelectedItems.Contains(item) ? Selected() : [item.Path]);
     }
+
+    void OnRelease(object sender, MouseButtonEventArgs e)
+    {
+        _pressedAt = null;
+        if (_narrowTo is not { } item) return;
+        _narrowTo = null;
+        List.SelectedItems.Clear();
+        List.SelectedItem = item;
+        (List.ItemContainerGenerator.ContainerFromItem(item) as ListBoxItem)?.Focus();
+    }
+
+    /// <summary>The selected files, in the shelf's order: what dragging a selected file, Copy and Show in folder act on.</summary>
+    IReadOnlyList<string> Selected() => _items.Where(List.SelectedItems.Contains).Select(i => i.Path).ToList();
+
+    /// <summary>Puts the selected files on the clipboard, to paste as copies, as Explorer's Copy does.</summary>
+    void CopySelected()
+    {
+        var paths = Selected();
+        if (paths.Count == 0) return;
+        try
+        {
+            _clipboard.SetFiles(paths);
+        }
+        catch (ConversionException ex)
+        {
+            Log.Write(ex); // another app had the clipboard
+        }
+    }
+
+    /// <summary>Opens the folder of each selected file in Explorer with the file selected there, a window per folder.</summary>
+    void ShowSelectedInFolder()
+    {
+        foreach (var inFolder in Selected().GroupBy(p => Path.GetDirectoryName(p) ?? p, StringComparer.OrdinalIgnoreCase))
+        {
+            try
+            {
+                _reveal(inFolder.ToList());
+            }
+            catch (IOException)
+            {
+                // Moved or deleted since; the next prune takes it off the shelf.
+            }
+        }
+    }
+
+    void OnShowInFolder(object sender, RoutedEventArgs e) => ShowSelectedInFolder();
+
+    void OnCopy(object sender, RoutedEventArgs e) => CopySelected();
+
+    void OnTakeOff(object sender, RoutedEventArgs e) => _shelf.Remove(Selected());
 
     void DragOut(IReadOnlyList<string> paths)
     {
@@ -190,7 +257,11 @@ public partial class FloatWindow : Window
         switch (e.Key)
         {
             case Key.Delete when List.SelectedItems.Count > 0:
-                _shelf.Remove(List.SelectedItems.Cast<Item>().Select(i => i.Path).ToList());
+                _shelf.Remove(Selected());
+                e.Handled = true;
+                break;
+            case Key.C when Keyboard.Modifiers == ModifierKeys.Control && List.SelectedItems.Count > 0:
+                CopySelected();
                 e.Handled = true;
                 break;
             case Key.Escape:

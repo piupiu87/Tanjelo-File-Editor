@@ -90,6 +90,7 @@ public static class Strings
     public static string DoubleClick => Get();
     public static string ChangeAText => Get();
     public static string CtrlZCtrlY => Get();
+    public static string CtrlC => Get();
     public static string UndoRedo => Get();
     public static string Space => Get();
     public static string HoldAndDragToLookAround => Get();
