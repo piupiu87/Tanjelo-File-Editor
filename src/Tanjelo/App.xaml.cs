@@ -20,6 +20,7 @@ public partial class App : Application
     ConverterEngine? _engine;
     DateTime _engineBuilt;
     HotkeyManager? _hotkey;
+    ClipboardWatcher? _watcher;
     TrayIcon? _tray;
     Mutex? _singleInstance;
     FileSystemWatcher? _settingsWatcher;
@@ -126,6 +127,8 @@ public partial class App : Application
         ApplyHotkey();
         WatchSettings();
         StartUpdateChecks();
+        _watcher = new ClipboardWatcher { Enabled = _settings.ParkScreenshots };
+        _watcher.Screenshot += change => _ = ParkScreenshotAsync(change);
         // Only here, in the one copy of Tanjelo in the tray: pictures left in its folder by a crash, or by a menu closed
         // with Esc, belong to no shelf. Another copy, such as one started from "Send to", leaves them alone.
         Recycle(_clipboardFolder.Orphans(_shelf.Items));
@@ -463,6 +466,36 @@ public partial class App : Application
             Shutdown();
     }
 
+    // ---- Screenshots, parked on the shelf as they're taken
+
+    /// <summary>
+    /// Saves the screenshot on the clipboard in Tanjelo's folder and parks it, in place of the one before when it's that one
+    /// edited in Snipping Tool, then shows the shelf without taking the focus.
+    /// </summary>
+    async Task ParkScreenshotAsync(ClipboardChange change)
+    {
+        try
+        {
+            // The picture, even when the tool put a file there too.
+            var picture = await Task.Run(() => ClipboardPicture.Choose(_clipboard.Read() with { Files = [] }).Picture);
+            if (picture is null)
+            {
+                Log.Write($"clipboard: no picture in a screenshot from {change.Owner ?? "Print Screen"}");
+                return;
+            }
+            var (file, _) = await Task.Run(() => _clipboardFolder.Save(picture, change.Sequence));
+            var replaced = _watcher!.Decisions.Replaces(change, file, picture.Width, picture.Height, DateTime.Now,
+                p => _shelf.Contains(p) && !_shelf.IsUsed(p));
+            if (replaced is null || !_shelf.Replace(replaced, file)) _shelf.Add([file]);
+            ShowShelf();
+            _float!.ShowNotice(Strings.ScreenshotParkedOnTheShelf);
+        }
+        catch (Exception ex) when (ex is ConversionException or IOException or UnauthorizedAccessException)
+        {
+            Log.Write($"clipboard: {ex.Message}");
+        }
+    }
+
     // ---- Float shelf and Share
 
     FloatWindow ShelfWindow()
@@ -608,6 +641,7 @@ public partial class App : Application
         }
         if (_tray is not null && (before.Hotkey != _settings.Hotkey || before.FloatHotkey != _settings.FloatHotkey || before.ClipboardHotkey != _settings.ClipboardHotkey))
             ApplyHotkey();
+        if (_watcher is not null) _watcher.Enabled = _settings.ParkScreenshots;
         if (_settings.CheckForUpdates && !before.CheckForUpdates)
             _ = CheckForUpdatesAsync();
     }
@@ -716,6 +750,7 @@ public partial class App : Application
     {
         _updateTimer?.Stop();
         _hotkey?.Dispose();
+        _watcher?.Dispose();
         _tray?.Dispose();
         _settingsWatcher?.Dispose();
         _singleInstance?.Dispose();

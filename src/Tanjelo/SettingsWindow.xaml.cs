@@ -85,6 +85,7 @@ public partial class SettingsWindow : Window
         SendToCheck.Click += (_, _) => ChangeWindows(() => _windows.InSendToMenu = SendToCheck.IsChecked == true);
         Windows11MenuCheck.Click += (_, _) => ChangeWindows(() => _windows.InWindows11Menu = Windows11MenuCheck.IsChecked == true);
         CheckUpdatesBox.Click += (_, _) => Change(s => s.CheckForUpdates = CheckUpdatesBox.IsChecked == true);
+        ParkScreenshotsCheck.Click += (_, _) => Change(s => s.ParkScreenshots = ParkScreenshotsCheck.IsChecked == true);
         UpdateLink.Click += (_, _) =>
         {
             if (_updatePage is { } page) PageClicked?.Invoke(page);
@@ -128,6 +129,7 @@ public partial class SettingsWindow : Window
             HeicSlider.Value = Math.Clamp(settings.HeicQuality, 1, 100);
             DpiSlider.Value = Math.Clamp(settings.PdfRenderDpi, 72, 600);
             CheckUpdatesBox.IsChecked = settings.CheckForUpdates;
+            ParkScreenshotsCheck.IsChecked = settings.ParkScreenshots;
             if (Blank(FfmpegPath.Text) != Blank(settings.FfmpegPath)) FfmpegPath.Text = settings.FfmpegPath ?? "";
             if (Blank(SevenZipPath.Text) != Blank(settings.SevenZipPath)) SevenZipPath.Text = settings.SevenZipPath ?? "";
             ShowWindowsSettings();

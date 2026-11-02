@@ -104,6 +104,10 @@
                 <TextBlock x:Name="ClipboardShortcutHint" Style="{StaticResource Hint}" Text="{x:Static local:Strings.ClipboardShortcutHint}" />
                 <TextBlock x:Name="ShortcutProblem" Style="{StaticResource Problem}" Visibility="Collapsed" />
 
+                <TextBlock Text="{x:Static local:Strings.Clipboard}" Style="{StaticResource SectionHeading}" />
+                <CheckBox x:Name="ParkScreenshotsCheck" Style="{StaticResource Check}" Content="{x:Static local:Strings.ParkScreenshotsOnTheShelf}" />
+                <TextBlock Style="{StaticResource Hint}" Margin="27,2,0,0" Text="{x:Static local:Strings.ParkScreenshotsHint}" />
+
                 <TextBlock Text="{x:Static local:Strings.Appearance}" Style="{StaticResource SectionHeading}" />
                 <TextBlock x:Name="ThemeLabel" Text="{x:Static local:Strings.Theme}" Style="{StaticResource Label}" />
                 <WrapPanel x:Name="ThemeChoices" AutomationProperties.LabeledBy="{Binding ElementName=ThemeLabel}">

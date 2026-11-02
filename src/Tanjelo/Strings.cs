@@ -498,4 +498,8 @@ public static class Strings
     public static string RemoveTheClipboardShortcut => Get();
     public static string ClipboardShortcutHint => Get();
     public static string ThatSTheClipboardShortcutChoose => Get();
+    public static string Clipboard => Get();
+    public static string ParkScreenshotsOnTheShelf => Get();
+    public static string ParkScreenshotsHint => Get();
+    public static string ScreenshotParkedOnTheShelf => Get();
 }

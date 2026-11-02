@@ -52,7 +52,7 @@ public class AccessibilityTests
             using var attached = A11y.Attach(host);
             await Ui.Settle();
             var order = A11y.Check(host, "settings");
-            A11y.InOrder(order, window.MenuShortcut, window.ShelfShortcut, window.ClearShelfShortcut, window.ClipboardShortcut, window.ClearClipboardShortcut, window.ThemeSystem, window.ThemeDark,
+            A11y.InOrder(order, window.MenuShortcut, window.ShelfShortcut, window.ClearShelfShortcut, window.ClipboardShortcut, window.ClearClipboardShortcut, window.ParkScreenshotsCheck, window.ThemeSystem, window.ThemeDark,
                 window.JpegSlider, window.DpiSlider, window.FfmpegPath, window.FfmpegBrowse, window.SevenZipPath, window.StartupCheck,
                 window.SendToCheck, window.Windows11MenuCheck, window.CheckUpdatesBox, window.UpdateLink, window.OpenFileButton, window.DoneButton);
             RenderInContrast(host, "settings-contrast", Theme.Contrast.Aquatic);

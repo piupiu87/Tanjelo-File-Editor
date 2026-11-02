@@ -1525,4 +1525,16 @@
   <data name="ThatSTheClipboardShortcutChoose" xml:space="preserve">
     <value>That's the clipboard menu's shortcut. Choose other keys.</value>
   </data>
+  <data name="Clipboard" xml:space="preserve">
+    <value>Clipboard</value>
+  </data>
+  <data name="ParkScreenshotsOnTheShelf" xml:space="preserve">
+    <value>Park screenshots on the shelf</value>
+  </data>
+  <data name="ParkScreenshotsHint" xml:space="preserve">
+    <value>Screenshots from Snipping Tool, Win+Shift+S and Print Screen go on the shelf as they're taken, kept in Tanjelo's own folder. To spot them, Tanjelo looks only at which app copied something; nothing leaves your PC.</value>
+  </data>
+  <data name="ScreenshotParkedOnTheShelf" xml:space="preserve">
+    <value>Screenshot parked on the shelf</value>
+  </data>
 </root>

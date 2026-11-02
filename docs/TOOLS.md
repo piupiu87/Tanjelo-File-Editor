@@ -383,6 +383,7 @@ converted and edited straight from the clipboard, without saving it first.
 
 | Way in | What happens |
 |---|---|
+| Every screenshot | Parked on the [Float shelf](#float-shelf) as it's taken, from Snipping Tool, **Win+Shift+S** or Print Screen, and the shelf appears without taking the focus. Turn it off with *Park screenshots on the shelf* in Settings (`parkScreenshots`) |
 | **Ctrl+Shift+Space** with nothing selected, in File Explorer or on the desktop | The menu for the picture on the clipboard, or for the files copied there |
 | Its own shortcut, set in [Settings](../README.md#settings) (`clipboardHotkey` in settings.json) | The same menu, from any app: the way in right after Win+Shift+S |
 | Tray menu → *Clipboard picture…* | The same menu; greyed out while the clipboard holds no picture or files |
@@ -392,6 +393,13 @@ The menu says *Clipboard picture* and the picture's size, and has every picture 
 one already), Compress, Crop, Add background, Redact, Annotate, Edit photo, text by OCR, Share, Float and Save to….
 From an Explorer window or the desktop it also has **Save in "Folder"**, which copies the picture into that folder.
 Copy path, Copy, Open in Terminal, Move to…, Metadata… and the archives are left out.
+
+Screenshots are read once the clipboard has been left alone for a second, since tools put a picture there in several
+steps. Snipping Tool copies its picture again after each edit when *Automatically copy changes* is on: a picture from
+the same tool within 30 seconds, at the same size, takes the place of the one before as long as that one hasn't been
+dragged, copied, saved, edited or converted yet, so the shelf gets one item rather than one for every stroke. The same
+picture pasted twice is the same file. Only the app that copied something, and for those three the list of formats,
+is looked at to spot a screenshot: see [Privacy](../README.md#privacy).
 
 Where the files go:
 

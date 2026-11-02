@@ -57,7 +57,7 @@ The app isn't code-signed yet, so the first launch may show "Windows protected y
 | "Send to" menu | Turn on *Show in the "Send to" menu* in Settings, then right-click files → Send to → Tanjelo |
 | Windows 11 right-click menu | In a signed release, turn on *Show in the Windows 11 right-click menu* in Settings, then right-click files → **Tanjelo…** for the same menu as the shortcut |
 | Float shelf | Drop files on the shelf at the right edge of the screen, or press **Ctrl+V** there to park copied files or a picture; drag copies out later (hold Shift to move them), or press the shortcut there to convert them; right-click them to copy them, save copies or show them in their folder |
-| Screenshots and copied pictures | With nothing selected, press **Ctrl+Shift+Space** in Explorer or on the desktop for the menu for the picture on the clipboard; or give it a shortcut of its own in Settings that works in every app, or right-click the tray icon → *Clipboard picture…*. The picture and its results wait on the shelf, in Tanjelo's own folder, until you save or drag them where you want them (see [clipboard pictures](docs/TOOLS.md#clipboard-pictures)) |
+| Screenshots and copied pictures | Every screenshot from Snipping Tool, **Win+Shift+S** or Print Screen is parked on the shelf as it's taken. With nothing selected, press **Ctrl+Shift+Space** in Explorer or on the desktop for the menu for the picture on the clipboard; or give it a shortcut of its own in Settings that works in every app, or right-click the tray icon → *Clipboard picture…*. The picture and its results wait on the shelf, in Tanjelo's own folder, until you save or drag them where you want them (see [clipboard pictures](docs/TOOLS.md#clipboard-pictures)) |
 | Command line | `tanj convert webp *.png` (see [Command line](#command-line)) |
 
 The menu has three tabs: **Convert**, **Tools** and **Actions**. Press **Tab** (or the shortcut again) to switch, or
@@ -165,9 +165,10 @@ Save to… (a copy in a folder you pick) and Move to….
 ## Settings
 
 Tray menu → *Settings…* opens the settings window: the shortcuts for the menu, the shelf and the clipboard picture's
-menu (click a box and press the keys), the theme, the quality of JPG, WebP and HEIC pictures and of PDF pages saved as pictures, where ffmpeg and 7-Zip
-are when they aren't found automatically, which optional programs were found, *Start with Windows*, the "Send to"
-entry, the Windows 11 menu entry (in signed releases) and the [update check](#privacy). Changes apply at once.
+menu (click a box and press the keys), *Park screenshots on the shelf* (see [Privacy](#privacy)), the theme, the
+quality of JPG, WebP and HEIC pictures and of PDF pages saved as pictures, where ffmpeg and 7-Zip are when they aren't
+found automatically, which optional programs were found, *Start with Windows*, the "Send to" entry, the Windows 11 menu
+entry (in signed releases) and the [update check](#privacy). Changes apply at once.
 
 The settings live in `%APPDATA%\Tanjelo\settings.json` (*Open settings file* in the window), which can still be edited
 by hand; changes apply as soon as you save it.
@@ -184,7 +185,8 @@ by hand; changes apply as soon as you save it.
   "pdfRenderDpi": 300,        // resolution for PDF -> image
   "ffmpegPath": null,         // only needed if ffmpeg isn't found automatically
   "sevenZipPath": null,
-  "checkForUpdates": false    // ask GitHub once a day whether a newer version is out
+  "checkForUpdates": false,   // ask GitHub once a day whether a newer version is out
+  "parkScreenshots": true     // park screenshots on the shelf as they're taken
 }
 ```
 
@@ -209,6 +211,16 @@ collected (no account, no telemetry, no crash reports). The only network use is 
 - **Share…** sends files only where you choose in Windows' Share sheet.
 
 Office, LibreOffice, ffmpeg, 7-Zip and the WebView2 runtime run on your PC; WebView2 runs with every web address blocked.
+
+**The clipboard.** To park screenshots on the shelf as they're taken, Tanjelo is told by Windows each time something
+is copied. It looks only at which app copied it (Snipping Tool, the Win+Shift+S overlay, or Print Screen) and, for
+those, at the list of formats; what was copied is read only when it's a screenshot. Copies that password managers mark
+as not for clipboard watchers or for clipboard history are left alone, and so is anything copied by other apps. The
+screenshots are saved in `%LOCALAPPDATA%\Tanjelo\Clipboard` while they're on the shelf, go to the Recycle Bin when taken
+off it, and are never uploaded. Turn off *Park screenshots on the shelf* in Settings and Tanjelo stops listening
+altogether; the clipboard is then read only when you ask, with the shortcut, the tray or Ctrl+V on the shelf. A picture
+from another app that Tanjelo leaves alone is noted in its log by that app's name, so the list of screenshot apps can be
+fixed.
 
 ## Code signing policy
 

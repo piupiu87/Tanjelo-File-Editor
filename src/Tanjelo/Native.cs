@@ -166,6 +166,93 @@ static class Native
         return stream.ToArray();
     }
 
+    public const int WM_CLIPBOARDUPDATE = 0x031D;
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool AddClipboardFormatListener(IntPtr hwnd);
+
+    [DllImport("user32.dll")]
+    public static extern bool RemoveClipboardFormatListener(IntPtr hwnd);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetClipboardOwner();
+
+    [DllImport("user32.dll")]
+    public static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint processId);
+
+    [DllImport("user32.dll")]
+    public static extern uint GetClipboardSequenceNumber();
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool OpenClipboard(IntPtr owner);
+
+    [DllImport("user32.dll")]
+    public static extern bool CloseClipboard();
+
+    [DllImport("user32.dll")]
+    public static extern uint EnumClipboardFormats(uint format);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetClipboardData(uint format);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    static extern int GetClipboardFormatName(uint format, StringBuilder name, int max);
+
+    [DllImport("kernel32.dll")]
+    public static extern IntPtr GlobalLock(IntPtr memory);
+
+    [DllImport("kernel32.dll")]
+    public static extern bool GlobalUnlock(IntPtr memory);
+
+    const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    static extern IntPtr OpenProcess(uint access, bool inherit, uint processId);
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    static extern bool QueryFullProcessImageName(IntPtr process, uint flags, StringBuilder name, ref int size);
+
+    [DllImport("kernel32.dll")]
+    static extern bool CloseHandle(IntPtr handle);
+
+    /// <summary>The file name of the program running a process, such as "SnippingTool.exe"; null when it can't be asked.</summary>
+    public static string? ProgramOf(uint processId)
+    {
+        var process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, processId);
+        if (process == IntPtr.Zero) return null;
+        try
+        {
+            var name = new StringBuilder(1024);
+            var size = name.Capacity;
+            return QueryFullProcessImageName(process, 0, name, ref size) ? Path.GetFileName(name.ToString()) : null;
+        }
+        finally
+        {
+            CloseHandle(process);
+        }
+    }
+
+    /// <summary>A clipboard format's name: "CF_DIB" for the standard ones, the registered name for the rest.</summary>
+    public static string ClipboardFormatName(uint format)
+    {
+        switch (format)
+        {
+            case 1: return "CF_TEXT";
+            case 2: return "CF_BITMAP";
+            case 3: return "CF_METAFILEPICT";
+            case 7: return "CF_OEMTEXT";
+            case 8: return "CF_DIB";
+            case 9: return "CF_PALETTE";
+            case 13: return "CF_UNICODETEXT";
+            case 14: return "CF_ENHMETAFILE";
+            case 15: return "CF_HDROP";
+            case 16: return "CF_LOCALE";
+            case 17: return "CF_DIBV5";
+        }
+        var name = new StringBuilder(256);
+        return GetClipboardFormatName(format, name, name.Capacity) > 0 ? name.ToString() : $"#{format}";
+    }
+
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     struct SHFILEOPSTRUCT
     {

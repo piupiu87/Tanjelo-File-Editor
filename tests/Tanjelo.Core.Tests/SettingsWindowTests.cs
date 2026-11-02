@@ -87,6 +87,12 @@ public class SettingsWindowTests
             w.HeicSlider.Value = 55;
             Assert.Equal((60, 55), (h.Last.WebpQuality, h.Last.HeicQuality));
 
+            // Screenshots are parked unless turned off.
+            Assert.True(w.ParkScreenshotsCheck.IsChecked);
+            w.ParkScreenshotsCheck.IsChecked = false;
+            w.ParkScreenshotsCheck.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            Assert.False(h.Last.ParkScreenshots);
+
             // Windows' own settings go straight to Windows.
             w.StartupCheck.IsChecked = true;
             w.StartupCheck.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));

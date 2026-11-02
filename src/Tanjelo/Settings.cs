@@ -26,6 +26,9 @@ sealed class Settings
     /// <summary>Whether to ask GitHub once a day if a newer Tanjelo is out; off unless turned on.</summary>
     public bool CheckForUpdates { get; set; }
 
+    /// <summary>Whether screenshots from Snipping Tool, Win+Shift+S and Print Screen are parked on the shelf as they're taken.</summary>
+    public bool ParkScreenshots { get; set; } = true;
+
     public static string FilePath { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tanjelo", "settings.json");
 

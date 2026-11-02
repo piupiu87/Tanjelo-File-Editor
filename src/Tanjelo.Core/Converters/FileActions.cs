@@ -78,14 +78,13 @@ public sealed class WindowsClipboard : IClipboard
         }
         try
         {
-            // The bytes are copied out and the clipboard closed at once; the picture is decoded afterwards. Only what
-            // wins is read, since asking an app for a format it renders late makes it do the work there and then.
+            // The bytes are copied out and the clipboard closed at once; the picture is decoded afterwards. A bitmap is
+            // read only without a PNG, since asking an app for a format it renders late makes it do the work there and
+            // then. The picture is read even beside files, for a screenshot tool that puts both.
             var formats = new List<uint>();
             for (var format = EnumClipboardFormats(0); format != 0; format = EnumClipboardFormats(format))
                 formats.Add(format);
             var files = formats.Contains(ClipboardData.CF_HDROP) ? DroppedFiles() : [];
-            if (files.Any(p => File.Exists(p) || Directory.Exists(p)))
-                return new ClipboardData { Files = files };
             var pngFormat = RegisterClipboardFormat("PNG");
             var png = formats.Contains(pngFormat) ? Bytes(pngFormat) : null;
             if (png is not null && ClipboardPicture.IsPng(png))
