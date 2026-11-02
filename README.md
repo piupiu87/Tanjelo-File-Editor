@@ -31,6 +31,8 @@ independent project, not affiliated with Tangerine.
   screenshots, edit photos with live sliders, and trim and bleep video and audio, or redact video, on a timeline.
 - **Actions** work on the files themselves: copy their paths, open a terminal there, share them, copy or move them to a
   folder, or park them on the **Float shelf** and drag copies out later.
+- **Clipboard pictures**: screenshots wait on the shelf as they're taken, and the picture on the clipboard can be
+  converted or edited without saving it first, with the results back on the clipboard, ready to paste.
 - **`tanj`**, the command-line tool, does all of it from scripts.
 
 ## Download
@@ -332,10 +334,11 @@ SignPath; [.signpath/README.md](.signpath/README.md) says how it's set up.
 
 ## Roadmap
 
-v1.0 makes Tanjelo ready for everyone: an installer and a winget package, the .NET runtime inside, a settings window,
-an opt-in update check, an accessibility pass and text ready to translate. It ships unsigned: code signing, and the
-Windows 11 menu entry that needs it, are on hold for a later release. See [docs/ROADMAP.md](docs/ROADMAP.md) for the
-full plan. Ideas and pull requests are welcome; open an issue first for anything big, and see
+v1.0 made Tanjelo ready for everyone: an installer and a winget package, the .NET runtime inside, a settings window,
+an opt-in update check, an accessibility pass and text ready to translate. v1.1 brings clipboard pictures: screenshots
+parked on the shelf as they're taken, a menu for the picture on the clipboard, results back on the clipboard, Save to…,
+and `tanj --clipboard`. Releases ship unsigned: code signing, and the Windows 11 menu entry that needs it, are on hold
+for a later release. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are welcome; open an issue first for anything big, and see
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License

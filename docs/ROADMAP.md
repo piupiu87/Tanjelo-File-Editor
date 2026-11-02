@@ -130,12 +130,12 @@ v1.0 ships unsigned, so the first launch may show "Windows protected your PC" un
 Screenshots and copied pictures, used without saving them first.
 
 - [x] Shelf: drag several selected files together, Ctrl+C, Show in folder (S) (PR #6)
-- [ ] Read pictures from the clipboard: PNG, and bitmaps with transparency; copied files act like a selection (M)
-- [ ] Screenshots parked on the shelf as they're taken; Ctrl+V on the shelf; held pictures go to the Recycle Bin when taken off (M)
-- [ ] Menu for the clipboard picture: from the shortcut with nothing selected, its own shortcut, or the tray (M)
-- [ ] Results back on the clipboard, and a Copy button on every result (S)
-- [ ] Save to… and Save in "Folder" actions (S)
-- [ ] `tanj --clipboard` (S)
+- [x] Read pictures from the clipboard: PNG, and bitmaps with transparency; copied files act like a selection (M)
+- [x] Screenshots parked on the shelf as they're taken; Ctrl+V on the shelf; held pictures go to the Recycle Bin when taken off (M)
+- [x] Menu for the clipboard picture: from the shortcut with nothing selected, its own shortcut, or the tray (M)
+- [x] Results back on the clipboard, and a Copy button on every result (S)
+- [x] Save to… and Save in "Folder" actions (S)
+- [x] `tanj --clipboard` (S)
 
 ## Signed releases (on hold)
 
