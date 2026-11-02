@@ -61,9 +61,9 @@ sealed class ClipboardWatcher : IDisposable
             if (Decisions.Notice(Describe(), out var skipped)) _quiet.Start();
             else if (skipped is not null) Log.Write($"clipboard: {skipped}");
         }
-        catch (Exception ex) when (ex is ExternalException or InvalidOperationException)
+        catch (Exception ex)
         {
-            Log.Write(ex);
+            Log.Write(ex); // on every copy in every app: never a card
         }
         return IntPtr.Zero;
     }

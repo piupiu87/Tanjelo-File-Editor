@@ -248,7 +248,7 @@ public partial class App : Application
             sequence = _clipboard.Sequence;
             input = await Task.Run(() => ClipboardInput.Choose([], folderInFront, _clipboard.Read()));
         }
-        catch (ConversionException ex)
+        catch (Exception ex) when (ex is ConversionException or ImageMagick.MagickException)
         {
             Toast().ShowError(Strings.CouldnTReadTheClipboard, ex.Message);
             return;
@@ -508,9 +508,9 @@ public partial class App : Application
             ShowShelf();
             _float!.ShowNotice(Strings.ScreenshotParkedOnTheShelf);
         }
-        catch (Exception ex) when (ex is ConversionException or IOException or UnauthorizedAccessException)
+        catch (Exception ex)
         {
-            Log.Write($"clipboard: {ex.Message}");
+            Log.Write(ex); // nobody asked for this, so a problem goes in the log rather than on a card
         }
     }
 
@@ -550,9 +550,9 @@ public partial class App : Application
             {
                 Native.Recycle(paths);
             }
-            catch (IOException ex)
+            catch (Exception ex)
             {
-                Log.Write(ex.Message);
+                Log.Write(ex); // a thread of its own: anything thrown here would end the app
             }
         })
         {

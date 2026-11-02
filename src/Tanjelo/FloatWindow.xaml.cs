@@ -195,7 +195,7 @@ public partial class FloatWindow : Window
                 ShowNotice(content.Problem ?? Strings.ThereSNoPictureOrFilesOnTheClipboard);
             }
         }
-        catch (Exception ex) when (ex is ConversionException or IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is ConversionException or IOException or UnauthorizedAccessException or ImageMagick.MagickException)
         {
             Log.Write(ex);
             ShowNotice(ex.Message);
