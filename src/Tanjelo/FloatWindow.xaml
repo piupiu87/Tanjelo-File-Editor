@@ -89,6 +89,79 @@
                     </Grid>
                 </DataTemplate>
             </ListBox.ItemTemplate>
+            <!-- Right-clicking a selected file keeps the selection, so these act on all the selected files -->
+            <ListBox.ContextMenu>
+                <ContextMenu x:Name="ItemMenu" FontFamily="{StaticResource UiFont}" FontSize="13" Foreground="{DynamicResource TextPrimary}"
+                             Grid.IsSharedSizeScope="True">
+                    <ContextMenu.Template>
+                        <ControlTemplate TargetType="ContextMenu">
+                            <!-- The shadow on a frame of its own, so the text keeps its ClearType -->
+                            <Grid Margin="0,0,10,10" MinWidth="200">
+                                <Border CornerRadius="7" Background="{DynamicResource Surface}">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.22" />
+                                    </Border.Effect>
+                                </Border>
+                                <Border CornerRadius="7" Padding="4" Background="{DynamicResource Surface}" BorderThickness="1"
+                                        BorderBrush="{DynamicResource FieldBorder}">
+                                    <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle" />
+                                </Border>
+                            </Grid>
+                        </ControlTemplate>
+                    </ContextMenu.Template>
+                    <ContextMenu.Resources>
+                        <Style TargetType="MenuItem">
+                            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+                            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="MenuItem">
+                                        <Grid>
+                                            <Border x:Name="Back" CornerRadius="4" Background="Transparent" Padding="8,6,12,6">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="26" />
+                                                        <ColumnDefinition />
+                                                        <ColumnDefinition Width="Auto" SharedSizeGroup="Keys" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Icon, RelativeSource={RelativeSource TemplatedParent}}" FontFamily="{StaticResource IconFont}"
+                                                               FontSize="14" VerticalAlignment="Center" />
+                                                    <ContentPresenter Grid.Column="1" ContentSource="Header" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="2" Text="{TemplateBinding InputGestureText}" Margin="28,0,0,0" FontSize="12"
+                                                               Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" />
+                                                </Grid>
+                                            </Border>
+                                            <!-- In a contrast theme the item the pointer or the arrows are on is outlined -->
+                                            <Border x:Name="Outline" CornerRadius="4" BorderThickness="1.5" BorderBrush="Transparent" IsHitTestVisible="False" />
+                                        </Grid>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsHighlighted" Value="True">
+                                                <Setter TargetName="Back" Property="Background" Value="{DynamicResource Hover}" />
+                                                <Setter TargetName="Outline" Property="BorderBrush" Value="{DynamicResource SelectedBorder}" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                        <Style x:Key="{x:Static MenuItem.SeparatorStyleKey}" TargetType="Separator">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Separator">
+                                        <Border Height="1" Margin="8,4" Background="{DynamicResource FieldBorder}" />
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ContextMenu.Resources>
+                    <MenuItem x:Name="ShowInFolderItem" Header="{x:Static local:Strings.ShowInFolder}" Icon="&#xE838;" Click="OnShowInFolder" />
+                    <MenuItem x:Name="CopyItem" Header="{x:Static local:Strings.Copy}" Icon="&#xE8C8;" InputGestureText="{x:Static local:Strings.CtrlC}"
+                              Click="OnCopy" />
+                    <Separator />
+                    <MenuItem x:Name="TakeOffItem" Header="{x:Static local:Strings.TakeOffTheShelf}" Icon="&#xE711;"
+                              InputGestureText="{x:Static local:Strings.Delete}" Click="OnTakeOff" />
+                </ContextMenu>
+            </ListBox.ContextMenu>
         </ListBox>
 
         <!-- Empty: where to drop. Otherwise: drag everything at once, and the keys -->
