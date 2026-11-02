@@ -13,6 +13,7 @@
             <Setter Property="ToolTip" Value="{Binding Path}" />
             <Setter Property="AutomationProperties.Name" Value="{Binding Spoken}" />
             <Setter Property="AutomationProperties.HelpText" Value="{Binding Folder}" />
+            <EventSetter Event="MouseDoubleClick" Handler="OnItemDoubleClick" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
@@ -155,6 +156,8 @@
                             </Setter>
                         </Style>
                     </ContextMenu.Resources>
+                    <MenuItem x:Name="OpenItem" Header="{x:Static local:Strings.Open}" Icon="&#xE8E5;" InputGestureText="{x:Static local:Strings.Enter}"
+                              FontWeight="SemiBold" Click="OnOpen" />
                     <MenuItem x:Name="ShowInFolderItem" Header="{x:Static local:Strings.ShowInFolder}" Icon="&#xE838;" Click="OnShowInFolder" />
                     <MenuItem x:Name="CopyItem" Header="{x:Static local:Strings.Copy}" Icon="&#xE8C8;" InputGestureText="{x:Static local:Strings.CtrlC}"
                               Click="OnCopy" />

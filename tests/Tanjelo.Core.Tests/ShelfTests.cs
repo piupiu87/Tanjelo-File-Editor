@@ -233,7 +233,7 @@ public class ShelfTests
             // One picture not saved yet: Save as…, and no Show in folder, which would open Tanjelo's own folder.
             list.SelectedItems.Add(list.Items[0]);
             window.ShowMenuItems();
-            Assert.Equal([Tanjelo.Strings.Copy, Tanjelo.Strings.SaveAs, Tanjelo.Strings.TakeOffTheShelf], Visible(window.ItemMenu));
+            Assert.Equal([Tanjelo.Strings.Open, Tanjelo.Strings.Copy, Tanjelo.Strings.SaveAs, Tanjelo.Strings.TakeOffTheShelf], Visible(window.ItemMenu));
             Click(window.SaveAsItem);
             Assert.Equal(File.ReadAllBytes(held), File.ReadAllBytes(Path.Combine(saved, "renamed.png")));
             Assert.Equal([held, mine], shelf.Items);   // the shelf keeps its own
@@ -245,13 +245,13 @@ public class ShelfTests
             // With a file of the user's too: Save to… a folder, and Show in folder for that one only.
             list.SelectedItems.Add(list.Items[1]);
             window.ShowMenuItems();
-            Assert.Equal([Tanjelo.Strings.ShowInFolder, Tanjelo.Strings.Copy, Tanjelo.Strings.SaveTo, Tanjelo.Strings.TakeOffTheShelf], Visible(window.ItemMenu));
+            Assert.Equal([Tanjelo.Strings.Open, Tanjelo.Strings.ShowInFolder, Tanjelo.Strings.Copy, Tanjelo.Strings.SaveTo, Tanjelo.Strings.TakeOffTheShelf], Visible(window.ItemMenu));
             Click(window.SaveToItem);
             Assert.Equal(["mine.png", "renamed.png", "Screenshot 2026-11-02 143005.png"], Directory.GetFiles(saved).Select(Path.GetFileName).Order());
             Click(window.ShowInFolderItem);
             Assert.Equal([[mine]], revealed.Select(r => r.ToArray()));
             var menu = window.ItemMenu;
-            (menu.Width, menu.Height) = (240, 190);
+            (menu.Width, menu.Height) = (240, 225);
             Ui.Render(menu, "shelf-held-menu-light");
 
             Click(window.TakeOffItem);
@@ -295,6 +295,50 @@ public class ShelfTests
             Assert.Equal(2, shelf.Items.Count);
         });
     }
+
+    [Fact]
+    public async Task A_double_click_Enter_or_Open_opens_the_file_in_its_app()
+    {
+        using var scratch = new Scratch();
+        var (shelf, folder, _) = Holding(scratch);
+        var (screenshot, _) = folder.Save(ClipboardFolderTests.Picture(scratch, "shot.png", System.Drawing.Color.SteelBlue, 40, 30), 1);
+        var photos = scratch.Folder("photos");
+        await Ui.Run(async () =>
+        {
+            shelf.Add([screenshot, photos]);
+            var opened = new List<string>();
+            var window = new FloatWindow(shelf, null, new FakeClipboard()) { OpenFile = opened.Add };
+            var host = Ui.Host(window, 248, 300);
+            using var attached = A11y.Attach(host); // so a file can have the focus, as a click gives it
+            await Ui.Settle();
+            var list = window.List;
+
+            DoubleClick(Container(list, 0));
+            Assert.Equal([screenshot], opened);   // a screenshot not saved yet opens too, in Photos or whatever opens PNGs
+            Assert.False(shelf.IsUsed(screenshot)); // looking at it doesn't count as using it
+
+            // From the keys: Enter on the selected files, in the list only.
+            list.SelectedItems.Add(list.Items[0]);
+            list.SelectedItems.Add(list.Items[1]);
+            Assert.False(window.Press(Key.Enter, ModifierKeys.None));
+            Container(list, 1).Focus();
+            Assert.True(window.Press(Key.Enter, ModifierKeys.None));
+            Assert.Equal([screenshot, screenshot, photos], opened);   // a folder opens in Explorer
+
+            window.ShowMenuItems();
+            Click(window.OpenItem);
+            Assert.Equal([screenshot, screenshot, photos, screenshot, photos], opened);   // each one selected
+            Assert.Equal("Enter", window.OpenItem.InputGestureText);
+
+            // One that can't be opened says why under the shelf.
+            window.OpenFile = _ => throw new System.ComponentModel.Win32Exception("No app is associated with this file.");
+            DoubleClick(Container(list, 0));
+            Assert.Equal("No app is associated with this file.", window.Notice.Text);
+        });
+    }
+
+    static void DoubleClick(System.Windows.Controls.Control element) =>
+        element.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Left) { RoutedEvent = System.Windows.Controls.Control.MouseDoubleClickEvent });
 
     static List<string> Visible(ContextMenu menu) =>
         menu.Items.OfType<MenuItem>().Where(i => i.Visibility == Visibility.Visible).Select(i => (string)i.Header).ToList();
@@ -388,11 +432,11 @@ public class ShelfTests
 
             // The menu, as it shows: the window's words, the keys, and the theme's colours.
             window.ShowMenuItems();
-            Assert.Equal([Tanjelo.Strings.ShowInFolder, Tanjelo.Strings.Copy, Tanjelo.Strings.SaveTo, Tanjelo.Strings.TakeOffTheShelf], Visible(window.ItemMenu));
+            Assert.Equal([Tanjelo.Strings.Open, Tanjelo.Strings.ShowInFolder, Tanjelo.Strings.Copy, Tanjelo.Strings.SaveTo, Tanjelo.Strings.TakeOffTheShelf], Visible(window.ItemMenu));
             Assert.Equal("Ctrl+C", window.CopyItem.InputGestureText);
             // Laid out on its own, as in its popup: a menu can't go inside anything else.
             var menu = window.ItemMenu;
-            (menu.Width, menu.Height) = (240, 190);
+            (menu.Width, menu.Height) = (240, 225);
             typeof(MenuItem).GetProperty(nameof(MenuItem.IsHighlighted))!.SetValue(window.CopyItem, true); // as under the pointer
             var light = Ui.Render(menu, "shelf-menu-light");
             Ui.UseTheme("dark", menu);

@@ -58,7 +58,7 @@ The app isn't code-signed yet, so the first launch may show "Windows protected y
 | Notification area | Click the Tanjelo icon to pick files; right-click for options |
 | "Send to" menu | Turn on *Show in the "Send to" menu* in Settings, then right-click files → Send to → Tanjelo |
 | Windows 11 right-click menu | In a signed release, turn on *Show in the Windows 11 right-click menu* in Settings, then right-click files → **Tanjelo…** for the same menu as the shortcut |
-| Float shelf | Drop files on the shelf at the right edge of the screen, or press **Ctrl+V** there to park copied files or a picture; drag copies out later (hold Shift to move them), or press the shortcut there to convert them; right-click them to copy them, save copies or show them in their folder |
+| Float shelf | Drop files on the shelf at the right edge of the screen, or press **Ctrl+V** there to park copied files or a picture; double-click one to open it, drag copies out later (hold Shift to move them), or press the shortcut there to convert them; right-click them to copy them, save copies or show them in their folder |
 | Screenshots and copied pictures | Every screenshot from Snipping Tool, **Win+Shift+S** or Print Screen is parked on the shelf as it's taken. With nothing selected, press **Ctrl+Shift+Space** in Explorer or on the desktop for the menu for the picture on the clipboard; or give it a shortcut of its own in Settings that works in every app, or right-click the tray icon → *Clipboard picture…*. The picture and its results wait on the shelf, in Tanjelo's own folder, until you save or drag them where you want them (see [clipboard pictures](docs/TOOLS.md#clipboard-pictures)) |
 | Command line | `tanj convert webp *.png` (see [Command line](#command-line)) |
 

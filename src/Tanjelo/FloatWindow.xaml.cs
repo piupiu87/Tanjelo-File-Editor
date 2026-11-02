@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -104,6 +105,9 @@ public partial class FloatWindow : Window
 
     /// <summary>Which folder Save to… copies into; null when canceled.</summary>
     internal Func<string?> AskForFolder { get; set; } = SaveCopies.AskFolder;
+
+    /// <summary>Opens a file in its app, or a folder in Explorer, as Explorer's double-click does. Tests record instead.</summary>
+    internal Action<string> OpenFile { get; set; } = path => Process.Start(new ProcessStartInfo(path) { UseShellExecute = true })?.Dispose();
 
     /// <summary>The selected files, or all of them when none is selected: what the hotkey converts.</summary>
     public IReadOnlyList<string> SelectedOrAll()
@@ -322,6 +326,34 @@ public partial class FloatWindow : Window
         }
     }
 
+    /// <summary>Opens each file in its app and each folder in Explorer; one that's gone or has no app says so under the shelf.</summary>
+    void OpenItems(IReadOnlyList<string> paths)
+    {
+        foreach (var path in paths)
+        {
+            try
+            {
+                OpenFile(path);
+            }
+            catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException)
+            {
+                Log.Write($"{path}: {ex.Message}");
+                ShowNotice(ex.Message);
+                _shelf.Prune(); // a file moved or deleted since drops off
+            }
+        }
+    }
+
+    void OnItemDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        // Not on the × button, where two quick clicks are only quick.
+        if (e.ChangedButton != MouseButton.Left || e.OriginalSource is DependencyObject d && IsInButton(d)) return;
+        if (((FrameworkElement)sender).DataContext is Item item) OpenItems([item.Path]);
+        e.Handled = true;
+    }
+
+    void OnOpen(object sender, RoutedEventArgs e) => OpenItems(Selected());
+
     void OnShowInFolder(object sender, RoutedEventArgs e) => ShowSelectedInFolder();
 
     void OnCopy(object sender, RoutedEventArgs e) => CopySelected();
@@ -366,24 +398,32 @@ public partial class FloatWindow : Window
 
     void OnKey(object sender, KeyEventArgs e)
     {
-        switch (e.Key)
+        if (Press(e.Key, Keyboard.Modifiers)) e.Handled = true;
+    }
+
+    /// <summary>A key going down with these modifiers held; returns whether the shelf used it.</summary>
+    internal bool Press(Key key, ModifierKeys modifiers)
+    {
+        switch (key)
         {
+            // Only in the list: on Clear or ×, Enter presses the button.
+            case Key.Enter when List.IsKeyboardFocusWithin && List.SelectedItems.Count > 0 && modifiers == ModifierKeys.None:
+                OpenItems(Selected());
+                return true;
             case Key.Delete when List.SelectedItems.Count > 0:
                 _shelf.Remove(Selected());
-                e.Handled = true;
-                break;
-            case Key.C when Keyboard.Modifiers == ModifierKeys.Control && List.SelectedItems.Count > 0:
+                return true;
+            case Key.C when modifiers == ModifierKeys.Control && List.SelectedItems.Count > 0:
                 CopySelected();
-                e.Handled = true;
-                break;
-            case Key.V when Keyboard.Modifiers == ModifierKeys.Control:
+                return true;
+            case Key.V when modifiers == ModifierKeys.Control:
                 _ = PasteAsync();
-                e.Handled = true;
-                break;
+                return true;
             case Key.Escape:
                 Hide();
-                e.Handled = true;
-                break;
+                return true;
+            default:
+                return false;
         }
     }
 

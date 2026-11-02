@@ -364,11 +364,14 @@ shortcuts. The shelf holds references to your files, not copies, so files that w
 - Pictures from the clipboard say *Not saved yet* where other files show their folder. They're kept in
   `%LOCALAPPDATA%\Tanjelo\Clipboard` for as long as they're on the shelf, and reach your own folders only when you
   drag one out or save a copy.
+- Double-click a file, or select it and press **Enter**, to open it in its app (a picture not saved yet opens too,
+  in whatever opens pictures); a folder opens in Explorer.
 - Press the Tanjelo shortcut on the shelf to convert what's selected there (or everything on it).
-- Right-click a file, or one of several selected, for **Show in folder** (Explorer opens each one's folder with it
-  selected; not for pictures not saved yet), **Copy** (**Ctrl+C**, to paste the files somewhere else), **Save as…**
-  for one file (a copy where you choose, starting in Pictures) or **Save to…** for several (copies in a folder you pick;
-  names already taken there get " (2)"), and **Take off the shelf**. Saving copies; the shelf keeps its own.
+- Right-click a file, or one of several selected, for **Open**, **Show in folder** (Explorer opens each one's folder
+  with it selected; not for pictures not saved yet), **Copy** (**Ctrl+C**, to paste the files somewhere else),
+  **Save as…** for one file (a copy where you choose, starting in Pictures) or **Save to…** for several (copies in a
+  folder you pick; names already taken there get " (2)"), and **Take off the shelf**. Saving copies; the shelf keeps
+  its own.
 - **Delete** or × takes an item off the shelf, **Clear** takes them all. Your files stay where they are; pictures not
   saved go to the Recycle Bin, so they can still be got back.
 - It doesn't take the focus when it appears and stays out of Alt+Tab and the taskbar. × or **Esc** hides it, and

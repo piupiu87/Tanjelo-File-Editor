@@ -263,6 +263,10 @@
   <data name="CtrlC" xml:space="preserve">
     <value>Ctrl+C</value>
   </data>
+  <data name="Enter" xml:space="preserve">
+    <value>Enter</value>
+    <comment>The key, as a menu shows it beside an entry</comment>
+  </data>
   <data name="UndoRedo" xml:space="preserve">
     <value>Undo, redo</value>
   </data>
