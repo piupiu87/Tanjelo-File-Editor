@@ -43,6 +43,8 @@ public partial class FormatMenuWindow : Window
             "copy-files" => "",                  // copy
             "open-terminal" => "",               // command prompt
             "move-to" => "",                     // move to folder
+            "save-to" when Target.FolderPrompt is null => "", // save, in the folder already chosen
+            "save-to" => "",               // save as
             "compress" => "",                    // arrows pointing in
             "metadata" => "",                    // tag
             "crop" => "",                        // crop

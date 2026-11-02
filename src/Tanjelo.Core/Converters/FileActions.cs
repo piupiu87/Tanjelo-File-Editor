@@ -331,7 +331,7 @@ public sealed class MoveToFolderAction : IConverter
     }, ctx.Cancellation);
 
     /// <summary>The name a file can take in <paramref name="destination"/>, keeping its extension exactly as written.</summary>
-    static string FreeFileName(string source, string destination)
+    internal static string FreeFileName(string source, string destination)
     {
         var name = Path.GetFileName(source);
         var baseName = Formats.BaseName(source);
@@ -364,7 +364,7 @@ public sealed class MoveToFolderAction : IConverter
         }
     }
 
-    static void CopyFolder(string source, string destination, CancellationToken ct)
+    internal static void CopyFolder(string source, string destination, CancellationToken ct)
     {
         Directory.CreateDirectory(destination);
         foreach (var file in Directory.EnumerateFiles(source))
@@ -374,5 +374,76 @@ public sealed class MoveToFolderAction : IConverter
         }
         foreach (var folder in Directory.EnumerateDirectories(source))
             CopyFolder(folder, Path.Combine(destination, Path.GetFileName(folder)), ct);
+    }
+}
+
+/// <summary>
+/// Copies files and folders into a folder the user picks, leaving them where they are, as Save to… on a picture taken
+/// from the clipboard does. Names already taken there get " (2)" and so on.
+/// </summary>
+public sealed class SaveToFolderAction : IConverter
+{
+    public bool HandlesFolders => true;
+
+    public IEnumerable<Target> TargetsFor(string input) =>
+    [
+        new("save-to", Strings.SaveTo, Strings.CopyIntoAFolderYouPick, Section.File)
+        {
+            Kind = TargetKind.Action,
+            Running = Strings.Saving,
+            Done = Strings.Saved,
+            FolderPrompt = Strings.SaveToWhichFolder,
+            Parameters = new Dictionary<string, string> { ["folder"] = "" },
+        },
+    ];
+
+    /// <summary>Save in "Folder": the entry with the folder already chosen, such as the one open in Explorer.</summary>
+    public static Target In(Target saveTo, string folder) => saveTo.WithParameters(new Dictionary<string, string> { ["folder"] = folder }) with
+    {
+        Label = string.Format(Strings.SaveIn, Path.GetFileName(folder.TrimEnd('\\')) is { Length: > 0 } name ? name : folder),
+        Description = folder,
+        FolderPrompt = null,
+    };
+
+    public Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx) => Task.Run<IReadOnlyList<string>>(() =>
+    {
+        var chosen = target.Parameter("folder");
+        if (chosen.Length == 0)
+            throw new ConversionException(Strings.ChooseAFolderToSaveTo);
+        var output = CopyInto(input, chosen, ctx.Cancellation);
+        ctx.Progress.Report(1);
+        return [output];
+    }, ctx.Cancellation);
+
+    /// <summary>Copies a file or folder into <paramref name="folder"/> under a name not yet taken there, and returns the copy.</summary>
+    public static string CopyInto(string input, string folder, CancellationToken ct = default)
+    {
+        var destination = Path.GetFullPath(folder);
+        if (!Directory.Exists(destination))
+            throw new ConversionException(Strings.ThatFolderDoesnTExist);
+        var source = Path.GetFullPath(input).TrimEnd('\\');
+        var isFolder = Directory.Exists(source);
+        if (string.Equals(OutputPaths.DirectoryOf(source).TrimEnd('\\'), destination.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase))
+            throw new ConversionException(Strings.ItSAlreadyInThatFolder);
+        if (isFolder && (destination + "\\").StartsWith(source + "\\", StringComparison.OrdinalIgnoreCase))
+            throw new ConversionException(Strings.AFolderCanTBeCopiedIntoItself);
+
+        if (!isFolder)
+        {
+            var output = MoveToFolderAction.FreeFileName(source, destination);
+            File.Copy(source, output);
+            return output;
+        }
+        var copy = OutputPaths.Unique(destination, Path.GetFileName(source), "");
+        try
+        {
+            MoveToFolderAction.CopyFolder(source, copy, ct);
+        }
+        catch
+        {
+            OutputPaths.TryDelete(copy);
+            throw;
+        }
+        return copy;
     }
 }

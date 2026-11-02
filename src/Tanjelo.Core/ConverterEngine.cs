@@ -55,6 +55,7 @@ public sealed class ConverterEngine
                 new AnnotateTool(),
                 new AdjustTool(),
                 new ArchiveConverter(tools),
+                new SaveToFolderAction(),
                 new MoveToFolderAction(),
             ],
             [

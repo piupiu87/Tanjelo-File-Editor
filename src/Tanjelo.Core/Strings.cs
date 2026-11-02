@@ -266,6 +266,14 @@ public static class Strings
     public static string ThatFolderDoesnTExist => Get();
     public static string ItSAlreadyInThatFolder => Get();
     public static string AFolderCanTBeMovedInto => Get();
+    public static string SaveTo => Get();
+    public static string CopyIntoAFolderYouPick => Get();
+    public static string Saving => Get();
+    public static string Saved => Get();
+    public static string SaveToWhichFolder => Get();
+    public static string SaveIn => Get();
+    public static string ChooseAFolderToSaveTo => Get();
+    public static string AFolderCanTBeCopiedIntoItself => Get();
     public static string CopiedToButSomeOfTheOriginal => Get();
     public static string HEICOutputNeedsTheHEIFImageExtensions => Get();
     public static string WebView2StoppedRespondingWhilePrinting => Get();

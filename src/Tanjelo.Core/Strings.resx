@@ -753,6 +753,30 @@
   <data name="AFolderCanTBeMovedInto" xml:space="preserve">
     <value>A folder can't be moved into itself.</value>
   </data>
+  <data name="SaveTo" xml:space="preserve">
+    <value>Save to…</value>
+  </data>
+  <data name="CopyIntoAFolderYouPick" xml:space="preserve">
+    <value>Copy into a folder you pick</value>
+  </data>
+  <data name="Saving" xml:space="preserve">
+    <value>Saving…</value>
+  </data>
+  <data name="Saved" xml:space="preserve">
+    <value>Saved</value>
+  </data>
+  <data name="SaveToWhichFolder" xml:space="preserve">
+    <value>Save to which folder?</value>
+  </data>
+  <data name="SaveIn" xml:space="preserve">
+    <value>Save in "{0}"</value>
+  </data>
+  <data name="ChooseAFolderToSaveTo" xml:space="preserve">
+    <value>Choose a folder to save to.</value>
+  </data>
+  <data name="AFolderCanTBeCopiedIntoItself" xml:space="preserve">
+    <value>A folder can't be copied into itself.</value>
+  </data>
   <data name="CopiedToButSomeOfTheOriginal" xml:space="preserve">
     <value>Copied to {0}, but some of the original folder couldn't be deleted: {1}</value>
   </data>

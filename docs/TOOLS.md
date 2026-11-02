@@ -340,11 +340,13 @@ Actions work with the selected files and folders themselves:
 | Open in Terminal | Opens Windows Terminal (or PowerShell) in each selected folder, or in the folder holding the selected files |
 | Share… | Opens the Windows Share sheet for the selected files, next to the pointer: email, apps, nearby PCs and phones. Nearby Sharing appears there when it's turned on in Windows' settings |
 | Float | Parks the selection on the Float shelf (below) |
+| Save to… | Copies the selection into a folder you pick and leaves it where it is; names already taken there get " (2)" |
 | Move to… | Moves the selection into a folder you pick; names already taken there get " (2)" |
 
 Share and Float need the app; `tanj` lists them but says so when they're run.
 
 ```
+tanj convert save-to --folder=D:\Backup report.pdf
 tanj convert move-to --folder=D:\Archive *.jpg
 ```
 

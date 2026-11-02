@@ -29,8 +29,8 @@ independent project, not affiliated with Tangerine.
   PDFs, join videos, save frames, remove the location and other metadata, and more.
 - **Editors** open a window for work by hand: organize PDF pages, redact faces and text in photos, annotate
   screenshots, edit photos with live sliders, and trim and bleep video and audio, or redact video, on a timeline.
-- **Actions** work on the files themselves: copy their paths, open a terminal there, share them, move them, or park
-  them on the **Float shelf** and drag copies out later.
+- **Actions** work on the files themselves: copy their paths, open a terminal there, share them, copy or move them to a
+  folder, or park them on the **Float shelf** and drag copies out later.
 - **`tanj`**, the command-line tool, does all of it from scripts.
 
 ## Download
@@ -139,8 +139,8 @@ silence from its ends; split a PDF into pages, or merge several.
 
 <p align="center"><img src="docs/images/trim.png" width="680" alt="The Trim editor in the dark theme: a video above a timeline of thumbnails and the sound's waveform, with the part kept outlined between two handles"></p>
 
-**Actions** work with the files and folders themselves: Copy path, Copy, Open in Terminal, Share…, Float (the shelf)
-and Move to….
+**Actions** work with the files and folders themselves: Copy path, Copy, Open in Terminal, Share…, Float (the shelf),
+Save to… (a copy in a folder you pick) and Move to….
 
 ## Requirements
 
