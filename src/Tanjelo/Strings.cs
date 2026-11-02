@@ -502,4 +502,10 @@ public static class Strings
     public static string ParkScreenshotsOnTheShelf => Get();
     public static string ParkScreenshotsHint => Get();
     public static string ScreenshotParkedOnTheShelf => Get();
+    public static string OnTheShelfCopiedToTheClipboard => Get();
+    public static string CopiedToTheClipboard => Get();
+    public static string CouldnTCopy => Get();
+    public static string PutTheResultOnTheClipboard => Get();
+    public static string PutResultsBackOnTheClipboard => Get();
+    public static string PutResultsBackOnTheClipboardHint => Get();
 }

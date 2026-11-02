@@ -170,21 +170,63 @@ public class ClipboardMenuTests
         {
             var target = Env.Offered(Env.Engine(), "jpg", [shot]) with { Done = "Annotated" };
             var card = new ProgressToast { SaveCopies = paths => { saved.Add(paths); return paths; } };
-            card.ShowResult(target, [shot], new BatchResult([annotated], [], [], false), onShelf: true);
+            card.ShowResult(target, [shot], new BatchResult([annotated], [], [], false), onShelf: true, copied: true);
             var host = Ui.Host(card, 360, 160);
             using var attached = A11y.Attach(host);
             await Ui.Settle();
 
+            // Put back on the clipboard already, so there's no Copy.
             Assert.Equal("Annotated", card.Heading.Text);
-            Assert.Equal("On the shelf", card.Detail.Text);
+            Assert.Equal("On the shelf · Copied to the clipboard", card.Detail.Text);
+            Assert.Equal(Visibility.Collapsed, card.CopyButton.Visibility);
             Assert.Equal((Tanjelo.Strings.Open, Tanjelo.Strings.SaveAs), ((string)card.SecondaryButton.Content, (string)card.PrimaryButton.Content));
-            Assert.Equal($"Annotated. On the shelf", AutomationProperties.GetName(card.Card));
+            Assert.Equal("Annotated. On the shelf · Copied to the clipboard", AutomationProperties.GetName(card.Card));
             A11y.InOrder(A11y.Check(host, "card on the shelf"), card.SecondaryButton, card.PrimaryButton, card.CloseButton);
             Ui.Render(host, "card-shelf-light");
             AccessibilityTests.RenderInContrast(host, "card-shelf-contrast", Theme.Contrast.Desert);
 
             card.PrimaryButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
             Assert.Equal([[annotated]], saved.Select(s => s.ToArray()));
+        });
+    }
+
+    [Fact]
+    public async Task Every_result_card_that_wrote_files_has_Copy()
+    {
+        using var scratch = new Scratch();
+        var photo = scratch.Image("photo.png");
+        var output = scratch.Image("photo.jpg");
+        await Ui.Run(async () =>
+        {
+            var target = Env.Offered(Env.Engine(), "jpg", [photo]);
+            var clipboard = new FakeClipboard();
+            var card = new ProgressToast { Clipboard = clipboard };
+            card.ShowResult(target, [photo], new BatchResult([output], [], [], false));
+            var host = Ui.Host(card, 360, 160);
+            using var attached = A11y.Attach(host);
+            await Ui.Settle();
+
+            Assert.Equal((Tanjelo.Strings.Copy, Tanjelo.Strings.Open, Tanjelo.Strings.ShowInFolder),
+                ((string)card.CopyButton.Content, (string)card.SecondaryButton.Content, (string)card.PrimaryButton.Content));
+            A11y.InOrder(A11y.Check(host, "card with Copy"), card.CopyButton, card.SecondaryButton, card.PrimaryButton, card.CloseButton);
+            Ui.Render(host, "card-copy-light");
+            Ui.UseTheme("dark", host);
+            Ui.Render(host, "card-copy-dark");
+            Ui.UseTheme("light", host);
+
+            card.CopyButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            Assert.Equal(output, clipboard.Picture);   // a picture goes on as a picture
+            Assert.Equal("photo.jpg · Copied to the clipboard", card.Detail.Text);
+            Assert.Equal(Visibility.Collapsed, card.CopyButton.Visibility);
+
+            // Results on the shelf that weren't put back on the clipboard, with the setting off, can be copied too.
+            var held = new ProgressToast { Clipboard = clipboard };
+            held.ShowResult(target, [photo], new BatchResult([output], [], [], false), onShelf: true);
+            Assert.Equal(("On the shelf", Visibility.Visible), (held.Detail.Text, held.CopyButton.Visibility));
+            // A card that wrote nothing has none.
+            var nothing = new ProgressToast { Clipboard = clipboard };
+            nothing.ShowResult(Env.Offered(Env.Engine(), "copy-path", [photo]), [photo], new BatchResult([], [], [], false));
+            Assert.Equal(Visibility.Collapsed, nothing.CopyButton.Visibility);
         });
     }
 }

@@ -63,6 +63,34 @@ public class FileActionsTests
     }
 
     [Fact]
+    public void Results_go_on_the_clipboard_as_a_picture_as_text_or_as_files()
+    {
+        using var scratch = new Scratch();
+        var png = scratch.Image("shot-annotated.png");
+        var jpg = scratch.Image("shot.jpg");
+        var text = scratch.Text("shot.txt", "Meeting moved to Thursday");
+        var long_ = scratch.Text("long.txt", new string('x', (int)ClipboardResults.MaxText + 1));
+        var pdf = scratch.Text("shot.pdf", "%PDF");
+        var folder = scratch.Folder("pages", "1.png");
+
+        ClipboardResults.Copy(_clipboard, [png]);
+        Assert.Equal(png, _clipboard.Picture);
+        ClipboardResults.Copy(_clipboard, [jpg]);
+        Assert.Equal(jpg, _clipboard.Picture);
+        ClipboardResults.Copy(_clipboard, [text]);
+        Assert.Equal("Meeting moved to Thursday", _clipboard.Text);
+        foreach (var files in new[] { [long_], [pdf], [folder], new[] { png, jpg } })
+        {
+            ClipboardResults.Copy(_clipboard, files);
+            Assert.Equal(files, _clipboard.Files);
+            Assert.Null(_clipboard.Picture);
+        }
+        Assert.True(ClipboardResults.IsPicture(png));
+        Assert.False(ClipboardResults.IsPicture(scratch.PathOf("gone.png")));
+        Assert.False(ClipboardResults.IsPicture(pdf));
+    }
+
+    [Fact]
     public void Terminal_opens_in_each_folder_once_and_in_the_folder_of_each_file()
     {
         using var scratch = new Scratch();

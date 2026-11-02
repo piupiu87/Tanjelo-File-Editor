@@ -29,6 +29,9 @@ sealed class Settings
     /// <summary>Whether screenshots from Snipping Tool, Win+Shift+S and Print Screen are parked on the shelf as they're taken.</summary>
     public bool ParkScreenshots { get; set; } = true;
 
+    /// <summary>Whether results of a picture from the clipboard are put on the clipboard as they're made, ready to paste.</summary>
+    public bool CopyClipboardResults { get; set; } = true;
+
     public static string FilePath { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tanjelo", "settings.json");
 

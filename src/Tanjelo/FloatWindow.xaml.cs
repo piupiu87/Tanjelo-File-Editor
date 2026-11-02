@@ -266,14 +266,18 @@ public partial class FloatWindow : Window
         ShowInFolderItem.Visibility = selected.Any(i => !i.Held) ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    /// <summary>Puts the selected files on the clipboard, to paste as copies, as Explorer's Copy does.</summary>
+    /// <summary>
+    /// Puts the selected files on the clipboard, to paste as copies, as Explorer's Copy does; one picture goes on as a
+    /// picture too, to paste into a chat or a document.
+    /// </summary>
     void CopySelected()
     {
         var paths = Selected();
         if (paths.Count == 0) return;
         try
         {
-            _clipboard.SetFiles(paths);
+            if (paths is [var one] && ClipboardResults.IsPicture(one)) ClipboardResults.Copy(_clipboard, paths);
+            else _clipboard.SetFiles(paths);
             _shelf.MarkUsed(paths);
         }
         catch (ConversionException ex)

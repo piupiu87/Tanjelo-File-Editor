@@ -92,6 +92,11 @@ public class SettingsWindowTests
             w.ParkScreenshotsCheck.IsChecked = false;
             w.ParkScreenshotsCheck.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
             Assert.False(h.Last.ParkScreenshots);
+            Assert.True(w.CopyResultsCheck.IsChecked);
+            w.CopyResultsCheck.IsChecked = false;
+            w.CopyResultsCheck.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            Assert.False(h.Last.CopyClipboardResults);
+            Assert.False(h.Last.ParkScreenshots);
 
             // Windows' own settings go straight to Windows.
             w.StartupCheck.IsChecked = true;

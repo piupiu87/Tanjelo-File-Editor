@@ -193,6 +193,43 @@ public sealed class WindowsClipboard : IClipboard
     static extern uint DragQueryFile(IntPtr drop, uint index, char[]? file, uint size);
 }
 
+/// <summary>
+/// How results go on the clipboard, by hand from a card or by themselves for a picture taken from the clipboard: one
+/// picture as a picture (and its file), one text file as its text, anything else as files to paste.
+/// </summary>
+public static class ClipboardResults
+{
+    /// <summary>A longer text file goes on as the file: pasting a megabyte of text is seldom what's meant.</summary>
+    public const long MaxText = 1024 * 1024;
+
+    static readonly HashSet<string> Pictures = ["png", "jpg", "jpeg", "jfif", "bmp", "gif", "webp", "tif", "tiff"];
+
+    /// <summary>Whether a file goes on the clipboard as a picture: the kinds chats, documents and Paint take.</summary>
+    public static bool IsPicture(string path) => Pictures.Contains(Formats.Ext(path)) && File.Exists(path);
+
+    public static void Copy(IClipboard clipboard, IReadOnlyList<string> outputs)
+    {
+        if (outputs is [var one] && IsPicture(one))
+        {
+            try
+            {
+                clipboard.SetPicture(one);
+                return;
+            }
+            catch (ImageMagick.MagickException)
+            {
+                // A picture that can't be read goes on as the file.
+            }
+        }
+        else if (outputs is [var text] && Formats.Ext(text) == "txt" && File.Exists(text) && new FileInfo(text).Length < MaxText)
+        {
+            clipboard.SetText(File.ReadAllText(text));
+            return;
+        }
+        clipboard.SetFiles(outputs);
+    }
+}
+
 /// <summary>Actions that work on the selection itself, for files and folders alike.</summary>
 public sealed class ClipboardActions(IClipboard clipboard) : IBatchOperation
 {

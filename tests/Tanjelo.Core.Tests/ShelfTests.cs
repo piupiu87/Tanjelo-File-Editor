@@ -209,7 +209,8 @@ public class ShelfTests
         {
             shelf.Add([held, mine]);
             var revealed = new List<IReadOnlyList<string>>();
-            var window = new FloatWindow(shelf, "Ctrl+Shift+Space", new FakeClipboard(), revealed.Add)
+            var clipboard = new FakeClipboard();
+            var window = new FloatWindow(shelf, "Ctrl+Shift+Space", clipboard, revealed.Add)
             {
                 AskForFileName = _ => Path.Combine(saved, "renamed.png"),
                 AskForFolder = () => saved,
@@ -238,6 +239,8 @@ public class ShelfTests
             Assert.Equal([held, mine], shelf.Items);   // the shelf keeps its own
             Assert.True(shelf.IsUsed(held));
             Assert.Equal("Saved as renamed.png", window.Notice.Text);
+            Click(window.CopyItem);
+            Assert.Equal(held, clipboard.Picture);   // one picture goes on as a picture, to paste into a chat
 
             // With a file of the user's too: Save to… a folder, and Show in folder for that one only.
             list.SelectedItems.Add(list.Items[1]);

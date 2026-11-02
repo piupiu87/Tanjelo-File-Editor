@@ -418,7 +418,10 @@ public partial class App : Application
                 _shelf.Add(held);
                 ShowShelf();
             }
-            toast.ShowResult(target, files, result, onShelf: held.Count > 0 && held.Count == result.Outputs.Count);
+            var onShelf = held.Count > 0 && held.Count == result.Outputs.Count;
+            // ...and go back on the clipboard, where the picture came from, ready to paste.
+            var copied = onShelf && result.Failures.Count == 0 && _settings.CopyClipboardResults && await CopyResultsAsync(held);
+            toast.ShowResult(target, files, result, onShelf, copied);
         }
         catch (Exception ex)
         {
@@ -428,6 +431,21 @@ public partial class App : Application
         finally
         {
             toast.CancelRequested -= cancel.Cancel;
+        }
+    }
+
+    /// <summary>Puts results on the clipboard off the UI thread, since a picture is made into bitmaps first; false if that failed.</summary>
+    async Task<bool> CopyResultsAsync(IReadOnlyList<string> results)
+    {
+        try
+        {
+            await Task.Run(() => ClipboardResults.Copy(_clipboard, results));
+            return true;
+        }
+        catch (Exception ex) when (ex is ConversionException or IOException or UnauthorizedAccessException)
+        {
+            Log.Write($"clipboard: {ex.Message}");
+            return false;
         }
     }
 

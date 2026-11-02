@@ -408,7 +408,16 @@ Where the files go:
   nothing is left behind.
 - Results go beside it, with the usual names (`Screenshot 2026-11-02 143005-annotated.png`), are parked on the shelf
   too, and the shelf appears. Their card has **Open** and **Save as…**.
+- Results go back on the clipboard, ready to paste: one picture as a picture (with its file, for pasting into a
+  folder), one text file, such as the text read by OCR, as its text, and anything else, such as a PDF or several
+  pictures, as files. *Put results back on the clipboard* in Settings (`copyClipboardResults`) turns that off; the card
+  then has **Copy** instead.
 - Nothing reaches your own folders until you put it there: drag it out of the shelf, use Save as…, Save to… or
   Save in "Folder", or paste it. Pictures stay in Tanjelo's folder as long as they're on the shelf, and go to the
   Recycle Bin when taken off it.
-- Copied files (Ctrl+C in Explorer) act like a selection instead: results go beside them in their own folders.
+- Copied files (Ctrl+C in Explorer) act like a selection instead: results go beside them in their own folders, and
+  nothing goes back on the clipboard by itself.
+
+Every card for a result that wrote files has **Copy**, whatever the files were, with the same rule: a picture as a
+picture, a text file as its text, the rest as files. **Ctrl+C** on the shelf puts one picture on the clipboard as a
+picture too.

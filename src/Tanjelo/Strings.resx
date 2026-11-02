@@ -1537,4 +1537,22 @@
   <data name="ScreenshotParkedOnTheShelf" xml:space="preserve">
     <value>Screenshot parked on the shelf</value>
   </data>
+  <data name="OnTheShelfCopiedToTheClipboard" xml:space="preserve">
+    <value>On the shelf · Copied to the clipboard</value>
+  </data>
+  <data name="CopiedToTheClipboard" xml:space="preserve">
+    <value>Copied to the clipboard</value>
+  </data>
+  <data name="CouldnTCopy" xml:space="preserve">
+    <value>Couldn't copy</value>
+  </data>
+  <data name="PutTheResultOnTheClipboard" xml:space="preserve">
+    <value>Put the result on the clipboard, ready to paste: a picture as a picture, a text file as its text</value>
+  </data>
+  <data name="PutResultsBackOnTheClipboard" xml:space="preserve">
+    <value>Put results back on the clipboard</value>
+  </data>
+  <data name="PutResultsBackOnTheClipboardHint" xml:space="preserve">
+    <value>What's made from a picture on the clipboard goes back on it, ready to paste into a chat or a document. The picture stays on the shelf.</value>
+  </data>
 </root>

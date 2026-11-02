@@ -67,6 +67,10 @@ Tools whose names end in "…" need a few settings first, so they open a small o
 settings you used last time, shows a live preview where that helps, and runs on **Enter** (**Esc** cancels). Editors
 open in a window of their own for one file.
 
+A card at the bottom right shows each result, with **Copy** (a picture goes on the clipboard as a picture, a text file
+as its text, anything else as files to paste), **Open** and **Show in folder**. Results of a picture from the clipboard
+go back on the clipboard by themselves.
+
 The shortcut is only grabbed while Explorer or the desktop is in front, so other apps keep their own Ctrl+Shift+Space.
 
 Everything works from the keyboard, with a focus ring showing where Tab has got to, and with a screen reader such as
@@ -165,10 +169,11 @@ Save to… (a copy in a folder you pick) and Move to….
 ## Settings
 
 Tray menu → *Settings…* opens the settings window: the shortcuts for the menu, the shelf and the clipboard picture's
-menu (click a box and press the keys), *Park screenshots on the shelf* (see [Privacy](#privacy)), the theme, the
-quality of JPG, WebP and HEIC pictures and of PDF pages saved as pictures, where ffmpeg and 7-Zip are when they aren't
-found automatically, which optional programs were found, *Start with Windows*, the "Send to" entry, the Windows 11 menu
-entry (in signed releases) and the [update check](#privacy). Changes apply at once.
+menu (click a box and press the keys), *Park screenshots on the shelf* (see [Privacy](#privacy)) and *Put results back
+on the clipboard*, the theme, the quality of JPG, WebP and HEIC pictures and of PDF pages saved as pictures, where
+ffmpeg and 7-Zip are when they aren't found automatically, which optional programs were found, *Start with Windows*,
+the "Send to" entry, the Windows 11 menu entry (in signed releases) and the [update check](#privacy). Changes apply at
+once.
 
 The settings live in `%APPDATA%\Tanjelo\settings.json` (*Open settings file* in the window), which can still be edited
 by hand; changes apply as soon as you save it.
@@ -186,7 +191,8 @@ by hand; changes apply as soon as you save it.
   "ffmpegPath": null,         // only needed if ffmpeg isn't found automatically
   "sevenZipPath": null,
   "checkForUpdates": false,   // ask GitHub once a day whether a newer version is out
-  "parkScreenshots": true     // park screenshots on the shelf as they're taken
+  "parkScreenshots": true,    // park screenshots on the shelf as they're taken
+  "copyClipboardResults": true // results of a clipboard picture go back on the clipboard
 }
 ```
 

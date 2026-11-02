@@ -106,7 +106,9 @@
 
                 <TextBlock Text="{x:Static local:Strings.Clipboard}" Style="{StaticResource SectionHeading}" />
                 <CheckBox x:Name="ParkScreenshotsCheck" Style="{StaticResource Check}" Content="{x:Static local:Strings.ParkScreenshotsOnTheShelf}" />
-                <TextBlock Style="{StaticResource Hint}" Margin="27,2,0,0" Text="{x:Static local:Strings.ParkScreenshotsHint}" />
+                <TextBlock Style="{StaticResource Hint}" Margin="27,2,0,10" Text="{x:Static local:Strings.ParkScreenshotsHint}" />
+                <CheckBox x:Name="CopyResultsCheck" Style="{StaticResource Check}" Content="{x:Static local:Strings.PutResultsBackOnTheClipboard}" />
+                <TextBlock Style="{StaticResource Hint}" Margin="27,2,0,0" Text="{x:Static local:Strings.PutResultsBackOnTheClipboardHint}" />
 
                 <TextBlock Text="{x:Static local:Strings.Appearance}" Style="{StaticResource SectionHeading}" />
                 <TextBlock x:Name="ThemeLabel" Text="{x:Static local:Strings.Theme}" Style="{StaticResource Label}" />
