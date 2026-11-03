@@ -11,6 +11,7 @@ public class StringsTests
     [Theory]
     [InlineData(typeof(Strings))]
     [InlineData(typeof(Tanjelo.Strings))]
+    [InlineData(typeof(Tanjelo.Setup.Strings))]
     public void Every_string_in_the_resource_file_has_a_property_and_every_property_a_string(Type strings)
     {
         var resources = new ResourceManager(strings.FullName!, strings.Assembly);
@@ -26,7 +27,7 @@ public class StringsTests
     [Fact]
     public void Placeholders_in_the_strings_are_numbered_from_zero_without_gaps()
     {
-        foreach (var strings in new[] { typeof(Strings), typeof(Tanjelo.Strings) })
+        foreach (var strings in new[] { typeof(Strings), typeof(Tanjelo.Strings), typeof(Tanjelo.Setup.Strings) })
             foreach (var property in strings.GetProperties(BindingFlags.Public | BindingFlags.Static).Where(p => p.PropertyType == typeof(string)))
             {
                 var text = (string)property.GetValue(null)!;

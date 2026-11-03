@@ -1,57 +1,53 @@
-using Microsoft.Win32;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Tanjelo;
 
 /// <summary>
-/// What the installer's hooks do. After installing: put the install folder on the user's PATH, so <c>tanj</c> works in
-/// any terminal. Before uninstalling: take that away again, with the other things Tanjelo can add to Windows (Start with
-/// Windows, the "Send to" entry and the Windows 11 menu entry), so nothing is left behind. Settings in
-/// %APPDATA%\Tanjelo stay for a reinstall. Each hook has 30 seconds and must not show anything.
+/// What Tanjelo does for setup and its uninstaller. <c>--quit</c>: the Tanjelo in the tray quits, so its files can be
+/// replaced or removed. <c>--before-uninstall</c>: take away what Tanjelo can add to Windows for the user (Start with
+/// Windows, the "Send to" entry and the Windows 11 menu entry), so nothing is left behind; the uninstaller removes the
+/// rest. Settings in %APPDATA%\Tanjelo stay for a reinstall. Neither shows anything.
 /// </summary>
 static class Installation
 {
-    /// <summary>The folder Velopack keeps the installed version in, the same across updates (…\Tanjelo\current).</summary>
+    /// <summary>The folder this Tanjelo runs from, where setup installed it.</summary>
     static string InstallFolder => Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory);
 
-    public static void AfterInstall() => Try(() => SetUserPath(WithFolder(UserPath(), InstallFolder)));
+    /// <summary>
+    /// The event the Tanjelo in the tray waits on to quit, one per folder, so quitting one never closes a copy run from
+    /// somewhere else. Setup works out the same name from the install folder (Tanjelo.Setup.TanjeloProcesses).
+    /// </summary>
+    internal static string QuitEventName(string folder) =>
+        @"Local\Tanjelo.Quit." + Convert.ToHexStringLower(SHA256.HashData(Encoding.Unicode.GetBytes(Path.TrimEndingDirectorySeparator(folder).ToUpperInvariant())), 0, 8);
+
+    /// <summary>The quit event for this copy, which only the copy in the tray makes.</summary>
+    internal static EventWaitHandle QuitEvent() => new(false, EventResetMode.AutoReset, QuitEventName(InstallFolder));
+
+    /// <summary>Asks the Tanjelo in the tray from this folder to quit, and waits up to 15 seconds. 0 once it's gone.</summary>
+    public static int Quit()
+    {
+        if (!EventWaitHandle.TryOpenExisting(QuitEventName(InstallFolder), out var quit)) return 0;
+        using (quit) quit.Set();
+        // The copy in the tray holds this mutex while it runs.
+        using var running = new Mutex(false, App.TrayMutex);
+        try
+        {
+            if (!running.WaitOne(TimeSpan.FromSeconds(15))) return 1;
+        }
+        catch (AbandonedMutexException)
+        {
+            // It ended without letting go, which is how it always ends; the mutex is ours now.
+        }
+        running.ReleaseMutex();
+        return 0;
+    }
 
     public static void BeforeUninstall()
     {
-        Try(() => SetUserPath(WithoutFolder(UserPath(), InstallFolder)));
         Try(() => ShellIntegration.StartsWithWindows = false);
         Try(() => ShellIntegration.InSendToMenu = false);
         Try(() => ShellIntegration.InWindows11Menu = false);
-    }
-
-    /// <summary>A PATH with <paramref name="folder"/> added at the end, unless it's there already.</summary>
-    internal static string WithFolder(string path, string folder) =>
-        Entries(path).Any(e => Same(e, folder)) ? path : string.Join(';', Entries(path).Append(folder));
-
-    /// <summary>A PATH without <paramref name="folder"/>, keeping every other entry as it was.</summary>
-    internal static string WithoutFolder(string path, string folder) =>
-        string.Join(';', Entries(path).Where(e => !Same(e, folder)));
-
-    static IEnumerable<string> Entries(string path) => path.Split(';', StringSplitOptions.RemoveEmptyEntries);
-
-    static bool Same(string entry, string folder) =>
-        string.Equals(Path.TrimEndingDirectorySeparator(Environment.ExpandEnvironmentVariables(entry.Trim().Trim('"'))),
-            Path.TrimEndingDirectorySeparator(folder), StringComparison.OrdinalIgnoreCase);
-
-    // The user's own PATH, as written (with %VARIABLES% unexpanded), not the one this process was started with.
-    static string UserPath()
-    {
-        using var key = Registry.CurrentUser.OpenSubKey("Environment");
-        return key?.GetValue("Path", "", RegistryValueOptions.DoNotExpandEnvironmentNames) as string ?? "";
-    }
-
-    static void SetUserPath(string path)
-    {
-        using var key = Registry.CurrentUser.CreateSubKey("Environment");
-        if (path == (key.GetValue("Path", "", RegistryValueOptions.DoNotExpandEnvironmentNames) as string ?? "")) return;
-        if (path.Length == 0) key.DeleteValue("Path", throwOnMissingValue: false);
-        else key.SetValue("Path", path, RegistryValueKind.ExpandString);
-        // Terminals opened from now on, and Explorer, read the new PATH.
-        Native.SendMessageTimeout(Native.HWND_BROADCAST, Native.WM_SETTINGCHANGE, IntPtr.Zero, "Environment", Native.SMTO_ABORTIFHUNG, 2000, out _);
     }
 
     static void Try(Action step)
@@ -60,7 +56,7 @@ static class Installation
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException
                                    or System.Runtime.InteropServices.COMException)
         {
-            Log.Write($"installer hook: {ex.Message}");
+            Log.Write($"before uninstalling: {ex.Message}");
         }
     }
 }

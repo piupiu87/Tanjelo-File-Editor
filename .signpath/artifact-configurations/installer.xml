@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- SignPath artifact configuration "installer": Tanjelo-<version>-Setup.exe, made by Velopack from the signed files. -->
+<!-- SignPath artifact configuration "installer": Tanjelo-<version>-Setup.exe, Tanjelo's own setup with the signed files inside. -->
 <artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
   <zip-file>
     <pe-file path="Tanjelo-*-Setup.exe">

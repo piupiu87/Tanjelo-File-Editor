@@ -46,14 +46,35 @@ changing how the clipboard is read or written.
 | `src/Tanjelo` | The WPF tray app: hotkey, Explorer selection, the menu, options dialogs, the editors (`Editors/`), progress cards, the Share sheet, the Float shelf, the clipboard watcher and the settings window |
 | `src/tanj` | The command-line front end |
 | `src/Tanjelo.ShellMenu` | The Windows 11 right-click menu entry: `TanjeloMenu.dll`, a COM server published with NativeAOT that hands the selection to Tanjelo.exe, and the sparse package (`Package/`) that registers it. Published on CI, which has the C++ tools NativeAOT needs; `dotnet build` only compiles it. It ships only in signed releases, and the `windows11-menu` CI job tries it unsigned |
+| `src/Tanjelo.Setup` | Setup and the uninstaller: one program on .NET Framework 4.8 (part of Windows), also built for .NET 10 so the tests can drive it. `Installer` copies, registers and removes; `SetupJob` puts the steps in order around it; `VelopackInstall` moves 1.0 and 1.1 installs over |
 | `tests/Tanjelo.Core.Tests` | xUnit tests for the engine, every converter, the app's pure helpers, and the editors' windows (`Ui.cs` renders them off-screen) |
 | `winget/` | The winget manifests, filled in for each release by the workflow |
 
 `dotnet publish` puts the .NET runtime in with each app (`SelfContained` when publishing), and leaves out PDFsharp's
-Windows Phone font subset, which isn't open source (`Directory.Build.targets`). The installer is made on CI with
-Velopack's `vpk pack` from the published folder; `Program.Main` runs Velopack's install and uninstall hooks
-(`Installation.cs`) before the app. To try the installer, push a branch and download the `Tanjelo-release` artifact:
-installing it here changes your user's PATH, Start menu and Apps list.
+Windows Phone font subset, which isn't open source (`Directory.Build.targets`).
+
+### Setup and the uninstaller
+
+`src/Tanjelo.Setup` builds two ways. With `-p:Payload=<zip of the published folder>` it's `Tanjelo-<version>-Setup.exe`,
+with the app inside and its SHA-256 beside it; without, it's `Uninstall Tanjelo.exe`, which setup puts in the install
+folder. CI builds both for `net48` after publishing (see the Publish and Package steps of `.github/workflows/build.yml`).
+
+- Setup always installs into a folder of its own (`…\Tanjelo`) and writes down every file it puts there in
+  `installed-files.txt`. The uninstaller removes those files, then folders left empty, and nothing else.
+- For everyone on the PC, setup starts one elevated copy of itself (`--elevated`) that only copies and registers,
+  reporting over a named pipe. Everything else, including quitting and starting Tanjelo, runs as the user.
+- Tanjelo is asked to quit through an event named after its folder (`Tanjelo.exe --quit` does the same), and
+  `Tanjelo.exe --before-uninstall` takes away Start with Windows, Send to and the Windows 11 menu entry.
+- An install from Tanjelo 1.0 or 1.1 (Velopack, in `%LOCALAPPDATA%\Tanjelo`) is moved over by removing Velopack's
+  files by name, keeping Tanjelo's data in that folder.
+- Silent runs (`--silent`, `--all-users`, `--dir <folder>`) log to `%TEMP%\Tanjelo-Setup.log`.
+
+To try it safely, use the tests: `SetupTests` installs, updates, moves a fake 1.1 install over and uninstalls on a
+sandbox PC (`SetupSandbox`: Program Files, the Start menus, the PATH and Apps all in a scratch folder and a scratch
+registry key under `HKCU\Software\Tanjelo tests`), with decoy files that must survive. Running Setup.exe or the
+uninstaller itself changes this PC's PATH, Start menu and Apps list, so leave that to CI's `installer` job, which does
+it on a clean runner with `tools/setup-checks.ps1`; or push a branch and try the `Tanjelo-release` artifact on a PC
+you don't mind changing.
 
 ## Adding a conversion or a tool
 

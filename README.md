@@ -319,8 +319,9 @@ reads commas as separators), so publish to the default folder and copy from ther
 the app icon.
 
 Pushing a tag such as `v1.0.0` makes the GitHub Actions workflow build, test and smoke-test; make the zip, the
-installer (with [Velopack](https://velopack.io)'s `vpk pack`) and the winget manifests (from `winget/`); install, use and
-uninstall the installer on a fresh runner with its own .NET hidden; and attach them all to a new release. Once the
+installer (Tanjelo's own setup, `src/Tanjelo.Setup`, with the app inside) and the winget manifests (from `winget/`);
+install, use and uninstall it on a fresh runner with its own .NET hidden, for one user, for everyone, in a chosen folder
+and over Tanjelo 1.1.0; and attach them all to a new release. Once the
 SignPath secrets are added, the same workflow has the app and the installer signed first, each approved by hand on
 SignPath; [.signpath/README.md](.signpath/README.md) says how it's set up.
 
@@ -330,6 +331,7 @@ SignPath; [.signpath/README.md](.signpath/README.md) says how it's set up.
 | `src/Tanjelo` | WPF tray app: hotkey, Explorer selection, the format menu, options dialogs, the editors (`Editors/`), progress cards |
 | `src/tanj` | Command-line front end |
 | `src/Tanjelo.ShellMenu` | The Windows 11 right-click menu entry: a small COM server, published with NativeAOT, and its sparse package |
+| `src/Tanjelo.Setup` | Setup and the uninstaller, on the .NET Framework that comes with Windows |
 | `tests/Tanjelo.Core.Tests` | xUnit tests for the engine and every converter, and the editors' windows, rendered and driven off-screen |
 
 ## Roadmap

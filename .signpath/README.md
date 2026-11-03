@@ -20,8 +20,8 @@ The project on SignPath needs the two artifact configurations in `artifact-confi
 
 Each release makes two signing requests, each waiting up to five hours for its approval on SignPath:
 
-1. **app:** `Tanjelo.exe`, `tanj.exe`, Tanjelo's own DLLs and the Windows 11 menu entry (`TanjeloMenu.dll` and its
-   package, `Tanjelo.ShellMenu.msix`), before the zip and the installer are made from them.
-2. **installer:** `Tanjelo-<version>-Setup.exe`, made by Velopack from the signed files.
+1. **app:** `Tanjelo.exe`, `tanj.exe`, `Uninstall Tanjelo.exe`, Tanjelo's own DLLs and the Windows 11 menu entry
+   (`TanjeloMenu.dll` and its package, `Tanjelo.ShellMenu.msix`), before the zip and the installer are made from them.
+2. **installer:** `Tanjelo-<version>-Setup.exe`, Tanjelo's own setup, built with the signed files inside.
 
 The workflow checks each signature before going on, and the winget manifests take the signed installer's SHA-256.

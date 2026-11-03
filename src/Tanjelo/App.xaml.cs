@@ -23,6 +23,10 @@ public partial class App : Application
     ClipboardWatcher? _watcher;
     TrayIcon? _tray;
     Mutex? _singleInstance;
+    EventWaitHandle? _quit;
+
+    /// <summary>Held by the copy of Tanjelo in the tray, the only one there is.</summary>
+    internal const string TrayMutex = @"Local\Tanjelo.Tray";
     FileSystemWatcher? _settingsWatcher;
     SettingsWindow? _settingsWindow;
     UpdateCheck? _updates;
@@ -67,13 +71,16 @@ public partial class App : Application
             return;
         }
 
-        _singleInstance = new Mutex(true, @"Local\Tanjelo.Tray", out var isFirst);
+        _singleInstance = new Mutex(true, TrayMutex, out var isFirst);
         if (!isFirst)
         {
             MessageBox.Show(Strings.TanjeloIsAlreadyRunningLookForIts, "Tanjelo");
             Shutdown();
             return;
         }
+        // Setup, and Tanjelo.exe --quit, ask this copy to quit before replacing or removing its files.
+        _quit = Installation.QuitEvent();
+        ThreadPool.RegisterWaitForSingleObject(_quit, (_, _) => Dispatcher.BeginInvoke(() => Shutdown()), null, Timeout.Infinite, executeOnlyOnce: true);
         StartTray(showWelcome: !e.Args.Contains("--autostart"));
     }
 
@@ -780,6 +787,7 @@ public partial class App : Application
         _watcher?.Dispose();
         _tray?.Dispose();
         _settingsWatcher?.Dispose();
+        _quit?.Dispose();
         _singleInstance?.Dispose();
         base.OnExit(e);
         // Settings, tool choices and the shelf are saved as they change, so the rest of the shutdown can be skipped.

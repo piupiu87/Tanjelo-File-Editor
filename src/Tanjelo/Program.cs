@@ -1,22 +1,23 @@
-using Velopack;
-
 namespace Tanjelo;
 
 /// <summary>
-/// Starts Tanjelo. The installer runs Tanjelo.exe with its own arguments after installing and before uninstalling;
-/// Velopack handles those first and exits, and only an ordinary start goes on to the app.
+/// Starts Tanjelo. Setup and the uninstaller run Tanjelo.exe with their own arguments: <c>--quit</c> asks the Tanjelo in
+/// the tray to quit, and <c>--before-uninstall</c> takes away what Tanjelo added to Windows. Those are handled first,
+/// without showing anything, and only an ordinary start goes on to the app.
 /// </summary>
 static class Program
 {
     [STAThread]
-    static void Main()
+    static int Main(string[] args)
     {
-        VelopackApp.Build()
-            .OnAfterInstallFastCallback(_ => Installation.AfterInstall())
-            .OnBeforeUninstallFastCallback(_ => Installation.BeforeUninstall())
-            .Run();
+        if (args.Contains("--quit")) return Installation.Quit();
+        if (args.Contains("--before-uninstall"))
+        {
+            Installation.BeforeUninstall();
+            return 0;
+        }
         var app = new App();
         app.InitializeComponent();
-        app.Run();
+        return app.Run();
     }
 }
