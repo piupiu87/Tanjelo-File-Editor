@@ -10,10 +10,6 @@ on:
 permissions:
   contents: read
 
-env:
-  # Velopack's packager; the same version as the Velopack package in src/Tanjelo/Tanjelo.csproj.
-  VPK_VERSION: 1.2.161
-
 jobs:
   build:
     runs-on: windows-latest
@@ -46,7 +42,10 @@ jobs:
         run: choco install pandoc --no-progress -y
 
       - name: Test
-        # Fixtures are generated at test time; Office and LibreOffice tests skip themselves on the runner.
+        # Fixtures are generated at test time; Office and LibreOffice tests skip themselves on the runner. The runner is
+        # thrown away afterwards, so setup's one test with the real winget runs here (it installs 7-Zip, if winget is on it).
+        env:
+          TANJELO_REAL_WINGET: '1'
         run: |
           dotnet test --project tests/Tanjelo.Core.Tests -c Release
           if ($LASTEXITCODE -ne 0) { throw "tests failed" }
@@ -73,6 +72,11 @@ jobs:
           New-Item -ItemType Directory -Force $out | Out-Null
           Copy-Item src/Tanjelo/bin/Release/net10.0-windows10.0.19041.0/win-x64/publish/* $out -Recurse -Force
           Copy-Item src/tanj/bin/Release/net10.0-windows10.0.19041.0/win-x64/publish/* $out -Recurse -Force
+
+          # The uninstaller: setup without the app inside, on .NET Framework 4.8, which setup puts beside the app.
+          dotnet build src/Tanjelo.Setup -c Release -f net48 "-p:Version=$version" -o artifacts/uninstaller
+          if ($LASTEXITCODE -ne 0) { throw "building the uninstaller failed" }
+          Copy-Item artifacts/uninstaller/Tanjelo.Setup.exe "$out/Uninstall Tanjelo.exe"
 
       - name: Windows 11 menu entry
         env:
@@ -111,9 +115,10 @@ jobs:
         working-directory: artifacts
         run: |
           # The runtime is inside: nothing to install first.
-          foreach ($file in 'hostfxr.dll', 'coreclr.dll', 'PresentationFramework.dll', 'Velopack.dll') {
+          foreach ($file in 'hostfxr.dll', 'coreclr.dll', 'PresentationFramework.dll') {
             if (-not (Test-Path "Tanjelo/$file")) { throw "missing Tanjelo/${file}: the folder doesn't carry its own .NET" }
           }
+          if (-not (Test-Path "Tanjelo/Uninstall Tanjelo.exe")) { throw "missing the uninstaller" }
           foreach ($app in 'Tanjelo', 'tanj') {
             $config = Get-Content "Tanjelo/$app.runtimeconfig.json" | ConvertFrom-Json
             if (-not $config.runtimeOptions.includedFrameworks) { throw "$app isn't self-contained" }
@@ -136,7 +141,7 @@ jobs:
           }
           foreach ($file in 'Tanjelo/LICENSE.txt', 'Tanjelo/THIRD-PARTY-NOTICES.md', 'Tanjelo/licenses/ImageMagick-NOTICE.txt',
                    'Tanjelo/licenses/PdfPig-LICENSE.txt', 'Tanjelo/licenses/PdfPig-NOTICE.txt', 'Tanjelo/licenses/Markdig-LICENSE.txt',
-                   'Tanjelo/licenses/WebView2-LICENSE.txt', 'Tanjelo/licenses/YuNet-LICENSE.txt', 'Tanjelo/licenses/Velopack-LICENSE.txt',
+                   'Tanjelo/licenses/WebView2-LICENSE.txt', 'Tanjelo/licenses/YuNet-LICENSE.txt',
                    'Tanjelo/licenses/dotnet-LICENSE.txt', 'Tanjelo/licenses/dotnet-runtime-THIRD-PARTY-NOTICES.txt') {
             if (-not (Test-Path $file)) { throw "missing $file" }
           }
@@ -148,7 +153,7 @@ jobs:
         if: env.SIGN == 'true'
         run: |
           New-Item -ItemType Directory -Force artifacts/to-sign | Out-Null
-          foreach ($file in 'Tanjelo.exe', 'Tanjelo.dll', 'tanj.exe', 'tanj.dll', 'Tanjelo.Core.dll', 'TanjeloMenu.dll', 'Tanjelo.ShellMenu.msix') {
+          foreach ($file in 'Tanjelo.exe', 'Tanjelo.dll', 'tanj.exe', 'tanj.dll', 'Tanjelo.Core.dll', 'TanjeloMenu.dll', 'Tanjelo.ShellMenu.msix', 'Uninstall Tanjelo.exe') {
             Copy-Item "artifacts/Tanjelo/$file" artifacts/to-sign
           }
 
@@ -185,20 +190,19 @@ jobs:
 
       - name: Package
         run: |
-          # The zip for portable use, and Tanjelo-<version>-Setup.exe: a per-user install with a Start menu entry and an
-          # uninstaller, made by Velopack from the same folder.
+          # The zip for portable use, without the uninstaller, and Tanjelo-<version>-Setup.exe: Tanjelo's own setup
+          # (src/Tanjelo.Setup) with the whole folder inside as payload.zip, built after the app's files are signed.
           $version = '${{ steps.version.outputs.version }}'
           New-Item -ItemType Directory -Force artifacts/release | Out-Null
-          Compress-Archive -Path artifacts/Tanjelo/* -DestinationPath "artifacts/release/Tanjelo-$version-win-x64.zip"
-          dotnet tool install --global vpk --version $env:VPK_VERSION
-          if ($LASTEXITCODE -ne 0) { throw "installing vpk failed" }
-          vpk pack --packId Tanjelo --packVersion $version --packDir artifacts/Tanjelo --mainExe Tanjelo.exe `
-            --packTitle Tanjelo --packAuthors piupiu87 --icon src/Tanjelo/Assets/app.ico --shortcuts StartMenuRoot `
-            --noPortable --outputDir artifacts/velopack
-          if ($LASTEXITCODE -ne 0) { throw "vpk pack failed" }
-          $setup = Get-ChildItem artifacts/velopack -Filter *-Setup.exe | Select-Object -First 1
-          if (-not $setup) { throw "vpk made no installer" }
-          Move-Item $setup.FullName "artifacts/release/Tanjelo-$version-Setup.exe"
+          Get-ChildItem artifacts/Tanjelo | Where-Object Name -ne 'Uninstall Tanjelo.exe' |
+            Compress-Archive -DestinationPath "artifacts/release/Tanjelo-$version-win-x64.zip"
+          $payload = Join-Path $PWD artifacts/payload.zip
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          [System.IO.Compression.ZipFile]::CreateFromDirectory((Resolve-Path artifacts/Tanjelo).Path, $payload, 'Optimal', $false)
+          dotnet build src/Tanjelo.Setup -c Release -f net48 "-p:Version=$version" "-p:Payload=$payload" -o artifacts/setup --no-incremental
+          if ($LASTEXITCODE -ne 0) { throw "building setup failed" }
+          Copy-Item artifacts/setup/Tanjelo.Setup.exe "artifacts/release/Tanjelo-$version-Setup.exe"
+          Write-Host "Setup.exe: $([math]::Round((Get-Item "artifacts/release/Tanjelo-$version-Setup.exe").Length / 1MB)) MB"
 
       - name: Upload the installer for signing
         id: upload-unsigned-installer
@@ -265,14 +269,20 @@ jobs:
           path: artifacts/release
 
   installer:
-    # Installs the way a user would, on a runner whose own .NET is hidden away, uses it, and uninstalls it, checking
-    # nothing is left behind.
+    # Installs the way a user would, on a runner whose own .NET is hidden away: just for the runner's user, for everyone,
+    # into a chosen folder, and over a real Tanjelo 1.1.0, each followed by the uninstaller. Checks that each install is
+    # whole and works, and that nothing is left behind except files that were never setup's: decoys beside and inside the
+    # install folder. tools/setup-checks.ps1 has the checks.
     needs: build
     runs-on: windows-latest
     defaults:
       run:
         shell: pwsh
     steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: tools
+
       - uses: actions/download-artifact@v8
         with:
           name: Tanjelo-release
@@ -280,68 +290,90 @@ jobs:
 
       - name: Hide the runner's .NET
         run: |
-          # PowerShell 7 brings its own runtime, so these steps still run; Tanjelo has only the one it carries.
+          # PowerShell 7 brings its own runtime, so these steps still run; Tanjelo has only the one it carries, and setup
+          # the .NET Framework that's part of Windows.
           Rename-Item "$env:ProgramFiles\dotnet" dotnet-hidden
           if (Get-Command dotnet -ErrorAction SilentlyContinue) { throw "dotnet is still on the PATH" }
 
-      - name: Install silently
+      - name: Just for me
         run: |
-          $setup = Get-ChildItem release -Filter *-Setup.exe | Select-Object -First 1
-          # Waits for the installer alone: -Wait would wait for the Tanjelo it starts, too.
-          $run = Start-Process $setup.FullName -ArgumentList '--silent' -PassThru
-          $null = $run.Handle
-          if (-not $run.WaitForExit(300000)) { throw "the installer took more than 5 minutes" }
-          if ($run.ExitCode -ne 0) { throw "the installer failed with exit code $($run.ExitCode)" }
-          $root = "$env:LOCALAPPDATA\Tanjelo"
-          foreach ($file in "$root\current\Tanjelo.exe", "$root\current\tanj.exe", "$root\Update.exe") {
-            if (-not (Test-Path $file)) { throw "missing $file" }
-          }
-          if (-not (Test-Path "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Tanjelo.lnk")) { throw "no Start menu entry" }
-          $entry = Get-ItemProperty HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Tanjelo -ErrorAction Stop
-          if (-not $entry.UninstallString) { throw "no uninstaller in Apps & features" }
-          Write-Host "Apps & features: $($entry.DisplayName) $($entry.DisplayVersion) by $($entry.Publisher)"
-          if ([Environment]::GetEnvironmentVariable('PATH', 'User') -notlike "*$root\current*") { throw "tanj isn't on the user's PATH" }
+          . tools/setup-checks.ps1
+          $folder = "$env:LOCALAPPDATA\Programs\Tanjelo"
+          # A clean runner has no %LOCALAPPDATA%\Programs yet.
+          New-Item -ItemType Directory -Force "$env:LOCALAPPDATA\Programs" | Out-Null
+          Set-Content "$env:LOCALAPPDATA\Programs\decoy.txt" 'beside the install folder'
+          Invoke-AndWait (Get-Setup) '--silent'
+          Test-Installed $folder 'user'
+          if (Get-AppsEntry 'machine') { throw "an Apps entry for everyone too" }
+          Test-InstalledCopy $folder
+          Set-TanjeloExtras "$folder\Tanjelo.exe"
+          Invoke-Uninstall $folder 'user'
+          Assert-FolderGone $folder
+          if (-not (Test-Path "$env:LOCALAPPDATA\Programs\decoy.txt")) { throw "the file beside the install folder went" }
 
-      - name: Smoke test the installed copy
+      - name: For everyone
         run: |
-          # The PATH a terminal opened after installing would have.
-          $env:PATH = [Environment]::GetEnvironmentVariable('PATH', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('PATH', 'User')
-          tanj tools
-          if ($LASTEXITCODE -ne 0) { throw "tanj tools failed" }
-          Add-Type -AssemblyName System.Drawing
-          $bitmap = [System.Drawing.Bitmap]::new(64, 48)
-          [System.Drawing.Graphics]::FromImage($bitmap).Clear([System.Drawing.Color]::Orange)
-          $bitmap.Save("$PWD/smoke.png")
-          $bitmap.Dispose()
-          foreach ($step in @(@('jpg', 'smoke.png'), @('pdf', 'smoke.png'), @('png', 'smoke.pdf'))) {
-            tanj convert $step[0] $step[1]
-            if ($LASTEXITCODE -ne 0) { throw "tanj convert $($step -join ' ') failed" }
-          }
-          # The app itself starts too, with only the .NET it carries: still running a few seconds later. (If the installer
-          # already started it, this one says so and waits, which counts as well.)
-          $app = Start-Process "$env:LOCALAPPDATA\Tanjelo\current\Tanjelo.exe" -PassThru
-          Start-Sleep 8
-          if ($app.HasExited) { throw "Tanjelo.exe exited with code $($app.ExitCode)" }
+          # The runner is an administrator already, so setup does it all itself: the prompt can't be tried here.
+          . tools/setup-checks.ps1
+          $folder = "$env:ProgramFiles\Tanjelo"
+          Invoke-AndWait (Get-Setup) '--silent', '--all-users'
+          Test-Installed $folder 'machine'
+          if (Get-AppsEntry 'user') { throw "an Apps entry just for the user too" }
+          Test-InstalledCopy $folder
+          Invoke-Uninstall $folder 'machine'
+          Assert-FolderGone $folder
 
-      - name: Uninstall
+      - name: In a chosen folder
         run: |
-          # The installer starts the app when it's done; the uninstaller is run as Apps & features would run it.
-          Get-Process Tanjelo -ErrorAction SilentlyContinue | Stop-Process -Force
+          . tools/setup-checks.ps1
+          $apps = "$env:RUNNER_TEMP\My Apps"
+          New-Item -ItemType Directory $apps | Out-Null
+          Set-Content "$apps\decoy.txt" 'beside the install folder'
+          Invoke-AndWait (Get-Setup) '--silent', '--dir', "`"$apps`""
+          # Tanjelo always goes in a folder of its own.
+          $folder = "$apps\Tanjelo"
+          Test-Installed $folder 'user'
+          Set-Content "$folder\notes.txt" 'added by someone'
+          Invoke-Uninstall $folder 'user'
+          $left = (Get-ChildItem $apps -Recurse -Name | Sort-Object) -join ', '
+          if ($left -ne 'decoy.txt, Tanjelo, Tanjelo\notes.txt') { throw "expected only the decoys to stay, found: $left" }
+
+      - name: Over Tanjelo 1.1.0
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The real 1.1.0, installed by Velopack in %LOCALAPPDATA%\Tanjelo, with pictures held on the shelf, Start with
+          # Windows and Send to on. Setup moves it over: Velopack's files go, Tanjelo's data stays, and Windows' entries
+          # point at the new copy.
+          . tools/setup-checks.ps1
+          gh release download v1.1.0 --repo $env:GITHUB_REPOSITORY --pattern 'Tanjelo-1.1.0-Setup.exe' --dir old
+          if ($LASTEXITCODE -ne 0) { throw "couldn't download 1.1.0" }
+          Invoke-AndWait (Resolve-Path old/Tanjelo-1.1.0-Setup.exe).Path '--silent'
           $root = "$env:LOCALAPPDATA\Tanjelo"
-          $run = Start-Process "$root\Update.exe" -ArgumentList '--silent', 'uninstall' -PassThru
-          $null = $run.Handle
-          if (-not $run.WaitForExit(300000)) { throw "the uninstaller took more than 5 minutes" }
-          if ($run.ExitCode -ne 0) { throw "the uninstaller failed with exit code $($run.ExitCode)" }
-          # Update.exe removes itself just after it exits.
-          for ($i = 0; $i -lt 60 -and (Test-Path $root); $i++) { Start-Sleep 1 }
-          $left = @()
-          if (Test-Path $root) { $left += "${root}: $((Get-ChildItem $root -Recurse -Name) -join ', ')" }
-          if (Test-Path "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Tanjelo.lnk") { $left += 'the Start menu entry' }
-          if (Test-Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Tanjelo) { $left += 'the Apps & features entry' }
-          if ([Environment]::GetEnvironmentVariable('PATH', 'User') -like "*$root*") { $left += 'the PATH entry' }
-          if ((Get-ItemProperty HKCU:\Software\Microsoft\Windows\CurrentVersion\Run -ErrorAction SilentlyContinue).Tanjelo) { $left += 'Start with Windows' }
-          if (Test-Path "$env:APPDATA\Microsoft\Windows\SendTo\Tanjelo.lnk") { $left += 'the Send to entry' }
-          if ($left) { throw "left behind: $($left -join '; ')" }
+          foreach ($file in "$root\Update.exe", "$root\current\Tanjelo.exe") { if (-not (Test-Path $file)) { throw "1.1.0 didn't install: no $file" } }
+          New-Item -ItemType Directory -Force "$root\Clipboard", "$root\WebView2" | Out-Null
+          Set-Content "$root\Clipboard\held.png" 'a picture held on the shelf'
+          Set-Content "$root\update.json" '{}'
+          Set-Content "$root\log.txt" 'the log'
+          Set-TanjeloExtras "$root\current\Tanjelo.exe"
+          # Velopack starts 1.1.0 once it's installed; setup has to close it first.
+          Start-Sleep 5
+
+          Invoke-AndWait (Get-Setup) '--silent'
+
+          $folder = "$env:LOCALAPPDATA\Programs\Tanjelo"
+          Test-Installed $folder 'user'
+          $gone = 'current', 'packages', 'Update.exe', 'Tanjelo.exe' | Where-Object { Test-Path "$root\$_" }
+          if ($gone) { throw "Velopack's files are still there: $($gone -join ', ')" }
+          foreach ($kept in 'Clipboard\held.png', 'update.json', 'log.txt', 'WebView2') { if (-not (Test-Path "$root\$kept")) { throw "$kept was lost" } }
+          if ((Get-SavedPath 'user') -split ';' -contains "$root\current") { throw "1.1.0's folder is still on the PATH" }
+          $run = (Get-ItemProperty HKCU:\Software\Microsoft\Windows\CurrentVersion\Run).Tanjelo
+          if ($run -ne "`"$folder\Tanjelo.exe`" --autostart") { throw "Start with Windows runs $run" }
+          if ((Get-ShortcutTarget "$env:APPDATA\Microsoft\Windows\SendTo\Tanjelo.lnk") -ne "$folder\Tanjelo.exe") { throw "Send to doesn't open the new copy" }
+          if (Get-Process | Where-Object { $_.Path -like "$root\*" }) { throw "1.1.0 is still running" }
+
+          Invoke-Uninstall $folder 'user'
+          if (Test-Path $root) { throw "%LOCALAPPDATA%\Tanjelo is still there: $((Get-ChildItem $root -Recurse -Name) -join ', ')" }
 
   windows11-menu:
     # The Windows 11 menu entry, unsigned, as Windows allows only for testing: in developer mode on the administrator
@@ -410,7 +442,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          notes="Install with **Tanjelo-${GITHUB_REF_NAME#v}-Setup.exe** (per user, no administrator needed, with a Start menu entry and an uninstaller), or unzip the zip anywhere and run Tanjelo.exe. The .NET runtime is inside both. winget-manifests.zip is for microsoft/winget-pkgs.
+          notes="Install with **Tanjelo-${GITHUB_REF_NAME#v}-Setup.exe**: just for you (no administrator needed) or for everyone on the PC, in a folder you choose, with optional tools such as ffmpeg and pandoc installed through winget, and an uninstaller in Settings > Apps. It updates an installed Tanjelo where it is, and moves a 1.0 or 1.1 install over with your settings and shelf pictures kept. Or unzip the zip anywhere and run Tanjelo.exe. The .NET runtime is inside both. winget-manifests.zip is for microsoft/winget-pkgs.
 
           See the [Code signing policy](https://github.com/${GITHUB_REPOSITORY}#code-signing-policy) and the [Privacy](https://github.com/${GITHUB_REPOSITORY}#privacy) statement."
           gh release create "$GITHUB_REF_NAME" release/* --repo "$GITHUB_REPOSITORY" --title "Tanjelo $GITHUB_REF_NAME" --notes "$notes" --generate-notes

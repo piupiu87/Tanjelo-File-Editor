@@ -11,6 +11,7 @@
       <include path="tanj.dll" />
       <include path="Tanjelo.Core.dll" />
       <include path="TanjeloMenu.dll" />
+      <include path="Uninstall Tanjelo.exe" />
       <for-each>
         <authenticode-sign />
       </for-each>

@@ -17,8 +17,9 @@ Every feature should keep these true:
   only when you save, drag or paste them.
 - **One gesture.** Select, press the hotkey, pick. A dialog appears only when a tool can't work without input, and it
   opens with sensible defaults and remembers the last choice.
-- **Optional tools stay optional.** ffmpeg, 7-Zip, Office, pandoc and similar are installed separately. When one is
-  missing, its options are hidden and the menu says what to install.
+- **Optional tools stay optional.** ffmpeg, 7-Zip, Office, pandoc and similar are installed separately, never bundled:
+  setup offers them on a page of their own, each with what it's for, and installs the ones you tick through winget.
+  When one is missing, its options are hidden and the menu says what to install.
 - **MIT-compatible dependencies.** Anything shipped inside the app must be MIT, BSD, Apache-2.0, or LGPL as a separate DLL.
   GPL tools are only ever called as separately installed programs.
 
@@ -125,7 +126,7 @@ A shared timeline first, then the editors that use it.
 
 v1.0 ships unsigned, so the first launch may show "Windows protected your PC" until signing comes.
 
-## v1.1.0: clipboard pictures
+## v1.1.0: clipboard pictures (released)
 
 Screenshots and copied pictures, used without saving them first.
 
@@ -136,6 +137,12 @@ Screenshots and copied pictures, used without saving them first.
 - [x] Results back on the clipboard, and a Copy button on every result (S)
 - [x] Save to… and Save in "Folder" actions (S)
 - [x] `tanj --clipboard` (S)
+
+## v1.2.0: a clearer setup
+
+- [x] Setup wizard: install for you or for everyone on the PC, in a folder you choose, with a progress bar (L)
+- [x] Optional tools on a setup page, each with what it's for: ffmpeg, pandoc, WebView2, 7-Zip, LibreOffice and the HEIC extensions, installed through winget (M)
+- [x] Tanjelo's own installer and uninstaller replace Velopack; 1.1 installs move over with settings and shelf pictures kept (L)
 
 ## Signed releases (on hold)
 

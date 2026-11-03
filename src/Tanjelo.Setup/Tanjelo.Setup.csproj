@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Tanjelo's setup and uninstaller. It runs on .NET Framework 4.8, part of every Windows that Tanjelo runs on, so
+       Setup.exe needs nothing installed first and adds only its own few hundred KB to the download. It's also built for
+       .NET 10, only so the tests can drive it. Built with -p:Payload=<zip of the published app>, it's Setup.exe with
+       the app inside; built without, it's "Uninstall Tanjelo.exe", which setup copies in beside the app. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFrameworks>net48;net10.0-windows</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <!-- 64-bit wherever Windows is, so Program Files and the registry are the 64-bit ones Tanjelo uses. -->
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <AssemblyTitle>Tanjelo setup</AssemblyTitle>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\Tanjelo\Assets\app.ico</ApplicationIcon>
+    <!-- The exe is shipped on its own, renamed, so there's no .exe.config beside it to read. -->
+    <GenerateSupportedRuntime>false</GenerateSupportedRuntime>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- .NET Framework has HttpClient in an assembly of its own, and setup never goes online itself. -->
+    <Using Remove="System.Net.Http" />
+    <!-- UseWPF drops System.IO from the implicit usings (it clashes with System.Windows.Shapes.Path). -->
+    <Using Include="System.IO" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The icon at the top of the wizard, the app's own. -->
+    <EmbeddedResource Include="..\Tanjelo\Assets\app.ico" LogicalName="app.ico" Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <Reference Include="System.IO.Compression" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Tanjelo.Core.Tests" />
+  </ItemGroup>
+
+  <!-- The app inside Setup.exe, and its SHA-256, which setup checks before copying anything. -->
+  <ItemGroup Condition="'$(Payload)' != ''">
+    <EmbeddedResource Include="$(Payload)" LogicalName="payload.zip" />
+  </ItemGroup>
+
+  <Target Name="HashPayload" BeforeTargets="GetAssemblyAttributes" Condition="'$(Payload)' != ''">
+    <GetFileHash Files="$(Payload)" Algorithm="SHA256">
+      <Output TaskParameter="Hash" PropertyName="PayloadSha256" />
+    </GetFileHash>
+    <ItemGroup>
+      <AssemblyMetadata Include="PayloadSha256" Value="$(PayloadSha256)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

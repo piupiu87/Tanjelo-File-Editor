@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.10.0.schema.json
 
 PackageIdentifier: Tanjelo.Tanjelo
-PackageVersion: 1.0.0
+PackageVersion: 1.2.0
 PackageLocale: en-US
 Publisher: piupiu87
 PublisherUrl: https://github.com/piupiu87
@@ -26,6 +26,6 @@ Tags:
 - video
 - audio
 - offline
-ReleaseNotesUrl: https://github.com/piupiu87/Tanjelo-File-Editor/releases/tag/v1.0.0
+ReleaseNotesUrl: https://github.com/piupiu87/Tanjelo-File-Editor/releases/tag/v1.2.0
 ManifestType: defaultLocale
 ManifestVersion: 1.10.0

@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="SetupSOwnCopyOfTanjeloIsDamaged" xml:space="preserve">
+    <value>Setup's own copy of Tanjelo is damaged. Download setup again.</value>
+  </data>
+  <data name="ChooseAFolderOnThisPC" xml:space="preserve">
+    <value>Choose a folder on this PC, not on a network drive.</value>
+  </data>
+  <data name="ThatIsnTAFolderSetupCanUse" xml:space="preserve">
+    <value>That isn't a folder setup can use.</value>
+  </data>
+  <data name="ChooseAFolderNotAWholeDrive" xml:space="preserve">
+    <value>Choose a folder, not a whole drive.</value>
+  </data>
+  <data name="ChooseAFolderOutsideTheWindowsFolder" xml:space="preserve">
+    <value>Choose a folder outside the Windows folder.</value>
+  </data>
+  <data name="TanjeloKeepsItsOwnFilesInChoose" xml:space="preserve">
+    <value>Tanjelo keeps its own files in {0}. Choose another folder.</value>
+  </data>
+  <data name="AlreadyHasFilesInItChooseAn" xml:space="preserve">
+    <value>{0} already has files in it. Choose an empty folder, or a new one.</value>
+  </data>
+  <data name="SetupCanTWriteToForAFolder" xml:space="preserve">
+    <value>Setup can't write to {0}. For a folder like Program Files, choose to install for everyone on this PC.</value>
+  </data>
+  <data name="CouldnTCopyTanjelo" xml:space="preserve">
+    <value>Couldn't copy Tanjelo: {0}</value>
+  </data>
+  <data name="CouldnTReplaceTanjeloSFiles" xml:space="preserve">
+    <value>Couldn't replace Tanjelo's files, so the version that was there stays: {0}</value>
+  </data>
+  <data name="ConvertAndEditFilesStraightFrom" xml:space="preserve">
+    <value>Convert and edit files straight from File Explorer, offline.</value>
+  </data>
+  <data name="CouldnTAddTanjeloToWindows" xml:space="preserve">
+    <value>Couldn't add Tanjelo to the Start menu and Apps: {0}</value>
+  </data>
+  <data name="TanjeloIsnTInstalledIn" xml:space="preserve">
+    <value>Tanjelo isn't installed in {0}.</value>
+  </data>
+  <data name="CouldnTRemoveTanjeloFromWindows" xml:space="preserve">
+    <value>Couldn't take Tanjelo out of the Start menu and Apps: {0}</value>
+  </data>
+  <data name="InstallingForEveryoneNeedsAdministratorPermission" xml:space="preserve">
+    <value>Tanjelo for everyone on this PC needs administrator permission, which wasn't given.</value>
+  </data>
+  <data name="TheAdministratorCopyOfSetupStopped" xml:space="preserve">
+    <value>The copy of setup running as administrator stopped before it was done (exit code {0}).</value>
+  </data>
+  <data name="TanjeloIsStillRunningCloseItFrom" xml:space="preserve">
+    <value>Tanjelo is still running. Quit it from its icon in the notification area, then try again.</value>
+  </data>
+  <data name="NeedsAValue" xml:space="preserve">
+    <value>{0} needs a value.</value>
+  </data>
+  <data name="SetupDoesnTKnow" xml:space="preserve">
+    <value>Setup doesn't know "{0}". It takes --silent, --all-users and --dir &lt;folder&gt;.</value>
+  </data>
+  <data name="TanjeloSetup" xml:space="preserve">
+    <value>Tanjelo setup</value>
+  </data>
+  <data name="UninstallTanjelo" xml:space="preserve">
+    <value>Uninstall Tanjelo</value>
+  </data>
+  <data name="TanjeloConvertsAndEditsFiles" xml:space="preserve">
+    <value>Tanjelo converts and edits files straight from File Explorer, offline: select files, press Ctrl⁠+⁠Shift⁠+⁠Space, and pick what they should become.</value>
+  </data>
+  <data name="TanjeloIsFreeAndOpenSource" xml:space="preserve">
+    <value>Tanjelo is free and open source, under the</value>
+  </data>
+  <data name="MITLicence" xml:space="preserve">
+    <value>MIT licence</value>
+  </data>
+  <data name="TanjeloIsInstalledForYouIn" xml:space="preserve">
+    <value>Tanjelo {0} is installed for you in {1}. Setup updates it there to {2}.</value>
+  </data>
+  <data name="TanjeloIsInstalledForEveryoneIn" xml:space="preserve">
+    <value>Tanjelo {0} is installed for everyone on this PC in {1}. Setup updates it there to {2}.</value>
+  </data>
+  <data name="TanjeloIsInstalledInSetupMovesIt" xml:space="preserve">
+    <value>Tanjelo {0} is installed in {1}. Setup moves it to the folder you choose next; your settings and the pictures on your shelf stay.</value>
+  </data>
+  <data name="InstallTanjeloFor" xml:space="preserve">
+    <value>Install Tanjelo for</value>
+  </data>
+  <data name="JustForMe" xml:space="preserve">
+    <value>Just for me</value>
+  </data>
+  <data name="NoAdministratorPermissionNeeded" xml:space="preserve">
+    <value>No administrator permission needed. Tanjelo goes in your own Programs folder.</value>
+  </data>
+  <data name="EveryoneOnThisPC" xml:space="preserve">
+    <value>Everyone on this PC</value>
+  </data>
+  <data name="AsksForAdministratorPermissionOnce" xml:space="preserve">
+    <value>Asks for administrator permission once. Tanjelo goes in Program Files.</value>
+  </data>
+  <data name="Folder" xml:space="preserve">
+    <value>Folder</value>
+  </data>
+  <data name="Browse" xml:space="preserve">
+    <value>Browse…</value>
+  </data>
+  <data name="ChooseWhereTanjeloGoes" xml:space="preserve">
+    <value>Choose where Tanjelo goes</value>
+  </data>
+  <data name="TanjeloGoesInAFolderOfItsOwn" xml:space="preserve">
+    <value>Tanjelo goes in {0}, a folder of its own.</value>
+  </data>
+  <data name="TanjeloIsInstalledInSoItSUpdated" xml:space="preserve">
+    <value>Tanjelo is installed in {0}, so it's updated there. To move it, uninstall it first.</value>
+  </data>
+  <data name="SpaceNeeded" xml:space="preserve">
+    <value>Space needed: {0}.</value>
+  </data>
+  <data name="SpaceNeededFreeOn" xml:space="preserve">
+    <value>Space needed: {0}. Free on {1}: {2}.</value>
+  </data>
+  <data name="Progress" xml:space="preserve">
+    <value>Progress</value>
+  </data>
+  <data name="OpenSetupSLog" xml:space="preserve">
+    <value>Open setup's log</value>
+  </data>
+  <data name="StartTanjelo" xml:space="preserve">
+    <value>Start Tanjelo</value>
+  </data>
+  <data name="YourSettingsStayInAppData" xml:space="preserve">
+    <value>Your settings stay in %APPDATA%\Tanjelo, in case you come back. Optional tools you installed with it, such as ffmpeg, stay too.</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="Next" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Install" xml:space="preserve">
+    <value>Install</value>
+  </data>
+  <data name="Update" xml:space="preserve">
+    <value>Update</value>
+  </data>
+  <data name="Finish" xml:space="preserve">
+    <value>Finish</value>
+  </data>
+  <data name="Uninstall" xml:space="preserve">
+    <value>Uninstall</value>
+  </data>
+  <data name="InstallTanjelo" xml:space="preserve">
+    <value>Install Tanjelo</value>
+  </data>
+  <data name="UpdateTanjelo" xml:space="preserve">
+    <value>Update Tanjelo</value>
+  </data>
+  <data name="Version" xml:space="preserve">
+    <value>Version {0}</value>
+  </data>
+  <data name="WhereTanjeloGoes" xml:space="preserve">
+    <value>Where Tanjelo goes</value>
+  </data>
+  <data name="InstallingTanjelo" xml:space="preserve">
+    <value>Installing Tanjelo</value>
+  </data>
+  <data name="UpdatingTanjelo" xml:space="preserve">
+    <value>Updating Tanjelo</value>
+  </data>
+  <data name="UninstallingTanjelo" xml:space="preserve">
+    <value>Uninstalling Tanjelo</value>
+  </data>
+  <data name="UninstallTanjeloQuestion" xml:space="preserve">
+    <value>Uninstall Tanjelo?</value>
+  </data>
+  <data name="CopyingTanjelo" xml:space="preserve">
+    <value>Copying Tanjelo</value>
+  </data>
+  <data name="CopyingTanjeloOf" xml:space="preserve">
+    <value>Copying Tanjelo ({0} of {1})</value>
+  </data>
+  <data name="CheckingSetupSCopyOfTanjelo" xml:space="preserve">
+    <value>Checking setup's copy of Tanjelo</value>
+  </data>
+  <data name="AddingTanjeloToTheStartMenu" xml:space="preserve">
+    <value>Adding Tanjelo to the Start menu</value>
+  </data>
+  <data name="MovingTanjeloOver" xml:space="preserve">
+    <value>Moving Tanjelo {0} over</value>
+  </data>
+  <data name="Cancelling" xml:space="preserve">
+    <value>Cancelling…</value>
+  </data>
+  <data name="TanjeloIsStillRunningAndDidnT" xml:space="preserve">
+    <value>Tanjelo is still running and didn't close when asked. Close it now? Anything it's converting stops.</value>
+  </data>
+  <data name="TanjeloIsInstalled" xml:space="preserve">
+    <value>Tanjelo is installed</value>
+  </data>
+  <data name="TanjeloIsUpdated" xml:space="preserve">
+    <value>Tanjelo is updated</value>
+  </data>
+  <data name="TanjeloIsInStartItFrom" xml:space="preserve">
+    <value>Tanjelo {0} is in {1}. Select files in File Explorer and press Ctrl⁠+⁠Shift⁠+⁠Space, or open Tanjelo from the Start menu. tanj works in terminals opened from now on.</value>
+  </data>
+  <data name="SetupWasCancelled" xml:space="preserve">
+    <value>Setup was cancelled</value>
+  </data>
+  <data name="TanjeloWasnTInstalled" xml:space="preserve">
+    <value>Tanjelo wasn't installed</value>
+  </data>
+  <data name="NothingWasInstalled" xml:space="preserve">
+    <value>Nothing was installed.</value>
+  </data>
+  <data name="TanjeloStaysAsItWas" xml:space="preserve">
+    <value>Tanjelo {0} stays as it was.</value>
+  </data>
+  <data name="ThisRemovesTanjeloFrom" xml:space="preserve">
+    <value>This removes Tanjelo from {0}: its files, its Start menu entry, its place on the PATH, and the pictures still held on its shelf.</value>
+  </data>
+  <data name="RemovingTanjelo" xml:space="preserve">
+    <value>Removing Tanjelo</value>
+  </data>
+  <data name="ClosingTanjelo" xml:space="preserve">
+    <value>Closing Tanjelo</value>
+  </data>
+  <data name="RemovingTanjeloSFilesOf" xml:space="preserve">
+    <value>Removing Tanjelo's files ({0} of {1})</value>
+  </data>
+  <data name="TanjeloIsUninstalled" xml:space="preserve">
+    <value>Tanjelo is uninstalled</value>
+  </data>
+  <data name="TanjeloIsUninstalledThanks" xml:space="preserve">
+    <value>Tanjelo is gone from this PC. Thanks for trying it.</value>
+  </data>
+  <data name="TanjeloWasnTFullyUninstalled" xml:space="preserve">
+    <value>Tanjelo wasn't fully uninstalled</value>
+  </data>
+  <data name="TheseFilesCouldnTBeRemoved" xml:space="preserve">
+    <value>These files couldn't be removed, so the uninstaller stays to try again: {0}</value>
+  </data>
+  <data name="StepWaiting" xml:space="preserve">
+    <value>{0}, to do</value>
+  </data>
+  <data name="StepWorking" xml:space="preserve">
+    <value>{0}, under way</value>
+  </data>
+  <data name="StepDone" xml:space="preserve">
+    <value>{0}, done</value>
+  </data>
+  <data name="StepFailed" xml:space="preserve">
+    <value>{0}, failed</value>
+  </data>
+  <data name="StepSkipped" xml:space="preserve">
+    <value>{0}, skipped</value>
+  </data>
+  <data name="Steps" xml:space="preserve">
+    <value>Steps</value>
+  </data>
+  <data name="OptionalTools" xml:space="preserve">
+    <value>Optional tools</value>
+  </data>
+  <data name="TickedToolsAreInstalledWithWinget" xml:space="preserve">
+    <value>Tanjelo works without these; what needs one is left out of its menu. Ticked tools are installed with winget, Windows' package manager, which accepts each one's licence for you.</value>
+  </data>
+  <data name="WingetIsnTOnThisPC" xml:space="preserve">
+    <value>winget, Windows' package manager, isn't on this PC, so setup can't install these. Each one's site has it, and Tanjelo finds it once it's installed.</value>
+  </data>
+  <data name="FfmpegPurpose" xml:space="preserve">
+    <value>Audio and video: conversions, the editors, compress, trim, join, bleep and more.</value>
+  </data>
+  <data name="PandocPurpose" xml:space="preserve">
+    <value>Word and EPUB documents, and Markdown to DOCX.</value>
+  </data>
+  <data name="WebView2Runtime" xml:space="preserve">
+    <value>WebView2 runtime</value>
+  </data>
+  <data name="WebView2Purpose" xml:space="preserve">
+    <value>Markdown, EPUB and HTML to PDF. Part of Windows 11; usually missing only on Windows 10.</value>
+  </data>
+  <data name="SevenZipPurpose" xml:space="preserve">
+    <value>7Z, RAR and other archives Windows can't open.</value>
+  </data>
+  <data name="LibreOfficePurpose" xml:space="preserve">
+    <value>Office documents, when Microsoft Office isn't installed.</value>
+  </data>
+  <data name="HeicExtensions" xml:space="preserve">
+    <value>HEIC extensions</value>
+  </data>
+  <data name="HeicPurpose" xml:space="preserve">
+    <value>HEIC output. Ticking this opens their two pages in the Microsoft Store.</value>
+  </data>
+  <data name="About100MB" xml:space="preserve">
+    <value>About 100 MB</value>
+  </data>
+  <data name="About40MB" xml:space="preserve">
+    <value>About 40 MB</value>
+  </data>
+  <data name="About180MB" xml:space="preserve">
+    <value>About 180 MB</value>
+  </data>
+  <data name="About2MB" xml:space="preserve">
+    <value>About 2 MB</value>
+  </data>
+  <data name="About350MB" xml:space="preserve">
+    <value>About 350 MB</value>
+  </data>
+  <data name="AFewMB" xml:space="preserve">
+    <value>A few MB</value>
+  </data>
+  <data name="GplInstalledAsItsOwnProgram" xml:space="preserve">
+    <value>GPL, installed as its own program</value>
+  </data>
+  <data name="MicrosoftSLicenceTerms" xml:space="preserve">
+    <value>Microsoft's licence terms</value>
+  </data>
+  <data name="AsksForAdministratorPermission" xml:space="preserve">
+    <value>Asks for administrator permission</value>
+  </data>
+  <data name="LargeAsksForAdministratorPermission" xml:space="preserve">
+    <value>Large; asks for administrator permission</value>
+  </data>
+  <data name="FromTheMicrosoftStoreHevcCosts" xml:space="preserve">
+    <value>HEVC costs about US$1 unless the PC came with it</value>
+  </data>
+  <data name="Installed" xml:space="preserve">
+    <value>Installed</value>
+  </data>
+  <data name="Licence" xml:space="preserve">
+    <value>Licence</value>
+  </data>
+  <data name="GetItFromItsSite" xml:space="preserve">
+    <value>Get it from its site</value>
+  </data>
+  <data name="InstallingTool" xml:space="preserve">
+    <value>Installing {0}</value>
+  </data>
+  <data name="OpeningTheMicrosoftStorePagesFor" xml:space="preserve">
+    <value>Opening the Microsoft Store pages for the {0}</value>
+  </data>
+  <data name="AlsoInstalled" xml:space="preserve">
+    <value>Also installed: {0}.</value>
+  </data>
+  <data name="SkipTheRest" xml:space="preserve">
+    <value>Skip the rest</value>
+  </data>
+  <data name="TheRestAreSkippedOnceThisOne" xml:space="preserve">
+    <value>The rest are skipped once this one is done.</value>
+  </data>
+  <data name="ToolsThatWerenTInstalled" xml:space="preserve">
+    <value>Tools that weren't installed</value>
+  </data>
+  <data name="WingetCouldnTStart" xml:space="preserve">
+    <value>winget couldn't start: {0}</value>
+  </data>
+  <data name="WingetEndedWithCode" xml:space="preserve">
+    <value>winget ended with code {0}.</value>
+  </data>
+  <data name="TookLongerThanMinutes" xml:space="preserve">
+    <value>It took longer than {0} min, so setup stopped waiting for it.</value>
+  </data>
+  <data name="Skipped" xml:space="preserve">
+    <value>Skipped.</value>
+  </data>
+  <data name="CouldnTMakeOnlyAdministratorsAble" xml:space="preserve">
+    <value>Couldn't make {0} a folder only administrators can change: {1}</value>
+  </data>
+  <data name="ForEveryoneOnThisPCChooseANewFolder" xml:space="preserve">
+    <value>{0} is already there. For everyone on this PC, choose a new folder: setup makes it so that only administrators can change it.</value>
+  </data>
+  <data name="CouldBeChangedByOtherUsersChoose" xml:space="preserve">
+    <value>{0} wasn't made by an administrator, so other users could change what everyone runs from it. Choose a new folder.</value>
+  </data>
+  <data name="IsALinkToAnotherFolderSo" xml:space="preserve">
+    <value>{0} is a link to another folder, so setup stops rather than change what's there. Remove the link, then try again.</value>
+  </data>
+  <data name="SetupStopped" xml:space="preserve">
+    <value>Setup stopped</value>
+  </data>
+  <data name="SomethingWentWrongThatSetupDidnT" xml:space="preserve">
+    <value>Something went wrong that setup didn't expect. Its log has the details, for a bug report.</value>
+  </data>
+</root>

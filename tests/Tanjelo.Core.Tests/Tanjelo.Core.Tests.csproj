@@ -36,6 +36,8 @@
     <ProjectReference Include="..\..\src\Tanjelo.ShellMenu\Tanjelo.ShellMenu.csproj" />
     <!-- tanj's own helpers, such as reading the clipboard for it. -->
     <ProjectReference Include="..\..\src\tanj\tanj.csproj" />
+    <!-- Setup, built for .NET 10 as well as for the .NET Framework it ships on, so it can be driven in a sandbox. -->
+    <ProjectReference Include="..\..\src\Tanjelo.Setup\Tanjelo.Setup.csproj" />
   </ItemGroup>
 
 </Project>

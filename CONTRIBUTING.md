@@ -29,8 +29,9 @@ ffmpeg and pandoc; Office tests skip there.
 `tanj convert <key> [--name=value] <files>` runs one entry.
 
 The README's screenshots in `docs/images` come from the `ReadmeScreenshots` class, which draws its own landscape so no
-one's files or paths show. It runs only when `TANJELO_SCREENSHOTS` holds the full path of the folder to save them in;
-after changing a window they show, point it at `docs\images` and run that class.
+one's files or paths show (setup's tools page is drawn on the sandbox PC, with a fake winget). It runs only when
+`TANJELO_SCREENSHOTS` holds the full path of the folder to save them in; after changing a window they show, point it at
+`docs\images` and run that class.
 
 The tests leave the real clipboard and the Recycle Bin alone: they use `FakeClipboard`, a clipboard folder in their
 scratch folder and a recycle callback that only records. One test reads and writes the real clipboard, overwriting
@@ -46,14 +47,55 @@ changing how the clipboard is read or written.
 | `src/Tanjelo` | The WPF tray app: hotkey, Explorer selection, the menu, options dialogs, the editors (`Editors/`), progress cards, the Share sheet, the Float shelf, the clipboard watcher and the settings window |
 | `src/tanj` | The command-line front end |
 | `src/Tanjelo.ShellMenu` | The Windows 11 right-click menu entry: `TanjeloMenu.dll`, a COM server published with NativeAOT that hands the selection to Tanjelo.exe, and the sparse package (`Package/`) that registers it. Published on CI, which has the C++ tools NativeAOT needs; `dotnet build` only compiles it. It ships only in signed releases, and the `windows11-menu` CI job tries it unsigned |
+| `src/Tanjelo.Setup` | Setup and the uninstaller: one program on .NET Framework 4.8 (part of Windows), also built for .NET 10 so the tests can drive it. `Installer` copies, registers and removes; `SetupJob` puts the steps in order around it; `VelopackInstall` moves 1.0 and 1.1 installs over |
 | `tests/Tanjelo.Core.Tests` | xUnit tests for the engine, every converter, the app's pure helpers, and the editors' windows (`Ui.cs` renders them off-screen) |
 | `winget/` | The winget manifests, filled in for each release by the workflow |
 
 `dotnet publish` puts the .NET runtime in with each app (`SelfContained` when publishing), and leaves out PDFsharp's
-Windows Phone font subset, which isn't open source (`Directory.Build.targets`). The installer is made on CI with
-Velopack's `vpk pack` from the published folder; `Program.Main` runs Velopack's install and uninstall hooks
-(`Installation.cs`) before the app. To try the installer, push a branch and download the `Tanjelo-release` artifact:
-installing it here changes your user's PATH, Start menu and Apps list.
+Windows Phone font subset, which isn't open source (`Directory.Build.targets`).
+
+### Setup and the uninstaller
+
+`src/Tanjelo.Setup` builds two ways. With `-p:Payload=<zip of the published folder>` it's `Tanjelo-<version>-Setup.exe`,
+with the app inside and its SHA-256 beside it; without, it's `Uninstall Tanjelo.exe`, which setup puts in the install
+folder. CI builds both for `net48` after publishing (see the Publish and Package steps of `.github/workflows/build.yml`).
+
+- Setup always installs into a folder of its own (`…\Tanjelo`) and writes down every file it puts there in
+  `installed-files.txt`. The uninstaller removes those files, then folders left empty, and nothing else.
+- For everyone on the PC, setup starts one elevated copy of itself (`--elevated`) that only copies and registers,
+  reporting over a named pipe. Everything else, including quitting and starting Tanjelo, runs as the user. That
+  folder is made with Administrators as its owner and Program Files' rules, not the ones it would inherit
+  (`FolderSecurity`), and a folder that's already there is used only if it's Tanjelo installed for everyone by an
+  administrator, since every user runs what's in it.
+- Setup never deletes or moves anything through a junction or symbolic link: a link in its way goes as a link, and a
+  listed file whose path crosses one is left alone (an update stops instead).
+- Tanjelo running means its own programs from the install folder (`Tanjelo.exe`, `tanj.exe`, a 1.1 `Update.exe`),
+  never setup itself: the uninstaller and its elevated copy run from that folder too.
+- Tanjelo is asked to quit through an event named after its folder (`Tanjelo.exe --quit` does the same), and
+  `Tanjelo.exe --before-uninstall` takes away Start with Windows, Send to and the Windows 11 menu entry.
+- An install from Tanjelo 1.0 or 1.1 (Velopack, in `%LOCALAPPDATA%\Tanjelo`) is moved over by removing Velopack's
+  files by name, keeping Tanjelo's data in that folder.
+- Silent runs (`--silent`, `--all-users`, `--dir <folder>`) log to `%TEMP%\Tanjelo-Setup.log`. Without `--silent`,
+  the wizard (`SetupWindow`) shows the same job page by page: Welcome, Location, Installing, Done, or for the
+  uninstaller a page saying what goes, then Uninstalling and Done. Its look (`Styles.xaml`, `Theme.cs`) matches the
+  app's and follows Windows' light, dark and contrast themes; its words are in its own `Strings.resx`.
+- The Optional tools page (`OptionalTools`, `ToolRow`) offers ffmpeg, pandoc and the WebView2 runtime ticked when
+  missing, and 7-Zip, LibreOffice and the HEIC extensions unticked, each saying what it's for. `Winget` installs the
+  ticked ones as the user, one at a time with a timeout; HEIC opens its Store pages instead. Without winget, the
+  rows link to each tool's site. A tool that fails never fails the install. `OptionalTools.IsInstalled` looks where
+  `Toolbox.Detect` looks; a test keeps the two in step.
+
+To try it safely, use the tests: `SetupTests` installs, updates, moves a fake 1.1 install over and uninstalls on a
+sandbox PC (`SetupSandbox`: Program Files, the Start menus, the PATH and Apps all in a scratch folder and a scratch
+registry key under `HKCU\Software\Tanjelo tests`), with decoy files that must survive; `SetupSafetyTests` checks the
+folder's owner and rules for everyone (the test's own user stands in for Administrators) and junctions that must not
+be followed (junctions need no administrator rights); `SetupWizardTests` drives the
+wizard there page by page and renders each page in light, dark and a contrast theme, and `SetupToolsTests` uses a
+fake winget (a batch file that succeeds, fails or hangs). The one test with the real winget installs 7-Zip, so it runs
+only when `TANJELO_REAL_WINGET` is `1`, as on CI. Running Setup.exe or the
+uninstaller itself changes this PC's PATH, Start menu and Apps list, so leave that to CI's `installer` job, which does
+it on a clean runner with `tools/setup-checks.ps1`; or push a branch and try the `Tanjelo-release` artifact on a PC
+you don't mind changing.
 
 ## Adding a conversion or a tool
 

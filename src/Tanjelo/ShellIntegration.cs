@@ -53,7 +53,7 @@ static class ShellIntegration
 
     // ---- The entry in the Windows 11 right-click menu: a sparse package beside the app (signed releases bring it),
     // registered for this user while the setting is on. Its COM server, TanjeloMenu.dll, hands the selection to
-    // Tanjelo.exe. The package points at this folder, which Velopack keeps the same across updates.
+    // Tanjelo.exe. The package points at this folder, which setup keeps the same across updates.
 
     const string MenuPackageName = "Tanjelo.Menu";
 
