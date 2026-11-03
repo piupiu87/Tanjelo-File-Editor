@@ -63,7 +63,12 @@ folder. CI builds both for `net48` after publishing (see the Publish and Package
 - Setup always installs into a folder of its own (`…\Tanjelo`) and writes down every file it puts there in
   `installed-files.txt`. The uninstaller removes those files, then folders left empty, and nothing else.
 - For everyone on the PC, setup starts one elevated copy of itself (`--elevated`) that only copies and registers,
-  reporting over a named pipe. Everything else, including quitting and starting Tanjelo, runs as the user.
+  reporting over a named pipe. Everything else, including quitting and starting Tanjelo, runs as the user. That
+  folder is made with Administrators as its owner and Program Files' rules, not the ones it would inherit
+  (`FolderSecurity`), and a folder that's already there is used only if it's Tanjelo installed for everyone by an
+  administrator, since every user runs what's in it.
+- Setup never deletes or moves anything through a junction or symbolic link: a link in its way goes as a link, and a
+  listed file whose path crosses one is left alone (an update stops instead).
 - Tanjelo is asked to quit through an event named after its folder (`Tanjelo.exe --quit` does the same), and
   `Tanjelo.exe --before-uninstall` takes away Start with Windows, Send to and the Windows 11 menu entry.
 - An install from Tanjelo 1.0 or 1.1 (Velopack, in `%LOCALAPPDATA%\Tanjelo`) is moved over by removing Velopack's
@@ -80,7 +85,9 @@ folder. CI builds both for `net48` after publishing (see the Publish and Package
 
 To try it safely, use the tests: `SetupTests` installs, updates, moves a fake 1.1 install over and uninstalls on a
 sandbox PC (`SetupSandbox`: Program Files, the Start menus, the PATH and Apps all in a scratch folder and a scratch
-registry key under `HKCU\Software\Tanjelo tests`), with decoy files that must survive; `SetupWizardTests` drives the
+registry key under `HKCU\Software\Tanjelo tests`), with decoy files that must survive; `SetupSafetyTests` checks the
+folder's owner and rules for everyone (the test's own user stands in for Administrators) and junctions that must not
+be followed (junctions need no administrator rights); `SetupWizardTests` drives the
 wizard there page by page and renders each page in light, dark and a contrast theme, and `SetupToolsTests` uses a
 fake winget (a batch file that succeeds, fails or hangs). The one test with the real winget installs 7-Zip, so it runs
 only when `TANJELO_REAL_WINGET` is `1`, as on CI. Running Setup.exe or the

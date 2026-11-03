@@ -1,3 +1,4 @@
+using System.Security.Principal;
 using Microsoft.Win32;
 
 namespace Tanjelo.Setup;
@@ -10,7 +11,7 @@ enum Scope { User, Machine }
 /// point every one of them into a scratch folder and a scratch registry key, so they never touch this PC's PATH, Start
 /// menu or Apps list.
 /// </summary>
-sealed class Places
+sealed record Places
 {
     /// <summary>%LOCALAPPDATA%: "just for me" installs go in its Programs folder, Tanjelo keeps its data in its Tanjelo
     /// folder, and Tanjelo 1.1 was installed there too.</summary>
@@ -39,6 +40,15 @@ sealed class Places
 
     /// <summary>Whether to tell running programs that the PATH changed, as Windows expects; never from the tests.</summary>
     public bool Announce { get; init; }
+
+    /// <summary>
+    /// The owner of a folder installed for everyone: Administrators, as for Program Files. The tests, which can't make
+    /// anyone but themselves an owner, use their own user.
+    /// </summary>
+    public SecurityIdentifier MachineOwner { get; init; } = FolderSecurity.Administrators;
+
+    /// <summary>The owners an existing folder for everyone may have: ones only an administrator could have given it.</summary>
+    public IReadOnlyList<SecurityIdentifier> TrustedOwners { get; init; } = [FolderSecurity.Administrators, FolderSecurity.LocalSystem];
 
     public static Places ForWindows()
     {

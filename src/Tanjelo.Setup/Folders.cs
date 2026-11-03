@@ -30,7 +30,29 @@ static class Folders
         return Within(full, folder) && !Same(full, folder) ? full : null;
     }
 
-    /// <summary>Deletes <paramref name="folder"/> and the folders above it, up to and including <paramref name="top"/>, while each is empty.</summary>
+    /// <summary>Whether <paramref name="path"/> is a junction or a symbolic link (any reparse point), to a folder or a file.</summary>
+    public static bool IsLink(string path)
+    {
+        try { return (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException) { return false; }
+    }
+
+    /// <summary>
+    /// The first junction or symbolic link that <paramref name="path"/> goes through below <paramref name="top"/>, or null:
+    /// a path through one leads to someone else's files, which setup never deletes or moves.
+    /// </summary>
+    public static string? LinkOnTheWay(string top, string path)
+    {
+        var folders = new Stack<string>();
+        for (var at = Path.GetDirectoryName(Trim(path)); at is not null && Within(at, top) && !Same(at, top); at = Path.GetDirectoryName(at))
+            folders.Push(at);
+        return folders.FirstOrDefault(IsLink);
+    }
+
+    /// <summary>
+    /// Deletes <paramref name="folder"/> and the folders above it, up to and including <paramref name="top"/>, while each
+    /// is empty. It stops at a link, which isn't setup's to remove.
+    /// </summary>
     public static void RemoveEmpty(string folder, string top)
     {
         for (var at = Trim(folder); Within(at, top); at = Path.GetDirectoryName(at) ?? "")
@@ -38,7 +60,7 @@ static class Folders
             try
             {
                 if (!Directory.Exists(at)) continue;
-                if (Directory.EnumerateFileSystemEntries(at).Any()) return;
+                if (IsLink(at) || Directory.EnumerateFileSystemEntries(at).Any()) return;
                 Directory.Delete(at);
             }
             catch (IOException) { return; }
@@ -47,24 +69,15 @@ static class Folders
         }
     }
 
-    /// <summary>Every empty folder under <paramref name="top"/>, deepest first, then <paramref name="top"/> itself if that leaves it empty.</summary>
-    public static void RemoveAllEmpty(string top)
-    {
-        if (!Directory.Exists(top)) return;
-        foreach (var folder in Directory.EnumerateDirectories(top, "*", SearchOption.AllDirectories).OrderByDescending(f => f.Length))
-            RemoveEmpty(folder, folder);
-        RemoveEmpty(top, top);
-    }
-
-    /// <summary>Deletes a file, read-only or not; false if it's still there.</summary>
+    /// <summary>Deletes a file, read-only or not; false if it's still there. A link to a file goes as a link.</summary>
     public static bool DeleteFile(string path)
     {
         for (var attempt = 0; ; attempt++)
         {
             try
             {
-                if (!File.Exists(path)) return true;
-                File.SetAttributes(path, FileAttributes.Normal);
+                if (!File.Exists(path) && !IsLink(path)) return true;
+                if (!IsLink(path)) File.SetAttributes(path, FileAttributes.Normal);
                 File.Delete(path);
                 return true;
             }
@@ -76,13 +89,36 @@ static class Folders
         }
     }
 
-    /// <summary>Deletes a folder setup made for itself, with everything in it.</summary>
+    /// <summary>
+    /// Deletes a folder setup made for itself, with everything in it, walking it by hand: a junction or symbolic link in
+    /// it, or in its place, goes as a link, and what it points to is never looked into.
+    /// </summary>
     public static void DeleteOwn(string folder)
     {
+        if (IsLink(folder))
+        {
+            RemoveLink(folder);
+            return;
+        }
         if (!Directory.Exists(folder)) return;
-        foreach (var file in Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories))
-            DeleteFile(file);
-        RemoveAllEmpty(folder);
+        foreach (var entry in Directory.GetFileSystemEntries(folder))
+        {
+            if (IsLink(entry)) RemoveLink(entry);
+            else if (Directory.Exists(entry)) DeleteOwn(entry);
+            else DeleteFile(entry);
+        }
+        RemoveEmpty(folder, folder);
+    }
+
+    static void RemoveLink(string link)
+    {
+        try
+        {
+            // Removing a link to a folder removes the link alone, even when that folder has things in it.
+            if ((File.GetAttributes(link) & FileAttributes.Directory) != 0) Directory.Delete(link);
+            else File.Delete(link);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
     }
 
     /// <summary>The size of a file in bytes as people read it: "310 MB", "1.2 GB".</summary>

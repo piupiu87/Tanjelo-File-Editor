@@ -290,7 +290,7 @@ public partial class SetupWindow : Window
     {
         if (_payload is null) return;
         var folder = Target;
-        var problem = Updating ? null : _job.Installer.Problem(folder, _existing);
+        var problem = Updating ? null : _job.Installer.Problem(folder, _existing, ChosenScope);
         FolderProblem.Text = problem ?? "";
         FolderProblem.Visibility = problem is null ? Visibility.Collapsed : Visibility.Visible;
         if (!Updating) FolderNote.Text = problem is null ? string.Format(Strings.TanjeloGoesInAFolderOfItsOwn, folder) : "";

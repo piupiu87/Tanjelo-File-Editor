@@ -138,4 +138,8 @@ public static class Strings
     public static string WingetEndedWithCode => Get();
     public static string TookLongerThanMinutes => Get();
     public static string Skipped => Get();
+    public static string CouldnTMakeOnlyAdministratorsAble => Get();
+    public static string ForEveryoneOnThisPCChooseANewFolder => Get();
+    public static string CouldBeChangedByOtherUsersChoose => Get();
+    public static string IsALinkToAnotherFolderSo => Get();
 }

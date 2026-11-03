@@ -71,8 +71,8 @@ sealed class Installer(Places places, Log log)
         return (folder is null ? DefaultFolder(scope) : OwnFolder(folder), scope, null);
     }
 
-    /// <summary>Why Tanjelo can't be installed in <paramref name="folder"/>, or null if it can.</summary>
-    public string? Problem(string folder, Installed? existing)
+    /// <summary>Why Tanjelo can't be installed in <paramref name="folder"/> for <paramref name="scope"/>, or null if it can.</summary>
+    public string? Problem(string folder, Installed? existing, Scope scope = Scope.User)
     {
         string full;
         try
@@ -102,11 +102,25 @@ sealed class Installer(Places places, Log log)
             if (Folders.Within(full, data))
                 return string.Format(Strings.TanjeloKeepsItsOwnFilesInChoose, data);
         if (File.Exists(full)) return Strings.ThatIsnTAFolderSetupCanUse;
+        if (scope == Scope.Machine && ForEveryoneProblem(full) is { } unsafeFolder) return unsafeFolder;
         if (existing is { FromVelopack: false } && Folders.Same(full, existing.Folder)) return null;
         // A folder with something in it is only used if it's a Tanjelo install: its files are known, so nothing else is lost.
         if (Directory.Exists(full) && Directory.EnumerateFileSystemEntries(full).Any() && ReadList(full) is null)
             return string.Format(Strings.AlreadyHasFilesInItChooseAn, full);
         return null;
+    }
+
+    /// <summary>
+    /// Why a folder can't hold Tanjelo for everyone. Setup makes a new one that only administrators can change; one that's
+    /// there already is used only if it's Tanjelo installed for everyone by an administrator, since anyone who could change
+    /// it could change what every user runs.
+    /// </summary>
+    string? ForEveryoneProblem(string folder)
+    {
+        if (!Directory.Exists(folder)) return null;
+        if (ReadList(folder) is not { Scope: Scope.Machine }) return string.Format(Strings.ForEveryoneOnThisPCChooseANewFolder, folder);
+        return FolderSecurity.Owner(folder) is { } owner && places.TrustedOwners.Contains(owner) ? null
+            : string.Format(Strings.CouldBeChangedByOtherUsersChoose, folder);
     }
 
     /// <summary>
@@ -119,10 +133,16 @@ sealed class Installer(Places places, Log log)
         folder = Folders.Trim(Path.GetFullPath(folder));
         progress?.Report(new Report(Step.Checking));
         payload.Verify(cancel);
+        // Checked again here, in the elevated copy, which takes the folder from its command line.
+        if (scope == Scope.Machine && ForEveryoneProblem(folder) is { } unsafeFolder) throw new SetupException(unsafeFolder);
+        if (LinkOnTheWay(folder, payload.Files.Select(f => f.Path).Concat(ReadList(folder)?.Files ?? [])) is { } link)
+            throw new SetupException(string.Format(Strings.IsALinkToAnotherFolderSo, link));
         var existed = Directory.Exists(folder);
         var staged = Path.Combine(folder, NewFiles);
         try
         {
+            // For everyone, the folder is made, or made again, so that only administrators can change it.
+            if (scope == Scope.Machine) FolderSecurity.Secure(folder, places.MachineOwner);
             Folders.DeleteOwn(staged);
             Folders.DeleteOwn(Path.Combine(folder, OldFiles));
             var total = payload.Size;
@@ -224,12 +244,19 @@ sealed class Installer(Places places, Log log)
         progress?.Report(new Report(Step.Removing, 0, list.Files.Count));
         var left = new List<string>();
         var done = 0;
+        // Only paths inside the folder that go through no junction or symbolic link: what a link points to isn't setup's.
+        var ours = new List<string>();
         foreach (var file in list.Files)
         {
             var path = Folders.Inside(folder, file);
             if (path is null) log.Write($"left {file} alone: it isn't a path inside {folder}");
-            else if (running is not null && Folders.Same(path, running)) { }
-            else if (!Folders.DeleteFile(path)) left.Add(file);
+            else if (Folders.LinkOnTheWay(folder, path) is { } link) log.Write($"left {file} alone: {link} is a link to somewhere else");
+            else
+            {
+                ours.Add(path);
+                if (running is not null && Folders.Same(path, running)) { }
+                else if (!Folders.DeleteFile(path)) left.Add(file);
+            }
             progress?.Report(new Report(Step.Removing, ++done, list.Files.Count));
         }
         if (left.Count > 0)
@@ -242,9 +269,8 @@ sealed class Installer(Places places, Log log)
             Folders.DeleteFile(Path.Combine(folder, ListName));
         }
         // Folders the removed files leave empty go, the install folder too once nothing is left in it.
-        foreach (var file in list.Files.OrderByDescending(f => f.Length))
-            if (Folders.Inside(folder, file) is { } path)
-                Folders.RemoveEmpty(Path.GetDirectoryName(path)!, folder);
+        foreach (var path in ours.OrderByDescending(p => p.Length))
+            Folders.RemoveEmpty(Path.GetDirectoryName(path)!, folder);
         if (left.Count > 0) return left;
         Unregister(folder, list.Scope);
         if (running is not null && Folders.Within(running, folder)) SelfDelete.Schedule(running, folder, log);
@@ -279,6 +305,12 @@ sealed class Installer(Places places, Log log)
         foreach (var folder in new[] { "Clipboard", "WebView2" }) Folders.DeleteOwn(Path.Combine(data, folder));
         Folders.RemoveEmpty(data, data);
     }
+
+    /// <summary>The first junction or symbolic link inside <paramref name="folder"/> that any of these files' paths go through.</summary>
+    static string? LinkOnTheWay(string folder, IEnumerable<string> files) =>
+        files.Select(file => Folders.Inside(folder, file)).OfType<string>()
+            .Select(path => Path.GetDirectoryName(path)!).Distinct(StringComparer.OrdinalIgnoreCase)
+            .Select(parent => Folders.LinkOnTheWay(folder, Path.Combine(parent, "x"))).FirstOrDefault(link => link is not null);
 
     /// <summary>The list of installed files in <paramref name="folder"/>, or null when it isn't a Tanjelo install.</summary>
     public static FileList? ReadList(string folder)

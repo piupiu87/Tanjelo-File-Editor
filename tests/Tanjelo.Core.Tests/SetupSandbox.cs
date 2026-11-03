@@ -44,6 +44,9 @@ sealed class SetupSandbox : IDisposable
             Windows = Folder("Windows"),
             CurrentUser = _user,
             LocalMachine = _machine,
+            // A test can't give a folder to Administrators without being one, so the user stands in for them.
+            MachineOwner = Me,
+            TrustedOwners = [Me, FolderSecurity.Administrators, FolderSecurity.LocalSystem],
         };
         Log = new global::Tanjelo.Setup.Log(_scratch.PathOf("setup.log"));
         Installer = new Installer(Places, Log);
@@ -54,6 +57,24 @@ sealed class SetupSandbox : IDisposable
     public string Root => _scratch.Dir;
 
     public string PathOf(string name) => _scratch.PathOf(name);
+
+    /// <summary>The user running the tests.</summary>
+    public static System.Security.Principal.SecurityIdentifier Me => System.Security.Principal.WindowsIdentity.GetCurrent().User!;
+
+    /// <summary>A junction at <paramref name="link"/> to <paramref name="target"/>, made as any user can make one, with mklink.</summary>
+    public static void Junction(string link, string target)
+    {
+        using var mklink = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
+            Path.Combine(Environment.SystemDirectory, "cmd.exe"), $"/d /c mklink /J \"{link}\" \"{target}\"")
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+        })!;
+        mklink.StandardOutput.ReadToEnd();
+        mklink.WaitForExit();
+        Assert.True(Folders.IsLink(link), $"no junction at {link}");
+    }
 
     /// <summary>The made-up files of an app version, as the build zips the published folder.</summary>
     public static (string Path, string Text)[] App(string version) =>

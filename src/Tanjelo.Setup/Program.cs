@@ -56,7 +56,7 @@ static class Program
         var existing = installer.Find();
         var (folder, scope, note) = installer.Choose(existing, options.AllUsers, options.Folder);
         if (note is not null) log.Write(note);
-        if (installer.Problem(folder, existing) is { } problem) throw new SetupException(problem);
+        if (installer.Problem(folder, existing, scope) is { } problem) throw new SetupException(problem);
         job.InstallAsync(folder, scope, payload, existing, null, mayStop: () => true, CancellationToken.None).GetAwaiter().GetResult();
         return ExitCodes.Done;
     }

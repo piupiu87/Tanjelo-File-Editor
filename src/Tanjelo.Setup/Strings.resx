@@ -375,4 +375,16 @@
   <data name="Skipped" xml:space="preserve">
     <value>Skipped.</value>
   </data>
+  <data name="CouldnTMakeOnlyAdministratorsAble" xml:space="preserve">
+    <value>Couldn't make {0} a folder only administrators can change: {1}</value>
+  </data>
+  <data name="ForEveryoneOnThisPCChooseANewFolder" xml:space="preserve">
+    <value>{0} is already there. For everyone on this PC, choose a new folder: setup makes it so that only administrators can change it.</value>
+  </data>
+  <data name="CouldBeChangedByOtherUsersChoose" xml:space="preserve">
+    <value>{0} wasn't made by an administrator, so other users could change what everyone runs from it. Choose a new folder.</value>
+  </data>
+  <data name="IsALinkToAnotherFolderSo" xml:space="preserve">
+    <value>{0} is a link to another folder, so setup stops rather than change what's there. Remove the link, then try again.</value>
+  </data>
 </root>
