@@ -9,7 +9,10 @@ namespace Tanjelo.Setup;
 /// <summary>The installed Tanjelo as a running program: setup asks it to quit, and starts it when it's done.</summary>
 interface ITanjeloProcesses
 {
-    /// <summary>The ids of the programs running from <paramref name="folder"/> (Tanjelo, tanj, a 1.1 updater).</summary>
+    /// <summary>
+    /// The ids of Tanjelo's programs running from <paramref name="folder"/> (Tanjelo, tanj, a 1.1 updater); never setup
+    /// itself, nor the uninstaller and its elevated copy, which run from that folder too.
+    /// </summary>
     IReadOnlyList<int> In(string folder);
 
     /// <summary>Asks the Tanjelo in the tray, if it's the one from <paramref name="folder"/>, to quit, as <c>Tanjelo.exe --quit</c> does.</summary>
@@ -38,13 +41,29 @@ sealed class TanjeloProcesses(Log log) : ITanjeloProcesses
         return @"Local\Tanjelo.Quit." + string.Concat(hash.Take(8).Select(b => b.ToString("x2")));
     }
 
+    /// <summary>
+    /// The programs that are Tanjelo, by name: the app and tanj, and in a 1.1 folder Velopack's updater (its launcher is
+    /// Tanjelo.exe too). The uninstaller runs from the install folder as well, and its elevated copy from the same file,
+    /// so anything else there is never taken for Tanjelo.
+    /// </summary>
+    static readonly string[] Programs = ["Tanjelo.exe", "tanj.exe", "Update.exe"];
+
+    internal static bool IsTanjelo(string path) => Programs.Contains(Path.GetFileName(path), StringComparer.OrdinalIgnoreCase);
+
+    // Setup itself, whatever its name and wherever it runs from: never listed, never stopped.
+    static readonly int Self = Process.GetCurrentProcess().Id;
+    static readonly string? SelfImage = ImagePath(Self);
+
+    static bool Ours(int id, string? path, string folder) =>
+        id != Self && path is not null && Folders.Within(path, folder) && IsTanjelo(path) && !(SelfImage is not null && Folders.Same(path, SelfImage));
+
     public IReadOnlyList<int> In(string folder)
     {
         var found = new List<int>();
         foreach (var process in Process.GetProcesses())
         {
             using (process)
-                if (ImagePath(process.Id) is { } path && Folders.Within(path, folder)) found.Add(process.Id);
+                if (Ours(process.Id, ImagePath(process.Id), folder)) found.Add(process.Id);
         }
         return found;
     }
@@ -60,8 +79,8 @@ sealed class TanjeloProcesses(Log log) : ITanjeloProcesses
         try
         {
             using var process = Process.GetProcessById(id);
-            // The id may have been taken by another program since it was listed.
-            if (ImagePath(id) is not { } path || !Folders.Within(path, folder)) return;
+            // The id may have been taken by another program since it was listed; and setup never stops itself.
+            if (ImagePath(id) is not { } path || !Ours(id, path, folder)) return;
             log.Write($"stopping {path} ({id})");
             process.Kill();
             process.WaitForExit(5000);

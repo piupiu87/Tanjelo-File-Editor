@@ -56,6 +56,98 @@ public class SetupHelperTests
         helper.Dispose();
     }
 
+    /// <summary>A real program that waits about <paramref name="seconds"/> seconds, under the name given: a copy of ping.</summary>
+    static Process Waiting(string exe, int seconds)
+    {
+        if (!File.Exists(exe)) File.Copy(Path.Combine(Environment.SystemDirectory, "PING.EXE"), exe);
+        return Process.Start(new ProcessStartInfo(exe, $"-n {seconds + 1} 127.0.0.1") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true })!;
+    }
+
+    static void End(Process process)
+    {
+        try { if (!process.HasExited) process.Kill(); }
+        catch (InvalidOperationException) { }
+        process.Dispose();
+    }
+
+    [Fact]
+    public void Only_Tanjelos_programs_count_as_Tanjelo_running_never_setup_or_the_uninstaller()
+    {
+        using var scratch = new Scratch();
+        var processes = new TanjeloProcesses(new global::Tanjelo.Setup.Log(scratch.PathOf("setup.log")));
+        // The test runner's own folder: whatever runs from it, the runner itself is never listed.
+        Assert.DoesNotContain(Environment.ProcessId, processes.In(AppContext.BaseDirectory));
+
+        Assert.True(TanjeloProcesses.IsTanjelo(@"C:\Program Files\Tanjelo\Tanjelo.exe"));
+        Assert.True(TanjeloProcesses.IsTanjelo(@"C:\Program Files\Tanjelo\TANJ.EXE"));
+        Assert.True(TanjeloProcesses.IsTanjelo(@"C:\Users\someone\AppData\Local\Tanjelo\Update.exe"));
+        Assert.False(TanjeloProcesses.IsTanjelo(@"C:\Program Files\Tanjelo\Uninstall Tanjelo.exe"));
+        Assert.False(TanjeloProcesses.IsTanjelo(@"C:\Program Files\Tanjelo\Tanjelo-1.2.0-Setup.exe"));
+
+        // Real programs in a folder, one named as Tanjelo and one as the uninstaller.
+        var folder = Directory.CreateDirectory(scratch.PathOf("Tanjelo")).FullName;
+        var tanjelo = Waiting(Path.Combine(folder, "Tanjelo.exe"), 20);
+        var uninstaller = Waiting(Path.Combine(folder, Installer.UninstallerName), 20);
+        try
+        {
+            Assert.Equal([tanjelo.Id], processes.In(folder));
+            processes.Stop(uninstaller.Id, folder);
+            Assert.False(uninstaller.WaitForExit(500), "the uninstaller was stopped");
+            processes.Stop(tanjelo.Id, folder);
+            Assert.True(tanjelo.WaitForExit(5000));
+        }
+        finally
+        {
+            End(tanjelo);
+            End(uninstaller);
+        }
+    }
+
+    [Fact]
+    public async Task Uninstalling_with_only_the_uninstaller_running_neither_waits_nor_asks_and_it_goes_once_both_copies_end()
+    {
+        using var pc = new SetupSandbox();
+        var folder = pc.Installer.DefaultFolder(Scope.Machine);
+        await pc.Job.InstallAsync(folder, Scope.Machine, pc.Payload("1.2.0", SetupSandbox.App("1.2.0")), null, null, () => false, TestContext.Current.CancellationToken);
+        // The uninstaller as Apps starts it, and its elevated copy: two programs from the one file in the install folder.
+        var uninstaller = Path.Combine(folder, Installer.UninstallerName);
+        File.Delete(uninstaller);
+        var parent = Waiting(uninstaller, 6);
+        var helper = Waiting(uninstaller, 12);
+        try
+        {
+            var asked = false;
+            var job = new SetupJob(pc.Installer, new TanjeloProcesses(pc.Log), pc.Elevation, pc.Log) { QuitWait = TimeSpan.FromSeconds(15), StopWait = TimeSpan.FromSeconds(2) };
+            var took = Stopwatch.StartNew();
+            var left = await job.UninstallAsync(folder, uninstaller, null, () => asked = true, TestContext.Current.CancellationToken);
+            took.Stop();
+
+            Assert.Empty(left);
+            Assert.False(asked, "it asked to stop Tanjelo, which wasn't running");
+            Assert.True(took.Elapsed < TimeSpan.FromSeconds(5), $"it waited {took.Elapsed}");
+            Assert.DoesNotContain("asking Tanjelo", File.ReadAllText(pc.PathOf("setup.log")));
+            Assert.False(parent.HasExited);
+            Assert.False(helper.HasExited);
+            Assert.Null(pc.AppsEntry(Scope.Machine));
+            Assert.False(File.Exists(Path.Combine(folder, "Tanjelo.exe")));
+            // The uninstaller in use is skipped, and waited for: it's still there while either copy runs.
+            Assert.True(File.Exists(uninstaller));
+            Assert.True(parent.WaitForExit(15_000));
+            await Task.Delay(1500, TestContext.Current.CancellationToken);
+            Assert.False(helper.HasExited);
+            Assert.True(File.Exists(uninstaller), "the uninstaller went while its elevated copy still ran");
+            Assert.True(helper.WaitForExit(15_000));
+            for (var waited = 0; Directory.Exists(folder) && waited < 40_000; waited += 200)
+                await Task.Delay(200, TestContext.Current.CancellationToken);
+            Assert.False(Directory.Exists(folder));
+        }
+        finally
+        {
+            End(parent);
+            End(helper);
+        }
+    }
+
     [Fact]
     public async Task Something_unexpected_shows_on_the_last_page_with_the_log()
     {

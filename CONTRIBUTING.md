@@ -69,6 +69,8 @@ folder. CI builds both for `net48` after publishing (see the Publish and Package
   administrator, since every user runs what's in it.
 - Setup never deletes or moves anything through a junction or symbolic link: a link in its way goes as a link, and a
   listed file whose path crosses one is left alone (an update stops instead).
+- Tanjelo running means its own programs from the install folder (`Tanjelo.exe`, `tanj.exe`, a 1.1 `Update.exe`),
+  never setup itself: the uninstaller and its elevated copy run from that folder too.
 - Tanjelo is asked to quit through an event named after its folder (`Tanjelo.exe --quit` does the same), and
   `Tanjelo.exe --before-uninstall` takes away Start with Windows, Send to and the Windows 11 menu entry.
 - An install from Tanjelo 1.0 or 1.1 (Velopack, in `%LOCALAPPDATA%\Tanjelo`) is moved over by removing Velopack's
