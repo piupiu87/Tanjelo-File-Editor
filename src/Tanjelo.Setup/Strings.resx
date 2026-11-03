@@ -387,4 +387,10 @@
   <data name="IsALinkToAnotherFolderSo" xml:space="preserve">
     <value>{0} is a link to another folder, so setup stops rather than change what's there. Remove the link, then try again.</value>
   </data>
+  <data name="SetupStopped" xml:space="preserve">
+    <value>Setup stopped</value>
+  </data>
+  <data name="SomethingWentWrongThatSetupDidnT" xml:space="preserve">
+    <value>Something went wrong that setup didn't expect. Its log has the details, for a bug report.</value>
+  </data>
 </root>

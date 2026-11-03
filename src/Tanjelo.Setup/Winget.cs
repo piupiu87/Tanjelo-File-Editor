@@ -60,17 +60,18 @@ sealed class Winget(string exe, Log log)
         {
             var output = run.StandardOutput.ReadToEndAsync();
             var errors = run.StandardError.ReadToEndAsync();
-            var exited = new TaskCompletionSource<bool>();
-            run.EnableRaisingEvents = true;
-            run.Exited += (_, _) => exited.TrySetResult(true);
-            if (run.HasExited) exited.TrySetResult(true);
-            using (cancel.Register(() => exited.TrySetCanceled()))
+            // If winget is stopped, its output is never read to the end, and whatever that ends in doesn't matter.
+            ProcessExit.Ignore(output);
+            ProcessExit.Ignore(errors);
+            var exited = ProcessExit.Of(run);
+            var skipped = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            using (cancel.Register(() => skipped.TrySetResult(true)))
             {
-                var finished = await Task.WhenAny(exited.Task, Task.Delay(Timeout)).ConfigureAwait(false);
-                if (finished != exited.Task || exited.Task.IsCanceled)
+                var finished = await Task.WhenAny(exited, skipped.Task, Task.Delay(Timeout)).ConfigureAwait(false);
+                if (finished != exited)
                 {
                     Stop(run);
-                    var why = exited.Task.IsCanceled ? Strings.Skipped : string.Format(Strings.TookLongerThanMinutes, Math.Max(1, (int)Math.Ceiling(Timeout.TotalMinutes)));
+                    var why = finished == skipped.Task ? Strings.Skipped : string.Format(Strings.TookLongerThanMinutes, Math.Max(1, (int)Math.Ceiling(Timeout.TotalMinutes)));
                     log.Write($"winget {tool.WingetId}: {why}");
                     return why;
                 }

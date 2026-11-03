@@ -15,6 +15,13 @@ static class Program
         // Setup never keeps the install folder open, so the folder can be removed.
         Environment.CurrentDirectory = Environment.SystemDirectory;
         var log = Log.Default();
+        // The last resort: whatever escapes is written down, so a silent run, or a window that vanished, leaves a reason.
+        AppDomain.CurrentDomain.UnhandledException += (_, e) => log.Write($"setup stopped: {e.ExceptionObject}");
+        TaskScheduler.UnobservedTaskException += (_, e) =>
+        {
+            log.Write($"a task failed unseen: {e.Exception}");
+            e.SetObserved();
+        };
         try
         {
             var options = Options.Parse(args);
@@ -64,7 +71,14 @@ static class Program
     /// <summary>Shows the wizard until it's closed, and ends with what it did.</summary>
     static int Wizard(SetupWindow window)
     {
-        new System.Windows.Application { ShutdownMode = System.Windows.ShutdownMode.OnMainWindowClose }.Run(window);
+        var app = new System.Windows.Application { ShutdownMode = System.Windows.ShutdownMode.OnMainWindowClose };
+        // Something unexpected on the window's thread shows on the last page, with the log, rather than closing it.
+        app.DispatcherUnhandledException += (_, e) =>
+        {
+            e.Handled = true;
+            window.Fail(e.Exception);
+        };
+        app.Run(window);
         return window.ExitCode;
     }
 

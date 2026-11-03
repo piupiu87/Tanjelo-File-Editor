@@ -63,23 +63,53 @@ sealed class Elevation(string exe, Log log) : IElevation
         }
         if (helper is null) throw new SetupException(Strings.InstallingForEveryoneNeedsAdministratorPermission, ExitCodes.NoAdministrator);
         using (helper)
+            return await HelperProcess.RunAsync(helper, pipe, progress, cancel, HelperProcess.ExitWait).ConfigureAwait(false);
+    }
+}
+
+/// <summary>
+/// The elevated copy as a running program: waited for on the pipe, listened to, and let go. Windows reports its exit
+/// on a thread of its own, at any time, even after setup has finished with it, so nothing that reports can fail.
+/// </summary>
+static class HelperProcess
+{
+    /// <summary>How long to wait for the elevated copy to end once it has said how it went.</summary>
+    public static readonly TimeSpan ExitWait = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// Waits for <paramref name="helper"/> to connect to <paramref name="pipe"/>, passes on what it reports, and waits
+    /// up to <paramref name="exitWait"/> for it to end. Returns the files an uninstall couldn't remove.
+    /// </summary>
+    public static async Task<IReadOnlyList<string>> RunAsync(Process helper, NamedPipeServerStream pipe, IProgress<Report>? progress,
+        CancellationToken cancel, TimeSpan exitWait)
+    {
+        var exited = ProcessExit.Of(helper);
+        if (!await ConnectedAsync(pipe, exited).ConfigureAwait(false))
+            throw new SetupException(string.Format(Strings.TheAdministratorCopyOfSetupStopped, ExitCode(helper)));
+        var left = await HelperChannel.ListenAsync(pipe, progress, cancel).ConfigureAwait(false);
+        await Task.WhenAny(exited, Task.Delay(exitWait)).ConfigureAwait(false);
+        return left;
+    }
+
+    /// <summary>Whether the helper connected; false when it exited without doing so.</summary>
+    static async Task<bool> ConnectedAsync(NamedPipeServerStream pipe, Task exited)
+    {
+        // Not cancelled: .NET Framework can't stop a wait for a connection part way. Closing the pipe ends it.
+        var connecting = pipe.WaitForConnectionAsync();
+        ProcessExit.Ignore(connecting);
+        if (await Task.WhenAny(connecting, exited).ConfigureAwait(false) == connecting)
         {
-            using var gone = new CancellationTokenSource();
-            helper.EnableRaisingEvents = true;
-            helper.Exited += (_, _) => gone.Cancel();
-            if (helper.HasExited) gone.Cancel();
-            try
-            {
-                await pipe.WaitForConnectionAsync(gone.Token).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                throw new SetupException(string.Format(Strings.TheAdministratorCopyOfSetupStopped, helper.ExitCode));
-            }
-            var left = await HelperChannel.ListenAsync(pipe, progress, cancel).ConfigureAwait(false);
-            helper.WaitForExit();
-            return left;
+            await connecting.ConfigureAwait(false);
+            return true;
         }
+        // It may have connected just before it ended, and the news of that be a moment behind.
+        return await Task.WhenAny(connecting, Task.Delay(500)).ConfigureAwait(false) == connecting && connecting.Status == TaskStatus.RanToCompletion;
+    }
+
+    static string ExitCode(Process process)
+    {
+        try { return process.ExitCode.ToString(); }
+        catch (InvalidOperationException) { return "?"; }
     }
 }
 
@@ -143,7 +173,8 @@ static class HelperChannel
                 catch (IOException) { /* setup has gone; the job carries on to its end */ }
             }
         }
-        using var cancel = new CancellationTokenSource();
+        // Never disposed: the listening thread may still cancel it as the job ends, and one with no timer holds nothing.
+        var cancel = new CancellationTokenSource();
         var listening = new Thread(() =>
         {
             try

@@ -142,4 +142,6 @@ public static class Strings
     public static string ForEveryoneOnThisPCChooseANewFolder => Get();
     public static string CouldBeChangedByOtherUsersChoose => Get();
     public static string IsALinkToAnotherFolderSo => Get();
+    public static string SetupStopped => Get();
+    public static string SomethingWentWrongThatSetupDidnT => Get();
 }

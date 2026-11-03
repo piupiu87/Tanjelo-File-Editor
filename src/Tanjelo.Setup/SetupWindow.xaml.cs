@@ -372,10 +372,28 @@ public partial class SetupWindow : Window
             ExitCode = ex.ExitCode;
             ShowDone(Strings.TanjeloWasnTInstalled, Unchanged(), ex.Message);
         }
+        catch (Exception ex)
+        {
+            Fail(ex);
+        }
         finally
         {
             _working = _cancellable = false;
         }
+    }
+
+    /// <summary>
+    /// Something setup didn't expect: it's written to the log and shown on the last page, with a link to the log, rather
+    /// than the window closing with no word. What's done stays done; a Tanjelo already installed can still be started.
+    /// </summary>
+    internal void Fail(Exception error)
+    {
+        _log.Write($"setup stopped: {error}");
+        _working = _cancellable = false;
+        _skipTools?.Cancel();
+        Halt(StepState.Failed, "");
+        if (_installed is null) ExitCode = ExitCodes.Failed;
+        ShowDone(Strings.SetupStopped, Strings.SomethingWentWrongThatSetupDidnT, error.Message);
     }
 
     /// <summary>
@@ -521,6 +539,10 @@ public partial class SetupWindow : Window
             Halt(StepState.Failed, "");
             ExitCode = ex.ExitCode;
             ShowDone(Strings.TanjeloWasnTFullyUninstalled, "", ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Fail(ex);
         }
         finally
         {
