@@ -67,11 +67,15 @@ folder. CI builds both for `net48` after publishing (see the Publish and Package
   `Tanjelo.exe --before-uninstall` takes away Start with Windows, Send to and the Windows 11 menu entry.
 - An install from Tanjelo 1.0 or 1.1 (Velopack, in `%LOCALAPPDATA%\Tanjelo`) is moved over by removing Velopack's
   files by name, keeping Tanjelo's data in that folder.
-- Silent runs (`--silent`, `--all-users`, `--dir <folder>`) log to `%TEMP%\Tanjelo-Setup.log`.
+- Silent runs (`--silent`, `--all-users`, `--dir <folder>`) log to `%TEMP%\Tanjelo-Setup.log`. Without `--silent`,
+  the wizard (`SetupWindow`) shows the same job page by page: Welcome, Location, Installing, Done, or for the
+  uninstaller a page saying what goes, then Uninstalling and Done. Its look (`Styles.xaml`, `Theme.cs`) matches the
+  app's and follows Windows' light, dark and contrast themes; its words are in its own `Strings.resx`.
 
 To try it safely, use the tests: `SetupTests` installs, updates, moves a fake 1.1 install over and uninstalls on a
 sandbox PC (`SetupSandbox`: Program Files, the Start menus, the PATH and Apps all in a scratch folder and a scratch
-registry key under `HKCU\Software\Tanjelo tests`), with decoy files that must survive. Running Setup.exe or the
+registry key under `HKCU\Software\Tanjelo tests`), with decoy files that must survive; `SetupWizardTests` drives the
+wizard there page by page and renders each page in light, dark and a contrast theme. Running Setup.exe or the
 uninstaller itself changes this PC's PATH, Start menu and Apps list, so leave that to CI's `installer` job, which does
 it on a clean runner with `tools/setup-checks.ps1`; or push a branch and try the `Tanjelo-release` artifact on a PC
 you don't mind changing.

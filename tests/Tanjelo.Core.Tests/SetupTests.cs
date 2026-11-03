@@ -553,6 +553,18 @@ public class SetupTests
     }
 
     [Fact]
+    public void Sizes_read_as_people_read_them()
+    {
+        Assert.Equal("310 MB", Folders.Size(310L << 20));
+        Assert.Equal("1.5 GB", Folders.Size(3L << 29));
+        Assert.Equal("1 KB", Folders.Size(10));
+        // The part copied so far is in the whole's unit: "124 of 310 MB".
+        Assert.Equal("124", Folders.Part(124L << 20, 310L << 20));
+        Assert.Equal("0.5", Folders.Part(1L << 29, 3L << 29));
+        Assert.Equal("0", Folders.Part(100, 900));
+    }
+
+    [Fact]
     public void The_command_line()
     {
         var silent = Options.Parse(["--silent", "--all-users", "--dir", @"D:\My Apps"]);

@@ -29,6 +29,7 @@ public class PseudoLanguageTests
         if (!InPseudo) return;
         Strings.Transform = Pseudo;
         Tanjelo.Strings.Transform = Pseudo;
+        Tanjelo.Setup.Strings.Transform = Pseudo;
     }
 
     /// <summary>"Settings" becomes "[Šéţţîñĝš ~~~]": placeholders such as {0} and Open-dialog filters stay as they are.</summary>
@@ -105,6 +106,9 @@ public class PseudoLanguageTests
         // Made here: ffmpeg is waited for, which would hold up the UI thread the windows need.
         var clip = Env.HasFfmpeg ? scratch.Numbered("clip.mp4", seconds: 2) : null;
         var tone = Env.HasFfmpeg ? scratch.Tone("tone.wav") : null;
+        // Setup's wizard, on a sandbox PC.
+        using var pc = new SetupSandbox();
+        var payload = pc.Payload("1.2.0", SetupSandbox.App("1.2.0"));
         // Names, sizes and numbers that come from the files and settings rather than the resource files.
         string[] data = ["photo.png", "second.png", "report.pdf", "Ctrl+Shift+Space", "Ctrl+Shift+F", "Ctrl+Shift+V", "photo.jpg", "a.png", "b.png"];
         var problems = new List<string>();
@@ -156,6 +160,18 @@ public class PseudoLanguageTests
                 var window = new EditorWindow(file, target, make(file, target));
                 await Check(key, window, 1100, 760, window.LoadAsync);
             }
+            Tanjelo.Setup.SetupWindow Wizard() => new(pc.Job, payload, Tanjelo.Setup.Options.Parse([]), pc.Log) { Ask = _ => true, Open = _ => { } };
+            await Check("setup-welcome", Wizard(), SetupWizardTests.Width, SetupWizardTests.Height);
+            var location = Wizard();
+            location.GoNext();
+            await Check("setup-location", location, SetupWizardTests.Width, SetupWizardTests.Height);
+            var done = Wizard();
+            done.GoNext();
+            done.GoNext();
+            await done.Working;
+            await Check("setup-done", done, SetupWizardTests.Width, SetupWizardTests.Height);
+            await Check("setup-uninstall", new Tanjelo.Setup.SetupWindow(pc.Job, pc.Installer.DefaultFolder(Tanjelo.Setup.Scope.User), null, pc.Log),
+                SetupWizardTests.Width, SetupWizardTests.Height);
             if (clip is null || tone is null) return;
             foreach (var (file, key, make) in new (string, string, Func<string, Target, Editor>)[]
                      {

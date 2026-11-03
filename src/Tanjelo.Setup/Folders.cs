@@ -92,4 +92,12 @@ static class Folders
         >= 1L << 20 => $"{(bytes + (1L << 19)) >> 20} MB",
         _ => $"{Math.Max(1, (bytes + 512) >> 10)} KB",
     };
+
+    /// <summary>Part of a size, as a number in the whole's unit: 124 of 310 MB, 0.4 of 1.2 GB.</summary>
+    public static string Part(long bytes, long whole) => whole switch
+    {
+        >= 1L << 30 => $"{bytes / (double)(1L << 30):0.0}",
+        >= 1L << 20 => $"{bytes >> 20}",
+        _ => $"{bytes >> 10}",
+    };
 }

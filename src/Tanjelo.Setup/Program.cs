@@ -25,11 +25,16 @@ static class Program
             if (options.Elevated is not null) return RunElevated(options, payload, log);
             var installer = new Installer(Places.ForWindows(), log);
             var job = new SetupJob(installer, new TanjeloProcesses(log), new Elevation(exe, log), log);
-            return payload is null ? Uninstall(job, exe) : Install(job, options, payload, log);
+            if (options.Silent) return payload is null ? Uninstall(job, exe) : Install(job, options, payload, log);
+            var folder = Path.GetDirectoryName(exe)!;
+            if (payload is null && Installer.ReadList(folder) is null) throw new SetupException(string.Format(Strings.TanjeloIsnTInstalledIn, folder));
+            return Wizard(payload is null ? new SetupWindow(job, folder, exe, log) : new SetupWindow(job, payload, options, log));
         }
         catch (SetupException ex)
         {
             log.Write(ex.Message);
+            if (!args.Any(a => a.Equals("--silent", StringComparison.OrdinalIgnoreCase)) && !args.Contains("--elevated"))
+                System.Windows.MessageBox.Show(ex.Message, "Tanjelo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
             return ex.ExitCode;
         }
         catch (OperationCanceledException)
@@ -52,8 +57,14 @@ static class Program
         if (note is not null) log.Write(note);
         if (installer.Problem(folder, existing) is { } problem) throw new SetupException(problem);
         job.InstallAsync(folder, scope, payload, existing, null, mayStop: () => true, CancellationToken.None).GetAwaiter().GetResult();
-        if (!options.Silent) job.Start(folder);
         return ExitCodes.Done;
+    }
+
+    /// <summary>Shows the wizard until it's closed, and ends with what it did.</summary>
+    static int Wizard(SetupWindow window)
+    {
+        new System.Windows.Application { ShutdownMode = System.Windows.ShutdownMode.OnMainWindowClose }.Run(window);
+        return window.ExitCode;
     }
 
     static int Uninstall(SetupJob job, string exe)

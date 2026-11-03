@@ -10,6 +10,7 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
     <!-- 64-bit wherever Windows is, so Program Files and the registry are the 64-bit ones Tanjelo uses. -->
     <PlatformTarget>AnyCPU</PlatformTarget>
     <Prefer32Bit>false</Prefer32Bit>
@@ -23,6 +24,13 @@
   <ItemGroup>
     <!-- .NET Framework has HttpClient in an assembly of its own, and setup never goes online itself. -->
     <Using Remove="System.Net.Http" />
+    <!-- UseWPF drops System.IO from the implicit usings (it clashes with System.Windows.Shapes.Path). -->
+    <Using Include="System.IO" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The icon at the top of the wizard, the app's own. -->
+    <EmbeddedResource Include="..\Tanjelo\Assets\app.ico" LogicalName="app.ico" Visible="false" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
