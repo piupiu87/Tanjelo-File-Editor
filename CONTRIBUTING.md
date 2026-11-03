@@ -71,11 +71,18 @@ folder. CI builds both for `net48` after publishing (see the Publish and Package
   the wizard (`SetupWindow`) shows the same job page by page: Welcome, Location, Installing, Done, or for the
   uninstaller a page saying what goes, then Uninstalling and Done. Its look (`Styles.xaml`, `Theme.cs`) matches the
   app's and follows Windows' light, dark and contrast themes; its words are in its own `Strings.resx`.
+- The Optional tools page (`OptionalTools`, `ToolRow`) offers ffmpeg, pandoc and the WebView2 runtime ticked when
+  missing, and 7-Zip, LibreOffice and the HEIC extensions unticked, each saying what it's for. `Winget` installs the
+  ticked ones as the user, one at a time with a timeout; HEIC opens its Store pages instead. Without winget, the
+  rows link to each tool's site. A tool that fails never fails the install. `OptionalTools.IsInstalled` looks where
+  `Toolbox.Detect` looks; a test keeps the two in step.
 
 To try it safely, use the tests: `SetupTests` installs, updates, moves a fake 1.1 install over and uninstalls on a
 sandbox PC (`SetupSandbox`: Program Files, the Start menus, the PATH and Apps all in a scratch folder and a scratch
 registry key under `HKCU\Software\Tanjelo tests`), with decoy files that must survive; `SetupWizardTests` drives the
-wizard there page by page and renders each page in light, dark and a contrast theme. Running Setup.exe or the
+wizard there page by page and renders each page in light, dark and a contrast theme, and `SetupToolsTests` uses a
+fake winget (a batch file that succeeds, fails or hangs). The one test with the real winget installs 7-Zip, so it runs
+only when `TANJELO_REAL_WINGET` is `1`, as on CI. Running Setup.exe or the
 uninstaller itself changes this PC's PATH, Start menu and Apps list, so leave that to CI's `installer` job, which does
 it on a clean runner with `tools/setup-checks.ps1`; or push a branch and try the `Tanjelo-release` artifact on a PC
 you don't mind changing.

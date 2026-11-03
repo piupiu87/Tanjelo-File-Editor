@@ -12,14 +12,17 @@ namespace Tanjelo.Core.Tests;
 /// </summary>
 public class SetupWizardTests
 {
-    public const double Width = 620, Height = 520;
+    public const double Width = 620, Height = 560;
 
     /// <summary>Setup's wizard for <paramref name="payload"/>, on the UI thread, laid out and in a window that's never shown.</summary>
-    internal static (SetupWindow Window, FrameworkElement Host, IDisposable Attached) Open(SetupSandbox pc, Payload payload, params string[] args)
+    /// <param name="winget">The fake winget the tools page uses; none means no winget on this PC.</param>
+    /// <param name="installed">Which optional tools are there already; none by default.</param>
+    internal static (SetupWindow Window, FrameworkElement Host, IDisposable Attached) Open(SetupSandbox pc, Payload payload, string[]? args = null,
+        Winget? winget = null, Func<OptionalTool, bool>? installed = null)
     {
         SetupTheme.DarkOverride = false;
         SetupTheme.ContrastOverride = null;
-        var window = new SetupWindow(pc.Job, payload, Options.Parse(args), pc.Log) { Ask = _ => true, Open = _ => { } };
+        var window = new SetupWindow(pc.Job, payload, Options.Parse(args ?? []), pc.Log, winget, installed ?? (_ => false)) { Ask = _ => true, Open = _ => { } };
         window.ApplyTheme();
         var host = Ui.Host(window, Width, Height);
         return (window, host, A11y.Attach(host));
@@ -69,7 +72,8 @@ public class SetupWizardTests
         var payload = pc.Payload("1.2.0", SetupSandbox.App("1.2.0"));
         await Ui.Run(async () =>
         {
-            var (window, host, attached) = Open(pc, payload, "--all-users");
+            // ffmpeg is there already; winget installs the rest that are ticked.
+            var (window, host, attached) = Open(pc, payload, ["--all-users"], pc.FakeWinget(), tool => tool.Key == "ffmpeg");
             using (attached)
             {
                 await Settle(host);
@@ -86,8 +90,16 @@ public class SetupWizardTests
                 order = A11y.Check(host, "setup location");
                 A11y.InOrder(order, window.ForMe, window.ForEveryone, window.FolderBox, window.BrowseButton, window.BackButton, window.NextButton, window.CancelButton);
                 Assert.Equal(SetupStrings.Folder, new System.Windows.Automation.Peers.TextBoxAutomationPeer(window.FolderBox).GetName());
-                Assert.Equal(SetupStrings.Install, window.NextButton.Content);
+                Assert.Equal(SetupStrings.Next, window.NextButton.Content);
                 RenderInThemes(window, host, "location");
+
+                window.GoNext();
+                await Settle(host);
+                Assert.Equal(SetupWindow.Page.Tools, window.Current);
+                Assert.Equal(SetupStrings.Install, window.NextButton.Content);
+                order = A11y.Check(host, "setup tools");
+                A11y.InOrder(order, window.BackButton, window.NextButton, window.CancelButton);
+                RenderInThemes(window, host, "tools");
 
                 // For everyone, so the elevated copy's reports can be slowed enough to see the page while it works.
                 pc.Elevation.ReportPause = TimeSpan.FromMilliseconds(150);
@@ -107,6 +119,7 @@ public class SetupWizardTests
                 Assert.Equal(SetupWindow.Page.Done, window.Current);
                 Assert.Equal(SetupStrings.TanjeloIsInstalled, window.Heading.Text);
                 Assert.Equal(1, window.Bar.Value);
+                Assert.Equal(string.Format(SetupStrings.AlsoInstalled, $"pandoc, {SetupStrings.WebView2Runtime}"), window.ToolsDoneText.Text);
                 order = A11y.Check(host, "setup done");
                 A11y.InOrder(order, window.StartCheck, window.NextButton);
                 RenderInThemes(window, host, "done");
@@ -180,6 +193,7 @@ public class SetupWizardTests
                 Assert.Equal(SetupWindow.Page.Welcome, window.Current);
                 window.GoNext();
                 window.GoNext();
+                window.GoNext();
                 await window.Working;
 
                 Assert.Equal(SetupWindow.Page.Done, window.Current);
@@ -202,7 +216,7 @@ public class SetupWizardTests
         var payload = pc.Payload("1.3.0", SetupSandbox.App("1.3.0"));
         await Ui.Run(async () =>
         {
-            var (window, host, attached) = Open(pc, payload, "--all-users");
+            var (window, host, attached) = Open(pc, payload, ["--all-users"]);
             using (attached)
             {
                 await Settle(host);
@@ -216,9 +230,11 @@ public class SetupWizardTests
                 Assert.False(window.ForEveryone.IsEnabled);
                 Assert.False(window.FolderBox.IsEnabled);
                 Assert.Equal(string.Format(SetupStrings.TanjeloIsInstalledInSoItSUpdated, folder), window.FolderNote.Text);
-                Assert.Equal(SetupStrings.Update, window.NextButton.Content);
+                Assert.Equal(SetupStrings.Next, window.NextButton.Content);
                 A11y.Check(host, "setup update");
                 RenderInThemes(window, host, "update");
+                window.GoNext();
+                Assert.Equal(SetupStrings.Update, window.NextButton.Content);
                 window.GoNext();
                 await window.Working;
                 Assert.Equal(SetupStrings.TanjeloIsUpdated, window.Heading.Text);
@@ -235,9 +251,10 @@ public class SetupWizardTests
         var payload = pc.Payload("1.2.0", SetupSandbox.App("1.2.0"));
         await Ui.Run(async () =>
         {
-            var (window, host, attached) = Open(pc, payload, "--all-users");
+            var (window, host, attached) = Open(pc, payload, ["--all-users"]);
             using (attached)
             {
+                window.GoNext();
                 window.GoNext();
                 window.GoNext();
                 await window.Working;
@@ -247,6 +264,7 @@ public class SetupWizardTests
                 // Just for me goes ahead.
                 window.ForMe.IsChecked = true;
                 Assert.True(window.NextButton.IsEnabled);
+                window.GoNext();
                 window.GoNext();
                 await window.Working;
                 Assert.Equal(SetupStrings.TanjeloIsInstalled, window.Heading.Text);
@@ -261,10 +279,11 @@ public class SetupWizardTests
         var payload = pc.Payload("1.2.0", [.. SetupSandbox.App("1.2.0"), .. Enumerable.Range(0, 30).Select(i => ($@"data\{i}.bin", new string('x', 1 << 16)))]);
         await Ui.Run(async () =>
         {
-            var (window, host, attached) = Open(pc, payload, "--all-users");
+            var (window, host, attached) = Open(pc, payload, ["--all-users"]);
             using (attached)
             {
                 pc.Elevation.ReportPause = TimeSpan.FromMilliseconds(50);
+                window.GoNext();
                 window.GoNext();
                 window.GoNext();
                 await Until(() => window.Bar.Value > 0, "the copy to start");
@@ -304,6 +323,7 @@ public class SetupWizardTests
                     asked.Add(question);
                     return false;
                 };
+                window.GoNext();
                 window.GoNext();
                 window.GoNext();
                 await window.Working;

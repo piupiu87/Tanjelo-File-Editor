@@ -221,8 +221,11 @@
         <Setter Property="Margin" Value="0,0,0,6" />
     </Style>
 
-    <Style TargetType="Hyperlink">
+    <Style x:Key="Link" TargetType="Hyperlink">
         <Setter Property="Foreground" Value="{DynamicResource Accent}" />
         <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}" />
     </Style>
+
+    <!-- Links in templates name the style themselves: implicit styles don't reach into templates. -->
+    <Style TargetType="Hyperlink" BasedOn="{StaticResource Link}" />
 </ResourceDictionary>

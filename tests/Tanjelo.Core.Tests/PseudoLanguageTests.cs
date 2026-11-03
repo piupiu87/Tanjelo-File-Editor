@@ -110,7 +110,9 @@ public class PseudoLanguageTests
         using var pc = new SetupSandbox();
         var payload = pc.Payload("1.2.0", SetupSandbox.App("1.2.0"));
         // Names, sizes and numbers that come from the files and settings rather than the resource files.
-        string[] data = ["photo.png", "second.png", "report.pdf", "Ctrl+Shift+Space", "Ctrl+Shift+F", "Ctrl+Shift+V", "photo.jpg", "a.png", "b.png"];
+        // Optional tools' names are their own, never translated.
+        string[] data = ["photo.png", "second.png", "report.pdf", "Ctrl+Shift+Space", "Ctrl+Shift+F", "Ctrl+Shift+V", "photo.jpg", "a.png", "b.png",
+            "ffmpeg", "pandoc", "7-Zip", "LibreOffice"];
         var problems = new List<string>();
         await Ui.Run(async () =>
         {
@@ -160,12 +162,17 @@ public class PseudoLanguageTests
                 var window = new EditorWindow(file, target, make(file, target));
                 await Check(key, window, 1100, 760, window.LoadAsync);
             }
-            Tanjelo.Setup.SetupWindow Wizard() => new(pc.Job, payload, Tanjelo.Setup.Options.Parse([]), pc.Log) { Ask = _ => true, Open = _ => { } };
+            Tanjelo.Setup.SetupWindow Wizard() => new(pc.Job, payload, Tanjelo.Setup.Options.Parse([]), pc.Log, pc.FakeWinget(), _ => false) { Ask = _ => true, Open = _ => { } };
             await Check("setup-welcome", Wizard(), SetupWizardTests.Width, SetupWizardTests.Height);
             var location = Wizard();
             location.GoNext();
             await Check("setup-location", location, SetupWizardTests.Width, SetupWizardTests.Height);
+            var tools = Wizard();
+            tools.GoNext();
+            tools.GoNext();
+            await Check("setup-tools", tools, SetupWizardTests.Width, SetupWizardTests.Height);
             var done = Wizard();
+            done.GoNext();
             done.GoNext();
             done.GoNext();
             await done.Working;

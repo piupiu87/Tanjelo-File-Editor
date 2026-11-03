@@ -18,7 +18,7 @@ namespace Tanjelo.Setup;
 /// </summary>
 public partial class SetupWindow : Window
 {
-    internal enum Page { Welcome, Location, Progress, Done, Confirm }
+    internal enum Page { Welcome, Location, Tools, Progress, Done, Confirm }
 
     public const string LicenceUrl = "https://github.com/piupiu87/Tanjelo-File-Editor/blob/main/LICENSE";
 
@@ -29,7 +29,10 @@ public partial class SetupWindow : Window
     readonly string? _uninstallFolder;
     readonly string? _running;
     readonly ObservableCollection<StepRow> _steps = [];
+    readonly List<ToolRow> _tools = [];
+    readonly Winget? _winget;
     CancellationTokenSource? _cancel;
+    CancellationTokenSource? _skipTools;
     bool _cancellable;
     bool _working;
     bool _settingUp = true;
@@ -53,10 +56,20 @@ public partial class SetupWindow : Window
         catch (System.ComponentModel.Win32Exception) { }
     };
 
-    /// <summary>Setup's wizard, for the payload inside Setup.exe.</summary>
-    internal SetupWindow(SetupJob job, Payload payload, Options options, Log log) : this(job, log)
+    /// <summary>The optional tools offered, with whether each is there and ticked.</summary>
+    internal IReadOnlyList<ToolRow> Tools => _tools;
+
+    /// <summary>
+    /// Setup's wizard, for the payload inside Setup.exe. <paramref name="winget"/> installs the tools ticked, and is null
+    /// where there's no winget; <paramref name="isInstalled"/> says which are there already.
+    /// </summary>
+    internal SetupWindow(SetupJob job, Payload payload, Options options, Log log, Winget? winget, Func<OptionalTool, bool> isInstalled) : this(job, log)
     {
         _payload = payload;
+        _winget = winget;
+        _tools.AddRange(OptionalTools.All.Select(tool => new ToolRow(tool, isInstalled(tool), winget is not null)));
+        ToolList.ItemsSource = _tools;
+        ToolsIntro.Text = winget is null ? Strings.WingetIsnTOnThisPC : Strings.TickedToolsAreInstalledWithWinget;
         _existing = job.Installer.Find();
         Title = Strings.TanjeloSetup;
         var (folder, scope, _) = job.Installer.Choose(_existing, options.AllUsers, options.Folder);
@@ -156,9 +169,9 @@ public partial class SetupWindow : Window
     {
         Current = page;
         foreach (var (panel, which) in new (FrameworkElement, Page)[] { (WelcomePage, Page.Welcome), (LocationPage, Page.Location),
-                     (ProgressPage, Page.Progress), (DonePage, Page.Done), (ConfirmPage, Page.Confirm) })
+                     (ToolsPage, Page.Tools), (ProgressPage, Page.Progress), (DonePage, Page.Done), (ConfirmPage, Page.Confirm) })
             panel.Visibility = which == page ? Visibility.Visible : Visibility.Collapsed;
-        BackButton.Visibility = page == Page.Location ? Visibility.Visible : Visibility.Collapsed;
+        BackButton.Visibility = page is Page.Location or Page.Tools ? Visibility.Visible : Visibility.Collapsed;
         NextButton.Visibility = page == Page.Progress ? Visibility.Collapsed : Visibility.Visible;
         CancelButton.Visibility = page == Page.Done ? Visibility.Collapsed : Visibility.Visible;
         CancelButton.IsEnabled = page != Page.Progress || _cancellable;
@@ -167,7 +180,8 @@ public partial class SetupWindow : Window
         (Heading.Text, Subheading.Text, NextButton.Content) = page switch
         {
             Page.Welcome => (Updating ? Strings.UpdateTanjelo : Strings.InstallTanjelo, string.Format(Strings.Version, version), Strings.Next),
-            Page.Location => (Strings.WhereTanjeloGoes, string.Format(Strings.Version, version), Updating ? Strings.Update : Strings.Install),
+            Page.Location => (Strings.WhereTanjeloGoes, string.Format(Strings.Version, version), Strings.Next),
+            Page.Tools => (Strings.OptionalTools, string.Format(Strings.Version, version), Updating ? Strings.Update : Strings.Install),
             Page.Progress when _payload is null => (Strings.UninstallingTanjelo, "", ""),
             Page.Progress => (Updating ? Strings.UpdatingTanjelo : Strings.InstallingTanjelo, string.Format(Strings.Version, version), ""),
             Page.Confirm => (Strings.UninstallTanjeloQuestion, "", Strings.Uninstall),
@@ -198,7 +212,10 @@ public partial class SetupWindow : Window
                 break;
             case Page.Location:
                 UpdateFolder();
-                if (FolderProblem.Visibility != Visibility.Visible) Working = InstallAsync();
+                if (FolderProblem.Visibility != Visibility.Visible) Show(Page.Tools);
+                break;
+            case Page.Tools:
+                Working = InstallAsync();
                 break;
             case Page.Confirm:
                 Working = UninstallAsync();
@@ -212,13 +229,23 @@ public partial class SetupWindow : Window
     internal void GoBack()
     {
         if (Current == Page.Location) Show(Page.Welcome);
+        else if (Current == Page.Tools) Show(Page.Location);
     }
 
-    /// <summary>Cancel, or Esc: before the work, closes; during the copy, undoes it; on the last page, closes without starting Tanjelo.</summary>
+    /// <summary>
+    /// Cancel, or Esc: before the work, closes; during the copy, undoes it; during the tools, skips the ones not started.
+    /// </summary>
     internal void Cancel()
     {
         if (Current == Page.Progress)
         {
+            if (_skipTools is { IsCancellationRequested: false })
+            {
+                _skipTools.Cancel();
+                CancelButton.IsEnabled = false;
+                StatusText.Text = Strings.TheRestAreSkippedOnceThisOne;
+                return;
+            }
             if (!_cancellable) return;
             _cancel?.Cancel();
             _cancellable = false;
@@ -299,6 +326,9 @@ public partial class SetupWindow : Window
         var copy = AddStep(Strings.CopyingTanjelo, 10);
         var register = AddStep(Strings.AddingTanjeloToTheStartMenu, 1);
         var move = _existing is { FromVelopack: true } ? AddStep(string.Format(Strings.MovingTanjeloOver, _existing.Version), 1) : null;
+        // A winget install shows that it's working and moves the bar when it ends.
+        var tools = _tools.Where(t => t.Ticked).Select(t => (Row: t, Step: AddStep(string.Format(
+            t.Tool.StorePages.Length > 0 ? Strings.OpeningTheMicrosoftStorePagesFor : Strings.InstallingTool, t.Name), t.Tool.StorePages.Length > 0 ? 0.5 : 4))).ToList();
         _cancel = new CancellationTokenSource();
         _cancellable = _working = true;
         Show(Page.Progress);
@@ -312,7 +342,15 @@ public partial class SetupWindow : Window
             foreach (var step in new[] { copy, register, move }) if (step is not null) step.State = StepState.Done;
             _installed = folder;
             ExitCode = ExitCodes.Done;
+            UpdateBar();
+            // A tool that fails never fails the install: the Done page lists it, with where to get it.
+            var problems = await InstallToolsAsync(tools);
             ShowDone(Updating ? Strings.TanjeloIsUpdated : Strings.TanjeloIsInstalled, string.Format(Strings.TanjeloIsInStartItFrom, _payload!.Version, folder), null);
+            var installed = tools.Where(t => t.Step.State == StepState.Done && t.Row.Tool.StorePages.Length == 0).Select(t => t.Row.Name).ToList();
+            ToolsDoneText.Text = installed.Count > 0 ? string.Format(Strings.AlsoInstalled, string.Join(", ", installed)) : "";
+            ToolsDoneText.Visibility = installed.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            ToolProblems.ItemsSource = problems;
+            ToolProblems.Visibility = problems.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
         }
         catch (OperationCanceledException)
         {
@@ -338,6 +376,53 @@ public partial class SetupWindow : Window
         {
             _working = _cancellable = false;
         }
+    }
+
+    /// <summary>
+    /// Installs the ticked tools one by one with winget, as the user, or opens their Store pages. Cancel now skips the
+    /// ones not started; the one under way is left to finish. Returns those that weren't installed, with why.
+    /// </summary>
+    async Task<List<ToolProblem>> InstallToolsAsync(List<(ToolRow Row, StepRow Step)> tools)
+    {
+        var problems = new List<ToolProblem>();
+        if (tools.Count == 0) return problems;
+        _skipTools = new CancellationTokenSource();
+        CancelButton.Content = Strings.SkipTheRest;
+        CancelButton.IsEnabled = true;
+        try
+        {
+            foreach (var (row, step) in tools)
+            {
+                if (_skipTools.IsCancellationRequested)
+                {
+                    step.State = StepState.Skipped;
+                    continue;
+                }
+                step.State = StepState.Working;
+                StatusText.Text = step.Label;
+                UpdateBar();
+                string? problem = null;
+                if (row.Tool.StorePages.Length > 0)
+                    foreach (var page in row.Tool.StorePages) Open(page);
+                else
+                    problem = _winget is null ? Strings.WingetIsnTOnThisPC : await _winget.InstallAsync(row.Tool, CancellationToken.None);
+                step.State = problem is null ? StepState.Done : StepState.Failed;
+                step.Detail = problem ?? "";
+                if (problem is not null) problems.Add(new ToolProblem(row.Name, problem, row.Tool.Site));
+                UpdateBar();
+            }
+        }
+        finally
+        {
+            _skipTools = null;
+            CancelButton.Content = Strings.Cancel;
+        }
+        return problems;
+    }
+
+    void OpenToolLink(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkContentElement { Tag: string link }) Open(link);
     }
 
     string Unchanged() => _existing is { } installed ? string.Format(Strings.TanjeloStaysAsItWas, installed.Version) : Strings.NothingWasInstalled;

@@ -270,4 +270,109 @@
   <data name="Steps" xml:space="preserve">
     <value>Steps</value>
   </data>
+  <data name="OptionalTools" xml:space="preserve">
+    <value>Optional tools</value>
+  </data>
+  <data name="TickedToolsAreInstalledWithWinget" xml:space="preserve">
+    <value>Tanjelo works without these; what needs one is left out of its menu. Ticked tools are installed with winget, Windows' package manager, which accepts each one's licence for you.</value>
+  </data>
+  <data name="WingetIsnTOnThisPC" xml:space="preserve">
+    <value>winget, Windows' package manager, isn't on this PC, so setup can't install these. Each one's site has it, and Tanjelo finds it once it's installed.</value>
+  </data>
+  <data name="FfmpegPurpose" xml:space="preserve">
+    <value>Audio and video: conversions, the editors, compress, trim, join, bleep and more.</value>
+  </data>
+  <data name="PandocPurpose" xml:space="preserve">
+    <value>Word and EPUB documents, and Markdown to DOCX.</value>
+  </data>
+  <data name="WebView2Runtime" xml:space="preserve">
+    <value>WebView2 runtime</value>
+  </data>
+  <data name="WebView2Purpose" xml:space="preserve">
+    <value>Markdown, EPUB and HTML to PDF. Part of Windows 11; usually missing only on Windows 10.</value>
+  </data>
+  <data name="SevenZipPurpose" xml:space="preserve">
+    <value>7Z, RAR and other archives Windows can't open.</value>
+  </data>
+  <data name="LibreOfficePurpose" xml:space="preserve">
+    <value>Office documents, when Microsoft Office isn't installed.</value>
+  </data>
+  <data name="HeicExtensions" xml:space="preserve">
+    <value>HEIC extensions</value>
+  </data>
+  <data name="HeicPurpose" xml:space="preserve">
+    <value>HEIC output. Ticking this opens their two pages in the Microsoft Store.</value>
+  </data>
+  <data name="About100MB" xml:space="preserve">
+    <value>About 100 MB</value>
+  </data>
+  <data name="About40MB" xml:space="preserve">
+    <value>About 40 MB</value>
+  </data>
+  <data name="About180MB" xml:space="preserve">
+    <value>About 180 MB</value>
+  </data>
+  <data name="About2MB" xml:space="preserve">
+    <value>About 2 MB</value>
+  </data>
+  <data name="About350MB" xml:space="preserve">
+    <value>About 350 MB</value>
+  </data>
+  <data name="AFewMB" xml:space="preserve">
+    <value>A few MB</value>
+  </data>
+  <data name="GplInstalledAsItsOwnProgram" xml:space="preserve">
+    <value>GPL, installed as its own program</value>
+  </data>
+  <data name="MicrosoftSLicenceTerms" xml:space="preserve">
+    <value>Microsoft's licence terms</value>
+  </data>
+  <data name="AsksForAdministratorPermission" xml:space="preserve">
+    <value>Asks for administrator permission</value>
+  </data>
+  <data name="LargeAsksForAdministratorPermission" xml:space="preserve">
+    <value>Large; asks for administrator permission</value>
+  </data>
+  <data name="FromTheMicrosoftStoreHevcCosts" xml:space="preserve">
+    <value>HEVC costs about US$1 unless the PC came with it</value>
+  </data>
+  <data name="Installed" xml:space="preserve">
+    <value>Installed</value>
+  </data>
+  <data name="Licence" xml:space="preserve">
+    <value>Licence</value>
+  </data>
+  <data name="GetItFromItsSite" xml:space="preserve">
+    <value>Get it from its site</value>
+  </data>
+  <data name="InstallingTool" xml:space="preserve">
+    <value>Installing {0}</value>
+  </data>
+  <data name="OpeningTheMicrosoftStorePagesFor" xml:space="preserve">
+    <value>Opening the Microsoft Store pages for the {0}</value>
+  </data>
+  <data name="AlsoInstalled" xml:space="preserve">
+    <value>Also installed: {0}.</value>
+  </data>
+  <data name="SkipTheRest" xml:space="preserve">
+    <value>Skip the rest</value>
+  </data>
+  <data name="TheRestAreSkippedOnceThisOne" xml:space="preserve">
+    <value>The rest are skipped once this one is done.</value>
+  </data>
+  <data name="ToolsThatWerenTInstalled" xml:space="preserve">
+    <value>Tools that weren't installed</value>
+  </data>
+  <data name="WingetCouldnTStart" xml:space="preserve">
+    <value>winget couldn't start: {0}</value>
+  </data>
+  <data name="WingetEndedWithCode" xml:space="preserve">
+    <value>winget ended with code {0}.</value>
+  </data>
+  <data name="TookLongerThanMinutes" xml:space="preserve">
+    <value>It took longer than {0} min, so setup stopped waiting for it.</value>
+  </data>
+  <data name="Skipped" xml:space="preserve">
+    <value>Skipped.</value>
+  </data>
 </root>

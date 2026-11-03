@@ -79,6 +79,29 @@ sealed class SetupSandbox : IDisposable
         return payload;
     }
 
+    /// <summary>What the fake winget was asked, one line per run.</summary>
+    public string WingetCalls => PathOf("winget-calls.txt");
+
+    /// <summary>
+    /// A fake winget, a batch file that writes down its arguments and says it installed the package; it fails like an
+    /// installer would for ids in <paramref name="failing"/>, and hangs for those in <paramref name="hanging"/>.
+    /// </summary>
+    public Winget FakeWinget(string[]? failing = null, string[]? hanging = null, TimeSpan? timeout = null)
+    {
+        // Windows' own findstr and ping, by their full paths: a PATH from Git's shell has a Unix find first.
+        const string Has = "\"%SystemRoot%\\System32\\findstr.exe\" /l /c:";
+        var script = new System.Text.StringBuilder("@echo off\r\n");
+        script.Append($"echo %*>> \"{WingetCalls}\"\r\n");
+        foreach (var id in failing ?? [])
+            script.Append($"echo %* | {Has}\"{id}\" >nul && (echo Installing...& echo Installer failed with exit code: 1603& exit /b 1)\r\n");
+        foreach (var id in hanging ?? [])
+            script.Append($"echo %* | {Has}\"{id}\" >nul && (\"%SystemRoot%\\System32\\ping.exe\" -n 30 127.0.0.1 >nul& exit /b 0)\r\n");
+        script.Append("echo Successfully installed\r\nexit /b 0\r\n");
+        var exe = PathOf("winget.cmd");
+        File.WriteAllText(exe, script.ToString());
+        return new Winget(exe, Log) { Timeout = timeout ?? TimeSpan.FromSeconds(30) };
+    }
+
     public string UserPath => Read(_user, "Environment", "Path");
     public string MachinePath => Read(_machine, @"SYSTEM\CurrentControlSet\Control\Session Manager\Environment", "Path");
 

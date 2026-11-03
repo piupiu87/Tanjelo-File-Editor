@@ -28,7 +28,8 @@ static class Program
             if (options.Silent) return payload is null ? Uninstall(job, exe) : Install(job, options, payload, log);
             var folder = Path.GetDirectoryName(exe)!;
             if (payload is null && Installer.ReadList(folder) is null) throw new SetupException(string.Format(Strings.TanjeloIsnTInstalledIn, folder));
-            return Wizard(payload is null ? new SetupWindow(job, folder, exe, log) : new SetupWindow(job, payload, options, log));
+            return Wizard(payload is null ? new SetupWindow(job, folder, exe, log)
+                : new SetupWindow(job, payload, options, log, Winget.Find() is { } winget ? new Winget(winget, log) : null, OptionalTools.IsInstalled));
         }
         catch (SetupException ex)
         {

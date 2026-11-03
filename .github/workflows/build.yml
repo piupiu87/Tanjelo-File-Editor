@@ -42,7 +42,10 @@ jobs:
         run: choco install pandoc --no-progress -y
 
       - name: Test
-        # Fixtures are generated at test time; Office and LibreOffice tests skip themselves on the runner.
+        # Fixtures are generated at test time; Office and LibreOffice tests skip themselves on the runner. The runner is
+        # thrown away afterwards, so setup's one test with the real winget runs here (it installs 7-Zip, if winget is on it).
+        env:
+          TANJELO_REAL_WINGET: '1'
         run: |
           dotnet test --project tests/Tanjelo.Core.Tests -c Release
           if ($LASTEXITCODE -ne 0) { throw "tests failed" }
