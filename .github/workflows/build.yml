@@ -299,6 +299,8 @@ jobs:
         run: |
           . tools/setup-checks.ps1
           $folder = "$env:LOCALAPPDATA\Programs\Tanjelo"
+          # A clean runner has no %LOCALAPPDATA%\Programs yet.
+          New-Item -ItemType Directory -Force "$env:LOCALAPPDATA\Programs" | Out-Null
           Set-Content "$env:LOCALAPPDATA\Programs\decoy.txt" 'beside the install folder'
           Invoke-AndWait (Get-Setup) '--silent'
           Test-Installed $folder 'user'
