@@ -440,7 +440,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          notes="Install with **Tanjelo-${GITHUB_REF_NAME#v}-Setup.exe** (per user, no administrator needed, with a Start menu entry and an uninstaller), or unzip the zip anywhere and run Tanjelo.exe. The .NET runtime is inside both. winget-manifests.zip is for microsoft/winget-pkgs.
+          notes="Install with **Tanjelo-${GITHUB_REF_NAME#v}-Setup.exe**: just for you (no administrator needed) or for everyone on the PC, in a folder you choose, with optional tools such as ffmpeg and pandoc installed through winget, and an uninstaller in Settings > Apps. It updates an installed Tanjelo where it is, and moves a 1.0 or 1.1 install over with your settings and shelf pictures kept. Or unzip the zip anywhere and run Tanjelo.exe. The .NET runtime is inside both. winget-manifests.zip is for microsoft/winget-pkgs.
 
           See the [Code signing policy](https://github.com/${GITHUB_REPOSITORY}#code-signing-policy) and the [Privacy](https://github.com/${GITHUB_REPOSITORY}#privacy) statement."
           gh release create "$GITHUB_REF_NAME" release/* --repo "$GITHUB_REPOSITORY" --title "Tanjelo $GITHUB_REF_NAME" --notes "$notes" --generate-notes

@@ -88,6 +88,28 @@ public class ReadmeScreenshots
     }
 
     [Fact]
+    public async Task Setup_optional_tools_page()
+    {
+        Assert.SkipUnless(Folder is not null, Off);
+        // On a sandbox PC with none of the tools, as a fresh PC would be, and a fake winget.
+        using var pc = new SetupSandbox();
+        var payload = pc.Payload("1.2.0", SetupSandbox.App("1.2.0"));
+        await Ui.Run(async () =>
+        {
+            Tanjelo.Setup.Theme.DarkOverride = false;
+            Tanjelo.Setup.Theme.ContrastOverride = null;
+            var window = new Tanjelo.Setup.SetupWindow(pc.Job, payload, Tanjelo.Setup.Options.Parse([]), pc.Log, pc.FakeWinget(), _ => false);
+            window.ApplyTheme();
+            window.GoNext();
+            window.GoNext();
+            // Tall enough for every row, without the list's scroll bar.
+            var host = Ui.Host(window, SetupWizardTests.Width, 680);
+            await Ui.Settle();
+            Shoot(host, "setup-tools");
+        });
+    }
+
+    [Fact]
     public async Task Trim_editor_in_the_dark_theme()
     {
         Assert.SkipUnless(Folder is not null, Off);

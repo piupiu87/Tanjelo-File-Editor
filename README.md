@@ -39,13 +39,32 @@ independent project, not affiliated with Tangerine.
 
 From the [Releases page](../../releases/latest):
 
-- **`Tanjelo-<version>-Setup.exe`** installs Tanjelo for you alone, with no administrator needed: a Start menu entry,
-  `tanj` on your PATH, and an uninstaller in Settings → Apps (which keeps your settings, in case you come back). Once
-  it's listed on winget, `winget install Tanjelo` does the same.
+- **`Tanjelo-<version>-Setup.exe`** installs Tanjelo, with a Start menu entry, `tanj` on the PATH and an uninstaller
+  in Settings → Apps. Once it's listed on winget, `winget install Tanjelo` does the same.
 - **`Tanjelo-<version>-win-x64.zip`** is the same, to unzip anywhere and run `Tanjelo.exe` from, for a USB stick or
   a PC where you'd rather not install.
 
 Both carry the .NET runtime inside, so there's nothing else to install first.
+
+Setup asks three things, then shows its progress as it copies:
+
+1. **Who it's for:** just you (in `%LOCALAPPDATA%\Programs\Tanjelo`, no administrator needed) or everyone on the PC
+   (in Program Files, with one administrator prompt). **Browse…** picks another folder; Tanjelo always goes in a
+   folder of its own inside it.
+2. **Optional tools**, each with what it's for in Tanjelo. ffmpeg, pandoc and the WebView2 runtime start ticked when
+   they're missing; 7-Zip, LibreOffice and the HEIC extensions are there to tick. Ticked tools are installed with
+   winget, Windows' package manager, as programs of their own; the HEIC extensions open in the Microsoft Store. A tool
+   that doesn't install never stops Tanjelo installing.
+3. **Start Tanjelo** when it's done.
+
+<p align="center">
+  <img src="docs/images/setup-tools.png" width="520" alt="Setup's Optional tools page: ffmpeg, pandoc and the WebView2 runtime ticked, 7-Zip, LibreOffice and the HEIC extensions not, each with what it's for in Tanjelo, its size and a licence link">
+</p>
+
+Running setup again updates Tanjelo where it is. An install of Tanjelo 1.0 or 1.1 moves over, keeping your settings
+and the pictures on your shelf. The uninstaller removes only the files setup put there, and your settings stay in
+`%APPDATA%\Tanjelo`, in case you come back. For scripts, `Setup.exe --silent` installs just for you with no tools
+(add `--all-users`, or `--dir <folder>`), and `"Uninstall Tanjelo.exe" --silent` uninstalls.
 
 The app isn't code-signed yet, so the first launch may show "Windows protected your PC". Choose
 **More info → Run anyway**. See the [code signing policy](#code-signing-policy).
@@ -155,7 +174,7 @@ Save to… (a copy in a folder you pick) and Move to….
   Redact finds and follows faces best on Windows 11; Windows 10 can't run its face finder, so there Windows' own face
   detection finds only upright faces facing the camera.
 - Optional programs, found automatically. Formats that need a missing one just don't appear, and Settings and the
-  tray's *Converters* submenu show what was found.
+  tray's *Converters* submenu show what was found. Setup offers to install them; or install them yourself:
   - **ffmpeg** for audio and video: `winget install Gyan.FFmpeg.Essentials`
   - **7-Zip** for .7z and .rar, and faster zips. Windows' built-in `tar` covers the rest.
   - **Microsoft Office** or **LibreOffice** for documents.
@@ -217,6 +236,8 @@ collected (no account, no telemetry, no crash reports). The only network use is 
 - When **pandoc** turns a Markdown or HTML file into DOCX or EPUB, it downloads the web pictures that file links to, so
   they can go inside (it never uploads anything).
 - **Share…** sends files only where you choose in Windows' Share sheet.
+- **Setup's optional tools:** the ones you tick are downloaded and installed by winget from its own source, and the
+  HEIC extensions open in the Microsoft Store. Setup itself never goes online.
 
 Office, LibreOffice, ffmpeg, 7-Zip and the WebView2 runtime run on your PC; WebView2 runs with every web address blocked.
 
@@ -339,8 +360,9 @@ SignPath; [.signpath/README.md](.signpath/README.md) says how it's set up.
 v1.0 made Tanjelo ready for everyone: an installer and a winget package, the .NET runtime inside, a settings window,
 an opt-in update check, an accessibility pass and text ready to translate. v1.1 brings clipboard pictures: screenshots
 parked on the shelf as they're taken, a menu for the picture on the clipboard, results back on the clipboard, Save to…,
-and `tanj --clipboard`. Releases ship unsigned: code signing, and the Windows 11 menu entry that needs it, are on hold
-for a later release. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are welcome; open an issue first for anything big, and see
+and `tanj --clipboard`. v1.2 brings a clearer setup: for you or for everyone, in a folder you choose, with a progress
+bar, and the optional tools on a page of their own. Releases ship unsigned: code signing, and the Windows 11 menu
+entry that needs it, are on hold for a later release. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are welcome; open an issue first for anything big, and see
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License

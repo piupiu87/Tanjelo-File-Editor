@@ -37,5 +37,6 @@ Tanjelo starts these as separate programs that the user installs, and doesn't re
 | Windows OCR (`Windows.Media.Ocr`) and its language packs | Part of Windows; reads scanned PDF pages and pictures |
 | Windows Machine Learning (`Windows.AI.MachineLearning`) | Part of Windows; runs YuNet to find and follow faces (on Windows 11) |
 | .NET Framework 4.8 | Part of Windows; runs Tanjelo's setup and its uninstaller, which are Tanjelo's own MIT code |
+| [winget](https://github.com/microsoft/winget-cli) (Windows Package Manager) | MIT; part of Windows. Setup runs it to install the optional tools you tick, each under its own licence, which winget accepts for you as the tools page says |
 
 If you redistribute a build that bundles any of these (for example FFmpeg next to the app), that build takes on their license obligations too.

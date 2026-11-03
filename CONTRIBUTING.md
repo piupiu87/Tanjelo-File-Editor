@@ -29,8 +29,9 @@ ffmpeg and pandoc; Office tests skip there.
 `tanj convert <key> [--name=value] <files>` runs one entry.
 
 The README's screenshots in `docs/images` come from the `ReadmeScreenshots` class, which draws its own landscape so no
-one's files or paths show. It runs only when `TANJELO_SCREENSHOTS` holds the full path of the folder to save them in;
-after changing a window they show, point it at `docs\images` and run that class.
+one's files or paths show (setup's tools page is drawn on the sandbox PC, with a fake winget). It runs only when
+`TANJELO_SCREENSHOTS` holds the full path of the folder to save them in; after changing a window they show, point it at
+`docs\images` and run that class.
 
 The tests leave the real clipboard and the Recycle Bin alone: they use `FakeClipboard`, a clipboard folder in their
 scratch folder and a recycle callback that only records. One test reads and writes the real clipboard, overwriting

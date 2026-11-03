@@ -140,9 +140,9 @@ Screenshots and copied pictures, used without saving them first.
 
 ## v1.2.0: a clearer setup
 
-- [ ] Setup wizard: install for you or for everyone on the PC, in a folder you choose, with a progress bar (L)
-- [ ] Optional tools on a setup page, each with what it's for: ffmpeg, pandoc, WebView2, 7-Zip, LibreOffice and the HEIC extensions, installed through winget (M)
-- [ ] Tanjelo's own installer and uninstaller replace Velopack; 1.1 installs move over with settings and shelf pictures kept (L)
+- [x] Setup wizard: install for you or for everyone on the PC, in a folder you choose, with a progress bar (L)
+- [x] Optional tools on a setup page, each with what it's for: ffmpeg, pandoc, WebView2, 7-Zip, LibreOffice and the HEIC extensions, installed through winget (M)
+- [x] Tanjelo's own installer and uninstaller replace Velopack; 1.1 installs move over with settings and shelf pictures kept (L)
 
 ## Signed releases (on hold)
 

@@ -1,7 +1,13 @@
 # winget manifests
 
-The manifests for `winget install Tanjelo` (package `Tanjelo.Tanjelo`): a per-user install from
-`Tanjelo-<version>-Setup.exe`, which installs silently with `--silent` and puts `tanj` on the PATH.
+The manifests for `winget install Tanjelo` (package `Tanjelo.Tanjelo`), both from `Tanjelo-<version>-Setup.exe`, which
+installs silently with `--silent` and puts `tanj` on the PATH:
+
+- **user** scope (the default): `%LOCALAPPDATA%\Programs\Tanjelo`, no administrator needed;
+- **machine** scope (`winget install Tanjelo --scope machine`): Program Files, with `--all-users`.
+
+`winget install --location <folder>` passes `--dir`, and Tanjelo goes in a `Tanjelo` folder inside it. The product code
+is `Tanjelo`, the name of its Apps entry, as it was for 1.0 and 1.1, so winget sees one product across versions.
 
 The files here are for the version in `Directory.Build.props`, with a placeholder SHA-256. For each release, the
 workflow fills in the version, the installer's address and its SHA-256, checks them with `winget validate`, and attaches
