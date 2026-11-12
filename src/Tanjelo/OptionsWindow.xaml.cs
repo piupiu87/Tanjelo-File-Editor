@@ -58,6 +58,13 @@ public partial class OptionsWindow : Window
     bool _triedRun;
     bool _placingSlider;
 
+    /// <summary>What was typed in the second box of passwords asked for twice.</summary>
+    readonly Dictionary<string, string> _repeats = [];
+
+    /// <summary>What the tool found wrong when asked before closing, such as a wrong password; cleared by any change.</summary>
+    SettingsProblem? _problem;
+    bool _checking;
+
     /// <param name="remembered">Values to start from instead of the defaults, such as the ones used last time.</param>
     public OptionsWindow(ConverterEngine engine, IReadOnlyList<string> files, Target target, IReadOnlyDictionary<string, string> remembered)
     {
@@ -152,6 +159,7 @@ public partial class OptionsWindow : Window
             OptionKind.TimeRange => TimeRangeField(option),
             OptionKind.Times => TimesField(option),
             OptionKind.Order => OrderField(option),
+            OptionKind.Password => PasswordField(option),
             _ => TextField(option),
         };
         // Screen readers name each field by its label, and read the hint after it.
@@ -249,12 +257,14 @@ public partial class OptionsWindow : Window
 
     (FrameworkElement, Control?) ToggleField(Option option)
     {
+        // A long label wraps rather than running out of the dialog; the box is still named by it.
         var check = new CheckBox
         {
-            Content = option.Label,
+            Content = new TextBlock { Text = option.Label, TextWrapping = TextWrapping.Wrap },
             Style = (Style)FindResource("Check"),
             IsChecked = OptionValues.TryFlag(_values[option.Name], out var on) && on,
         };
+        AutomationProperties.SetName(check, option.Label);
         check.Checked += (_, _) => Set(option.Name, "true");
         check.Unchecked += (_, _) => Set(option.Name, "false");
         return (check, check);
@@ -470,6 +480,81 @@ public partial class OptionsWindow : Window
         return (new ScrollViewer { Content = list, MaxHeight = 230, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Focusable = false }, null);
     }
 
+    /// <summary>
+    /// A masked box that starts empty, since a password is never shown back, with a Show button that swaps in a plain
+    /// box holding the same text; asked twice when the option says so.
+    /// </summary>
+    (FrameworkElement, Control?) PasswordField(Option option)
+    {
+        _values[option.Name] = "";
+        var showing = false;
+        var syncing = false;
+        var pairs = new List<(PasswordBox Hidden, TextBox Plain)>();
+
+        (Grid Line, PasswordBox Hidden, TextBox Plain) Pair(string name, Action<string> changed)
+        {
+            var hidden = new PasswordBox { Style = (Style)FindResource("FieldPassword") };
+            var plain = Box();
+            plain.Visibility = Visibility.Collapsed;
+            AutomationProperties.SetName(hidden, name);
+            AutomationProperties.SetName(plain, name);
+            hidden.PasswordChanged += (_, _) =>
+            {
+                if (syncing) return;
+                syncing = true;
+                plain.Text = hidden.Password;
+                syncing = false;
+                changed(hidden.Password);
+            };
+            plain.TextChanged += (_, _) =>
+            {
+                if (syncing) return;
+                syncing = true;
+                hidden.Password = plain.Text;
+                syncing = false;
+                changed(plain.Text);
+            };
+            pairs.Add((hidden, plain));
+            var line = new Grid();
+            line.ColumnDefinitions.Add(new ColumnDefinition());
+            line.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            line.Children.Add(hidden);
+            line.Children.Add(plain);
+            return (line, hidden, plain);
+        }
+
+        var (first, box, _) = Pair(option.Label, value => Set(option.Name, value));
+        var show = new Button { Content = Strings.Show, Style = (Style)FindResource("SubtleButton"), Margin = new Thickness(6, 0, 0, 0) };
+        AutomationProperties.SetName(show, string.Format(Strings.ShowThe, option.Label.ToLowerInvariant()));
+        Grid.SetColumn(show, 1);
+        first.Children.Add(show);
+        show.Click += (_, _) =>
+        {
+            showing = !showing;
+            foreach (var (hidden, plain) in pairs)
+            {
+                hidden.Visibility = showing ? Visibility.Collapsed : Visibility.Visible;
+                plain.Visibility = showing ? Visibility.Visible : Visibility.Collapsed;
+            }
+            show.Content = showing ? Strings.Hide : Strings.Show;
+            AutomationProperties.SetName(show, string.Format(showing ? Strings.HideThe : Strings.ShowThe, option.Label.ToLowerInvariant()));
+        };
+        if (!option.Repeat) return (first, box);
+
+        _repeats[option.Name] = "";
+        var label = string.Format(Strings.RepeatThe, option.Label);
+        var (second, _, _) = Pair(label, value =>
+        {
+            _repeats[option.Name] = value;
+            Set(option.Name, _values[option.Name]);
+        });
+        var panel = new StackPanel();
+        panel.Children.Add(first);
+        panel.Children.Add(new TextBlock { Text = Strings.RepeatIt, FontSize = 12, Margin = new Thickness(0, 8, 0, 4), Foreground = Brush("TextSecondary") });
+        panel.Children.Add(second);
+        return (panel, box);
+    }
+
     TextBox Box(double? width = null)
     {
         var box = new TextBox { Style = (Style)FindResource("FieldBox") };
@@ -481,8 +566,13 @@ public partial class OptionsWindow : Window
     {
         _values[name] = value;
         _touched.Add(name);
+        _problem = null;
         Refresh(preview: true);
     }
+
+    /// <summary>For passwords asked twice: whether the second box says something else, phrased to follow the label.</summary>
+    string? RepeatProblem(Option option) =>
+        option.Repeat && _repeats.TryGetValue(option.Name, out var repeat) && repeat != _values[option.Name] ? Strings.IsnTTheSameInBothBoxes : null;
 
     /// <summary>Shows the fields that apply, checks each value, and lines up a new preview when they're all fine.</summary>
     void Refresh(bool preview)
@@ -494,14 +584,25 @@ public partial class OptionsWindow : Window
             var shown = field.Option.IsShown(_values);
             field.Row.Visibility = shown ? Visibility.Visible : Visibility.Collapsed;
             var value = _values[field.Option.Name];
-            var problem = shown ? field.Option.Problem(value) : null;
+            var problem = shown ? field.Option.Problem(value) ?? RepeatProblem(field.Option) : null;
             var flag = problem is not null && (value.Trim().Length > 0 || _touched.Contains(field.Option.Name) || _triedRun);
             field.Error.Text = flag ? $"{field.Option.Label} {problem}." : "";
+            // What the tool said when asked before closing, at its field.
+            if (!flag && shown && _problem?.Option == field.Option.Name)
+            {
+                field.Error.Text = _problem.Message;
+                flag = true;
+            }
             field.Error.Visibility = flag ? Visibility.Visible : Visibility.Collapsed;
             ok &= problem is null;
             red |= flag;
         }
-        RunButton.IsEnabled = ok;
+        var general = _problem is { } found && !_fields.Any(f => f.Option.Name == found.Option && f.Row.Visibility == Visibility.Visible);
+        Note.Text = general ? _problem!.Message : _files.Count == 1 ? Strings.SavedAsACopyBesideTheOriginal : Strings.SavedBesideTheOriginals;
+        Note.Foreground = Brush(general ? "Danger" : "TextTertiary");
+        Note.TextTrimming = general ? TextTrimming.None : TextTrimming.CharacterEllipsis;
+        Note.TextWrapping = general ? TextWrapping.Wrap : TextWrapping.NoWrap;
+        RunButton.IsEnabled = ok && !_checking;
         // Tools with a scrubber preview the frame under it even before any time has been picked.
         if (preview && (ok || _scrubbers.Count > 0))
         {
@@ -731,11 +832,38 @@ public partial class OptionsWindow : Window
         return brush;
     }
 
-    void Run()
+    /// <summary>Runs the tool once its settings are fine, asking it first about anything it can only check with the files, such as a password.</summary>
+    async void Run()
     {
         _triedRun = true;
         Refresh(preview: false);
-        if (RunButton.IsEnabled) Finish(_target.WithParameters(_values));
+        if (!RunButton.IsEnabled) return;
+        var target = _target.WithParameters(_values);
+        _checking = true;
+        Refresh(preview: false);
+        SettingsProblem? problem;
+        try
+        {
+            problem = await Task.Run(() => _engine.ValidateAsync(_files, target));
+        }
+        catch (Exception ex)
+        {
+            Log.Write(ex);
+            problem = null; // the run itself will say what's wrong
+        }
+        finally
+        {
+            _checking = false;
+        }
+        if (_closing) return;
+        if (problem is null)
+        {
+            Finish(target);
+            return;
+        }
+        _problem = problem;
+        Refresh(preview: false);
+        _fields.FirstOrDefault(f => f.Option.Name == problem.Option)?.Input?.Focus();
     }
 
     void Finish(Target? target)

@@ -109,7 +109,9 @@ you don't mind changing.
 4. When the conversion needs a program that may not be installed, find it in `Toolbox`, offer nothing without it, and
    say what to install in `HintFor`.
 5. Tools that need settings declare them with `Target.WithOptions`; the app then shows the options dialog and `tanj`
-   takes them as `--name=value`.
+   takes them as `--name=value`. A setting that can only be checked against the files, such as a PDF's password, is
+   checked by `IValidator`, which the dialog asks before it closes. Passwords use `OptionKind.Password`, which is
+   never remembered, logged or shown back, and which `tanj` reads from standard input or asks for.
 6. Register the class in `ConverterEngine`. When two converters offer the same key for a file, the earlier one wins.
    Work done by hand, such as drawing on a photo, gets an editor: set `Target.Editor`, and add an `Editor<T>` in
    `src/Tanjelo/Editors/` whose `Result` fills in the same parameters `tanj` takes, so the engine does the saving. Its

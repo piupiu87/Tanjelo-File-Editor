@@ -36,6 +36,7 @@ public sealed class ConverterEngine
                 new PdfSlidesConverter(),
                 new SplitPdfTool(),
                 new OrganizePdfTool(),
+                new PdfPasswordTools(),
                 new OfficeConverter(tools),
                 new LibreOfficeConverter(tools),
                 new MediaConverter(tools),
@@ -194,7 +195,7 @@ public sealed class ConverterEngine
     }
 
     /// <summary>Whether the entry can show its result before it runs, in the options dialog.</summary>
-    public bool CanPreview(IReadOnlyList<string> inputs, Target target) => inputs.Count > 0 && Find(inputs, target).Previewer is not null;
+    public bool CanPreview(IReadOnlyList<string> inputs, Target target) => inputs.Count > 0 && Find(inputs, target).Worker is IPreviewer;
 
     /// <summary>
     /// Shows what the entry would do with these parameter values, without writing anything beside the inputs.
@@ -203,8 +204,8 @@ public sealed class ConverterEngine
     public async Task<Preview?> PreviewAsync(IReadOnlyList<string> inputs, Target target, PreviewRequest request, CancellationToken ct = default)
     {
         if (inputs.Count == 0) return null;
-        var (previewer, own) = Find(inputs, target);
-        if (previewer is null) return null;
+        var (worker, own) = Find(inputs, target);
+        if (worker is not IPreviewer previewer) return null;
         using var ctx = new JobContext { Tools = Tools, Options = Options, Cancellation = ct };
         try
         {
@@ -216,18 +217,45 @@ public sealed class ConverterEngine
         }
     }
 
-    /// <summary>The previewer behind an entry and its own copy of the entry; per-file entries are looked up on the first input.</summary>
-    (IPreviewer? Previewer, Target? Own) Find(IReadOnlyList<string> inputs, Target target)
+    /// <summary>
+    /// Checks the entry's settings against the files before it runs, such as whether a password opens a PDF; null
+    /// when they're fine or the entry doesn't check. Per-file entries check every file.
+    /// </summary>
+    public async Task<SettingsProblem?> ValidateAsync(IReadOnlyList<string> inputs, Target target, CancellationToken ct = default)
+    {
+        if (inputs.Count == 0) return null;
+        using var ctx = new JobContext { Tools = Tools, Options = Options, Cancellation = ct };
+        foreach (var input in target.IsBatch ? [inputs[0]] : inputs)
+        {
+            var (worker, own) = Find(target.IsBatch ? inputs : [input], target);
+            if (worker is not IValidator validator) continue;
+            SettingsProblem? problem;
+            try
+            {
+                problem = await validator.ValidateAsync(target.IsBatch ? inputs : [input], own!.WithParameters(target.Parameters), ctx);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                problem = new SettingsProblem(null, Describe(ex));
+            }
+            if (problem is not null)
+                return inputs.Count > 1 && !target.IsBatch ? problem with { Message = $"{Path.GetFileName(input)}: {problem.Message}" } : problem;
+        }
+        return null;
+    }
+
+    /// <summary>The converter or operation behind an entry and its own copy of the entry; per-file entries are looked up on the first input.</summary>
+    (object? Worker, Target? Own) Find(IReadOnlyList<string> inputs, Target target)
     {
         if (target.IsBatch)
         {
             foreach (var op in _batchOperations)
                 if (Safe(() => op.TargetsFor(inputs)).FirstOrDefault(t => t.Key == target.Key) is { } own)
-                    return (op as IPreviewer, own);
+                    return (op, own);
             return (null, null);
         }
         var match = PerFileTargets(inputs[0]).FirstOrDefault(x => x.Target.Key == target.Key);
-        return (match.Converter as IPreviewer, match.Target);
+        return (match.Converter, match.Target);
     }
 
     IEnumerable<(Target Target, IConverter Converter)> PerFileTargets(string input)

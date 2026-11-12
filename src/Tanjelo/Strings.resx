@@ -1559,4 +1559,25 @@
   <data name="PutResultsBackOnTheClipboardHint" xml:space="preserve">
     <value>What's made from a picture on the clipboard goes back on it, ready to paste into a chat or a document. The picture stays on the shelf.</value>
   </data>
+  <data name="Show" xml:space="preserve">
+    <value>Show</value>
+  </data>
+  <data name="Hide" xml:space="preserve">
+    <value>Hide</value>
+  </data>
+  <data name="ShowThe" xml:space="preserve">
+    <value>Show the {0}</value>
+  </data>
+  <data name="HideThe" xml:space="preserve">
+    <value>Hide the {0}</value>
+  </data>
+  <data name="RepeatThe" xml:space="preserve">
+    <value>{0}, again</value>
+  </data>
+  <data name="RepeatIt" xml:space="preserve">
+    <value>Repeat it</value>
+  </data>
+  <data name="IsnTTheSameInBothBoxes" xml:space="preserve">
+    <value>isn't the same in both boxes</value>
+  </data>
 </root>

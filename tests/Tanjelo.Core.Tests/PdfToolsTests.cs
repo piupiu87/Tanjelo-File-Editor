@@ -71,7 +71,7 @@ public class PdfToolsTests
 
         var result = await engine.RunAsync(inputs, Env.Offered(engine, "merge-pdf", inputs), ct: TestContext.Current.CancellationToken);
 
-        Assert.Equal("locked.pdf: This PDF is password-protected.", Assert.Single(result.Failures).Message);
+        Assert.Equal("locked.pdf: This PDF is password-protected. Remove its password first with Remove password…", Assert.Single(result.Failures).Message);
         Assert.DoesNotContain("Merged.pdf", scratch.Files());
     }
 }

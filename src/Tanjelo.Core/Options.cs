@@ -30,6 +30,12 @@ public enum OptionKind
 
     /// <summary>The selected files in a new order, by their 1-based place in the selection ("2,1,3"); empty keeps the selection order.</summary>
     Order,
+
+    /// <summary>
+    /// A password: typed hidden, used as given (spaces and all), and never remembered, logged or shown back, not even
+    /// in an error. tanj reads it from standard input or asks for it with the typing hidden.
+    /// </summary>
+    Password,
 }
 
 public sealed record Choice(string Value, string Label);
@@ -77,12 +83,19 @@ public sealed record Option(string Name, string Label, OptionKind Kind, string D
     /// <summary>Whether the dialog starts from the value used last time. Off for values that only fit one file, such as times in a video.</summary>
     public bool Remember { get; init; } = true;
 
+    /// <summary>Whether the value is kept for next time: only for options that ask for it, and never for passwords.</summary>
+    public bool IsRemembered => Remember && Kind != OptionKind.Password;
+
+    /// <summary>For passwords: the dialog asks for it twice and tanj, when it prompts, too, so a typo can't lock a file.</summary>
+    public bool Repeat { get; init; }
+
     /// <summary>Whether this option applies given the other values; a hidden option keeps its value but isn't used.</summary>
     public bool IsShown(IReadOnlyDictionary<string, string> values) => ShownWhen?.Holds(values) ?? true;
 
     /// <summary>What's wrong with <paramref name="value"/>, phrased to follow the option's label ("must be…"), or null if it's fine.</summary>
     public string? Problem(string value)
     {
+        if (Kind == OptionKind.Password) return value.Length == 0 && !Optional ? Strings.IsNeeded : null;
         value = value.Trim();
         switch (Kind)
         {

@@ -143,7 +143,7 @@ public class OrganizePdfTests
         Assert.Equal("There's no page 9: doc.pdf has 5 pages.", Assert.Single((await Run(pdf, "1,9")).Failures).Message);
         Assert.Equal($"Couldn't find {scratch.PathOf("gone.pdf")} to take pages from.", Assert.Single((await Run(pdf, "1", "gone.pdf")).Failures).Message);
         var locked = scratch.TextPdf("locked.pdf", "secret", g => g.DrawString("Hidden", new XFont("Arial", 20), XBrushes.Black, 50, 50));
-        Assert.Equal("This PDF is password-protected.", Assert.Single((await Run(locked, "1")).Failures).Message);
+        Assert.Equal("This PDF is password-protected. Remove its password first with Remove password…", Assert.Single((await Run(locked, "1")).Failures).Message);
         Assert.Equal(["doc.pdf", "locked.pdf"], scratch.Files()); // nothing half-written
     }
 

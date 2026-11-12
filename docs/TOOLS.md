@@ -138,6 +138,44 @@ Left and right from 0% (silent) to 400%. In surround sound, every left-side and 
 and the centre and bass stay. The preview draws each channel after the change. A video's picture is copied and only
 its sound re-encoded.
 
+## PDF tools
+
+Each writes a changed copy beside the PDF and keeps its bookmarks, links, forms, metadata and page labels, unless
+changing them is the point. A PDF with a password gets "Remove its password first with Remove password…", and a
+digitally signed PDF's copy says its signature isn't valid any more, since any change breaks it.
+
+### Protect… (`protect-pdf`) and Remove password… (`unlock-pdf`)
+
+*PDF · PDFsharp*
+
+**Protect…** shows for PDFs without a password and saves `report-protected.pdf`, encrypted with AES-256 (so it's
+PDF 2.0):
+
+- *Password to open*, typed twice, with a Show button.
+- *Limit printing, copying and changes*: printing at full quality, low quality or not at all, copying text and
+  pictures, and changes, comments and form filling, each allowed or not, with a *Permissions password* that lifts the
+  limits again and must differ from the password to open. Limits can be set without a password to open.
+- At least one of the two is needed. PDF readers honour the limits, but the encryption doesn't enforce them.
+- A forgotten password can't be got back, and Tanjelo keeps no copy.
+
+**Remove password…** shows for PDFs with a password or limits and saves `report-unlocked.pdf` without encryption. It
+asks for the password that works: the password to open, or the permissions password when the PDF has limits, as
+Acrobat does. A wrong password is caught before the dialog closes.
+
+Passwords are never remembered, logged or shown back. With `tanj`, `--password=-` reads the password from standard
+input, and with no `--password` tanj asks for it with the typing hidden. A password typed on the command line works,
+with a warning that it stays in the shell's history. `--permissions-password` works the same way.
+
+```
+tanj convert unlock-pdf --password=- report.pdf < password.txt
+tanj convert protect-pdf --limit --printing=low --permissions-password=- report.pdf
+```
+
+Edge, Chrome and Acrobat open AES-256 PDFs, but Windows' own PDF reader can't, so Tanjelo can't preview or convert a
+protected copy (to PNG, say) until its password is removed.
+
+Organize pages, Split and Merge copy pages out of a PDF whatever its limits say, as they did before.
+
 ## Editors
 
 Editors open in a window of their own, for work done by hand. They're on the Tools tab when one file is selected, and

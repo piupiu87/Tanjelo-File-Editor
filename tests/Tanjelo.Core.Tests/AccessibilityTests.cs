@@ -116,7 +116,8 @@ public class AccessibilityTests
                         var order = A11y.Check(host, $"options for {target.Key}");
                         // The close button at the top, the fields top to bottom, then Cancel and the button that runs the tool.
                         Assert.Equal(dialog.CloseButton, order[0]);
-                        A11y.InOrder(order, dialog.CancelButton, dialog.RunButton);
+                        // Run stays off until it can run, such as Remove password before a password is typed.
+                        A11y.InOrder(order, dialog.RunButton.IsEnabled ? [dialog.CancelButton, dialog.RunButton] : [dialog.CancelButton]);
                         if (target.Key == "background") RenderInContrast(host, "options-background-contrast", Theme.Contrast.Desert);
                     }
                     dialog.Close();
@@ -124,6 +125,39 @@ public class AccessibilityTests
                 }
             }
             Assert.True(checkedAny >= 5, $"only {checkedAny} options dialogs were checked");
+        });
+    }
+
+    [Fact]
+    public async Task Every_options_dialog_for_pdfs_is_named_and_reached_by_Tab()
+    {
+        using var scratch = new Scratch();
+        var report = scratch.BookmarkedPdf("report.pdf", ("Introduction", 2), ("Methods", 1));
+        var second = scratch.Pdf("second.pdf", pages: 2);
+        var locked = scratch.EncryptedPdf("locked.pdf", "aes256", "made-up-1");
+        await Ui.Run(async () =>
+        {
+            var engine = Env.Engine();
+            var checkedAny = 0;
+            foreach (var files in new[] { new[] { report }, [report, second], [locked] })
+            {
+                foreach (var target in engine.GetMenu(files).Targets.Where(t => t.Options.Count > 0 && t.Editor is null))
+                {
+                    var dialog = new OptionsWindow(engine, files, target, new Dictionary<string, string>());
+                    var host = Ui.Host(dialog, 700, 900);
+                    using (A11y.Attach(host))
+                    {
+                        await Ui.Settle();
+                        var order = A11y.Check(host, $"options for {target.Key}");
+                        // Run stays off until it can run, such as Remove password before a password is typed.
+                        A11y.InOrder(order, dialog.RunButton.IsEnabled ? [dialog.CancelButton, dialog.RunButton] : [dialog.CancelButton]);
+                        if (target.Key == "protect-pdf") RenderInContrast(host, "options-protect-pdf-contrast", Theme.Contrast.Aquatic);
+                    }
+                    dialog.Close();
+                    checkedAny++;
+                }
+            }
+            Assert.True(checkedAny >= 3, $"only {checkedAny} options dialogs were checked");
         });
     }
 

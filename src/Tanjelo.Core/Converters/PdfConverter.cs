@@ -71,7 +71,10 @@ public sealed class PdfConverter : IConverter
         return count > 1 ? [directory] : outputs;
     }
 
-    /// <summary>Opens a PDF with Windows' PDF engine, with a password-protected file reported as such.</summary>
+    /// <summary>
+    /// Opens a PDF with Windows' PDF engine, with a password-protected file reported as such. Windows can't open
+    /// AES-256 encryption at all, even without an open password (0x80048040), so that's reported the same way.
+    /// </summary>
     internal static async Task<PdfDocument> LoadAsync(string pdf)
     {
         try
@@ -79,7 +82,8 @@ public sealed class PdfConverter : IConverter
             var file = await StorageFile.GetFileFromPathAsync(Path.GetFullPath(pdf));
             return await PdfDocument.LoadFromFileAsync(file);
         }
-        catch (Exception ex) when (ex.HResult == unchecked((int)0x8007052B))
+        catch (Exception ex) when (ex.HResult == unchecked((int)0x8007052B)
+            || (ex.HResult == unchecked((int)0x80048040) && PdfFiles.EncryptionOf(pdf) is not null))
         {
             throw new ConversionException(Strings.ThisPDFIsPasswordProtected, ex);
         }

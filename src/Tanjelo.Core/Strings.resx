@@ -1535,7 +1535,7 @@
     <value>pandoc couldn't convert this file: </value>
   </data>
   <data name="ThisPDFIsPasswordProtected" xml:space="preserve">
-    <value>This PDF is password-protected.</value>
+    <value>This PDF is password-protected. Remove its password first with Remove password…</value>
   </data>
   <data name="ThisDoesnTLookLikeAValid3" xml:space="preserve">
     <value>This doesn't look like a valid PDF.</value>
@@ -2130,5 +2130,107 @@
   </data>
   <data name="TarMany" xml:space="preserve">
     <value>Pack {0} items into a .tar</value>
+  </data>
+  <data name="ThisPDFLimitsChanges" xml:space="preserve">
+    <value>This PDF limits changes. Remove the limits first with Remove password…, which takes its permissions password.</value>
+  </data>
+  <data name="ThatPasswordOnlyOpensIt" xml:space="preserve">
+    <value>That password opens the PDF but doesn't lift its limits on printing, copying or changes. Give its permissions password.</value>
+  </data>
+  <data name="ThatPasswordIsnTRight" xml:space="preserve">
+    <value>That password isn't right.</value>
+  </data>
+  <data name="TheSignatureIsnTValidInTheCopy" xml:space="preserve">
+    <value>This PDF was digitally signed, and the signature isn't valid in the changed copy.</value>
+  </data>
+  <data name="Protect" xml:space="preserve">
+    <value>Protect…</value>
+  </data>
+  <data name="APasswordOrLimitsOnPrinting" xml:space="preserve">
+    <value>A password, or limits on printing and copying</value>
+  </data>
+  <data name="Protecting" xml:space="preserve">
+    <value>Protecting…</value>
+  </data>
+  <data name="Protected" xml:space="preserve">
+    <value>Protected</value>
+  </data>
+  <data name="ProtectButton" xml:space="preserve">
+    <value>Protect</value>
+  </data>
+  <data name="PasswordToOpen" xml:space="preserve">
+    <value>Password to open</value>
+  </data>
+  <data name="PasswordToOpenHint" xml:space="preserve">
+    <value>Anyone opening the copy needs it. Use 12 characters or more: shorter ones can be guessed. A forgotten password can't be got back, and Tanjelo keeps no copy.</value>
+  </data>
+  <data name="LimitPrintingCopyingAndChanges" xml:space="preserve">
+    <value>Limit printing, copying and changes</value>
+  </data>
+  <data name="LimitsAreHonouredByReaders" xml:space="preserve">
+    <value>PDF readers honour the limits, but the encryption doesn't enforce them: some programs ignore them.</value>
+  </data>
+  <data name="AllowPrinting" xml:space="preserve">
+    <value>Allow printing</value>
+  </data>
+  <data name="AtFullQuality" xml:space="preserve">
+    <value>Full quality</value>
+  </data>
+  <data name="AtLowQuality" xml:space="preserve">
+    <value>Low quality</value>
+  </data>
+  <data name="NotAtAll" xml:space="preserve">
+    <value>Not at all</value>
+  </data>
+  <data name="AllowCopyingTextAndPictures" xml:space="preserve">
+    <value>Allow copying text and pictures</value>
+  </data>
+  <data name="AllowChangesCommentsAndFormFilling" xml:space="preserve">
+    <value>Allow changes, comments and form filling</value>
+  </data>
+  <data name="PermissionsPassword" xml:space="preserve">
+    <value>Permissions password</value>
+  </data>
+  <data name="PermissionsPasswordHint" xml:space="preserve">
+    <value>Lifts the limits again. It must differ from the password to open.</value>
+  </data>
+  <data name="RemovePassword" xml:space="preserve">
+    <value>Remove password…</value>
+  </data>
+  <data name="ACopyWithoutEncryption" xml:space="preserve">
+    <value>A copy without its password or limits</value>
+  </data>
+  <data name="RemovingThePassword" xml:space="preserve">
+    <value>Removing the password…</value>
+  </data>
+  <data name="PasswordRemoved" xml:space="preserve">
+    <value>Password removed</value>
+  </data>
+  <data name="RemovePasswordButton" xml:space="preserve">
+    <value>Remove password</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="ThisPDFLimitsPrintingCopyingOrChanges" xml:space="preserve">
+    <value>This PDF limits printing, copying or changes, so it takes the password that lifts them, not the one to open it.</value>
+  </data>
+  <data name="ThePasswordAskedForWhenItOpens" xml:space="preserve">
+    <value>The password asked for when the PDF opens.</value>
+  </data>
+  <data name="ItsPasswordToOpenOrItsPermissionsPassword" xml:space="preserve">
+    <value>Its password to open, or its permissions password if it limits printing, copying or changes.</value>
+  </data>
+  <data name="GiveAPasswordToOpenOrLimit" xml:space="preserve">
+    <value>Give a password to open, or limit printing, copying and changes.</value>
+  </data>
+  <data name="ThePermissionsPasswordMustDiffer" xml:space="preserve">
+    <value>The permissions password must differ from the password to open.</value>
+  </data>
+  <data name="ThisPDFIsAlreadyProtected" xml:space="preserve">
+    <value>This PDF is already protected. Remove its password first with Remove password…</value>
+  </data>
+  <data name="ThisPDFIsnTPasswordProtected" xml:space="preserve">
+    <value>This PDF isn't password-protected.</value>
   </data>
 </root>
