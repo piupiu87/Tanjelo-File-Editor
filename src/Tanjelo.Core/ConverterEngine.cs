@@ -37,6 +37,7 @@ public sealed class ConverterEngine
                 new SplitPdfTool(),
                 new OrganizePdfTool(),
                 new PdfPasswordTools(),
+                new SearchablePdfTool(tools),
                 new WatermarkTool(),
                 new OfficeConverter(tools),
                 new LibreOfficeConverter(tools),
@@ -61,7 +62,7 @@ public sealed class ConverterEngine
                 new MoveToFolderAction(),
             ],
             [
-                new CombinePdfOperation(),
+                new CombinePdfOperation(tools),
                 new PageNumbersOperation(),
                 new CombinePptxOperation(),
                 new CollageOperation(),

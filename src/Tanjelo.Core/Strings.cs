@@ -827,4 +827,17 @@ public static class Strings
     public static string OnAllNPages => Get();
     public static string NOfMPages => Get();
     public static string GiveTheTextOfTheWatermark => Get();
+    public static string MakeSearchable => Get();
+    public static string ScannedPagesGetTextYouCanSearch => Get();
+    public static string ReadingTheScannedPages => Get();
+    public static string MadeSearchable => Get();
+    public static string EveryPageAlreadyHasText => Get();
+    public static string OCRFoundNoTextOnTheScannedPages => Get();
+    public static string ThereSNoOCRLanguage => Get();
+    public static string N1PageHadNothingOCRCouldRead => Get();
+    public static string PagesHadNothingOCRCouldRead => Get();
+    public static string SearchablePDF => Get();
+    public static string ThePictureAsAPageWithItsText => Get();
+    public static string OneSearchablePDF => Get();
+    public static string CombineImagesAsSearchablePages => Get();
 }

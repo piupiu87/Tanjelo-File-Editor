@@ -2437,4 +2437,43 @@
   <data name="GiveTheTextOfTheWatermark" xml:space="preserve">
     <value>Give the watermark's text.</value>
   </data>
+  <data name="MakeSearchable" xml:space="preserve">
+    <value>Make searchable</value>
+  </data>
+  <data name="ScannedPagesGetTextYouCanSearch" xml:space="preserve">
+    <value>Scanned pages get text you can search and copy, read with OCR</value>
+  </data>
+  <data name="ReadingTheScannedPages" xml:space="preserve">
+    <value>Reading the scanned pages…</value>
+  </data>
+  <data name="MadeSearchable" xml:space="preserve">
+    <value>Made searchable</value>
+  </data>
+  <data name="EveryPageAlreadyHasText" xml:space="preserve">
+    <value>Every page already has text.</value>
+  </data>
+  <data name="OCRFoundNoTextOnTheScannedPages" xml:space="preserve">
+    <value>OCR found no text it could read on the scanned pages.</value>
+  </data>
+  <data name="ThereSNoOCRLanguage" xml:space="preserve">
+    <value>Windows has no OCR language '{0}'. Installed: {1}.</value>
+  </data>
+  <data name="N1PageHadNothingOCRCouldRead" xml:space="preserve">
+    <value>1 page had nothing OCR could read</value>
+  </data>
+  <data name="PagesHadNothingOCRCouldRead" xml:space="preserve">
+    <value>{0} pages had nothing OCR could read</value>
+  </data>
+  <data name="SearchablePDF" xml:space="preserve">
+    <value>Searchable PDF</value>
+  </data>
+  <data name="ThePictureAsAPageWithItsText" xml:space="preserve">
+    <value>The picture as a PDF page, its text searchable</value>
+  </data>
+  <data name="OneSearchablePDF" xml:space="preserve">
+    <value>One searchable PDF</value>
+  </data>
+  <data name="CombineImagesAsSearchablePages" xml:space="preserve">
+    <value>{0} pictures as pages, their text searchable</value>
+  </data>
 </root>

@@ -243,6 +243,23 @@ A watermark marks a copy; it doesn't protect it, and it can be taken out again.
 
 `tanj convert watermark --text=DRAFT --layout=tiled --opacity=15 report.pdf`
 
+### Make searchable (`searchable-pdf`)
+
+*PDF · Windows' PDF renderer and OCR, PDFsharp*
+
+A quick tool for scans: the pages without text are drawn at 300 DPI and read with Windows' OCR in your language, and
+each word becomes invisible text over it, stretched to its box, so searching and selecting line up with the picture
+and copied text is right. Pages that already have text are left alone, the same test PDF → TXT uses, and a PDF with
+text on every page says so and writes nothing. The copy is `scan-searchable.pdf`, and the card says how many pages
+were read and how many had nothing OCR could read.
+
+It shows when Windows has an OCR language; otherwise the menu's hint says how to add one. Pictures become searchable
+PDFs too: *Searchable PDF* beside *PDF* for one picture, and *One searchable PDF* beside *One PDF* for several (see
+[FORMATS.md](FORMATS.md#images)).
+
+`tanj convert searchable-pdf --language=ja scan.pdf` reads in another installed language; `tanj options searchable-pdf
+scan.pdf` lists them.
+
 ## Editors
 
 Editors open in a window of their own, for work done by hand. They're on the Tools tab when one file is selected, and

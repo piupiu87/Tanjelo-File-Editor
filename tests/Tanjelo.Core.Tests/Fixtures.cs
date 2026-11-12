@@ -192,6 +192,24 @@ sealed class Scratch : IDisposable
         return path;
     }
 
+    /// <summary>
+    /// A scan stored turned the other way by <paramref name="rotation"/> degrees, as some scanners save a page fed in
+    /// sideways, with /Rotate set so that it shows upright, as <see cref="ScannedPdf"/> does.
+    /// </summary>
+    public string TurnedScanPdf(string name, int rotation, params string[] lines)
+    {
+        var path = PathOf(name);
+        using (var image = new MagickImage(TextPicture(lines, 1700, 2200)) { Density = new Density(200, 200, DensityUnit.PixelsPerInch) })
+        {
+            image.Rotate(-rotation);
+            image.Write(path, MagickFormat.Pdf);
+        }
+        using var document = PdfSharp.Pdf.IO.PdfReader.Open(path, PdfSharp.Pdf.IO.PdfDocumentOpenMode.Modify);
+        document.Pages[0].Elements.SetInteger("/Rotate", rotation);
+        document.Save(path);
+        return path;
+    }
+
     /// <summary>A picture of text, such as a screenshot, saved in the format the extension names.</summary>
     public string TextPicture(string name, int width, int height, params string[] lines)
     {

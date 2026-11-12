@@ -89,6 +89,9 @@ static class OptionList
         {
             var settings = string.Join(", ", target.Parameters.Select(p => $"--{p.Key}={p.Value}"));
             output.WriteLine(settings.Length == 0 ? "  It takes no settings." : $"  Settings: {settings}");
+            // Tools that read text with OCR take one of Windows' OCR languages; empty is the user's own.
+            if (target.Parameters.ContainsKey("language"))
+                output.WriteLine($"  --language: an OCR language Windows has ({string.Join(", ", Toolbox.OcrLanguages())}); empty for yours.");
             return;
         }
         foreach (var option in target.Options)
