@@ -2275,4 +2275,100 @@
   <data name="PicturesMadeSmaller" xml:space="preserve">
     <value>{0} → {1}, {2} of {3} pictures made smaller</value>
   </data>
+  <data name="PageNumbers" xml:space="preserve">
+    <value>Page numbers…</value>
+  </data>
+  <data name="NumbersHeaderAndFooterTextAndBates" xml:space="preserve">
+    <value>Numbers, header and footer text, and Bates numbers</value>
+  </data>
+  <data name="NumberingPages" xml:space="preserve">
+    <value>Numbering pages…</value>
+  </data>
+  <data name="PagesNumbered" xml:space="preserve">
+    <value>Pages numbered</value>
+  </data>
+  <data name="AddToThePages" xml:space="preserve">
+    <value>Add to the pages</value>
+  </data>
+  <data name="TopLine" xml:space="preserve">
+    <value>Top line</value>
+  </data>
+  <data name="BottomLine" xml:space="preserve">
+    <value>Bottom line</value>
+  </data>
+  <data name="TopLineAt" xml:space="preserve">
+    <value>Top line at</value>
+  </data>
+  <data name="BottomLineAt" xml:space="preserve">
+    <value>Bottom line at</value>
+  </data>
+  <data name="LinesHint" xml:space="preserve">
+    <value>{page}, {pages}, {date}, {file} and {bates} are filled in for each page. Left empty, the line isn't added.</value>
+  </data>
+  <data name="PagePreset" xml:space="preserve">
+    <value>Page {page}</value>
+  </data>
+  <data name="PageOfPreset" xml:space="preserve">
+    <value>Page {page} of {pages}</value>
+  </data>
+  <data name="StartAt" xml:space="preserve">
+    <value>Start at</value>
+  </data>
+  <data name="StartAtHint" xml:space="preserve">
+    <value>The number of the first page that gets one.</value>
+  </data>
+  <data name="LeaveOutTheFirst" xml:space="preserve">
+    <value>Leave out the first</value>
+  </data>
+  <data name="PagesUnit" xml:space="preserve">
+    <value>pages</value>
+  </data>
+  <data name="LeaveOutHint" xml:space="preserve">
+    <value>Such as a cover: those pages get no number.</value>
+  </data>
+  <data name="FontSize" xml:space="preserve">
+    <value>Font size</value>
+  </data>
+  <data name="DistanceFromTheEdge" xml:space="preserve">
+    <value>Distance from the edge</value>
+  </data>
+  <data name="BatesPrefix" xml:space="preserve">
+    <value>Bates prefix</value>
+  </data>
+  <data name="BatesPrefixHint" xml:space="preserve">
+    <value>Bates numbers carry on across the PDFs, in the order they were selected.</value>
+  </data>
+  <data name="BatesDigits" xml:space="preserve">
+    <value>Digits</value>
+  </data>
+  <data name="FirstBatesNumber" xml:space="preserve">
+    <value>First Bates number</value>
+  </data>
+  <data name="BatesSuffix" xml:space="preserve">
+    <value>Bates suffix</value>
+  </data>
+  <data name="GiveTextForTheTopOrBottomLine" xml:space="preserve">
+    <value>Give text for the top or the bottom line.</value>
+  </data>
+  <data name="BatesRange" xml:space="preserve">
+    <value>{0}–{1}</value>
+  </data>
+  <data name="BatesRangeOf" xml:space="preserve">
+    <value>{0}: {1}–{2}</value>
+  </data>
+  <data name="FirstNumberedPage" xml:space="preserve">
+    <value>First numbered page</value>
+  </data>
+  <data name="TopAndBottom" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="Bates" xml:space="preserve">
+    <value>Bates</value>
+  </data>
+  <data name="Pt" xml:space="preserve">
+    <value>pt</value>
+  </data>
+  <data name="Mm" xml:space="preserve">
+    <value>mm</value>
+  </data>
 </root>

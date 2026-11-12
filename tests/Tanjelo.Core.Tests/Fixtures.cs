@@ -58,12 +58,14 @@ static class Env
         Engine().GetMenu(inputs).Targets.Where(t => t.Section == section).Select(t => t.Key).ToList();
 }
 
-/// <summary>Lets PDFsharp draw text with the fonts installed in Windows. It can only be set once, before any font is used.</summary>
+/// <summary>
+/// Lets PDFsharp draw text with the fonts installed in Windows, the way the app does. It can only be told once, before
+/// any font is used, so it's done as the tests load.
+/// </summary>
 static class PdfFonts
 {
-    static PdfFonts() => PdfSharp.Fonts.GlobalFontSettings.UseWindowsFontsUnderWindows = true;
-
-    public static void Ready() { }
+    [System.Runtime.CompilerServices.ModuleInitializer]
+    public static void Ready() => Converters.PdfLettering.EnsureFonts();
 }
 
 /// <summary>A scratch folder per test, with generators for the files the converters read.</summary>

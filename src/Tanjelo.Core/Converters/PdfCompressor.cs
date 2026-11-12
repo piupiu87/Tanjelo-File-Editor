@@ -198,20 +198,6 @@ static class PdfCompressor
 
     static PdfItem? Resolve(PdfItem? item) => item is PdfReference reference ? reference.Value : item;
 
-    /// <summary>A PDF transformation matrix: x' = a·x + c·y + e, y' = b·x + d·y + f.</summary>
-    internal readonly record struct Affine(double A, double B, double C, double D, double E, double F)
-    {
-        public static Affine Identity => new(1, 0, 0, 1, 0, 0);
-
-        public static Affine Scale(double factor) => new(factor, 0, 0, factor, 0, 0);
-
-        /// <summary>This transformation, then <paramref name="next"/>, as PDF's cm concatenates them.</summary>
-        public Affine Then(Affine next) => new(
-            A * next.A + B * next.C, A * next.B + B * next.D,
-            C * next.A + D * next.C, C * next.B + D * next.D,
-            E * next.A + F * next.C + next.E, E * next.B + F * next.D + next.F);
-    }
-
     // ---- Re-encoding pictures
 
     /// <summary>The new data for a picture and its size, or null when it's left as it is.</summary>

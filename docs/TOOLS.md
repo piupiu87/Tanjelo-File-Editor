@@ -198,6 +198,32 @@ and shows the largest before and after.
 
 `tanj convert compress --quality=low report.pdf`
 
+### Page numbers… (`page-numbers`)
+
+*One or more PDFs · PDFsharp, Windows' fonts*
+
+Adds a line of text at the top and one at the bottom of every page, each on the left, in the middle or on the right,
+and saves `report-numbered.pdf`. By default the bottom line is the page number, in the middle.
+
+- `{page}`, `{pages}`, `{date}`, `{file}` and `{bates}` are filled in for each page. Buttons fill a line with "1",
+  "Page 1", "Page 1 of 12", "1 / 12" or a Bates number.
+- *Start at* is the first number; *Leave out the first* pages, such as a cover, get none.
+- Font size (10 pt), colour (black) and the distance from the edge of the page as it's seen (12 mm).
+- **Bates numbers** (`{bates}`): a prefix, the number of digits (6), the first number and a suffix. With several PDFs
+  selected, the numbers carry on across them in the order selected, and the card lists each file's range, such as
+  `ABC000001–ABC000012`.
+- The lines are real text, so Bates numbers can be searched. They sit where the page is seen, on turned pages, pages
+  with a crop box and pages scaled by `/UserUnit` too, and can't be moved by content that leaves the drawing state
+  changed.
+- Text is in Arial; text with letters Arial lacks, such as Chinese, Japanese, Korean or Hindi, takes the first of
+  Segoe UI, Microsoft YaHei, Yu Gothic, Malgun Gothic, Nirmala UI and Segoe UI Symbol that has them all. Only the
+  letters used are embedded.
+
+```
+tanj convert page-numbers --bottom="Page {page} of {pages}" --skip=1 report.pdf
+tanj convert page-numbers --bottom={bates} --bottom-place=right --bates-prefix=ABC a.pdf b.pdf c.pdf
+```
+
 ## Editors
 
 Editors open in a window of their own, for work done by hand. They're on the Tools tab when one file is selected, and

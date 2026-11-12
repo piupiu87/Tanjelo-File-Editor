@@ -45,8 +45,12 @@ public sealed record Condition(string Name, params string[] Values)
 {
     public Condition? Or { get; init; }
 
+    /// <summary>Holds when the other option's value contains one of <see cref="Values"/>, such as a line with "{bates}" in it.</summary>
+    public bool Contains { get; init; }
+
     public bool Holds(IReadOnlyDictionary<string, string> values) =>
-        (values.TryGetValue(Name, out var value) && Values.Contains(value)) || Or?.Holds(values) == true;
+        (values.TryGetValue(Name, out var value) && Values.Any(v => Contains ? value.Contains(v, StringComparison.OrdinalIgnoreCase) : value == v))
+        || Or?.Holds(values) == true;
 }
 
 /// <summary>
@@ -88,6 +92,9 @@ public sealed record Option(string Name, string Label, OptionKind Kind, string D
 
     /// <summary>For passwords: the dialog asks for it twice and tanj, when it prompts, too, so a typo can't lock a file.</summary>
     public bool Repeat { get; init; }
+
+    /// <summary>For text: values the dialog offers to fill the field with, such as "Page {page} of {pages}", each with a label.</summary>
+    public IReadOnlyList<Choice> Presets { get; init; } = [];
 
     /// <summary>Whether this option applies given the other values; a hidden option keeps its value but isn't used.</summary>
     public bool IsShown(IReadOnlyDictionary<string, string> values) => ShownWhen?.Holds(values) ?? true;

@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Data.Pdf;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
@@ -88,6 +89,19 @@ public sealed class PdfConverter : IConverter
             throw new ConversionException(Strings.ThisPDFIsPasswordProtected, ex);
         }
     }
+
+    /// <summary>Opens a PDF held in memory, such as a preview's one changed page.</summary>
+    internal static async Task<PdfDocument> LoadAsync(byte[] pdf)
+    {
+        var stream = new InMemoryRandomAccessStream();
+        await stream.WriteAsync(pdf.AsBuffer());
+        stream.Seek(0);
+        return await PdfDocument.LoadFromStreamAsync(stream);
+    }
+
+    /// <summary>The first page of a PDF in memory, such as a changed copy of one page, drawn by Windows for a preview.</summary>
+    internal static async Task<byte[]> PreviewAsync(byte[] pdf, int maxSize) =>
+        (await RenderPagePngAsync(await LoadAsync(pdf), 0, 300, (uint)maxSize)).Png;
 
     /// <summary>One page as a bitmap at <paramref name="dpi"/>, shrunk if needed so neither side is longer than <paramref name="maxSide"/> pixels.</summary>
     internal static async Task<SoftwareBitmap> RenderPageAsync(PdfDocument document, int index, double dpi, uint maxSide = uint.MaxValue)

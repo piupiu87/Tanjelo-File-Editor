@@ -1580,4 +1580,7 @@
   <data name="IsnTTheSameInBothBoxes" xml:space="preserve">
     <value>isn't the same in both boxes</value>
   </data>
+  <data name="FillWith" xml:space="preserve">
+    <value>Fill the {0} with {1}</value>
+  </data>
 </root>

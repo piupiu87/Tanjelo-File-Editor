@@ -61,6 +61,7 @@ public sealed class ConverterEngine
             ],
             [
                 new CombinePdfOperation(),
+                new PageNumbersOperation(),
                 new CombinePptxOperation(),
                 new CollageOperation(),
                 new JoinVideosOperation(tools),

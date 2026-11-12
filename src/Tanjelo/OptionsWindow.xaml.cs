@@ -166,7 +166,8 @@ public partial class OptionsWindow : Window
         if (input is not null && option.Kind != OptionKind.Toggle) AutomationProperties.SetName(input, option.Label);
         if (input is not null && option.Hint is { } help) AutomationProperties.SetHelpText(input, help);
         row.Children.Add(view);
-        if (option.Hint is { } hint && option.Kind != OptionKind.Text)
+        // A text box shows its hint inside while empty; one with ready-made values, below too, as it rarely is.
+        if (option.Hint is { } hint && (option.Kind != OptionKind.Text || option.Presets.Count > 0))
             row.Children.Add(new TextBlock
             {
                 Text = hint,
@@ -276,7 +277,22 @@ public partial class OptionsWindow : Window
         box.Tag = option.Hint;
         box.Text = _values[option.Name];
         box.TextChanged += (_, _) => Set(option.Name, box.Text);
-        return (box, box);
+        _show[option.Name] = value => box.Text = value;
+        if (option.Presets.Count == 0) return (box, box);
+
+        // Ready-made values that fill the box, after it in Tab order.
+        var presets = new WrapPanel { Margin = new Thickness(0, 6, 0, -6) };
+        foreach (var preset in option.Presets)
+        {
+            var fill = new Button { Content = preset.Label, Style = (Style)FindResource("SubtleButton"), Margin = new Thickness(0, 0, 6, 6), ToolTip = preset.Value };
+            AutomationProperties.SetName(fill, string.Format(Strings.FillWith, option.Label.ToLowerInvariant(), preset.Label));
+            fill.Click += (_, _) => box.Text = preset.Value;
+            presets.Children.Add(fill);
+        }
+        var panel = new StackPanel();
+        panel.Children.Add(box);
+        panel.Children.Add(presets);
+        return (panel, box);
     }
 
     (FrameworkElement, Control?) ColourField(Option option)

@@ -112,9 +112,12 @@ static class OptionList
             output.WriteLine($"  {$"--{option.Name}={value}",-22} {option.Label}: {allowed}{when}");
             if (option.Hint is { } hint)
                 output.WriteLine($"  {"",-22} {hint}");
+            if (option.Presets.Count > 0)
+                output.WriteLine($"  {"",-22} Such as: {string.Join(", ", option.Presets.Select(p => $"\"{p.Value}\""))}");
         }
     }
 
     public static string ShownWhen(Condition condition) =>
-        $"--{condition.Name}={string.Join("|", condition.Values)}" + (condition.Or is { } or ? " or " + ShownWhen(or) : "");
+        (condition.Contains ? $"{string.Join(" or ", condition.Values)} in --{condition.Name}" : $"--{condition.Name}={string.Join("|", condition.Values)}")
+        + (condition.Or is { } or ? " or " + ShownWhen(or) : "");
 }
