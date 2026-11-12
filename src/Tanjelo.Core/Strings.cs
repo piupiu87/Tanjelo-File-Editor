@@ -893,4 +893,7 @@ public static class Strings
     public static string ThereSNothingToFlatten => Get();
     public static string N1FieldHadNoLook => Get();
     public static string FieldsHadNoLook => Get();
+    public static string IsnTAPDFOrAPicture => Get();
+    public static string PDFsPicturesAndDocumentsInTheOrderSelected => Get();
+    public static string InTheOrderSelectedABookmarkEach => Get();
 }

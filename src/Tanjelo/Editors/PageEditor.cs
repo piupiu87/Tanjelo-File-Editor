@@ -12,7 +12,15 @@ using Shapes = System.Windows.Shapes;
 namespace Tanjelo.Editors;
 
 /// <summary>One page in the page editor: which PDF and page it is, how far it's turned, and an id that tells copies apart.</summary>
-sealed record PageItem(int Source, int Index, int Rotation, int Id);
+sealed record PageItem(int Source, int Index, int Rotation, int Id)
+{
+    /// <summary>A blank page, with no PDF of its own, is shown the size of the page it was put after.</summary>
+    public static PageItem Blank(int id, (double Width, double Height) size) => new(-1, -1, 0, id) { BlankSize = size };
+
+    public bool IsBlank => Source < 0;
+
+    public (double Width, double Height) BlankSize { get; init; }
+}
 
 /// <summary>Where dragged pages land and how they move, apart from the screen.</summary>
 static class PageMoves
@@ -130,6 +138,8 @@ sealed class PageEditor : Editor<ImmutableList<PageItem>>
         AddButton("", Strings.Copy, Strings.CopyTheSelectedPagesCtrlD, Duplicate);
         AddButton("", Strings.Delete, Strings.DeleteTheSelectedPagesDelete, Delete);
         AddButton("", Strings.AddPages, Strings.AddThePagesOfAnotherPDFAfter, () => _ = PickAndInsertAsync(), always: true);
+        AddButton("", Strings.BlankPage, Strings.InsertABlankPageAfterTheSelection, InsertBlank, always: true);
+        AddButton("", Strings.AddPictures, Strings.AddPicturesAsPagesAfterTheSelection, () => _ = PickPicturesAsync(), always: true);
         _onlySelected.SetResourceReference(FrameworkElement.StyleProperty, "Check");
         _onlySelected.Checked += (_, _) => RaiseUpdated();
         _onlySelected.Unchecked += (_, _) => RaiseUpdated();
@@ -173,7 +183,7 @@ sealed class PageEditor : Editor<ImmutableList<PageItem>>
         // Other PDFs get their letters in the order their pages first appear: b, c…
         var others = pages.Where(p => p.Source > 0).Select(p => p.Source).Distinct().ToList();
         var letters = others.Select((source, i) => (source, i + 1)).ToDictionary(x => x.source, x => x.Item2);
-        var list = PageList.Format(pages.Select(p => new PageList.Page(p.Source == 0 ? 0 : letters[p.Source], p.Index, p.Rotation)).ToList());
+        var list = PageList.Format(pages.Select(p => p.IsBlank ? PageList.Page.Blank : new PageList.Page(p.Source == 0 ? 0 : letters[p.Source], p.Index, p.Rotation)).ToList());
         return _target.WithParameters(new Dictionary<string, string>
         {
             ["pages"] = list,
@@ -199,7 +209,7 @@ sealed class PageEditor : Editor<ImmutableList<PageItem>>
 
     Tile NewTile(PageItem page)
     {
-        var (width, height) = _sizes[page.Source][page.Index];
+        var (width, height) = page.IsBlank ? page.BlankSize : _sizes[page.Source][page.Index];
         var scale = Thumb / Math.Max(1, Math.Max(width, height));
         var picture = new Image { Stretch = Stretch.Fill };
         RenderOptions.SetBitmapScalingMode(picture, BitmapScalingMode.HighQuality);
@@ -217,7 +227,7 @@ sealed class PageEditor : Editor<ImmutableList<PageItem>>
         };
         paper.SetResourceReference(Border.BorderBrushProperty, "FieldBorder");
         var label = new TextBlock { FontSize = 12, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 6, 0, 0) };
-        label.Text = page.Source == 0 ? $"{page.Index + 1}" : $"{(char)('a' + page.Source)}{page.Index + 1}";
+        label.Text = page.IsBlank ? Strings.Blank : page.Source == 0 ? $"{page.Index + 1}" : $"{(char)('a' + page.Source)}{page.Index + 1}";
         var stack = new StackPanel();
         stack.Children.Add(new Grid { Width = Thumb + 4, Height = Thumb + 4, Children = { paper } });
         stack.Children.Add(label);
@@ -229,7 +239,7 @@ sealed class PageEditor : Editor<ImmutableList<PageItem>>
             CornerRadius = new CornerRadius(6),
             BorderThickness = new Thickness(2),
             Child = stack,
-            ToolTip = string.Format(Strings.Page, Path.GetFileName(_paths[page.Source]), page.Index + 1),
+            ToolTip = page.IsBlank ? Strings.ABlankPage : string.Format(Strings.Page, Path.GetFileName(_paths[page.Source]), page.Index + 1),
         };
         if (_pictures.TryGetValue((page.Source, page.Index), out var known)) picture.Source = known;
         return new Tile { Root = root, Paper = paper, Picture = picture, Turn = turn, Label = label };
@@ -321,31 +331,97 @@ sealed class PageEditor : Editor<ImmutableList<PageItem>>
         if (!moved.SequenceEqual(State)) Commit(moved);
     }
 
-    /// <summary>Adds every page of another PDF after the selection (or at the end), selected.</summary>
-    internal async Task InsertAsync(string path)
+    /// <summary>Opens another PDF to take pages from, shown from <paramref name="pdf"/>; its number, or null with the problem shown.</summary>
+    /// <param name="path">What the engine takes the pages from: the PDF, or a picture.</param>
+    async Task<int?> AddSourceAsync(string path, string pdf)
     {
         PdfThumbnails thumbnails;
         try
         {
-            thumbnails = await PdfThumbnails.OpenAsync(path);
+            thumbnails = await PdfThumbnails.OpenAsync(pdf);
         }
         catch (Exception ex) when (ex is ConversionException or IOException or UnauthorizedAccessException)
         {
             _problem = string.Format(Strings.CouldnTAdd, Path.GetFileName(path), ex.Message);
             RaiseUpdated();
-            return;
+            return null;
         }
         var sizes = await Task.Run(() => Enumerable.Range(0, thumbnails.Count).Select(thumbnails.Size).ToList());
-        var source = _sources.Count;
         _sources.Add(thumbnails);
         _paths.Add(Path.GetFullPath(path));
         _sizes.Add(sizes);
-        var added = Enumerable.Range(0, thumbnails.Count).Select(i => new PageItem(source, i, 0, _nextId++)).ToList();
+        return _sources.Count - 1;
+    }
+
+    /// <summary>Adds every page of another PDF after the selection (or at the end), selected.</summary>
+    internal async Task InsertAsync(string path)
+    {
+        if (await AddSourceAsync(path, path) is not { } source) return;
+        var added = Enumerable.Range(0, _sources[source].Count).Select(i => new PageItem(source, i, 0, _nextId++)).ToList();
         var places = SelectedPlaces();
         var at = places.Count > 0 ? places[^1] + 1 : State.Count;
         Select(added.Select(p => p.Id));
         _problem = null;
         Commit(State.InsertRange(at, added));
+    }
+
+    /// <summary>Puts a blank page after the selection (or at the end), the size of the page before it as it shows, selected.</summary>
+    internal void InsertBlank()
+    {
+        var places = SelectedPlaces();
+        var at = places.Count > 0 ? places[^1] + 1 : State.Count;
+        var neighbour = State[Math.Max(0, at - 1)];
+        var (width, height) = neighbour.IsBlank ? neighbour.BlankSize : _sizes[neighbour.Source][neighbour.Index];
+        var blank = PageItem.Blank(_nextId++, neighbour.Rotation is 90 or 270 ? (height, width) : (width, height));
+        Select([blank.Id]);
+        _problem = null;
+        Commit(State.Insert(at, blank));
+    }
+
+    /// <summary>
+    /// Adds each picture as a page after the selection, as One PDF makes them. The engine makes the same pages from the
+    /// pictures when saving; the ones made here are only for the thumbnails, in a scratch folder.
+    /// </summary>
+    internal async Task InsertPicturesAsync(IReadOnlyList<string> pictures)
+    {
+        _scratch ??= OutputPaths.CreateTemp();
+        var at = SelectedPlaces() is { Count: > 0 } places ? places[^1] + 1 : State.Count;
+        var added = new List<PageItem>();
+        foreach (var picture in pictures)
+        {
+            string page;
+            try
+            {
+                page = await Task.Run(() => OrganizePdfTool.PictureAsPage(picture, _scratch.Path));
+            }
+            catch (Exception ex) when (ex is ConversionException or IOException or UnauthorizedAccessException or ImageMagick.MagickException)
+            {
+                _problem = string.Format(Strings.CouldnTAdd, Path.GetFileName(picture), ex.Message);
+                RaiseUpdated();
+                continue;
+            }
+            if (await AddSourceAsync(picture, page) is { } source)
+                added.Add(new PageItem(source, 0, 0, _nextId++));
+        }
+        if (added.Count == 0) return;
+        Select(added.Select(p => p.Id));
+        _problem = null;
+        Commit(State.InsertRange(at, added));
+    }
+
+    async Task PickPicturesAsync()
+    {
+        var dialog = new OpenFileDialog { Title = Strings.AddPicturesAsPages, Filter = Strings.PicturesFilter, Multiselect = true, InitialDirectory = Path.GetDirectoryName(_file) };
+        if (dialog.ShowDialog(Window.GetWindow(_scroller)) == true) await InsertPicturesAsync(dialog.FileNames);
+    }
+
+    /// <summary>A picture's page, made for the thumbnails, goes when the editor does.</summary>
+    OutputPaths.TempDirectory? _scratch;
+
+    public override void Close()
+    {
+        _closing.Cancel();
+        _scratch?.Dispose();
     }
 
     async Task PickAndInsertAsync()
@@ -524,7 +600,7 @@ sealed class PageEditor : Editor<ImmutableList<PageItem>>
         foreach (var page in State)
         {
             var key = (page.Source, page.Index);
-            if (_pictures.ContainsKey(key) || _asked.Contains(key)) continue;
+            if (page.IsBlank || _pictures.ContainsKey(key) || _asked.Contains(key)) continue;
             var y = _tiles[page.Id].Root.TranslatePoint(new Point(), _surface).Y;
             if (y + Thumb < top || y > bottom) continue;
             _asked.Add(key);

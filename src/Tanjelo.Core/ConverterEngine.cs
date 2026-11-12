@@ -86,6 +86,20 @@ public sealed class ConverterEngine
         Options = options ?? new ConverterOptions();
         _converters = converters;
         _batchOperations = batchOperations;
+        // Merging makes PDFs of pictures and documents with their own converters.
+        foreach (var merge in batchOperations.OfType<MergePdfOperation>()) merge.Engine = this;
+    }
+
+    /// <summary>Whether some converter makes a PDF of this file, such as a picture or a Word document.</summary>
+    internal bool CanMakePdf(string input) => PerFileTargets(input).Any(x => x.Target.Key == "pdf");
+
+    /// <summary>Makes a PDF of the file with the converter that offers it, into <paramref name="folder"/>, and returns its path.</summary>
+    internal async Task<string> MakePdfAsync(string input, string folder, JobContext ctx)
+    {
+        var (target, converter) = PerFileTargets(input).FirstOrDefault(x => x.Target.Key == "pdf");
+        if (converter is null) throw new ConversionException(string.Format(Strings.CanTConvertThisFileTo, Strings.PDF));
+        using (OutputPaths.Into(folder))
+            return (await converter.ConvertAsync(input, target, ctx)).First(o => Formats.Key(o) == "pdf");
     }
 
     /// <summary>Formats every selected file can become, plus whole-selection operations.</summary>

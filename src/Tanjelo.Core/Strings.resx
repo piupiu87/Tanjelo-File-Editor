@@ -1475,13 +1475,13 @@
     <value>In their new order, such as 3,1-2,5r90: r90, r180 and r270 turn a page clockwise, a page listed twice is copied, </value>
   </data>
   <data name="AndAPageLeftOutIsDeleted" xml:space="preserve">
-    <value>and a page left out is deleted. Pages of the PDFs in --with are b1, b2…, then c1…</value>
+    <value>a page left out is deleted, and blank adds a blank page the size of the one before it. Pages of the PDFs or pictures in --with are b1, b2…, then c1…</value>
   </data>
   <data name="PagesFrom" xml:space="preserve">
     <value>Pages from</value>
   </data>
   <data name="OtherPDFsToTakePagesFromSeparated" xml:space="preserve">
-    <value>Other PDFs to take pages from, separated by |.</value>
+    <value>Other PDFs, or pictures, to take pages from, separated by |.</value>
   </data>
   <data name="CouldnTFindToTakePagesFrom" xml:space="preserve">
     <value>Couldn't find {0} to take pages from.</value>
@@ -2634,5 +2634,14 @@
   </data>
   <data name="FieldsHadNoLook" xml:space="preserve">
     <value>{0} form fields had nothing to show them by, so they were left as they are.</value>
+  </data>
+  <data name="IsnTAPDFOrAPicture" xml:space="preserve">
+    <value>{0} isn't a PDF or a picture, so it has no pages to take.</value>
+  </data>
+  <data name="PDFsPicturesAndDocumentsInTheOrderSelected" xml:space="preserve">
+    <value>PDFs, pictures and documents, in the order selected, a bookmark each</value>
+  </data>
+  <data name="InTheOrderSelectedABookmarkEach" xml:space="preserve">
+    <value>In the order selected, a bookmark each</value>
   </data>
 </root>

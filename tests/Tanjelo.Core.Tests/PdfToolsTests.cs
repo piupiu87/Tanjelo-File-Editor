@@ -46,13 +46,15 @@ public class PdfToolsTests
     }
 
     [Fact]
-    public void Merge_is_offered_only_for_two_or_more_pdfs()
+    public void Merge_is_offered_for_two_or_more_files_with_a_pdf_among_them()
     {
         using var scratch = new Scratch();
         var pdf = scratch.Pdf("a.pdf");
         Assert.Contains("merge-pdf", Env.Keys(pdf, scratch.Pdf("b.pdf")));
         Assert.DoesNotContain("merge-pdf", Env.Keys(pdf));
-        Assert.DoesNotContain("merge-pdf", Env.Keys(pdf, scratch.Image("c.png")));
+        Assert.Contains("merge-pdf", Env.Keys(pdf, scratch.Image("c.png"))); // a picture among PDFs is made a page
+        Assert.DoesNotContain("merge-pdf", Env.Keys(scratch.Image("d.png"), scratch.PathOf("c.png"))); // pictures alone have One PDF
+        Assert.DoesNotContain("merge-pdf", Env.Keys(pdf, scratch.Text("e.zip", "not a document")));
     }
 
     [Fact]
