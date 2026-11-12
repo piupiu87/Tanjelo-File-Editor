@@ -161,7 +161,7 @@ public sealed class OrganizePdfTool : IConverter
         return Losses(document);
     }
 
-    static string? Losses(PdfDocument document)
+    internal static string? Losses(PdfDocument document)
     {
         var form = document.Internals.Catalog.Elements.GetDictionary("/AcroForm")?.Elements.GetArray("/Fields") is { Elements.Count: > 0 };
         var links = document.Pages.Cast<PdfPage>().Any(page =>

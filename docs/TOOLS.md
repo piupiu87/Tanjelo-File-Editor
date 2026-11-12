@@ -260,6 +260,33 @@ PDFs too: *Searchable PDF* beside *PDF* for one picture, and *One searchable PDF
 `tanj convert searchable-pdf --language=ja scan.pdf` reads in another installed language; `tanj options searchable-pdf
 scan.pdf` lists them.
 
+### Split… (`split-pdf-parts`) and Save pictures (`save-pictures`)
+
+*PDF · PDFsharp, PdfPig*
+
+The quick *Split into pages* makes a PDF of every page. **Split…** makes parts, in a `report parts` folder:
+
+- every N pages (2);
+- at the top-level bookmarks, each part named after its bookmark, such as `report-01 Introduction.pdf`;
+- at listed pages, such as `1-3,4-8,9-`;
+- each under a size in MB, filled with as many pages as fit, measured by saving them. A page bigger than that on its
+  own makes a part by itself, and the card says which.
+
+Pages are copied as they are, and the bookmarks into each part go with it. Form fields and links between pages are
+lost, as in Organize pages; the dialog says so.
+
+**Save pictures**, a quick tool, puts the pictures in a PDF in a `report pictures` folder, named by page, such as
+`report-p03-1.jpg`. JPEGs are written byte for byte, except CMYK ones, which are turned RGB so they look right
+everywhere; JPEG 2000 is written as `.jp2`, and everything else as PNG, with transparency where the PDF gives the
+picture a soft mask. A picture shown on several pages is saved once; stencil masks and pictures under 16 pixels are
+left out, and kinds Tanjelo can't decode, such as JBIG2 scans, are counted on the card. A PDF without pictures says
+"Drawings aren't pictures: PDF → PNG saves whole pages."
+
+```
+tanj convert split-pdf-parts --by=bookmarks report.pdf
+tanj convert split-pdf-parts --by=size --size=9.5 report.pdf
+```
+
 ## Editors
 
 Editors open in a window of their own, for work done by hand. They're on the Tools tab when one file is selected, and

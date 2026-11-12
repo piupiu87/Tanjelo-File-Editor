@@ -35,6 +35,8 @@ public sealed class ConverterEngine
                 new PdfTextConverter(),
                 new PdfSlidesConverter(),
                 new SplitPdfTool(),
+                new SplitPdfPartsTool(),
+                new SavePicturesTool(),
                 new OrganizePdfTool(),
                 new PdfPasswordTools(),
                 new SearchablePdfTool(tools),

@@ -2476,4 +2476,79 @@
   <data name="CombineImagesAsSearchablePages" xml:space="preserve">
     <value>{0} pictures as pages, their text searchable</value>
   </data>
+  <data name="SplitParts" xml:space="preserve">
+    <value>Split…</value>
+  </data>
+  <data name="EveryFewPagesAtBookmarksOrUnderASize" xml:space="preserve">
+    <value>Every few pages, at bookmarks, at listed pages or under a size</value>
+  </data>
+  <data name="SplitBy" xml:space="preserve">
+    <value>Split</value>
+  </data>
+  <data name="EveryFewPages" xml:space="preserve">
+    <value>Every few pages</value>
+  </data>
+  <data name="AtBookmarks" xml:space="preserve">
+    <value>At bookmarks</value>
+  </data>
+  <data name="AtListedPages" xml:space="preserve">
+    <value>At listed pages</value>
+  </data>
+  <data name="UnderASize" xml:space="preserve">
+    <value>Under a size</value>
+  </data>
+  <data name="SplitHint" xml:space="preserve">
+    <value>Bookmarks into each part are kept; form fields and links between pages are lost, as in Organize pages.</value>
+  </data>
+  <data name="EveryHowManyPages" xml:space="preserve">
+    <value>Pages in each part</value>
+  </data>
+  <data name="PartsHint" xml:space="preserve">
+    <value>Each part's pages, such as 1-3,4-8,9- (9 to the end).</value>
+  </data>
+  <data name="AtMost" xml:space="preserve">
+    <value>Each part at most</value>
+  </data>
+  <data name="ThisPDFHasNoBookmarksToSplitAt" xml:space="preserve">
+    <value>This PDF has no bookmarks to split at.</value>
+  </data>
+  <data name="BeforeTheFirstBookmark" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="N1PageIsBiggerThanOnItsOwn" xml:space="preserve">
+    <value>Page {0} is bigger than {1} on its own, so it's a part by itself.</value>
+  </data>
+  <data name="PagesAreBiggerThanOnTheirOwn" xml:space="preserve">
+    <value>Pages {0} are bigger than {1} on their own, so each is a part by itself.</value>
+  </data>
+  <data name="NParts" xml:space="preserve">
+    <value>{0} parts</value>
+  </data>
+  <data name="OnePart" xml:space="preserve">
+    <value>1 part</value>
+  </data>
+  <data name="PartsFilledUpTo" xml:space="preserve">
+    <value>Filled up to {0} each, measured as they're saved</value>
+  </data>
+  <data name="SavePictures" xml:space="preserve">
+    <value>Save pictures</value>
+  </data>
+  <data name="ThePicturesInItAsFiles" xml:space="preserve">
+    <value>The pictures in it, as files</value>
+  </data>
+  <data name="SavingThePictures" xml:space="preserve">
+    <value>Saving the pictures…</value>
+  </data>
+  <data name="PicturesSaved" xml:space="preserve">
+    <value>Pictures saved</value>
+  </data>
+  <data name="ThisPDFHasNoPictures" xml:space="preserve">
+    <value>This PDF has no pictures. Drawings aren't pictures: PDF → PNG saves whole pages.</value>
+  </data>
+  <data name="N1PictureCouldnTBeSaved" xml:space="preserve">
+    <value>1 picture couldn't be saved: Tanjelo can't decode its kind.</value>
+  </data>
+  <data name="PicturesCouldnTBeSaved" xml:space="preserve">
+    <value>{0} pictures couldn't be saved: Tanjelo can't decode their kind.</value>
+  </data>
 </root>
