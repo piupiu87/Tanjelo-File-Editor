@@ -2233,4 +2233,46 @@
   <data name="ThisPDFIsnTPasswordProtected" xml:space="preserve">
     <value>This PDF isn't password-protected.</value>
   </data>
+  <data name="SmallerPicturesInsideIt" xml:space="preserve">
+    <value>Its pictures made smaller, at high, medium or low quality</value>
+  </data>
+  <data name="PictureQuality" xml:space="preserve">
+    <value>Picture quality</value>
+  </data>
+  <data name="High" xml:space="preserve">
+    <value>High</value>
+  </data>
+  <data name="Medium" xml:space="preserve">
+    <value>Medium</value>
+  </data>
+  <data name="Low" xml:space="preserve">
+    <value>Low</value>
+  </data>
+  <data name="PictureQualityHint" xml:space="preserve">
+    <value>Pictures are kept at 200, 150 or 100 pixels per inch for the largest size they're shown at, as JPEG at quality 85, 75 or 60. Text, drawings and screenshots stay sharp.</value>
+  </data>
+  <data name="AlreadyAsSmallAsTanjeloCanMakeIt" xml:space="preserve">
+    <value>Already as small as Tanjelo can make it.</value>
+  </data>
+  <data name="PicturesInIt" xml:space="preserve">
+    <value>Pictures</value>
+  </data>
+  <data name="NPicturesShareOfTheFile" xml:space="preserve">
+    <value>{0}, {1} of the file</value>
+  </data>
+  <data name="OnePictureShareOfTheFile" xml:space="preserve">
+    <value>1, {0} of the file</value>
+  </data>
+  <data name="NoPicturesInThisPDF" xml:space="preserve">
+    <value>None, so there's little to gain</value>
+  </data>
+  <data name="LargestPicture" xml:space="preserve">
+    <value>Largest</value>
+  </data>
+  <data name="LeftAsItIs" xml:space="preserve">
+    <value>left as it is</value>
+  </data>
+  <data name="PicturesMadeSmaller" xml:space="preserve">
+    <value>{0} → {1}, {2} of {3} pictures made smaller</value>
+  </data>
 </root>

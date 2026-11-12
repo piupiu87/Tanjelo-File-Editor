@@ -45,7 +45,7 @@ settings, starting from their defaults rather than the dialog's last values.
 
 ### Compress… (`compress`)
 
-*Images, video and audio · Magick.NET, ffmpeg*
+*Images, video, audio and PDF · Magick.NET, ffmpeg, PDFsharp*
 
 Choose a percentage of the original size or a target size in MB, and optionally smaller dimensions.
 
@@ -55,6 +55,8 @@ Choose a percentage of the original size or a target size in MB, and optionally 
 - Lossy audio keeps its format; lossless audio becomes MP3.
 
 `tanj convert compress --mode=size --size=8 clip.mp4`
+
+For a PDF, the one choice is *Picture quality* (see [PDF tools](#compress-for-pdfs-compress)).
 
 ### Metadata… (`metadata`)
 
@@ -175,6 +177,26 @@ Edge, Chrome and Acrobat open AES-256 PDFs, but Windows' own PDF reader can't, s
 protected copy (to PNG, say) until its password is removed.
 
 Organize pages, Split and Merge copy pages out of a PDF whatever its limits say, as they did before.
+
+### Compress… for PDFs (`compress`)
+
+*PDF · PDFsharp, Magick.NET*
+
+Most of a large PDF is usually its pictures, so they're what changes. *Picture quality* is High (200 pixels per inch,
+JPEG quality 85), **Medium** (150, 75) or Low (100, 60). The preview counts the pictures and their share of the file,
+and shows the largest before and after.
+
+- Each picture is handled once, however many pages show it. JPEGs (grey, RGB or CMYK) are scaled down to the chosen
+  resolution for the largest size they're drawn at, read from the pages' content, and re-encoded. Lossless photos
+  become JPEGs too; screenshots and diagrams stay lossless and are only packed tighter. A picture is replaced only when
+  the new one is smaller, and a JPEG kept at its own size only when that saves a tenth.
+- Left as they are: 1-bit scans, JPEG 2000, indexed colour, and pictures with masks, and the masks themselves.
+- Everything else is recompressed losslessly, page thumbnails go, and objects nothing uses are left out. Fonts, text,
+  drawings, forms, bookmarks, links and metadata stay.
+- The copy is kept only when it's clearly smaller than the original (by more than 2%); otherwise "Already as small
+  as Tanjelo can make it" and no file. The card says how much smaller, such as "34 MB → 6.1 MB".
+
+`tanj convert compress --quality=low report.pdf`
 
 ## Editors
 

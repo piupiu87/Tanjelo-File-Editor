@@ -759,4 +759,18 @@ public static class Strings
     public static string ThePermissionsPasswordMustDiffer => Get();
     public static string ThisPDFIsAlreadyProtected => Get();
     public static string ThisPDFIsnTPasswordProtected => Get();
+    public static string SmallerPicturesInsideIt => Get();
+    public static string PictureQuality => Get();
+    public static string High => Get();
+    public static string Medium => Get();
+    public static string Low => Get();
+    public static string PictureQualityHint => Get();
+    public static string AlreadyAsSmallAsTanjeloCanMakeIt => Get();
+    public static string PicturesInIt => Get();
+    public static string NPicturesShareOfTheFile => Get();
+    public static string OnePictureShareOfTheFile => Get();
+    public static string NoPicturesInThisPDF => Get();
+    public static string LargestPicture => Get();
+    public static string LeftAsItIs => Get();
+    public static string PicturesMadeSmaller => Get();
 }
