@@ -2,7 +2,7 @@
 
 Where Tanjelo is heading. Most feature ideas come from comparing it with Tangerine for Mac (tangerineformac.com,
 reviewed October 2026), which advertises 275 conversions, 26 file tools and 6 file actions, adapted to how Windows works.
-Plans change: open an issue to suggest a feature or to say you're working on one.
+The PDF tools of v1.3 and v1.4 come from comparing it with Adobe Acrobat's tools (November 2026). Plans change: open an issue to suggest a feature or to say you're working on one.
 
 **Effort:** S = no new UI, uses existing engines · M = a small dialog or one new library · L = an editor UI or a new engine.
 Items marked *good first issue* are small and self-contained.
@@ -138,11 +138,32 @@ Screenshots and copied pictures, used without saving them first.
 - [x] Save to… and Save in "Folder" actions (S)
 - [x] `tanj --clipboard` (S)
 
-## v1.2.0: a clearer setup
+## v1.2.0: a clearer setup (released)
 
 - [x] Setup wizard: install for you or for everyone on the PC, in a folder you choose, with a progress bar (L)
 - [x] Optional tools on a setup page, each with what it's for: ffmpeg, pandoc, WebView2, 7-Zip, LibreOffice and the HEIC extensions, installed through winget (M)
 - [x] Tanjelo's own installer and uninstaller replace Velopack; 1.1 installs move over with settings and shelf pictures kept (L)
+
+## v1.3.0: PDF tools
+
+Tools from Adobe Acrobat's list, made one gesture and local. Nothing new is bundled: PDFsharp, PdfPig, Magick.NET
+and Windows' own PDF renderer and OCR do it all.
+
+- [ ] Protect a PDF with a password (AES-256), optionally limiting printing, copying and changes; Remove password (M)
+- [ ] Compress PDFs: the pictures inside re-encoded at high, medium or low quality (M)
+- [ ] Page numbers, header and footer text, and Bates numbers that carry on across several PDFs (M)
+- [ ] Watermark with text or a picture: straight, diagonal or tiled (M)
+- [ ] Make scanned PDFs searchable with Windows' OCR, and searchable PDFs from pictures (M)
+- [ ] Split every N pages, at bookmarks, at listed pages or under a size; save the pictures in a PDF (M)
+- [ ] Crop PDF margins, automatically or by set amounts (M)
+- [ ] Flatten forms and comments into the page (M)
+- [ ] Merge pictures and documents with PDFs into one PDF, a bookmark for each; blank pages and pictures in Organize pages (S)
+
+## v1.4.0: PDF editors
+
+- [ ] Redact PDF: boxes, or words and patterns found on the pages (OCR for scans). What's covered is removed from the file and the rest stays text; a page that can't be cleaned is burned in (L)
+- [ ] Fill & sign: type on pages, ticks, the date, a drawn, typed or picture signature, and the PDF's own form fields (L)
+- [ ] Compare two PDFs: a side-by-side report with added and removed words marked (M/L)
 
 ## Signed releases (on hold)
 
@@ -156,6 +177,7 @@ Screenshots and copied pictures, used without saving them first.
 
 - [ ] Drag-triggered menu: hold Shift while dragging a file, like Tangerine (L)
 - [ ] PDF to XLSX, which needs reliable table extraction (L)
+- [ ] Certificate signatures: sign a PDF with a certificate from Windows' store, which PDFsharp can do (M)
 
 ## Project and community
 
@@ -167,6 +189,8 @@ Screenshots and copied pictures, used without saving them first.
 
 - Apple-only formats: Pages, RTFD, Finder text clippings
 - Online or cloud conversion
+- PDF/A: a valid PDF/A from any PDF needs every font embedded and a validator to prove it
+- Editing a PDF's text and pictures in place
 
 ## Already ahead of Tangerine
 
