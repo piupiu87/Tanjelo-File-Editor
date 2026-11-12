@@ -865,4 +865,24 @@ public static class Strings
     public static string ThisPDFHasNoPictures => Get();
     public static string N1PictureCouldnTBeSaved => Get();
     public static string PicturesCouldnTBeSaved => Get();
+    public static string CropMargins => Get();
+    public static string TrimTheMarginsAroundThePages => Get();
+    public static string CropButton => Get();
+    public static string CropBy => Get();
+    public static string AutomaticallyToTheContent => Get();
+    public static string BySetAmounts => Get();
+    public static string CroppingHidesTheMargins => Get();
+    public static string PaddingKept => Get();
+    public static string BoxesFor => Get();
+    public static string OneBoxForAll => Get();
+    public static string EachItsOwn => Get();
+    public static string TopMargin => Get();
+    public static string BottomMargin => Get();
+    public static string LeftMargin => Get();
+    public static string RightMargin => Get();
+    public static string ThereAreNoMarginsToCrop => Get();
+    public static string TheAmountsLeaveNothingOfPage => Get();
+    public static string KeptOf => Get();
+    public static string Kept => Get();
+    public static string MmSize => Get();
 }

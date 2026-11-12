@@ -287,6 +287,24 @@ tanj convert split-pdf-parts --by=bookmarks report.pdf
 tanj convert split-pdf-parts --by=size --size=9.5 report.pdf
 ```
 
+### Crop margins… (`crop-pdf`)
+
+*PDF · Windows' PDF renderer, PDFsharp*
+
+Saves `report-cropped.pdf` with the margins around the pages trimmed:
+
+- **To the content** (the default): each page is drawn small to find where its content is, and the margins around it
+  go, keeping some room (5 mm). One box holds every page's content, so the pages stay alike, or each page gets its
+  own.
+- **By set amounts**: so many millimetres off the top, bottom, left and right of the page as it's seen.
+
+The preview outlines what's kept on the first page. Turned pages are cropped where they're seen. A PDF whose pages
+have no margins says so and writes nothing.
+
+Cropping sets each page's visible box: it hides the margins, but what's in them stays in the file.
+
+`tanj convert crop-pdf --mode=amounts --top=15 --bottom=15 scan.pdf`
+
 ## Editors
 
 Editors open in a window of their own, for work done by hand. They're on the Tools tab when one file is selected, and

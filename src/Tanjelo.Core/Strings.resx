@@ -2551,4 +2551,64 @@
   <data name="PicturesCouldnTBeSaved" xml:space="preserve">
     <value>{0} pictures couldn't be saved: Tanjelo can't decode their kind.</value>
   </data>
+  <data name="CropMargins" xml:space="preserve">
+    <value>Crop margins…</value>
+  </data>
+  <data name="TrimTheMarginsAroundThePages" xml:space="preserve">
+    <value>Trim the margins around the pages</value>
+  </data>
+  <data name="CropButton" xml:space="preserve">
+    <value>Crop</value>
+  </data>
+  <data name="CropBy" xml:space="preserve">
+    <value>Crop</value>
+  </data>
+  <data name="AutomaticallyToTheContent" xml:space="preserve">
+    <value>To the content</value>
+  </data>
+  <data name="BySetAmounts" xml:space="preserve">
+    <value>By set amounts</value>
+  </data>
+  <data name="CroppingHidesTheMargins" xml:space="preserve">
+    <value>Cropping hides the margins; what's in them stays in the file.</value>
+  </data>
+  <data name="PaddingKept" xml:space="preserve">
+    <value>Room kept around the content</value>
+  </data>
+  <data name="BoxesFor" xml:space="preserve">
+    <value>Pages</value>
+  </data>
+  <data name="OneBoxForAll" xml:space="preserve">
+    <value>One box for all</value>
+  </data>
+  <data name="EachItsOwn" xml:space="preserve">
+    <value>Each its own</value>
+  </data>
+  <data name="TopMargin" xml:space="preserve">
+    <value>From the top</value>
+  </data>
+  <data name="BottomMargin" xml:space="preserve">
+    <value>From the bottom</value>
+  </data>
+  <data name="LeftMargin" xml:space="preserve">
+    <value>From the left</value>
+  </data>
+  <data name="RightMargin" xml:space="preserve">
+    <value>From the right</value>
+  </data>
+  <data name="ThereAreNoMarginsToCrop" xml:space="preserve">
+    <value>There are no margins to crop.</value>
+  </data>
+  <data name="TheAmountsLeaveNothingOfPage" xml:space="preserve">
+    <value>The amounts leave nothing of page {0}.</value>
+  </data>
+  <data name="KeptOf" xml:space="preserve">
+    <value>{0} of {1}</value>
+  </data>
+  <data name="Kept" xml:space="preserve">
+    <value>Kept</value>
+  </data>
+  <data name="MmSize" xml:space="preserve">
+    <value>{0} × {1} mm</value>
+  </data>
 </root>

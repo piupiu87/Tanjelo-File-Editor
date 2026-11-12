@@ -41,6 +41,7 @@ public sealed class ConverterEngine
                 new PdfPasswordTools(),
                 new SearchablePdfTool(tools),
                 new WatermarkTool(),
+                new CropPdfTool(),
                 new OfficeConverter(tools),
                 new LibreOfficeConverter(tools),
                 new MediaConverter(tools),
