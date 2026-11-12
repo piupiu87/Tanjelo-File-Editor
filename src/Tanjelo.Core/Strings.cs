@@ -805,4 +805,26 @@ public static class Strings
     public static string Bates => Get();
     public static string Pt => Get();
     public static string Mm => Get();
+    public static string Watermark => Get();
+    public static string TextOrAPictureAcrossThePages => Get();
+    public static string AddingTheWatermark => Get();
+    public static string Watermarked => Get();
+    public static string AddWatermark => Get();
+    public static string MarkWith => Get();
+    public static string TextKind => Get();
+    public static string WatermarkText => Get();
+    public static string Confidential => Get();
+    public static string StraightAcross => Get();
+    public static string Tiled => Get();
+    public static string WatermarkSizeHint => Get();
+    public static string Opacity => Get();
+    public static string OnPages => Get();
+    public static string OnPagesHint => Get();
+    public static string UnderThePageContent => Get();
+    public static string UnderThePageContentHint => Get();
+    public static string AWatermarkIsAMark => Get();
+    public static string CouldnTReadInThePages => Get();
+    public static string OnAllNPages => Get();
+    public static string NOfMPages => Get();
+    public static string GiveTheTextOfTheWatermark => Get();
 }

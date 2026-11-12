@@ -224,6 +224,25 @@ tanj convert page-numbers --bottom="Page {page} of {pages}" --skip=1 report.pdf
 tanj convert page-numbers --bottom={bates} --bottom-place=right --bates-prefix=ABC a.pdf b.pdf c.pdf
 ```
 
+### Watermark… (`watermark`)
+
+*PDF · PDFsharp, Windows' fonts*
+
+Puts text ("CONFIDENTIAL", in bold Arial or a font with its letters) or a picture across the pages and saves
+`report-watermarked.pdf`. A picture keeps its transparency; pictures other than PNG and JPG are converted first.
+
+- *Layout*: diagonal, from the bottom-left corner towards the top-right (the default), straight across the middle, or
+  tiled in staggered rows.
+- *Size*, a share of the page's width (60%), *Opacity* (25%), and for text its colour (grey).
+- *Pages*: all of them, or a list such as `1-3,5` or `9-` for 9 to the end.
+- *Under the page content*, off by default, puts it behind the text and pictures, as on letterhead; a scan or a page
+  with a filled background hides it.
+- The preview shows the first page it goes on.
+
+A watermark marks a copy; it doesn't protect it, and it can be taken out again.
+
+`tanj convert watermark --text=DRAFT --layout=tiled --opacity=15 report.pdf`
+
 ## Editors
 
 Editors open in a window of their own, for work done by hand. They're on the Tools tab when one file is selected, and

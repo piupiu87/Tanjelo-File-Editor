@@ -37,6 +37,7 @@ public sealed class ConverterEngine
                 new SplitPdfTool(),
                 new OrganizePdfTool(),
                 new PdfPasswordTools(),
+                new WatermarkTool(),
                 new OfficeConverter(tools),
                 new LibreOfficeConverter(tools),
                 new MediaConverter(tools),

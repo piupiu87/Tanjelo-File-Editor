@@ -120,6 +120,36 @@ internal sealed class PageGeometry
     }
 }
 
+/// <summary>Pages as people list them: "1-3,5", "9-" for 9 to the end, "-4" for 1 to 4; empty for all of them.</summary>
+internal static class PageRanges
+{
+    /// <summary>The 0-based first and last page of each range, in the order given.</summary>
+    /// <param name="count">How many pages the PDF has.</param>
+    /// <param name="name">The PDF's name, for the error about a page it doesn't have.</param>
+    public static IReadOnlyList<(int First, int Last)> Parse(string text, int count, string name)
+    {
+        var ranges = new List<(int, int)>();
+        foreach (var part in text.Split([',', ';', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var dash = part.IndexOf('-');
+            var (from, to) = dash < 0 ? (part, part) : (part[..dash].Trim(), part[(dash + 1)..].Trim());
+            int first = 1, last = count;
+            if ((from.Length > 0 && !int.TryParse(from, NumberStyles.None, CultureInfo.InvariantCulture, out first))
+                || (to.Length > 0 && !int.TryParse(to, NumberStyles.None, CultureInfo.InvariantCulture, out last))
+                || (from.Length == 0 && to.Length == 0) || first < 1 || last < first)
+                throw new ConversionException(string.Format(Strings.CouldnTReadInThePages, part));
+            if (last > count || first > count)
+                throw new ConversionException(string.Format(Strings.ThereSNoPageHas, Math.Max(first, last), name, Describe.Count(count, Strings.OnePage, Strings.NPages)));
+            ranges.Add((first - 1, last - 1));
+        }
+        return ranges.Count > 0 ? ranges : [(0, count - 1)];
+    }
+
+    /// <summary>Every page the list names, in order, each once.</summary>
+    public static SortedSet<int> Pages(string text, int count, string name) =>
+        new(Parse(text, count, name).SelectMany(r => Enumerable.Range(r.First, r.Last - r.First + 1)));
+}
+
 /// <summary>
 /// Puts things drawn with PDFsharp onto existing pages: each is drawn into a form (a small page of its own, in its own
 /// clean coordinates) and placed with a matrix from <see cref="PageGeometry"/>. What goes over the page is drawn after
@@ -136,26 +166,58 @@ internal sealed class PageStamper(PdfPage page)
     readonly StringBuilder _over = new();
     readonly StringBuilder _under = new();
 
+    // A form or an opacity used many times on a page, as in a tiled watermark, is named once.
+    readonly Dictionary<PdfDictionary, string> _forms = new(ReferenceEqualityComparer.Instance);
+    readonly Dictionary<double, string> _alphas = [];
+
     public PageGeometry Geometry { get; } = new(page);
 
     /// <summary>The PDF object of a form drawn with XGraphics.</summary>
     public static PdfFormXObject ObjectOf(XForm form) => (PdfFormXObject)FormObject.GetValue(form)!;
+
+    /// <summary>
+    /// Compresses the pictures a form draws, and their soft masks, afresh with .NET's zlib. Windows' PDF renderer can't
+    /// read the soft masks PDFsharp compresses, and leaves the whole picture out; other readers don't mind.
+    /// </summary>
+    public static void Repack(XForm form)
+    {
+        var pictures = ObjectOf(form).Elements.GetDictionary("/Resources")?.Elements.GetDictionary("/XObject");
+        foreach (var item in pictures?.Elements.Values ?? [])
+        {
+            if ((item is PdfReference r ? r.Value : item) is not PdfDictionary picture) continue;
+            foreach (var stream in new[] { picture, picture.Elements.GetDictionary("/SMask") }.OfType<PdfDictionary>())
+            {
+                if (stream.Elements.GetName("/Filter") != "/FlateDecode" || stream.Elements.ContainsKey("/DecodeParms")) continue;
+                using var packed = new MemoryStream();
+                using (var zlib = new System.IO.Compression.ZLibStream(packed, System.IO.Compression.CompressionLevel.SmallestSize))
+                    zlib.Write(stream.Stream.UnfilteredValue);
+                stream.Stream.Value = packed.ToArray();
+            }
+        }
+    }
 
     /// <summary>Places <paramref name="form"/> so that <paramref name="toSeen"/> maps its space onto the page as seen, in points from its bottom-left corner.</summary>
     public void Place(XForm form, Affine toSeen, bool under = false, double opacity = 1) => Place(ObjectOf(form), toSeen, under, opacity);
 
     public void Place(PdfDictionary form, Affine toSeen, bool under = false, double opacity = 1)
     {
-        var name = Add("/XObject", "TjForm", form.Reference!);
+        if (!_forms.TryGetValue(form, out var name))
+            _forms[form] = name = Add("/XObject", "TjForm", form.Reference!);
         var into = under ? _under : _over;
         into.Append("q ");
         if (opacity < 1)
         {
-            var alpha = new PdfDictionary(page.Owner);
-            alpha.Elements["/Type"] = new PdfName("/ExtGState");
-            alpha.Elements["/ca"] = new PdfReal(opacity);
-            alpha.Elements["/CA"] = new PdfReal(opacity);
-            into.Append(Add("/ExtGState", "TjAlpha", alpha)).Append(" gs ");
+            // Transparency came in with PDF 1.4.
+            page.Owner.Version = Math.Max(page.Owner.Version, 14);
+            if (!_alphas.TryGetValue(opacity, out var state))
+            {
+                var alpha = new PdfDictionary(page.Owner);
+                alpha.Elements["/Type"] = new PdfName("/ExtGState");
+                alpha.Elements["/ca"] = new PdfReal(opacity);
+                alpha.Elements["/CA"] = new PdfReal(opacity);
+                _alphas[opacity] = state = Add("/ExtGState", "TjAlpha", alpha);
+            }
+            into.Append(state).Append(" gs ");
         }
         into.Append(toSeen.Then(Geometry.FromSeen)).Append(" cm ").Append(name).Append(" Do Q\n");
     }

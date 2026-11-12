@@ -2371,4 +2371,70 @@
   <data name="Mm" xml:space="preserve">
     <value>mm</value>
   </data>
+  <data name="Watermark" xml:space="preserve">
+    <value>Watermark…</value>
+  </data>
+  <data name="TextOrAPictureAcrossThePages" xml:space="preserve">
+    <value>Text or a picture across the pages</value>
+  </data>
+  <data name="AddingTheWatermark" xml:space="preserve">
+    <value>Adding the watermark…</value>
+  </data>
+  <data name="Watermarked" xml:space="preserve">
+    <value>Watermarked</value>
+  </data>
+  <data name="AddWatermark" xml:space="preserve">
+    <value>Add watermark</value>
+  </data>
+  <data name="MarkWith" xml:space="preserve">
+    <value>Mark with</value>
+  </data>
+  <data name="TextKind" xml:space="preserve">
+    <value>Text</value>
+  </data>
+  <data name="WatermarkText" xml:space="preserve">
+    <value>Text</value>
+  </data>
+  <data name="Confidential" xml:space="preserve">
+    <value>CONFIDENTIAL</value>
+  </data>
+  <data name="StraightAcross" xml:space="preserve">
+    <value>Straight across</value>
+  </data>
+  <data name="Tiled" xml:space="preserve">
+    <value>Tiled</value>
+  </data>
+  <data name="WatermarkSizeHint" xml:space="preserve">
+    <value>A share of the page's width.</value>
+  </data>
+  <data name="Opacity" xml:space="preserve">
+    <value>Opacity</value>
+  </data>
+  <data name="OnPages" xml:space="preserve">
+    <value>Pages</value>
+  </data>
+  <data name="OnPagesHint" xml:space="preserve">
+    <value>All of them when empty, or a list such as 1-3,5 or 9- for 9 to the end.</value>
+  </data>
+  <data name="UnderThePageContent" xml:space="preserve">
+    <value>Under the page content</value>
+  </data>
+  <data name="UnderThePageContentHint" xml:space="preserve">
+    <value>Behind the text and pictures, as on letterhead. Scans and pages with a filled background hide it.</value>
+  </data>
+  <data name="AWatermarkIsAMark" xml:space="preserve">
+    <value>A watermark marks a copy; it doesn't protect it, and it can be removed.</value>
+  </data>
+  <data name="CouldnTReadInThePages" xml:space="preserve">
+    <value>Couldn't read '{0}' in the pages. Use page numbers and ranges such as 1-3,5 or 9-.</value>
+  </data>
+  <data name="OnAllNPages" xml:space="preserve">
+    <value>All {0}</value>
+  </data>
+  <data name="NOfMPages" xml:space="preserve">
+    <value>{0} of {1}</value>
+  </data>
+  <data name="GiveTheTextOfTheWatermark" xml:space="preserve">
+    <value>Give the watermark's text.</value>
+  </data>
 </root>
