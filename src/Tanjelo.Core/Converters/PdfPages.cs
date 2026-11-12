@@ -199,7 +199,11 @@ internal sealed class PageStamper(PdfPage page)
     /// <summary>Places <paramref name="form"/> so that <paramref name="toSeen"/> maps its space onto the page as seen, in points from its bottom-left corner.</summary>
     public void Place(XForm form, Affine toSeen, bool under = false, double opacity = 1) => Place(ObjectOf(form), toSeen, under, opacity);
 
-    public void Place(PdfDictionary form, Affine toSeen, bool under = false, double opacity = 1)
+    public void Place(PdfDictionary form, Affine toSeen, bool under = false, double opacity = 1) =>
+        PlaceInPage(form, toSeen.Then(Geometry.FromSeen), under, opacity);
+
+    /// <summary>Places <paramref name="form"/> so that <paramref name="toPage"/> maps its space onto the page's own coordinates, as for an annotation's appearance.</summary>
+    public void PlaceInPage(PdfDictionary form, Affine toPage, bool under = false, double opacity = 1)
     {
         if (!_forms.TryGetValue(form, out var name))
             _forms[form] = name = Add("/XObject", "TjForm", form.Reference!);
@@ -219,7 +223,7 @@ internal sealed class PageStamper(PdfPage page)
             }
             into.Append(state).Append(" gs ");
         }
-        into.Append(toSeen.Then(Geometry.FromSeen)).Append(" cm ").Append(name).Append(" Do Q\n");
+        into.Append(toPage).Append(" cm ").Append(name).Append(" Do Q\n");
     }
 
     /// <summary>Writes what was placed into the page's content.</summary>

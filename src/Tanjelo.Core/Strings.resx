@@ -2611,4 +2611,28 @@
   <data name="MmSize" xml:space="preserve">
     <value>{0} × {1} mm</value>
   </data>
+  <data name="Flatten" xml:space="preserve">
+    <value>Flatten</value>
+  </data>
+  <data name="FormsAndCommentsBecomePartOfThePage" xml:space="preserve">
+    <value>Forms and comments become part of the page</value>
+  </data>
+  <data name="Flattening" xml:space="preserve">
+    <value>Flattening…</value>
+  </data>
+  <data name="Flattened" xml:space="preserve">
+    <value>Flattened</value>
+  </data>
+  <data name="ThisIsAnXFAForm" xml:space="preserve">
+    <value>This is an XFA form, which Tanjelo can't flatten. Open it in a PDF reader and print it to PDF instead.</value>
+  </data>
+  <data name="ThereSNothingToFlatten" xml:space="preserve">
+    <value>There's nothing to flatten: no form fields or comments.</value>
+  </data>
+  <data name="N1FieldHadNoLook" xml:space="preserve">
+    <value>1 form field had nothing to show it by, so it was left as it is.</value>
+  </data>
+  <data name="FieldsHadNoLook" xml:space="preserve">
+    <value>{0} form fields had nothing to show them by, so they were left as they are.</value>
+  </data>
 </root>

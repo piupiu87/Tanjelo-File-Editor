@@ -42,6 +42,7 @@ public sealed class ConverterEngine
                 new SearchablePdfTool(tools),
                 new WatermarkTool(),
                 new CropPdfTool(),
+                new FlattenPdfTool(),
                 new OfficeConverter(tools),
                 new LibreOfficeConverter(tools),
                 new MediaConverter(tools),

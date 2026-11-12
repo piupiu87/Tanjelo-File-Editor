@@ -885,4 +885,12 @@ public static class Strings
     public static string KeptOf => Get();
     public static string Kept => Get();
     public static string MmSize => Get();
+    public static string Flatten => Get();
+    public static string FormsAndCommentsBecomePartOfThePage => Get();
+    public static string Flattening => Get();
+    public static string Flattened => Get();
+    public static string ThisIsAnXFAForm => Get();
+    public static string ThereSNothingToFlatten => Get();
+    public static string N1FieldHadNoLook => Get();
+    public static string FieldsHadNoLook => Get();
 }

@@ -305,6 +305,21 @@ Cropping sets each page's visible box: it hides the margins, but what's in them 
 
 `tanj convert crop-pdf --mode=amounts --top=15 --bottom=15 scan.pdf`
 
+### Flatten (`flatten-pdf`)
+
+*PDF · PDFsharp*
+
+A quick tool: form fields, comments, stamps and drawn signatures become part of the page, in `report-flattened.pdf`,
+so they look the same everywhere and can't be changed. Each one's look (its normal appearance) is drawn where it
+shows, and it goes; the form goes too once no fields are left.
+
+- Links stay. Popups and hidden comments go without being drawn.
+- A text field with no look of its own, as forms that leave drawing them to the reader have, is drawn from its value
+  in the size and colour the form gives it. Other fields with none, such as an unticked box with no look, are left as
+  they are and counted on the card; an invisible signature stays as it is.
+- XFA forms, made with LiveCycle Designer, are refused: open them in a PDF reader and print to PDF instead.
+- A PDF with no form fields or comments says so and writes nothing.
+
 ## Editors
 
 Editors open in a window of their own, for work done by hand. They're on the Tools tab when one file is selected, and
