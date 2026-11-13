@@ -149,15 +149,15 @@ Screenshots and copied pictures, used without saving them first.
 Tools from Adobe Acrobat's list, made one gesture and local. Nothing new is bundled: PDFsharp, PdfPig, Magick.NET
 and Windows' own PDF renderer and OCR do it all.
 
-- [ ] Protect a PDF with a password (AES-256), optionally limiting printing, copying and changes; Remove password (M)
-- [ ] Compress PDFs: the pictures inside re-encoded at high, medium or low quality (M)
-- [ ] Page numbers, header and footer text, and Bates numbers that carry on across several PDFs (M)
-- [ ] Watermark with text or a picture: straight, diagonal or tiled (M)
-- [ ] Make scanned PDFs searchable with Windows' OCR, and searchable PDFs from pictures (M)
-- [ ] Split every N pages, at bookmarks, at listed pages or under a size; save the pictures in a PDF (M)
-- [ ] Crop PDF margins, automatically or by set amounts (M)
-- [ ] Flatten forms and comments into the page (M)
-- [ ] Merge pictures and documents with PDFs into one PDF, a bookmark for each; blank pages and pictures in Organize pages (S)
+- [x] Protect a PDF with a password (AES-256), optionally limiting printing, copying and changes; Remove password (M)
+- [x] Compress PDFs: the pictures inside re-encoded at high, medium or low quality (M)
+- [x] Page numbers, header and footer text, and Bates numbers that carry on across several PDFs (M)
+- [x] Watermark with text or a picture: straight, diagonal or tiled (M)
+- [x] Make scanned PDFs searchable with Windows' OCR, and searchable PDFs from pictures (M)
+- [x] Split every N pages, at bookmarks, at listed pages or under a size; save the pictures in a PDF (M)
+- [x] Crop PDF margins, automatically or by set amounts (M)
+- [x] Flatten forms and comments into the page (M)
+- [x] Merge pictures and documents with PDFs into one PDF, a bookmark for each; blank pages and pictures in Organize pages (S)
 
 ## v1.4.0: PDF editors
 

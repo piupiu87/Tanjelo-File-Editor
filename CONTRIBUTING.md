@@ -121,6 +121,11 @@ you don't mind changing.
    frames by number with `Scratch.Numbered` and `Inspect.WhichFrame`, and go in the `Windows player` collection,
    which runs on its own. Every window is also checked with `A11y.Check` (each control named and reached by Tab) and
    rendered in a contrast theme with `AccessibilityTests.RenderInContrast`.
+   PDF tools that draw onto pages share three pieces in `Converters/PdfPages.cs` and `PdfLettering.cs`:
+   `PageGeometry` maps the page as it's seen (crop box, /Rotate, /UserUnit) onto its own coordinates,
+   `PageStamper` places a form drawn with PDFsharp over or under the page's content in a clean drawing state, and
+   `PdfLettering` draws text in Windows' fonts. Their fixtures, such as turned, cropped and encrypted PDFs, are in
+   `Fixtures.cs`, written as PDF operators so where everything sits is known exactly.
 7. Add tests next to the others, using `Scratch` for fixture files and `Env.Run` to go through the engine the way the
    app does. Skip with `Assert.SkipUnless` when an optional tool is missing.
 8. Describe it in [docs/FORMATS.md](docs/FORMATS.md) or [docs/TOOLS.md](docs/TOOLS.md), add it to the short tables in

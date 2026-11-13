@@ -13,6 +13,10 @@ Each tool has a key for `tanj` (shown in brackets below), and its settings are p
   [Join videos](#join-videos-join-videos), [Save frames](#save-frames-save-frames),
   [Split at](#split-at-split-video-at), [Make a video](#make-a-video-visualize),
   [Channel volume](#channel-volume-channel-volume)
+- [PDF tools](#pdf-tools): [Protect and Remove password](#protect-protect-pdf-and-remove-password-unlock-pdf),
+  [Compress](#compress-for-pdfs-compress), [Page numbers](#page-numbers-page-numbers), [Watermark](#watermark-watermark),
+  [Make searchable](#make-searchable-searchable-pdf), [Split and Save pictures](#split-split-pdf-parts-and-save-pictures-save-pictures),
+  [Crop margins](#crop-margins-crop-pdf), [Flatten](#flatten-flatten-pdf)
 - [Editors](#editors): [the timeline](#audio-and-video-editors-share-a-timeline),
   [Organize pages](#organize-pages-organize-pdf), [Redact](#redact-redact), [Annotate](#annotate-annotate),
   [Edit photo](#edit-photo-adjust), [Trim](#trim-trim), [Bleep](#bleep-bleep), [Redact video](#redact-video-redact)
@@ -28,7 +32,7 @@ These run as soon as they're picked.
 |---|---|---|
 | Video | Mute (no re-encoding) · 0.5×, 1.5× or 2× speed, keeping the pitch · split in 2, 3 or 4 equal parts (cut losslessly at keyframes when they line up) | ffmpeg |
 | Audio | Normalize volume to −16 LUFS (two passes, one steady gain) · to mono · to stereo · trim silence from the start and end | ffmpeg |
-| PDF | Split into one PDF per page · merge several PDFs in the order selected | PDFsharp (built in) |
+| PDF | Split into one PDF per page · merge several PDFs in the order selected, with pictures and documents among them, a bookmark each · [make searchable](#make-searchable-searchable-pdf) · [save pictures](#split-split-pdf-parts-and-save-pictures-save-pictures) · [flatten](#flatten-flatten-pdf) | PDFsharp, PdfPig, Windows' OCR (built in) |
 
 Some take settings with `tanj`, shown in brackets by `tanj targets`:
 
@@ -142,9 +146,26 @@ its sound re-encoded.
 
 ## PDF tools
 
-Each writes a changed copy beside the PDF and keeps its bookmarks, links, forms, metadata and page labels, unless
-changing them is the point. A PDF with a password gets "Remove its password first with Remove password…", and a
-digitally signed PDF's copy says its signature isn't valid any more, since any change breaks it.
+Tools from Adobe Acrobat's list, made one gesture and local; nothing extra is installed for them. Each writes a changed
+copy beside the PDF and keeps its bookmarks, links, forms, metadata and page labels, unless changing them is the point.
+A PDF with a password gets "Remove its password first with Remove password…", and a digitally signed PDF's copy says
+its signature isn't valid any more, since any change breaks it. A tool with nothing to do says so and writes nothing.
+
+| Tool | Key | Copy |
+|---|---|---|
+| [Protect…](#protect-protect-pdf-and-remove-password-unlock-pdf) | `protect-pdf` | `report-protected.pdf` |
+| [Remove password…](#protect-protect-pdf-and-remove-password-unlock-pdf) | `unlock-pdf` | `report-unlocked.pdf` |
+| [Compress…](#compress-for-pdfs-compress) | `compress` | `report-compressed.pdf` |
+| [Page numbers…](#page-numbers-page-numbers) | `page-numbers` | `report-numbered.pdf` |
+| [Watermark…](#watermark-watermark) | `watermark` | `report-watermarked.pdf` |
+| [Make searchable](#make-searchable-searchable-pdf) | `searchable-pdf` | `report-searchable.pdf` |
+| [Split…](#split-split-pdf-parts-and-save-pictures-save-pictures) | `split-pdf-parts` | the `report parts` folder |
+| [Save pictures](#split-split-pdf-parts-and-save-pictures-save-pictures) | `save-pictures` | the `report pictures` folder |
+| [Crop margins…](#crop-margins-crop-pdf) | `crop-pdf` | `report-cropped.pdf` |
+| [Flatten](#flatten-flatten-pdf) | `flatten-pdf` | `report-flattened.pdf` |
+| Split into pages | `split-pdf` | the `report pages` folder |
+| Merge into one PDF | `merge-pdf` | `Merged.pdf`, from PDFs, pictures and documents, a bookmark each |
+| [Organize pages…](#organize-pages-organize-pdf) | `organize-pdf` | `report-organized.pdf`, with blank pages and pictures if you add them |
 
 ### Protect… (`protect-pdf`) and Remove password… (`unlock-pdf`)
 
@@ -354,14 +375,18 @@ goes to the nearest frame.
 The pages as thumbnails: drag them into a new order (Ctrl and Shift pick several), turn them, copy and delete them, add
 the pages of other PDFs, and save everything or only the selected pages. Saved as `report-organized.pdf`.
 
+- **Blank page** puts a blank page after the selected one, the size of the page before it as it's seen.
+- **Add pictures…** adds pictures after the selected pages, each a page, as One PDF makes them.
 - Bookmarks are kept, each opening its page's first copy; those for deleted pages go.
 - A PDF's form fields and links between pages don't survive, and the window says so before saving.
 
 **With `tanj`:** `--pages="3,1-2,5r90,1"`. Ranges run either way, r90, r180 and r270 turn a page clockwise, a page
-listed twice is copied and one left out is deleted. `--with=other.pdf` adds pages written b1, b2…
+listed twice is copied and one left out is deleted, and `blank` is a blank page the size of the one before it.
+`--with=other.pdf|photo.jpg` adds other PDFs' pages and pictures, written b1, b2…, then c1…
 
 ```
 tanj convert organize-pdf --pages="3,1-2,2r90" report.pdf
+tanj convert organize-pdf --pages="blank,1-3,b1" --with=photo.jpg report.pdf
 ```
 
 ### Redact… (`redact`)
