@@ -146,7 +146,7 @@ its sound re-encoded.
 
 ## PDF tools
 
-Tools from Adobe Acrobat's list, made one gesture and local; nothing extra is installed for them. Each writes a changed
+Everyday jobs on PDFs, one gesture each and all offline; nothing extra is installed for them. Each writes a changed
 copy beside the PDF and keeps its bookmarks, links, forms, metadata and page labels, unless changing them is the point.
 A PDF with a password gets "Remove its password first with Remove password…", and a digitally signed PDF's copy says
 its signature isn't valid any more, since any change breaks it. A tool with nothing to do says so and writes nothing.
@@ -182,8 +182,8 @@ PDF 2.0):
 - A forgotten password can't be got back, and Tanjelo keeps no copy.
 
 **Remove password…** shows for PDFs with a password or limits and saves `report-unlocked.pdf` without encryption. It
-asks for the password that works: the password to open, or the permissions password when the PDF has limits, as
-Acrobat does. A wrong password is caught before the dialog closes.
+asks for the password that works: the password to open, or the permissions password when the PDF has limits.
+A wrong password is caught before the dialog closes.
 
 Passwords are never remembered, logged or shown back. With `tanj`, `--password=-` reads the password from standard
 input, and with no `--password` tanj asks for it with the typing hidden. A password typed on the command line works,
@@ -194,8 +194,8 @@ tanj convert unlock-pdf --password=- report.pdf < password.txt
 tanj convert protect-pdf --limit --printing=low --permissions-password=- report.pdf
 ```
 
-Edge, Chrome and Acrobat open AES-256 PDFs, but Windows' own PDF reader can't, so Tanjelo can't preview or convert a
-protected copy (to PNG, say) until its password is removed.
+Web browsers and most PDF readers open AES-256 PDFs, but Windows' own PDF reader can't, so Tanjelo can't preview or
+convert a protected copy (to PNG, say) until its password is removed.
 
 Organize pages, Split and Merge copy pages out of a PDF whatever its limits say, as they did before.
 

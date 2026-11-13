@@ -5,7 +5,7 @@ namespace Tanjelo.Core.Converters;
 /// <summary>
 /// Protect… saves a copy encrypted with AES-256 (so it's PDF 2.0) behind a password to open, limits on printing,
 /// copying and changes, or both. Remove password… saves a copy without encryption, given the password to open, or the
-/// permissions password when the PDF has limits, as Acrobat asks. Which of the two a PDF gets is read from its trailer,
+/// permissions password when the PDF has limits. Which of the two a PDF gets is read from its trailer,
 /// without parsing it. Passwords go nowhere but into PDFsharp: they're never remembered, logged or shown back.
 /// </summary>
 public sealed class PdfPasswordTools : IConverter, IValidator

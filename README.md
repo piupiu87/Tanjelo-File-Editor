@@ -27,7 +27,7 @@ independent project, not affiliated with Tangerine.
   See [what converts to what](#what-converts-to-what).
 - **Tools** do one job on a copy: compress to a size, crop, mute, change the speed, even out the volume, split or merge
   PDFs, join videos, save frames, remove the location and other metadata, and more.
-- **PDF tools** from Adobe Acrobat's list, one gesture each: protect with a password, compress, add page numbers and
+- **PDF tools**, one gesture each: protect with a password, compress, add page numbers and
   Bates numbers, watermark, make scans searchable, split, save the pictures, crop margins, flatten forms, and merge
   pictures and documents with PDFs. See [PDF tools](#pdf-tools).
 - **Editors** open a window for work by hand: organize PDF pages, redact faces and text in photos, annotate
@@ -157,8 +157,8 @@ searchable, save a PDF's pictures, or flatten its forms and comments.
 
 ### PDF tools
 
-Tools from Adobe Acrobat's list, made one gesture and local. Each writes a copy beside the PDF and keeps its
-bookmarks, links and forms unless changing them is the point. Nothing extra is installed for them.
+Everyday jobs on PDFs, one gesture each and all offline. Each writes a copy beside the PDF and keeps its bookmarks,
+links and forms unless changing them is the point. Nothing extra is installed for them.
 
 | Tool | What it does |
 |---|---|
@@ -392,7 +392,7 @@ v1.0 made Tanjelo ready for everyone: an installer and a winget package, the .NE
 an opt-in update check, an accessibility pass and text ready to translate. v1.1 brings clipboard pictures: screenshots
 parked on the shelf as they're taken, a menu for the picture on the clipboard, results back on the clipboard, Save to…,
 and `tanj --clipboard`. v1.2 brings a clearer setup: for you or for everyone, in a folder you choose, with a progress
-bar, and the optional tools on a page of their own. v1.3 brings PDF tools from Adobe Acrobat's list: protect, compress,
+bar, and the optional tools on a page of their own. v1.3 brings PDF tools: protect, compress,
 page numbers and Bates, watermark, searchable scans, split, crop, flatten and merging any files; v1.4 is planned to
 bring PDF editors: redact, fill & sign and compare. Releases ship unsigned: code signing, and the Windows 11 menu
 entry that needs it, are on hold for a later release. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are welcome; open an issue first for anything big, and see

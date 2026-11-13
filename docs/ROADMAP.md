@@ -2,7 +2,7 @@
 
 Where Tanjelo is heading. Most feature ideas come from comparing it with Tangerine for Mac (tangerineformac.com,
 reviewed October 2026), which advertises 275 conversions, 26 file tools and 6 file actions, adapted to how Windows works.
-The PDF tools of v1.3 and v1.4 come from comparing it with Adobe Acrobat's tools (November 2026). Plans change: open an issue to suggest a feature or to say you're working on one.
+Plans change: open an issue to suggest a feature or to say you're working on one.
 
 **Effort:** S = no new UI, uses existing engines · M = a small dialog or one new library · L = an editor UI or a new engine.
 Items marked *good first issue* are small and self-contained.
@@ -146,7 +146,7 @@ Screenshots and copied pictures, used without saving them first.
 
 ## v1.3.0: PDF tools
 
-Tools from Adobe Acrobat's list, made one gesture and local. Nothing new is bundled: PDFsharp, PdfPig, Magick.NET
+Everyday jobs on PDFs, one gesture each and all offline. Nothing new is bundled: PDFsharp, PdfPig, Magick.NET
 and Windows' own PDF renderer and OCR do it all.
 
 - [x] Protect a PDF with a password (AES-256), optionally limiting printing, copying and changes; Remove password (M)

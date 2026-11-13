@@ -8,7 +8,7 @@ using PdfSharp.Pdf.Content.Objects;
 namespace Tanjelo.Core.Converters;
 
 /// <summary>
-/// Makes a PDF smaller the way Acrobat's Compress does, with nothing but PDFsharp and Magick.NET: pictures are scaled
+/// Makes a PDF smaller with nothing but PDFsharp and Magick.NET: pictures are scaled
 /// down to a target resolution for the largest size they're drawn at, and re-encoded as JPEG; everything else is
 /// recompressed losslessly. Fonts, text, drawings, forms, bookmarks, links and metadata are left as they are.
 /// </summary>
