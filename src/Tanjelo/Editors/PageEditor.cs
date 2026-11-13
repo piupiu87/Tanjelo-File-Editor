@@ -82,7 +82,8 @@ sealed class PageEditor : Editor<ImmutableList<PageItem>>
     readonly WrapPanel _grid = new() { Margin = new Thickness(12) };
     readonly Canvas _marks = new() { IsHitTestVisible = false };
     readonly Shapes.Rectangle _caret = new() { Width = 3, RadiusX = 1.5, RadiusY = 1.5, Visibility = Visibility.Collapsed };
-    readonly StackPanel _toolbar = new() { Orientation = Orientation.Horizontal };
+    // Wraps onto a second line where a language's words are too long for one.
+    readonly WrapPanel _toolbar = new();
     readonly CheckBox _onlySelected = new() { Content = Strings.SaveOnlyTheSelectedPages, Margin = new Thickness(16, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
     readonly Dictionary<int, Tile> _tiles = [];
     readonly List<PdfThumbnails> _sources = [];
@@ -269,7 +270,7 @@ sealed class PageEditor : Editor<ImmutableList<PageItem>>
         var content = new StackPanel { Orientation = Orientation.Horizontal };
         content.Children.Add(icon);
         content.Children.Add(new TextBlock { Text = text, VerticalAlignment = VerticalAlignment.Center });
-        var button = new Button { Content = content, ToolTip = tip, Margin = new Thickness(0, 0, 6, 0), IsEnabled = always };
+        var button = new Button { Content = content, ToolTip = tip, Margin = new Thickness(0, 2, 6, 2), IsEnabled = always };
         System.Windows.Automation.AutomationProperties.SetName(button, text);
         System.Windows.Automation.AutomationProperties.SetHelpText(button, tip);
         button.SetResourceReference(FrameworkElement.StyleProperty, "SubtleButton");
