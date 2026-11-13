@@ -27,6 +27,9 @@ public sealed class Toolbox
     /// <summary>Whether Windows has an OCR language, to read the text in pictures and scans.</summary>
     public bool Ocr { get; init; }
 
+    /// <summary>The OCR languages Windows has, such as "en-US", for tanj's --language.</summary>
+    public static IReadOnlyList<string> OcrLanguages() => Converters.PdfText.OcrLanguages();
+
     public static Toolbox Detect(string? ffmpegPath = null, string? sevenZipPath = null)
     {
         var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);

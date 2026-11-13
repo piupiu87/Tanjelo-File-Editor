@@ -181,7 +181,7 @@ public class PdfTextTests
 
         var result = await engine.RunAsync([pdf], Env.Offered(engine, "md", [pdf]), ct: TestContext.Current.CancellationToken);
 
-        Assert.Equal("This PDF is password-protected.", Assert.Single(result.Failures).Message);
+        Assert.Equal("This PDF is password-protected. Remove its password first with Remove password…", Assert.Single(result.Failures).Message);
         Assert.Equal(["secret.pdf"], scratch.Files());
     }
 

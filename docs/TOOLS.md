@@ -13,6 +13,10 @@ Each tool has a key for `tanj` (shown in brackets below), and its settings are p
   [Join videos](#join-videos-join-videos), [Save frames](#save-frames-save-frames),
   [Split at](#split-at-split-video-at), [Make a video](#make-a-video-visualize),
   [Channel volume](#channel-volume-channel-volume)
+- [PDF tools](#pdf-tools): [Protect and Remove password](#protect-protect-pdf-and-remove-password-unlock-pdf),
+  [Compress](#compress-for-pdfs-compress), [Page numbers](#page-numbers-page-numbers), [Watermark](#watermark-watermark),
+  [Make searchable](#make-searchable-searchable-pdf), [Split and Save pictures](#split-split-pdf-parts-and-save-pictures-save-pictures),
+  [Crop margins](#crop-margins-crop-pdf), [Flatten](#flatten-flatten-pdf)
 - [Editors](#editors): [the timeline](#audio-and-video-editors-share-a-timeline),
   [Organize pages](#organize-pages-organize-pdf), [Redact](#redact-redact), [Annotate](#annotate-annotate),
   [Edit photo](#edit-photo-adjust), [Trim](#trim-trim), [Bleep](#bleep-bleep), [Redact video](#redact-video-redact)
@@ -28,7 +32,7 @@ These run as soon as they're picked.
 |---|---|---|
 | Video | Mute (no re-encoding) · 0.5×, 1.5× or 2× speed, keeping the pitch · split in 2, 3 or 4 equal parts (cut losslessly at keyframes when they line up) | ffmpeg |
 | Audio | Normalize volume to −16 LUFS (two passes, one steady gain) · to mono · to stereo · trim silence from the start and end | ffmpeg |
-| PDF | Split into one PDF per page · merge several PDFs in the order selected | PDFsharp (built in) |
+| PDF | Split into one PDF per page · merge several PDFs in the order selected, with pictures and documents among them, a bookmark each · [make searchable](#make-searchable-searchable-pdf) · [save pictures](#split-split-pdf-parts-and-save-pictures-save-pictures) · [flatten](#flatten-flatten-pdf) | PDFsharp, PdfPig, Windows' OCR (built in) |
 
 Some take settings with `tanj`, shown in brackets by `tanj targets`:
 
@@ -45,7 +49,7 @@ settings, starting from their defaults rather than the dialog's last values.
 
 ### Compress… (`compress`)
 
-*Images, video and audio · Magick.NET, ffmpeg*
+*Images, video, audio and PDF · Magick.NET, ffmpeg, PDFsharp*
 
 Choose a percentage of the original size or a target size in MB, and optionally smaller dimensions.
 
@@ -55,6 +59,8 @@ Choose a percentage of the original size or a target size in MB, and optionally 
 - Lossy audio keeps its format; lossless audio becomes MP3.
 
 `tanj convert compress --mode=size --size=8 clip.mp4`
+
+For a PDF, the one choice is *Picture quality* (see [PDF tools](#compress-for-pdfs-compress)).
 
 ### Metadata… (`metadata`)
 
@@ -138,6 +144,203 @@ Left and right from 0% (silent) to 400%. In surround sound, every left-side and 
 and the centre and bass stay. The preview draws each channel after the change. A video's picture is copied and only
 its sound re-encoded.
 
+## PDF tools
+
+Everyday jobs on PDFs, one gesture each and all offline; nothing extra is installed for them. Each writes a changed
+copy beside the PDF and keeps its bookmarks, links, forms, metadata and page labels, unless changing them is the point.
+A PDF with a password gets "Remove its password first with Remove password…", and a digitally signed PDF's copy says
+its signature isn't valid any more, since any change breaks it. A tool with nothing to do says so and writes nothing.
+
+| Tool | Key | Copy |
+|---|---|---|
+| [Protect…](#protect-protect-pdf-and-remove-password-unlock-pdf) | `protect-pdf` | `report-protected.pdf` |
+| [Remove password…](#protect-protect-pdf-and-remove-password-unlock-pdf) | `unlock-pdf` | `report-unlocked.pdf` |
+| [Compress…](#compress-for-pdfs-compress) | `compress` | `report-compressed.pdf` |
+| [Page numbers…](#page-numbers-page-numbers) | `page-numbers` | `report-numbered.pdf` |
+| [Watermark…](#watermark-watermark) | `watermark` | `report-watermarked.pdf` |
+| [Make searchable](#make-searchable-searchable-pdf) | `searchable-pdf` | `report-searchable.pdf` |
+| [Split…](#split-split-pdf-parts-and-save-pictures-save-pictures) | `split-pdf-parts` | the `report parts` folder |
+| [Save pictures](#split-split-pdf-parts-and-save-pictures-save-pictures) | `save-pictures` | the `report pictures` folder |
+| [Crop margins…](#crop-margins-crop-pdf) | `crop-pdf` | `report-cropped.pdf` |
+| [Flatten](#flatten-flatten-pdf) | `flatten-pdf` | `report-flattened.pdf` |
+| Split into pages | `split-pdf` | the `report pages` folder |
+| Merge into one PDF | `merge-pdf` | `Merged.pdf`, from PDFs, pictures and documents, a bookmark each |
+| [Organize pages…](#organize-pages-organize-pdf) | `organize-pdf` | `report-organized.pdf`, with blank pages and pictures if you add them |
+
+### Protect… (`protect-pdf`) and Remove password… (`unlock-pdf`)
+
+*PDF · PDFsharp*
+
+**Protect…** shows for PDFs without a password and saves `report-protected.pdf`, encrypted with AES-256 (so it's
+PDF 2.0):
+
+- *Password to open*, typed twice, with a Show button.
+- *Limit printing, copying and changes*: printing at full quality, low quality or not at all, copying text and
+  pictures, and changes, comments and form filling, each allowed or not, with a *Permissions password* that lifts the
+  limits again and must differ from the password to open. Limits can be set without a password to open.
+- At least one of the two is needed. PDF readers honour the limits, but the encryption doesn't enforce them.
+- A forgotten password can't be got back, and Tanjelo keeps no copy.
+
+**Remove password…** shows for PDFs with a password or limits and saves `report-unlocked.pdf` without encryption. It
+asks for the password that works: the password to open, or the permissions password when the PDF has limits.
+A wrong password is caught before the dialog closes.
+
+Passwords are never remembered, logged or shown back. With `tanj`, `--password=-` reads the password from standard
+input, and with no `--password` tanj asks for it with the typing hidden. A password typed on the command line works,
+with a warning that it stays in the shell's history. `--permissions-password` works the same way.
+
+```
+tanj convert unlock-pdf --password=- report.pdf < password.txt
+tanj convert protect-pdf --limit --printing=low --permissions-password=- report.pdf
+```
+
+Web browsers and most PDF readers open AES-256 PDFs, but Windows' own PDF reader can't, so Tanjelo can't preview or
+convert a protected copy (to PNG, say) until its password is removed.
+
+Organize pages, Split and Merge copy pages out of a PDF whatever its limits say, as they did before.
+
+### Compress… for PDFs (`compress`)
+
+*PDF · PDFsharp, Magick.NET*
+
+Most of a large PDF is usually its pictures, so they're what changes. *Picture quality* is High (200 pixels per inch,
+JPEG quality 85), **Medium** (150, 75) or Low (100, 60). The preview counts the pictures and their share of the file,
+and shows the largest before and after.
+
+- Each picture is handled once, however many pages show it. JPEGs (grey, RGB or CMYK) are scaled down to the chosen
+  resolution for the largest size they're drawn at, read from the pages' content, and re-encoded. Lossless photos
+  become JPEGs too; screenshots and diagrams stay lossless and are only packed tighter. A picture is replaced only when
+  the new one is smaller, and a JPEG kept at its own size only when that saves a tenth.
+- Left as they are: 1-bit scans, JPEG 2000, indexed colour, and pictures with masks, and the masks themselves.
+- Everything else is recompressed losslessly, page thumbnails go, and objects nothing uses are left out. Fonts, text,
+  drawings, forms, bookmarks, links and metadata stay.
+- The copy is kept only when it's clearly smaller than the original (by more than 2%); otherwise "Already as small
+  as Tanjelo can make it" and no file. The card says how much smaller, such as "34 MB → 6.1 MB".
+
+`tanj convert compress --quality=low report.pdf`
+
+### Page numbers… (`page-numbers`)
+
+*One or more PDFs · PDFsharp, Windows' fonts*
+
+Adds a line of text at the top and one at the bottom of every page, each on the left, in the middle or on the right,
+and saves `report-numbered.pdf`. By default the bottom line is the page number, in the middle.
+
+- `{page}`, `{pages}`, `{date}`, `{file}` and `{bates}` are filled in for each page. Buttons fill a line with "1",
+  "Page 1", "Page 1 of 12", "1 / 12" or a Bates number.
+- *Start at* is the first number; *Leave out the first* pages, such as a cover, get none.
+- Font size (10 pt), colour (black) and the distance from the edge of the page as it's seen (12 mm).
+- **Bates numbers** (`{bates}`): a prefix, the number of digits (6), the first number and a suffix. With several PDFs
+  selected, the numbers carry on across them in the order selected, and the card lists each file's range, such as
+  `ABC000001–ABC000012`.
+- The lines are real text, so Bates numbers can be searched. They sit where the page is seen, on turned pages, pages
+  with a crop box and pages scaled by `/UserUnit` too, and can't be moved by content that leaves the drawing state
+  changed.
+- Text is in Arial; text with letters Arial lacks, such as Chinese, Japanese, Korean or Hindi, takes the first of
+  Segoe UI, Microsoft YaHei, Yu Gothic, Malgun Gothic, Nirmala UI and Segoe UI Symbol that has them all. Only the
+  letters used are embedded.
+
+```
+tanj convert page-numbers --bottom="Page {page} of {pages}" --skip=1 report.pdf
+tanj convert page-numbers --bottom={bates} --bottom-place=right --bates-prefix=ABC a.pdf b.pdf c.pdf
+```
+
+### Watermark… (`watermark`)
+
+*PDF · PDFsharp, Windows' fonts*
+
+Puts text ("CONFIDENTIAL", in bold Arial or a font with its letters) or a picture across the pages and saves
+`report-watermarked.pdf`. A picture keeps its transparency; pictures other than PNG and JPG are converted first.
+
+- *Layout*: diagonal, from the bottom-left corner towards the top-right (the default), straight across the middle, or
+  tiled in staggered rows.
+- *Size*, a share of the page's width (60%), *Opacity* (25%), and for text its colour (grey).
+- *Pages*: all of them, or a list such as `1-3,5` or `9-` for 9 to the end.
+- *Under the page content*, off by default, puts it behind the text and pictures, as on letterhead; a scan or a page
+  with a filled background hides it.
+- The preview shows the first page it goes on.
+
+A watermark marks a copy; it doesn't protect it, and it can be taken out again.
+
+`tanj convert watermark --text=DRAFT --layout=tiled --opacity=15 report.pdf`
+
+### Make searchable (`searchable-pdf`)
+
+*PDF · Windows' PDF renderer and OCR, PDFsharp*
+
+A quick tool for scans: the pages without text are drawn at 300 DPI and read with Windows' OCR in your language, and
+each word becomes invisible text over it, stretched to its box, so searching and selecting line up with the picture
+and copied text is right. Pages that already have text are left alone, the same test PDF → TXT uses, and a PDF with
+text on every page says so and writes nothing. The copy is `scan-searchable.pdf`, and the card says how many pages
+were read and how many had nothing OCR could read.
+
+It shows when Windows has an OCR language; otherwise the menu's hint says how to add one. Pictures become searchable
+PDFs too: *Searchable PDF* beside *PDF* for one picture, and *One searchable PDF* beside *One PDF* for several (see
+[FORMATS.md](FORMATS.md#images)).
+
+`tanj convert searchable-pdf --language=ja scan.pdf` reads in another installed language; `tanj options searchable-pdf
+scan.pdf` lists them.
+
+### Split… (`split-pdf-parts`) and Save pictures (`save-pictures`)
+
+*PDF · PDFsharp, PdfPig*
+
+The quick *Split into pages* makes a PDF of every page. **Split…** makes parts, in a `report parts` folder:
+
+- every N pages (2);
+- at the top-level bookmarks, each part named after its bookmark, such as `report-01 Introduction.pdf`;
+- at listed pages, such as `1-3,4-8,9-`;
+- each under a size in MB, filled with as many pages as fit, measured by saving them. A page bigger than that on its
+  own makes a part by itself, and the card says which.
+
+Pages are copied as they are, and the bookmarks into each part go with it. Form fields and links between pages are
+lost, as in Organize pages; the dialog says so.
+
+**Save pictures**, a quick tool, puts the pictures in a PDF in a `report pictures` folder, named by page, such as
+`report-p03-1.jpg`. JPEGs are written byte for byte, except CMYK ones, which are turned RGB so they look right
+everywhere; JPEG 2000 is written as `.jp2`, and everything else as PNG, with transparency where the PDF gives the
+picture a soft mask. A picture shown on several pages is saved once; stencil masks and pictures under 16 pixels are
+left out, and kinds Tanjelo can't decode, such as JBIG2 scans, are counted on the card. A PDF without pictures says
+"Drawings aren't pictures: PDF → PNG saves whole pages."
+
+```
+tanj convert split-pdf-parts --by=bookmarks report.pdf
+tanj convert split-pdf-parts --by=size --size=9.5 report.pdf
+```
+
+### Crop margins… (`crop-pdf`)
+
+*PDF · Windows' PDF renderer, PDFsharp*
+
+Saves `report-cropped.pdf` with the margins around the pages trimmed:
+
+- **To the content** (the default): each page is drawn small to find where its content is, and the margins around it
+  go, keeping some room (5 mm). One box holds every page's content, so the pages stay alike, or each page gets its
+  own.
+- **By set amounts**: so many millimetres off the top, bottom, left and right of the page as it's seen.
+
+The preview outlines what's kept on the first page. Turned pages are cropped where they're seen. A PDF whose pages
+have no margins says so and writes nothing.
+
+Cropping sets each page's visible box: it hides the margins, but what's in them stays in the file.
+
+`tanj convert crop-pdf --mode=amounts --top=15 --bottom=15 scan.pdf`
+
+### Flatten (`flatten-pdf`)
+
+*PDF · PDFsharp*
+
+A quick tool: form fields, comments, stamps and drawn signatures become part of the page, in `report-flattened.pdf`,
+so they look the same everywhere and can't be changed. Each one's look (its normal appearance) is drawn where it
+shows, and it goes; the form goes too once no fields are left.
+
+- Links stay. Popups and hidden comments go without being drawn.
+- A text field with no look of its own, as forms that leave drawing them to the reader have, is drawn from its value
+  in the size and colour the form gives it. Other fields with none, such as an unticked box with no look, are left as
+  they are and counted on the card; an invisible signature stays as it is.
+- XFA forms, made with LiveCycle Designer, are refused: open them in a PDF reader and print to PDF instead.
+- A PDF with no form fields or comments says so and writes nothing.
+
 ## Editors
 
 Editors open in a window of their own, for work done by hand. They're on the Tools tab when one file is selected, and
@@ -172,14 +375,18 @@ goes to the nearest frame.
 The pages as thumbnails: drag them into a new order (Ctrl and Shift pick several), turn them, copy and delete them, add
 the pages of other PDFs, and save everything or only the selected pages. Saved as `report-organized.pdf`.
 
+- **Blank page** puts a blank page after the selected one, the size of the page before it as it's seen.
+- **Add pictures…** adds pictures after the selected pages, each a page, as One PDF makes them.
 - Bookmarks are kept, each opening its page's first copy; those for deleted pages go.
 - A PDF's form fields and links between pages don't survive, and the window says so before saving.
 
 **With `tanj`:** `--pages="3,1-2,5r90,1"`. Ranges run either way, r90, r180 and r270 turn a page clockwise, a page
-listed twice is copied and one left out is deleted. `--with=other.pdf` adds pages written b1, b2…
+listed twice is copied and one left out is deleted, and `blank` is a blank page the size of the one before it.
+`--with=other.pdf|photo.jpg` adds other PDFs' pages and pictures, written b1, b2…, then c1…
 
 ```
 tanj convert organize-pdf --pages="3,1-2,2r90" report.pdf
+tanj convert organize-pdf --pages="blank,1-3,b1" --with=photo.jpg report.pdf
 ```
 
 ### Redact… (`redact`)

@@ -509,4 +509,20 @@ public static class Strings
     public static string PutTheResultOnTheClipboard => Get();
     public static string PutResultsBackOnTheClipboard => Get();
     public static string PutResultsBackOnTheClipboardHint => Get();
+    public static string Show => Get();
+    public static string Hide => Get();
+    public static string ShowThe => Get();
+    public static string HideThe => Get();
+    public static string RepeatThe => Get();
+    public static string RepeatIt => Get();
+    public static string IsnTTheSameInBothBoxes => Get();
+    public static string FillWith => Get();
+    public static string BlankPage => Get();
+    public static string InsertABlankPageAfterTheSelection => Get();
+    public static string AddPictures => Get();
+    public static string AddPicturesAsPagesAfterTheSelection => Get();
+    public static string AddPicturesAsPages => Get();
+    public static string PicturesFilter => Get();
+    public static string Blank => Get();
+    public static string ABlankPage => Get();
 }

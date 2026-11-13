@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Data.Pdf;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
@@ -71,7 +72,10 @@ public sealed class PdfConverter : IConverter
         return count > 1 ? [directory] : outputs;
     }
 
-    /// <summary>Opens a PDF with Windows' PDF engine, with a password-protected file reported as such.</summary>
+    /// <summary>
+    /// Opens a PDF with Windows' PDF engine, with a password-protected file reported as such. Windows can't open
+    /// AES-256 encryption at all, even without an open password (0x80048040), so that's reported the same way.
+    /// </summary>
     internal static async Task<PdfDocument> LoadAsync(string pdf)
     {
         try
@@ -79,11 +83,25 @@ public sealed class PdfConverter : IConverter
             var file = await StorageFile.GetFileFromPathAsync(Path.GetFullPath(pdf));
             return await PdfDocument.LoadFromFileAsync(file);
         }
-        catch (Exception ex) when (ex.HResult == unchecked((int)0x8007052B))
+        catch (Exception ex) when (ex.HResult == unchecked((int)0x8007052B)
+            || (ex.HResult == unchecked((int)0x80048040) && PdfFiles.EncryptionOf(pdf) is not null))
         {
             throw new ConversionException(Strings.ThisPDFIsPasswordProtected, ex);
         }
     }
+
+    /// <summary>Opens a PDF held in memory, such as a preview's one changed page.</summary>
+    internal static async Task<PdfDocument> LoadAsync(byte[] pdf)
+    {
+        var stream = new InMemoryRandomAccessStream();
+        await stream.WriteAsync(pdf.AsBuffer());
+        stream.Seek(0);
+        return await PdfDocument.LoadFromStreamAsync(stream);
+    }
+
+    /// <summary>The first page of a PDF in memory, such as a changed copy of one page, drawn by Windows for a preview.</summary>
+    internal static async Task<byte[]> PreviewAsync(byte[] pdf, int maxSize) =>
+        (await RenderPagePngAsync(await LoadAsync(pdf), 0, 300, (uint)maxSize)).Png;
 
     /// <summary>One page as a bitmap at <paramref name="dpi"/>, shrunk if needed so neither side is longer than <paramref name="maxSide"/> pixels.</summary>
     internal static async Task<SoftwareBitmap> RenderPageAsync(PdfDocument document, int index, double dpi, uint maxSide = uint.MaxValue)

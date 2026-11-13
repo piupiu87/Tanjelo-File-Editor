@@ -15,7 +15,13 @@ public static partial class PageList
     /// <param name="Source">0 for the PDF being organized, 1 for the first other PDF (b), and so on.</param>
     /// <param name="Index">The page's 0-based place in its PDF.</param>
     /// <param name="Rotation">How far to turn it clockwise from how it is now: 0, 90, 180 or 270.</param>
-    public readonly record struct Page(int Source, int Index, int Rotation = 0);
+    public readonly record struct Page(int Source, int Index, int Rotation = 0)
+    {
+        /// <summary>A blank page, written "blank": the size of the page before it.</summary>
+        public static Page Blank => new(-1, -1);
+
+        public bool IsBlank => Source < 0;
+    }
 
     [GeneratedRegex(@"^([a-z])?(\d+)(?:-(\d+))?(?:r(\d+))?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex Token();
@@ -27,6 +33,11 @@ public static partial class PageList
         var pages = new List<Page>();
         foreach (var token in text.Split([',', ';', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
+            if (token.Equals("blank", StringComparison.OrdinalIgnoreCase))
+            {
+                pages.Add(Page.Blank);
+                continue;
+            }
             var match = Token().Match(token);
             var rotation = match.Groups[4].Success ? int.Parse(match.Groups[4].Value, CultureInfo.InvariantCulture) : 0;
             if (!match.Success || rotation is not (0 or 90 or 180 or 270))
@@ -61,6 +72,12 @@ public static partial class PageList
         for (var i = 0; i < pages.Count;)
         {
             var first = pages[i];
+            if (first.IsBlank)
+            {
+                parts.Add("blank");
+                i++;
+                continue;
+            }
             var end = i;
             var step = i + 1 < pages.Count && Alike(pages[i + 1], first) ? pages[i + 1].Index - first.Index : 0;
             if (Math.Abs(step) == 1)
@@ -105,10 +122,12 @@ public sealed class OrganizePdfTool : IConverter
     {
         var others = Others(target.Text("with"), input);
         var sources = new List<PdfDocument>();
+        using var temp = OutputPaths.CreateTemp();
         try
         {
-            foreach (var path in others.Prepend(input))
-                sources.Add(PdfFiles.OpenForImport(path));
+            sources.Add(PdfFiles.OpenForImport(input));
+            foreach (var path in others)
+                sources.Add(PdfFiles.OpenForImport(Formats.Key(path) == "pdf" ? path : PictureAsPage(path, temp.Path)));
             var pages = PageList.Parse(target.Text("pages"), sources.Select(s => s.PageCount).ToList(),
                 others.Prepend(input).Select(Path.GetFileName).ToList()!);
 
@@ -120,6 +139,12 @@ public sealed class OrganizePdfTool : IConverter
             for (var i = 0; i < pages.Count; i++)
             {
                 ctx.Cancellation.ThrowIfCancellationRequested();
+                if (pages[i].IsBlank)
+                {
+                    var (width, height) = BlankSize(output, sources, pages, i);
+                    output.AddPage().MediaBox = new PdfRectangle(new PdfSharp.Drawing.XPoint(0, 0), new PdfSharp.Drawing.XPoint(width, height));
+                    continue;
+                }
                 var (source, index, rotation) = pages[i];
                 var original = sources[source].Pages[index];
                 var copy = output.AddPage(original);
@@ -141,7 +166,38 @@ public sealed class OrganizePdfTool : IConverter
         }
     }, ctx.Cancellation);
 
-    /// <summary>The other PDFs to take pages from, "a.pdf|b.pdf", found beside the organized one when not given in full.</summary>
+    /// <summary>
+    /// A blank page is the size of the page before it, as it's seen, or of the page after it when it comes first, or
+    /// Letter.
+    /// </summary>
+    static (double Width, double Height) BlankSize(PdfDocument output, IReadOnlyList<PdfDocument> sources, IReadOnlyList<PageList.Page> pages, int at)
+    {
+        if (output.PageCount > 0)
+        {
+            var before = new PageGeometry(output.Pages[output.PageCount - 1]);
+            return (before.Width, before.Height);
+        }
+        if (pages.Skip(at).FirstOrDefault(p => !p.IsBlank) is { Source: >= 0 } next)
+        {
+            var after = new PageGeometry(sources[next.Source].Pages[next.Index]);
+            return next.Rotation is 90 or 270 ? (after.Height, after.Width) : (after.Width, after.Height);
+        }
+        return (612, 792);
+    }
+
+    /// <summary>A picture as a one-page PDF in a scratch folder, made as One PDF makes its pages.</summary>
+    public static string PictureAsPage(string picture, string folder)
+    {
+        var path = OutputPaths.Unique(folder, Formats.BaseName(picture), "pdf");
+        using var frames = ImageConverter.Read(picture);
+        var page = frames[0];
+        page.AutoOrient();
+        ImageConverter.PrepareForPdf(page, Formats.Key(picture));
+        page.Write(path, ImageMagick.MagickFormat.Pdf);
+        return path;
+    }
+
+    /// <summary>The other PDFs or pictures to take pages from, "a.pdf|b.png", found beside the organized one when not given in full.</summary>
     static IReadOnlyList<string> Others(string list, string input)
     {
         var paths = list.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
@@ -149,6 +205,8 @@ public sealed class OrganizePdfTool : IConverter
             .ToList();
         if (paths.FirstOrDefault(p => !File.Exists(p)) is { } missing)
             throw new ConversionException(string.Format(Strings.CouldnTFindToTakePagesFrom, missing));
+        if (paths.FirstOrDefault(p => Formats.Key(p) != "pdf" && Formats.KindOf(p) != FileKind.Image) is { } other)
+            throw new ConversionException(string.Format(Strings.IsnTAPDFOrAPicture, Path.GetFileName(other)));
         return paths;
     }
 
@@ -161,7 +219,7 @@ public sealed class OrganizePdfTool : IConverter
         return Losses(document);
     }
 
-    static string? Losses(PdfDocument document)
+    internal static string? Losses(PdfDocument document)
     {
         var form = document.Internals.Catalog.Elements.GetDictionary("/AcroForm")?.Elements.GetArray("/Fields") is { Elements.Count: > 0 };
         var links = document.Pages.Cast<PdfPage>().Any(page =>

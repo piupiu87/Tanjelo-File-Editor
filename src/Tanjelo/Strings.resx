@@ -1559,4 +1559,52 @@
   <data name="PutResultsBackOnTheClipboardHint" xml:space="preserve">
     <value>What's made from a picture on the clipboard goes back on it, ready to paste into a chat or a document. The picture stays on the shelf.</value>
   </data>
+  <data name="Show" xml:space="preserve">
+    <value>Show</value>
+  </data>
+  <data name="Hide" xml:space="preserve">
+    <value>Hide</value>
+  </data>
+  <data name="ShowThe" xml:space="preserve">
+    <value>Show the {0}</value>
+  </data>
+  <data name="HideThe" xml:space="preserve">
+    <value>Hide the {0}</value>
+  </data>
+  <data name="RepeatThe" xml:space="preserve">
+    <value>{0}, again</value>
+  </data>
+  <data name="RepeatIt" xml:space="preserve">
+    <value>Repeat it</value>
+  </data>
+  <data name="IsnTTheSameInBothBoxes" xml:space="preserve">
+    <value>isn't the same in both boxes</value>
+  </data>
+  <data name="FillWith" xml:space="preserve">
+    <value>Fill the {0} with {1}</value>
+  </data>
+  <data name="BlankPage" xml:space="preserve">
+    <value>Blank page</value>
+  </data>
+  <data name="InsertABlankPageAfterTheSelection" xml:space="preserve">
+    <value>Insert a blank page after the selected one, the size of the page before it</value>
+  </data>
+  <data name="AddPictures" xml:space="preserve">
+    <value>Add pictures…</value>
+  </data>
+  <data name="AddPicturesAsPagesAfterTheSelection" xml:space="preserve">
+    <value>Add pictures as pages after the selected ones, each a page</value>
+  </data>
+  <data name="AddPicturesAsPages" xml:space="preserve">
+    <value>Add pictures as pages</value>
+  </data>
+  <data name="PicturesFilter" xml:space="preserve">
+    <value>Pictures|*.png;*.jpg;*.jpeg;*.webp;*.avif;*.heic;*.bmp;*.gif;*.tif;*.tiff</value>
+  </data>
+  <data name="Blank" xml:space="preserve">
+    <value>blank</value>
+  </data>
+  <data name="ABlankPage" xml:space="preserve">
+    <value>A blank page</value>
+  </data>
 </root>

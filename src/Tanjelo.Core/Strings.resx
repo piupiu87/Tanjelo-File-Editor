@@ -1475,13 +1475,13 @@
     <value>In their new order, such as 3,1-2,5r90: r90, r180 and r270 turn a page clockwise, a page listed twice is copied, </value>
   </data>
   <data name="AndAPageLeftOutIsDeleted" xml:space="preserve">
-    <value>and a page left out is deleted. Pages of the PDFs in --with are b1, b2…, then c1…</value>
+    <value>a page left out is deleted, and blank adds a blank page the size of the one before it. Pages of the PDFs or pictures in --with are b1, b2…, then c1…</value>
   </data>
   <data name="PagesFrom" xml:space="preserve">
     <value>Pages from</value>
   </data>
   <data name="OtherPDFsToTakePagesFromSeparated" xml:space="preserve">
-    <value>Other PDFs to take pages from, separated by |.</value>
+    <value>Other PDFs, or pictures, to take pages from, separated by |.</value>
   </data>
   <data name="CouldnTFindToTakePagesFrom" xml:space="preserve">
     <value>Couldn't find {0} to take pages from.</value>
@@ -1535,7 +1535,7 @@
     <value>pandoc couldn't convert this file: </value>
   </data>
   <data name="ThisPDFIsPasswordProtected" xml:space="preserve">
-    <value>This PDF is password-protected.</value>
+    <value>This PDF is password-protected. Remove its password first with Remove password…</value>
   </data>
   <data name="ThisDoesnTLookLikeAValid3" xml:space="preserve">
     <value>This doesn't look like a valid PDF.</value>
@@ -2130,5 +2130,518 @@
   </data>
   <data name="TarMany" xml:space="preserve">
     <value>Pack {0} items into a .tar</value>
+  </data>
+  <data name="ThisPDFLimitsChanges" xml:space="preserve">
+    <value>This PDF limits changes. Remove the limits first with Remove password…, which takes its permissions password.</value>
+  </data>
+  <data name="ThatPasswordOnlyOpensIt" xml:space="preserve">
+    <value>That password opens the PDF but doesn't lift its limits on printing, copying or changes. Give its permissions password.</value>
+  </data>
+  <data name="ThatPasswordIsnTRight" xml:space="preserve">
+    <value>That password isn't right.</value>
+  </data>
+  <data name="TheSignatureIsnTValidInTheCopy" xml:space="preserve">
+    <value>This PDF was digitally signed, and the signature isn't valid in the changed copy.</value>
+  </data>
+  <data name="Protect" xml:space="preserve">
+    <value>Protect…</value>
+  </data>
+  <data name="APasswordOrLimitsOnPrinting" xml:space="preserve">
+    <value>A password, or limits on printing and copying</value>
+  </data>
+  <data name="Protecting" xml:space="preserve">
+    <value>Protecting…</value>
+  </data>
+  <data name="Protected" xml:space="preserve">
+    <value>Protected</value>
+  </data>
+  <data name="ProtectButton" xml:space="preserve">
+    <value>Protect</value>
+  </data>
+  <data name="PasswordToOpen" xml:space="preserve">
+    <value>Password to open</value>
+  </data>
+  <data name="PasswordToOpenHint" xml:space="preserve">
+    <value>Anyone opening the copy needs it. Use 12 characters or more: shorter ones can be guessed. A forgotten password can't be got back, and Tanjelo keeps no copy.</value>
+  </data>
+  <data name="LimitPrintingCopyingAndChanges" xml:space="preserve">
+    <value>Limit printing, copying and changes</value>
+  </data>
+  <data name="LimitsAreHonouredByReaders" xml:space="preserve">
+    <value>PDF readers honour the limits, but the encryption doesn't enforce them: some programs ignore them.</value>
+  </data>
+  <data name="AllowPrinting" xml:space="preserve">
+    <value>Allow printing</value>
+  </data>
+  <data name="AtFullQuality" xml:space="preserve">
+    <value>Full quality</value>
+  </data>
+  <data name="AtLowQuality" xml:space="preserve">
+    <value>Low quality</value>
+  </data>
+  <data name="NotAtAll" xml:space="preserve">
+    <value>Not at all</value>
+  </data>
+  <data name="AllowCopyingTextAndPictures" xml:space="preserve">
+    <value>Allow copying text and pictures</value>
+  </data>
+  <data name="AllowChangesCommentsAndFormFilling" xml:space="preserve">
+    <value>Allow changes, comments and form filling</value>
+  </data>
+  <data name="PermissionsPassword" xml:space="preserve">
+    <value>Permissions password</value>
+  </data>
+  <data name="PermissionsPasswordHint" xml:space="preserve">
+    <value>Lifts the limits again. It must differ from the password to open.</value>
+  </data>
+  <data name="RemovePassword" xml:space="preserve">
+    <value>Remove password…</value>
+  </data>
+  <data name="ACopyWithoutEncryption" xml:space="preserve">
+    <value>A copy without its password or limits</value>
+  </data>
+  <data name="RemovingThePassword" xml:space="preserve">
+    <value>Removing the password…</value>
+  </data>
+  <data name="PasswordRemoved" xml:space="preserve">
+    <value>Password removed</value>
+  </data>
+  <data name="RemovePasswordButton" xml:space="preserve">
+    <value>Remove password</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="ThisPDFLimitsPrintingCopyingOrChanges" xml:space="preserve">
+    <value>This PDF limits printing, copying or changes, so it takes the password that lifts them, not the one to open it.</value>
+  </data>
+  <data name="ThePasswordAskedForWhenItOpens" xml:space="preserve">
+    <value>The password asked for when the PDF opens.</value>
+  </data>
+  <data name="ItsPasswordToOpenOrItsPermissionsPassword" xml:space="preserve">
+    <value>Its password to open, or its permissions password if it limits printing, copying or changes.</value>
+  </data>
+  <data name="GiveAPasswordToOpenOrLimit" xml:space="preserve">
+    <value>Give a password to open, or limit printing, copying and changes.</value>
+  </data>
+  <data name="ThePermissionsPasswordMustDiffer" xml:space="preserve">
+    <value>The permissions password must differ from the password to open.</value>
+  </data>
+  <data name="ThisPDFIsAlreadyProtected" xml:space="preserve">
+    <value>This PDF is already protected. Remove its password first with Remove password…</value>
+  </data>
+  <data name="ThisPDFIsnTPasswordProtected" xml:space="preserve">
+    <value>This PDF isn't password-protected.</value>
+  </data>
+  <data name="SmallerPicturesInsideIt" xml:space="preserve">
+    <value>Its pictures made smaller, at high, medium or low quality</value>
+  </data>
+  <data name="PictureQuality" xml:space="preserve">
+    <value>Picture quality</value>
+  </data>
+  <data name="High" xml:space="preserve">
+    <value>High</value>
+  </data>
+  <data name="Medium" xml:space="preserve">
+    <value>Medium</value>
+  </data>
+  <data name="Low" xml:space="preserve">
+    <value>Low</value>
+  </data>
+  <data name="PictureQualityHint" xml:space="preserve">
+    <value>Pictures are kept at 200, 150 or 100 pixels per inch for the largest size they're shown at, as JPEG at quality 85, 75 or 60. Text, drawings and screenshots stay sharp.</value>
+  </data>
+  <data name="AlreadyAsSmallAsTanjeloCanMakeIt" xml:space="preserve">
+    <value>Already as small as Tanjelo can make it.</value>
+  </data>
+  <data name="PicturesInIt" xml:space="preserve">
+    <value>Pictures</value>
+  </data>
+  <data name="NPicturesShareOfTheFile" xml:space="preserve">
+    <value>{0}, {1} of the file</value>
+  </data>
+  <data name="OnePictureShareOfTheFile" xml:space="preserve">
+    <value>1, {0} of the file</value>
+  </data>
+  <data name="NoPicturesInThisPDF" xml:space="preserve">
+    <value>None, so there's little to gain</value>
+  </data>
+  <data name="LargestPicture" xml:space="preserve">
+    <value>Largest</value>
+  </data>
+  <data name="LeftAsItIs" xml:space="preserve">
+    <value>left as it is</value>
+  </data>
+  <data name="PicturesMadeSmaller" xml:space="preserve">
+    <value>{0} → {1}, {2} of {3} pictures made smaller</value>
+  </data>
+  <data name="PageNumbers" xml:space="preserve">
+    <value>Page numbers…</value>
+  </data>
+  <data name="NumbersHeaderAndFooterTextAndBates" xml:space="preserve">
+    <value>Numbers, header and footer text, and Bates numbers</value>
+  </data>
+  <data name="NumberingPages" xml:space="preserve">
+    <value>Numbering pages…</value>
+  </data>
+  <data name="PagesNumbered" xml:space="preserve">
+    <value>Pages numbered</value>
+  </data>
+  <data name="AddToThePages" xml:space="preserve">
+    <value>Add to the pages</value>
+  </data>
+  <data name="TopLine" xml:space="preserve">
+    <value>Top line</value>
+  </data>
+  <data name="BottomLine" xml:space="preserve">
+    <value>Bottom line</value>
+  </data>
+  <data name="TopLineAt" xml:space="preserve">
+    <value>Top line at</value>
+  </data>
+  <data name="BottomLineAt" xml:space="preserve">
+    <value>Bottom line at</value>
+  </data>
+  <data name="LinesHint" xml:space="preserve">
+    <value>{page}, {pages}, {date}, {file} and {bates} are filled in for each page. Left empty, the line isn't added.</value>
+  </data>
+  <data name="PagePreset" xml:space="preserve">
+    <value>Page {page}</value>
+  </data>
+  <data name="PageOfPreset" xml:space="preserve">
+    <value>Page {page} of {pages}</value>
+  </data>
+  <data name="StartAt" xml:space="preserve">
+    <value>Start at</value>
+  </data>
+  <data name="StartAtHint" xml:space="preserve">
+    <value>The number of the first page that gets one.</value>
+  </data>
+  <data name="LeaveOutTheFirst" xml:space="preserve">
+    <value>Leave out the first</value>
+  </data>
+  <data name="PagesUnit" xml:space="preserve">
+    <value>pages</value>
+  </data>
+  <data name="LeaveOutHint" xml:space="preserve">
+    <value>Such as a cover: those pages get no number.</value>
+  </data>
+  <data name="FontSize" xml:space="preserve">
+    <value>Font size</value>
+  </data>
+  <data name="DistanceFromTheEdge" xml:space="preserve">
+    <value>Distance from the edge</value>
+  </data>
+  <data name="BatesPrefix" xml:space="preserve">
+    <value>Bates prefix</value>
+  </data>
+  <data name="BatesPrefixHint" xml:space="preserve">
+    <value>Bates numbers carry on across the PDFs, in the order they were selected.</value>
+  </data>
+  <data name="BatesDigits" xml:space="preserve">
+    <value>Digits</value>
+  </data>
+  <data name="FirstBatesNumber" xml:space="preserve">
+    <value>First Bates number</value>
+  </data>
+  <data name="BatesSuffix" xml:space="preserve">
+    <value>Bates suffix</value>
+  </data>
+  <data name="GiveTextForTheTopOrBottomLine" xml:space="preserve">
+    <value>Give text for the top or the bottom line.</value>
+  </data>
+  <data name="BatesRange" xml:space="preserve">
+    <value>{0}–{1}</value>
+  </data>
+  <data name="BatesRangeOf" xml:space="preserve">
+    <value>{0}: {1}–{2}</value>
+  </data>
+  <data name="FirstNumberedPage" xml:space="preserve">
+    <value>First numbered page</value>
+  </data>
+  <data name="TopAndBottom" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="Bates" xml:space="preserve">
+    <value>Bates</value>
+  </data>
+  <data name="Pt" xml:space="preserve">
+    <value>pt</value>
+  </data>
+  <data name="Mm" xml:space="preserve">
+    <value>mm</value>
+  </data>
+  <data name="Watermark" xml:space="preserve">
+    <value>Watermark…</value>
+  </data>
+  <data name="TextOrAPictureAcrossThePages" xml:space="preserve">
+    <value>Text or a picture across the pages</value>
+  </data>
+  <data name="AddingTheWatermark" xml:space="preserve">
+    <value>Adding the watermark…</value>
+  </data>
+  <data name="Watermarked" xml:space="preserve">
+    <value>Watermarked</value>
+  </data>
+  <data name="AddWatermark" xml:space="preserve">
+    <value>Add watermark</value>
+  </data>
+  <data name="MarkWith" xml:space="preserve">
+    <value>Mark with</value>
+  </data>
+  <data name="TextKind" xml:space="preserve">
+    <value>Text</value>
+  </data>
+  <data name="WatermarkText" xml:space="preserve">
+    <value>Text</value>
+  </data>
+  <data name="Confidential" xml:space="preserve">
+    <value>CONFIDENTIAL</value>
+  </data>
+  <data name="StraightAcross" xml:space="preserve">
+    <value>Straight across</value>
+  </data>
+  <data name="Tiled" xml:space="preserve">
+    <value>Tiled</value>
+  </data>
+  <data name="WatermarkSizeHint" xml:space="preserve">
+    <value>A share of the page's width.</value>
+  </data>
+  <data name="Opacity" xml:space="preserve">
+    <value>Opacity</value>
+  </data>
+  <data name="OnPages" xml:space="preserve">
+    <value>Pages</value>
+  </data>
+  <data name="OnPagesHint" xml:space="preserve">
+    <value>All of them when empty, or a list such as 1-3,5 or 9- for 9 to the end.</value>
+  </data>
+  <data name="UnderThePageContent" xml:space="preserve">
+    <value>Under the page content</value>
+  </data>
+  <data name="UnderThePageContentHint" xml:space="preserve">
+    <value>Behind the text and pictures, as on letterhead. Scans and pages with a filled background hide it.</value>
+  </data>
+  <data name="AWatermarkIsAMark" xml:space="preserve">
+    <value>A watermark marks a copy; it doesn't protect it, and it can be removed.</value>
+  </data>
+  <data name="CouldnTReadInThePages" xml:space="preserve">
+    <value>Couldn't read '{0}' in the pages. Use page numbers and ranges such as 1-3,5 or 9-.</value>
+  </data>
+  <data name="OnAllNPages" xml:space="preserve">
+    <value>All {0}</value>
+  </data>
+  <data name="NOfMPages" xml:space="preserve">
+    <value>{0} of {1}</value>
+  </data>
+  <data name="GiveTheTextOfTheWatermark" xml:space="preserve">
+    <value>Give the watermark's text.</value>
+  </data>
+  <data name="MakeSearchable" xml:space="preserve">
+    <value>Make searchable</value>
+  </data>
+  <data name="ScannedPagesGetTextYouCanSearch" xml:space="preserve">
+    <value>Scanned pages get text you can search and copy, read with OCR</value>
+  </data>
+  <data name="ReadingTheScannedPages" xml:space="preserve">
+    <value>Reading the scanned pages…</value>
+  </data>
+  <data name="MadeSearchable" xml:space="preserve">
+    <value>Made searchable</value>
+  </data>
+  <data name="EveryPageAlreadyHasText" xml:space="preserve">
+    <value>Every page already has text.</value>
+  </data>
+  <data name="OCRFoundNoTextOnTheScannedPages" xml:space="preserve">
+    <value>OCR found no text it could read on the scanned pages.</value>
+  </data>
+  <data name="ThereSNoOCRLanguage" xml:space="preserve">
+    <value>Windows has no OCR language '{0}'. Installed: {1}.</value>
+  </data>
+  <data name="N1PageHadNothingOCRCouldRead" xml:space="preserve">
+    <value>1 page had nothing OCR could read</value>
+  </data>
+  <data name="PagesHadNothingOCRCouldRead" xml:space="preserve">
+    <value>{0} pages had nothing OCR could read</value>
+  </data>
+  <data name="SearchablePDF" xml:space="preserve">
+    <value>Searchable PDF</value>
+  </data>
+  <data name="ThePictureAsAPageWithItsText" xml:space="preserve">
+    <value>The picture as a PDF page, its text searchable</value>
+  </data>
+  <data name="OneSearchablePDF" xml:space="preserve">
+    <value>One searchable PDF</value>
+  </data>
+  <data name="CombineImagesAsSearchablePages" xml:space="preserve">
+    <value>{0} pictures as pages, their text searchable</value>
+  </data>
+  <data name="SplitParts" xml:space="preserve">
+    <value>Split…</value>
+  </data>
+  <data name="EveryFewPagesAtBookmarksOrUnderASize" xml:space="preserve">
+    <value>Every few pages, at bookmarks, at listed pages or under a size</value>
+  </data>
+  <data name="SplitBy" xml:space="preserve">
+    <value>Split</value>
+  </data>
+  <data name="EveryFewPages" xml:space="preserve">
+    <value>Every few pages</value>
+  </data>
+  <data name="AtBookmarks" xml:space="preserve">
+    <value>At bookmarks</value>
+  </data>
+  <data name="AtListedPages" xml:space="preserve">
+    <value>At listed pages</value>
+  </data>
+  <data name="UnderASize" xml:space="preserve">
+    <value>Under a size</value>
+  </data>
+  <data name="SplitHint" xml:space="preserve">
+    <value>Bookmarks into each part are kept; form fields and links between pages are lost, as in Organize pages.</value>
+  </data>
+  <data name="EveryHowManyPages" xml:space="preserve">
+    <value>Pages in each part</value>
+  </data>
+  <data name="PartsHint" xml:space="preserve">
+    <value>Each part's pages, such as 1-3,4-8,9- (9 to the end).</value>
+  </data>
+  <data name="AtMost" xml:space="preserve">
+    <value>Each part at most</value>
+  </data>
+  <data name="ThisPDFHasNoBookmarksToSplitAt" xml:space="preserve">
+    <value>This PDF has no bookmarks to split at.</value>
+  </data>
+  <data name="BeforeTheFirstBookmark" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="N1PageIsBiggerThanOnItsOwn" xml:space="preserve">
+    <value>Page {0} is bigger than {1} on its own, so it's a part by itself.</value>
+  </data>
+  <data name="PagesAreBiggerThanOnTheirOwn" xml:space="preserve">
+    <value>Pages {0} are bigger than {1} on their own, so each is a part by itself.</value>
+  </data>
+  <data name="NParts" xml:space="preserve">
+    <value>{0} parts</value>
+  </data>
+  <data name="OnePart" xml:space="preserve">
+    <value>1 part</value>
+  </data>
+  <data name="PartsFilledUpTo" xml:space="preserve">
+    <value>Filled up to {0} each, measured as they're saved</value>
+  </data>
+  <data name="SavePictures" xml:space="preserve">
+    <value>Save pictures</value>
+  </data>
+  <data name="ThePicturesInItAsFiles" xml:space="preserve">
+    <value>The pictures in it, as files</value>
+  </data>
+  <data name="SavingThePictures" xml:space="preserve">
+    <value>Saving the pictures…</value>
+  </data>
+  <data name="PicturesSaved" xml:space="preserve">
+    <value>Pictures saved</value>
+  </data>
+  <data name="ThisPDFHasNoPictures" xml:space="preserve">
+    <value>This PDF has no pictures. Drawings aren't pictures: PDF → PNG saves whole pages.</value>
+  </data>
+  <data name="N1PictureCouldnTBeSaved" xml:space="preserve">
+    <value>1 picture couldn't be saved: Tanjelo can't decode its kind.</value>
+  </data>
+  <data name="PicturesCouldnTBeSaved" xml:space="preserve">
+    <value>{0} pictures couldn't be saved: Tanjelo can't decode their kind.</value>
+  </data>
+  <data name="CropMargins" xml:space="preserve">
+    <value>Crop margins…</value>
+  </data>
+  <data name="TrimTheMarginsAroundThePages" xml:space="preserve">
+    <value>Trim the margins around the pages</value>
+  </data>
+  <data name="CropButton" xml:space="preserve">
+    <value>Crop</value>
+  </data>
+  <data name="CropBy" xml:space="preserve">
+    <value>Crop</value>
+  </data>
+  <data name="AutomaticallyToTheContent" xml:space="preserve">
+    <value>To the content</value>
+  </data>
+  <data name="BySetAmounts" xml:space="preserve">
+    <value>By set amounts</value>
+  </data>
+  <data name="CroppingHidesTheMargins" xml:space="preserve">
+    <value>Cropping hides the margins; what's in them stays in the file.</value>
+  </data>
+  <data name="PaddingKept" xml:space="preserve">
+    <value>Room kept around the content</value>
+  </data>
+  <data name="BoxesFor" xml:space="preserve">
+    <value>Pages</value>
+  </data>
+  <data name="OneBoxForAll" xml:space="preserve">
+    <value>One box for all</value>
+  </data>
+  <data name="EachItsOwn" xml:space="preserve">
+    <value>Each its own</value>
+  </data>
+  <data name="TopMargin" xml:space="preserve">
+    <value>From the top</value>
+  </data>
+  <data name="BottomMargin" xml:space="preserve">
+    <value>From the bottom</value>
+  </data>
+  <data name="LeftMargin" xml:space="preserve">
+    <value>From the left</value>
+  </data>
+  <data name="RightMargin" xml:space="preserve">
+    <value>From the right</value>
+  </data>
+  <data name="ThereAreNoMarginsToCrop" xml:space="preserve">
+    <value>There are no margins to crop.</value>
+  </data>
+  <data name="TheAmountsLeaveNothingOfPage" xml:space="preserve">
+    <value>The amounts leave nothing of page {0}.</value>
+  </data>
+  <data name="KeptOf" xml:space="preserve">
+    <value>{0} of {1}</value>
+  </data>
+  <data name="Kept" xml:space="preserve">
+    <value>Kept</value>
+  </data>
+  <data name="MmSize" xml:space="preserve">
+    <value>{0} × {1} mm</value>
+  </data>
+  <data name="Flatten" xml:space="preserve">
+    <value>Flatten</value>
+  </data>
+  <data name="FormsAndCommentsBecomePartOfThePage" xml:space="preserve">
+    <value>Forms and comments become part of the page</value>
+  </data>
+  <data name="Flattening" xml:space="preserve">
+    <value>Flattening…</value>
+  </data>
+  <data name="Flattened" xml:space="preserve">
+    <value>Flattened</value>
+  </data>
+  <data name="ThisIsAnXFAForm" xml:space="preserve">
+    <value>This is an XFA form, which Tanjelo can't flatten. Open it in a PDF reader and print it to PDF instead.</value>
+  </data>
+  <data name="ThereSNothingToFlatten" xml:space="preserve">
+    <value>There's nothing to flatten: no form fields or comments.</value>
+  </data>
+  <data name="N1FieldHadNoLook" xml:space="preserve">
+    <value>1 form field had nothing to show it by, so it was left as it is.</value>
+  </data>
+  <data name="FieldsHadNoLook" xml:space="preserve">
+    <value>{0} form fields had nothing to show them by, so they were left as they are.</value>
+  </data>
+  <data name="IsnTAPDFOrAPicture" xml:space="preserve">
+    <value>{0} isn't a PDF or a picture, so it has no pages to take.</value>
+  </data>
+  <data name="PDFsPicturesAndDocumentsInTheOrderSelected" xml:space="preserve">
+    <value>PDFs, pictures and documents, in the order selected, a bookmark each</value>
+  </data>
+  <data name="InTheOrderSelectedABookmarkEach" xml:space="preserve">
+    <value>In the order selected, a bookmark each</value>
   </data>
 </root>

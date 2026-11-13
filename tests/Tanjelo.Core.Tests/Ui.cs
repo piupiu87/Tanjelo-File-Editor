@@ -157,6 +157,43 @@ static class Ui
         Math.Abs(a.R - b.R) <= tolerance && Math.Abs(a.G - b.G) <= tolerance && Math.Abs(a.B - b.B) <= tolerance;
 
     public static System.Windows.Media.Color Colour(string key) => ((SolidColorBrush)Application.Current.Resources[key]).Color;
+
+    /// <summary>Every element of a type under <paramref name="root"/>, in the order they're laid out.</summary>
+    public static IEnumerable<T> Find<T>(DependencyObject root) where T : DependencyObject
+    {
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            if (child is T found) yield return found;
+            foreach (var below in Find<T>(child)) yield return below;
+        }
+    }
+
+    /// <summary>Whether an element and everything around it is set to show, laid out on screen or not.</summary>
+    public static bool Showing(UIElement element)
+    {
+        for (DependencyObject? at = element; at is not null; at = VisualTreeHelper.GetParent(at))
+            if (at is UIElement { Visibility: not Visibility.Visible }) return false;
+        return true;
+    }
+
+    /// <summary>The text of every text block showing under the host, laid out afresh.</summary>
+    public static List<string> Texts(FrameworkElement host)
+    {
+        Layout(host);
+        return Find<System.Windows.Controls.TextBlock>(host).Where(Showing).Select(t => t.Text).ToList();
+    }
+
+    /// <summary>Lets the UI thread run until <paramref name="done"/> holds, failing after <paramref name="seconds"/>.</summary>
+    public static async Task Until(Func<bool> done, double seconds = 10)
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        while (!done())
+        {
+            Assert.True(watch.Elapsed.TotalSeconds < seconds, "waited too long");
+            await Settle(20);
+        }
+    }
 }
 
 /// <summary>
