@@ -2135,7 +2135,7 @@
     <value>This PDF limits changes. Remove the limits first with Remove password…, which takes its permissions password.</value>
   </data>
   <data name="ThatPasswordOnlyOpensIt" xml:space="preserve">
-    <value>That password opens the PDF but doesn't lift its limits on printing, copying or changes. Give its permissions password.</value>
+    <value>That password opens the PDF, but it also has a permissions password, and only that one removes its protection. Give its permissions password.</value>
   </data>
   <data name="ThatPasswordIsnTRight" xml:space="preserve">
     <value>That password isn't right.</value>

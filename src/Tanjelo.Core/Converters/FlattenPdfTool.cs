@@ -10,9 +10,10 @@ namespace Tanjelo.Core.Converters;
 /// Flatten: form fields, comments, stamps and drawn signatures become part of the page. Each visible annotation's
 /// normal appearance is drawn into the page where it shows (its bounding box, through its matrix, onto its
 /// rectangle, as the PDF standard sets out), and the annotation goes. Links stay and popups go. A text field with no
-/// appearance, as forms that ask readers to draw them (/NeedAppearances) have, gets one drawn from its value first;
-/// other fields with none are left as they are and counted. The form goes once no fields are left. XFA forms are
-/// refused.
+/// appearance gets one drawn from its value first. So does every text field of a form that asks readers to draw its
+/// fields (/NeedAppearances): an app that fills one in may change the values and leave the old look, often blank, which
+/// readers never show. Other fields with no appearance are left as they are and counted. The form goes once no fields
+/// are left. XFA forms are refused.
 /// </summary>
 public sealed partial class FlattenPdfTool : IConverter
 {
@@ -28,6 +29,9 @@ public sealed partial class FlattenPdfTool : IConverter
     // Annotation flags (PDF 2.0, table 167).
     const int Hidden = 1 << 1, NoView = 1 << 5;
 
+    // A text field's flag for a password, whose value readers never show (PDF 2.0, table 229).
+    const int PasswordField = 1 << 13;
+
     public Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx) => Task.Run<IReadOnlyList<string>>(() =>
     {
         using var document = PdfFiles.OpenForChanges(input);
@@ -35,6 +39,9 @@ public sealed partial class FlattenPdfTool : IConverter
         var form = catalog.Elements.GetDictionary("/AcroForm");
         if (form?.Elements.ContainsKey("/XFA") == true) throw new ConversionException(Strings.ThisIsAnXFAForm);
         var resources = form?.Elements.GetDictionary("/DR");
+        var needAppearances = form?.Elements.GetBoolean("/NeedAppearances") == true;
+        // Asked now: a visible signature's field is gone once its look is drawn into the page.
+        var signed = PdfFiles.IsSigned(document);
 
         var changed = 0;
         var kept = new HashSet<PdfDictionary>(ReferenceEqualityComparer.Instance); // widgets left as they are
@@ -59,7 +66,15 @@ public sealed partial class FlattenPdfTool : IConverter
                 changed++;
                 if (subtype == "/Popup" || (annotation.Elements.GetInteger("/F") & (Hidden | NoView)) != 0)
                     continue; // never drawn, so nothing to keep
-                var appearance = Appearance(annotation) ?? (Field(annotation, "/FT") is PdfName { Value: "/Tx" } ? TextAppearance(document, annotation, form) : null);
+                var textField = subtype == "/Widget" && Field(annotation, "/FT") is PdfName { Value: "/Tx" };
+                PdfDictionary? appearance;
+                if (textField && needAppearances)
+                {
+                    // Readers draw these from their values, whatever look they have; an empty one shows nothing.
+                    if (TextValue(annotation) is null) continue;
+                    appearance = TextAppearance(document, annotation, form);
+                }
+                else appearance = Appearance(annotation) ?? (textField ? TextAppearance(document, annotation, form) : null);
                 if (appearance is null)
                 {
                     if (subtype != "/Widget") continue; // a comment with nothing to show
@@ -95,7 +110,7 @@ public sealed partial class FlattenPdfTool : IConverter
             }
         }
         if (kept.Count > 0) ctx.Note(kept.Count == 1 ? Strings.N1FieldHadNoLook : string.Format(Strings.FieldsHadNoLook, kept.Count));
-        PdfFiles.NoteIfSigned(document, ctx);
+        if (signed) ctx.Note(Strings.TheSignatureIsnTValidInTheCopy);
         var output = OutputPaths.Suffixed(input, "flattened", "pdf");
         PdfFiles.Save(document, output);
         ctx.Progress.Report(1);
@@ -179,6 +194,19 @@ public sealed partial class FlattenPdfTool : IConverter
         return [.. numbers];
     }
 
+    /// <summary>A text field's value as readers show it; null when it's empty, or a password, which is never drawn.</summary>
+    static string? TextValue(PdfDictionary annotation)
+    {
+        if (Field(annotation, "/Ff") is PdfInteger flags && (flags.Value & PasswordField) != 0) return null;
+        var value = Field(annotation, "/V") switch
+        {
+            PdfString s => s.Value,
+            PdfName n => n.Value.TrimStart('/'),
+            _ => null,
+        };
+        return string.IsNullOrEmpty(value) ? null : value;
+    }
+
     [GeneratedRegex(@"(-?[\d.]+)\s+Tf")]
     private static partial Regex FontSize();
 
@@ -195,13 +223,7 @@ public sealed partial class FlattenPdfTool : IConverter
     /// </summary>
     static PdfDictionary? TextAppearance(PdfDocument document, PdfDictionary annotation, PdfDictionary? form)
     {
-        var value = Field(annotation, "/V") switch
-        {
-            PdfString s => s.Value,
-            PdfName n => n.Value.TrimStart('/'),
-            _ => null,
-        };
-        if (string.IsNullOrEmpty(value) || Rect(annotation.Elements.GetArray("/Rect") ?? annotation.Elements["/Rect"]) is not { } rect) return null;
+        if (TextValue(annotation) is not { } value || Rect(annotation.Elements.GetArray("/Rect") ?? annotation.Elements["/Rect"]) is not { } rect) return null;
         var (width, height) = (rect.X1 - rect.X0, rect.Y1 - rect.Y0);
         if (width < 1 || height < 1) return null;
         var da = (Field(annotation, "/DA") as PdfString)?.Value ?? (form?.Elements["/DA"] as PdfString)?.Value ?? "";

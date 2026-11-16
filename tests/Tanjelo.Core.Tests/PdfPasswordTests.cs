@@ -14,6 +14,9 @@ public class PdfPasswordTests
     const string Open = "Open-Sesame-2026";
     const string Permissions = "Perm-Lift-5678";
 
+    const string PermissionsPasswordNeeded =
+        "That password opens the PDF, but it also has a permissions password, and only that one removes its protection. Give its permissions password.";
+
     static async Task<BatchResult> Run(string key, string input, params (string Name, string Value)[] values)
     {
         var engine = Env.Engine();
@@ -104,8 +107,7 @@ public class PdfPasswordTests
             ("password", Open), ("limit", "true"), ("permissions-password", Permissions))).Outputs);
 
         var opened = await Run("unlock-pdf", protectedCopy, ("password", Open));
-        Assert.Equal("That password opens the PDF but doesn't lift its limits on printing, copying or changes. Give its permissions password.",
-            Assert.Single(opened.Failures).Message);
+        Assert.Equal(PermissionsPasswordNeeded, Assert.Single(opened.Failures).Message);
         var unlocked = Assert.Single((await Run("unlock-pdf", protectedCopy, ("password", Permissions))).Outputs);
 
         Assert.Null(PdfFiles.EncryptionOf(unlocked));
@@ -113,6 +115,20 @@ public class PdfPasswordTests
         Assert.Contains("Introduction page 1", pdf.GetPage(1).Text);
         Assert.True(pdf.TryGetBookmarks(out var bookmarks));
         Assert.Single(bookmarks.Roots);
+    }
+
+    [Fact]
+    public async Task A_permissions_password_without_limits_is_named_as_such()
+    {
+        using var scratch = new Scratch();
+        // Made elsewhere: a password to open and a separate permissions password, but nothing actually limited.
+        var pdf = scratch.EncryptedPdf("both.pdf", "aes256", Open, Permissions);
+        Assert.False(PdfFiles.EncryptionOf(pdf)!.Limits);
+
+        var opened = await Run("unlock-pdf", pdf, ("password", Open));
+
+        Assert.Equal(PermissionsPasswordNeeded, Assert.Single(opened.Failures).Message);
+        Assert.Single((await Run("unlock-pdf", pdf, ("password", Permissions))).Outputs);
     }
 
     [Theory]

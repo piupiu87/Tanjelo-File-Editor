@@ -77,6 +77,43 @@ public class FlattenPdfTests
     }
 
     [Fact]
+    public async Task A_form_that_asks_for_its_fields_to_be_drawn_shows_their_values_not_their_old_look()
+    {
+        using var scratch = new Scratch();
+        var pdf = scratch.FormPdf("form.pdf", needAppearances: true);
+        using (var document = PdfReader.Open(pdf, PdfDocumentOpenMode.Modify))
+        {
+            // As an app that fills forms in can leave one: the value changed, the look still the old one.
+            RawPdf.Appearance(document, Annotations(document)[0], 200, 20, "/Tx BMC q BT /Helv 12 Tf 0 g 2 6 Td (Old value) Tj ET Q EMC");
+            document.Save(pdf);
+        }
+
+        var output = Assert.Single((await Flatten(pdf)).Outputs);
+
+        using var flattened = PigDocument.Open(output);
+        var words = flattened.GetPage(1).GetWords().Select(w => w.Text).ToList();
+        Assert.Contains("Filled", words);
+        Assert.DoesNotContain("Old", words);
+    }
+
+    [Fact]
+    public async Task A_password_fields_value_is_never_drawn()
+    {
+        using var scratch = new Scratch();
+        var pdf = scratch.FormPdf("form.pdf", needAppearances: true);
+        using (var document = PdfReader.Open(pdf, PdfDocumentOpenMode.Modify))
+        {
+            Annotations(document)[0].Elements.SetInteger("/Ff", 1 << 13); // the text field is a password field
+            document.Save(pdf);
+        }
+
+        var output = Assert.Single((await Flatten(pdf)).Outputs);
+
+        using var flattened = PigDocument.Open(output);
+        Assert.DoesNotContain("Filled", flattened.GetPage(1).Text);
+    }
+
+    [Fact]
     public async Task A_field_with_nothing_to_show_it_by_is_left_and_counted()
     {
         using var scratch = new Scratch();
@@ -128,5 +165,27 @@ public class FlattenPdfTests
         using var flattened = PdfReader.Open(Assert.Single(result.Outputs), PdfDocumentOpenMode.Import);
         Assert.Equal(["/Widget"], Annotations(flattened).Select(a => a.Elements.GetName("/Subtype")));
         Assert.True(flattened.Internals.Catalog.Elements.ContainsKey("/AcroForm"));
+    }
+
+    [Fact]
+    public async Task Flattening_a_visible_signature_says_it_wont_hold()
+    {
+        using var scratch = new Scratch();
+        var signed = scratch.SignedPdf("signed.pdf");
+        using (var document = PdfReader.Open(signed, PdfDocumentOpenMode.Modify))
+        {
+            // A signature shown on the page: its look is drawn in, and its field goes with it.
+            var field = Annotations(document)[0];
+            field.Elements["/Rect"] = RawPdf.Array(100, 100, 250, 150);
+            RawPdf.Appearance(document, field, 150, 50, "0 0 1 RG 2 w 10 10 m 140 40 l S");
+            document.Save(signed);
+        }
+
+        var result = await Flatten(signed);
+
+        Assert.Equal("This PDF was digitally signed, and the signature isn't valid in the changed copy.", Assert.Single(result.Notes));
+        using var flattened = PdfReader.Open(Assert.Single(result.Outputs), PdfDocumentOpenMode.Import);
+        Assert.Empty(Annotations(flattened));
+        Assert.False(flattened.Internals.Catalog.Elements.ContainsKey("/AcroForm"));
     }
 }
