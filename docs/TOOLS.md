@@ -344,7 +344,8 @@ shows, and it goes; the form goes too once no fields are left.
 - Other fields with no look, such as an unticked box with none, are left as they are and counted on the card; an
   invisible signature stays as it is. A signed PDF's copy says its signature isn't valid any more, a visible signature
   drawn into the page too.
-- XFA forms, made with LiveCycle Designer, are refused: open them in a PDF reader and print to PDF instead.
+- XFA forms, an older kind of form that few PDF readers support, are refused: open them in a PDF reader and print to
+  PDF instead.
 - A PDF with no form fields or comments says so and writes nothing.
 
 ## Editors
