@@ -3,11 +3,30 @@ namespace Tanjelo.Core;
 /// <summary>Outputs go beside the original and never overwrite anything: "photo.png", then "photo (2).png"...</summary>
 public static class OutputPaths
 {
-    public static string Beside(string input, string ext) => Unique(DirectoryOf(input), Formats.BaseName(input), ext);
+    static readonly AsyncLocal<string?> Redirected = new();
+
+    public static string Beside(string input, string ext) => Unique(Redirected.Value ?? DirectoryOf(input), Formats.BaseName(input), ext);
 
     /// <summary>For tools: "talk.mp4" with "muted" becomes "talk-muted.mp4", keeping the extension unless another is given.</summary>
     public static string Suffixed(string input, string suffix, string? ext = null) =>
-        Unique(DirectoryOf(input), Formats.BaseName(input) + "-" + suffix, ext ?? Formats.Ext(input));
+        Unique(Redirected.Value ?? DirectoryOf(input), Formats.BaseName(input) + "-" + suffix, ext ?? Formats.Ext(input));
+
+    /// <summary>
+    /// For work that makes a file only to use it, such as a PDF of a document to merge: until disposed, what's made
+    /// "beside" an input goes into <paramref name="folder"/>, while the input stays where it is, so a document finds
+    /// its pictures as it always does. It holds for the work this async flow starts.
+    /// </summary>
+    internal static IDisposable Into(string folder)
+    {
+        var before = Redirected.Value;
+        Redirected.Value = folder;
+        return new Back(before);
+    }
+
+    sealed class Back(string? before) : IDisposable
+    {
+        public void Dispose() => Redirected.Value = before;
+    }
 
     /// <param name="ext">Extension without the dot; empty for a folder.</param>
     public static string Unique(string directory, string baseName, string ext)

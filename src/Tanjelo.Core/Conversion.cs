@@ -90,6 +90,9 @@ public sealed record Target(string Key, string Label, string Description, Sectio
 
     public string Text(string name) => Checked(name, OptionKind.Text);
 
+    /// <summary>A password option's value exactly as typed; empty when it's optional and was left out.</summary>
+    public string Password(string name) => Checked(name, OptionKind.Password);
+
     public Colour Colour(string name) => Core.Colour.TryParse(Checked(name, OptionKind.Colour), out var value) ? value : default;
 
     /// <summary>A file option's full path, or null when it was left empty.</summary>
@@ -118,9 +121,11 @@ public sealed record Target(string Key, string Label, string Description, Sectio
         var option = Options.FirstOrDefault(o => o.Name == name);
         if (option is null || option.Kind != kind)
             throw new InvalidOperationException($"{Key} has no {kind} option '{name}'.");
-        var value = Parameter(name).Trim();
+        // A password is used as typed, and an error never repeats it.
+        var secret = kind == OptionKind.Password;
+        var value = secret ? Parameter(name) : Parameter(name).Trim();
         if (option.Problem(value) is { } problem)
-            throw new ConversionException($"{option.Label} {problem}" + (value.Length > 0 ? string.Format(Strings.Not, value) : "."));
+            throw new ConversionException($"{option.Label} {problem}" + (value.Length > 0 && !secret ? string.Format(Strings.Not, value) : "."));
         return value;
     }
 
@@ -168,6 +173,18 @@ public interface IBatchOperation
 {
     IEnumerable<Target> TargetsFor(IReadOnlyList<string> inputs);
     Task<IReadOnlyList<string>> RunAsync(IReadOnlyList<string> inputs, Target target, JobContext ctx);
+}
+
+/// <summary>What's wrong with the chosen settings for these files, such as a wrong password; <paramref name="Option"/> names the field to show it at, if any.</summary>
+public sealed record SettingsProblem(string? Option, string Message);
+
+/// <summary>
+/// A converter or batch operation that can check its settings against the files before it runs, so the options
+/// dialog can say what's wrong while it's still open, such as a password that doesn't open the PDF.
+/// </summary>
+public interface IValidator
+{
+    Task<SettingsProblem?> ValidateAsync(IReadOnlyList<string> inputs, Target target, JobContext ctx);
 }
 
 /// <summary>A failure whose message is fit to show the user as-is.</summary>

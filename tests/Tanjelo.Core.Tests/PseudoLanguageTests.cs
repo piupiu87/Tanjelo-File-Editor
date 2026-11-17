@@ -103,6 +103,7 @@ public class PseudoLanguageTests
         var photo = scratch.Photo("photo.png", 640, 480);
         var second = scratch.Image("second.png", 320, 240);
         var pdf = scratch.Pdf("report.pdf", pages: 3);
+        var locked = scratch.EncryptedPdf("locked.pdf", "aes256", "made-up-1");
         // Made here: ffmpeg is waited for, which would hold up the UI thread the windows need.
         var clip = Env.HasFfmpeg ? scratch.Numbered("clip.mp4", seconds: 2) : null;
         var tone = Env.HasFfmpeg ? scratch.Tone("tone.wav") : null;
@@ -111,7 +112,7 @@ public class PseudoLanguageTests
         var payload = pc.Payload("1.2.0", SetupSandbox.App("1.2.0"));
         // Names, sizes and numbers that come from the files and settings rather than the resource files.
         // Optional tools' names are their own, never translated.
-        string[] data = ["photo.png", "second.png", "report.pdf", "Ctrl+Shift+Space", "Ctrl+Shift+F", "Ctrl+Shift+V", "photo.jpg", "a.png", "b.png",
+        string[] data = ["photo.png", "second.png", "report.pdf", "locked.pdf", "Ctrl+Shift+Space", "Ctrl+Shift+F", "Ctrl+Shift+V", "photo.jpg", "a.png", "b.png",
             "ffmpeg", "pandoc", "7-Zip", "LibreOffice"];
         var problems = new List<string>();
         await Ui.Run(async () =>
@@ -147,9 +148,10 @@ public class PseudoLanguageTests
             shelf.Add([photo, second, clipboardFolder.Save(ClipboardPicture.FromPng(File.ReadAllBytes(second))!, 1).File]);
             await Check("shelf", new FloatWindow(shelf, "Ctrl+Shift+Space"), 248, 360);
             await Check("shelf-empty", new FloatWindow(new Shelf(), null), 248, 300);
-            foreach (var files in new[] { new[] { photo }, [photo, second] })
+            foreach (var files in new[] { new[] { photo }, [photo, second], [pdf], [locked] })
                 foreach (var target in engine.GetMenu(files).Targets.Where(t => t.Options.Count > 0 && t.Editor is null))
-                    await Check("options-" + target.Key + (files.Length > 1 ? "-2" : ""), new OptionsWindow(engine, files, target, new Dictionary<string, string>()), 720, 1000);
+                    await Check("options-" + target.Key + (files.Length > 1 ? "-2" : "") + (Formats.Key(files[0]) == "pdf" ? "-pdf" : ""),
+                        new OptionsWindow(engine, files, target, new Dictionary<string, string>()), 720, 1000);
             foreach (var (file, key, make) in new (string, string, Func<string, Target, Editor>)[]
                      {
                          (pdf, "organize-pdf", (f, t) => new PageEditor(f, t)),

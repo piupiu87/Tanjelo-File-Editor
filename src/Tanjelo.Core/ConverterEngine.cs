@@ -35,7 +35,14 @@ public sealed class ConverterEngine
                 new PdfTextConverter(),
                 new PdfSlidesConverter(),
                 new SplitPdfTool(),
+                new SplitPdfPartsTool(),
+                new SavePicturesTool(),
                 new OrganizePdfTool(),
+                new PdfPasswordTools(),
+                new SearchablePdfTool(tools),
+                new WatermarkTool(),
+                new CropPdfTool(),
+                new FlattenPdfTool(),
                 new OfficeConverter(tools),
                 new LibreOfficeConverter(tools),
                 new MediaConverter(tools),
@@ -59,7 +66,8 @@ public sealed class ConverterEngine
                 new MoveToFolderAction(),
             ],
             [
-                new CombinePdfOperation(),
+                new CombinePdfOperation(tools),
+                new PageNumbersOperation(),
                 new CombinePptxOperation(),
                 new CollageOperation(),
                 new JoinVideosOperation(tools),
@@ -78,6 +86,20 @@ public sealed class ConverterEngine
         Options = options ?? new ConverterOptions();
         _converters = converters;
         _batchOperations = batchOperations;
+        // Merging makes PDFs of pictures and documents with their own converters.
+        foreach (var merge in batchOperations.OfType<MergePdfOperation>()) merge.Engine = this;
+    }
+
+    /// <summary>Whether some converter makes a PDF of this file, such as a picture or a Word document.</summary>
+    internal bool CanMakePdf(string input) => PerFileTargets(input).Any(x => x.Target.Key == "pdf");
+
+    /// <summary>Makes a PDF of the file with the converter that offers it, into <paramref name="folder"/>, and returns its path.</summary>
+    internal async Task<string> MakePdfAsync(string input, string folder, JobContext ctx)
+    {
+        var (target, converter) = PerFileTargets(input).FirstOrDefault(x => x.Target.Key == "pdf");
+        if (converter is null) throw new ConversionException(string.Format(Strings.CanTConvertThisFileTo, Strings.PDF));
+        using (OutputPaths.Into(folder))
+            return (await converter.ConvertAsync(input, target, ctx)).First(o => Formats.Key(o) == "pdf");
     }
 
     /// <summary>Formats every selected file can become, plus whole-selection operations.</summary>
@@ -194,7 +216,7 @@ public sealed class ConverterEngine
     }
 
     /// <summary>Whether the entry can show its result before it runs, in the options dialog.</summary>
-    public bool CanPreview(IReadOnlyList<string> inputs, Target target) => inputs.Count > 0 && Find(inputs, target).Previewer is not null;
+    public bool CanPreview(IReadOnlyList<string> inputs, Target target) => inputs.Count > 0 && Find(inputs, target).Worker is IPreviewer;
 
     /// <summary>
     /// Shows what the entry would do with these parameter values, without writing anything beside the inputs.
@@ -203,8 +225,8 @@ public sealed class ConverterEngine
     public async Task<Preview?> PreviewAsync(IReadOnlyList<string> inputs, Target target, PreviewRequest request, CancellationToken ct = default)
     {
         if (inputs.Count == 0) return null;
-        var (previewer, own) = Find(inputs, target);
-        if (previewer is null) return null;
+        var (worker, own) = Find(inputs, target);
+        if (worker is not IPreviewer previewer) return null;
         using var ctx = new JobContext { Tools = Tools, Options = Options, Cancellation = ct };
         try
         {
@@ -216,18 +238,45 @@ public sealed class ConverterEngine
         }
     }
 
-    /// <summary>The previewer behind an entry and its own copy of the entry; per-file entries are looked up on the first input.</summary>
-    (IPreviewer? Previewer, Target? Own) Find(IReadOnlyList<string> inputs, Target target)
+    /// <summary>
+    /// Checks the entry's settings against the files before it runs, such as whether a password opens a PDF; null
+    /// when they're fine or the entry doesn't check. Per-file entries check every file.
+    /// </summary>
+    public async Task<SettingsProblem?> ValidateAsync(IReadOnlyList<string> inputs, Target target, CancellationToken ct = default)
+    {
+        if (inputs.Count == 0) return null;
+        using var ctx = new JobContext { Tools = Tools, Options = Options, Cancellation = ct };
+        foreach (var input in target.IsBatch ? [inputs[0]] : inputs)
+        {
+            var (worker, own) = Find(target.IsBatch ? inputs : [input], target);
+            if (worker is not IValidator validator) continue;
+            SettingsProblem? problem;
+            try
+            {
+                problem = await validator.ValidateAsync(target.IsBatch ? inputs : [input], own!.WithParameters(target.Parameters), ctx);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                problem = new SettingsProblem(null, Describe(ex));
+            }
+            if (problem is not null)
+                return inputs.Count > 1 && !target.IsBatch ? problem with { Message = $"{Path.GetFileName(input)}: {problem.Message}" } : problem;
+        }
+        return null;
+    }
+
+    /// <summary>The converter or operation behind an entry and its own copy of the entry; per-file entries are looked up on the first input.</summary>
+    (object? Worker, Target? Own) Find(IReadOnlyList<string> inputs, Target target)
     {
         if (target.IsBatch)
         {
             foreach (var op in _batchOperations)
                 if (Safe(() => op.TargetsFor(inputs)).FirstOrDefault(t => t.Key == target.Key) is { } own)
-                    return (op as IPreviewer, own);
+                    return (op, own);
             return (null, null);
         }
         var match = PerFileTargets(inputs[0]).FirstOrDefault(x => x.Target.Key == target.Key);
-        return (match.Converter as IPreviewer, match.Target);
+        return (match.Converter, match.Target);
     }
 
     IEnumerable<(Target Target, IConverter Converter)> PerFileTargets(string input)

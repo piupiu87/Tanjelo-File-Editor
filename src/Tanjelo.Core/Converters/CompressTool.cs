@@ -48,10 +48,23 @@ public sealed class CompressTool(Toolbox tools) : IConverter, IPreviewer
     static readonly Target VideoTarget = Compress(Section.Video, dimensions: true);
     static readonly Target AudioTarget = Compress(Section.Audio, dimensions: false);
 
+    /// <summary>For PDFs, only the pictures inside can give much, so the one choice is how good they stay.</summary>
+    static readonly Target PdfTarget = new Target("compress", Strings.Compress, Strings.SmallerPicturesInsideIt, Section.Document)
+    {
+        Kind = TargetKind.Tool,
+        Running = Strings.Compressing,
+        Done = Strings.Compressed,
+    }.WithOptions(new Option("quality", Strings.PictureQuality, OptionKind.Choice, "medium")
+    {
+        Choices = [new("high", Strings.High), new("medium", Strings.Medium), new("low", Strings.Low)],
+        Hint = Strings.PictureQualityHint,
+    });
+
     public IEnumerable<Target> TargetsFor(string input)
     {
         var key = Formats.Key(input);
         if (Images.Contains(key)) return [ImageTarget];
+        if (key == "pdf") return [PdfTarget];
         if (tools.Ffmpeg is null || tools.Ffprobe is null) return [];
         if (Formats.Videos.Contains(key)) return [VideoTarget];
         if (Formats.Audio.Contains(key)) return [AudioTarget];
@@ -60,6 +73,8 @@ public sealed class CompressTool(Toolbox tools) : IConverter, IPreviewer
 
     public async Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx)
     {
+        if (Formats.Key(input) == "pdf")
+            return [await Task.Run(() => CompressPdf(input, target, ctx), ctx.Cancellation)];
         var original = new FileInfo(input).Length;
         if (Images.Contains(Formats.Key(input)))
         {
@@ -76,9 +91,82 @@ public sealed class CompressTool(Toolbox tools) : IConverter, IPreviewer
             : [await AudioAsync(input, media, PlanAudio(input, media, original, target), ctx)];
     }
 
+    /// <summary>
+    /// A copy whose pictures are scaled down and re-encoded (see <see cref="PdfCompressor"/>), kept only if it's
+    /// clearly smaller: a few percent can come from PDFsharp writing the file afresh, which isn't worth a copy.
+    /// </summary>
+    static string CompressPdf(string input, Target target, JobContext ctx)
+    {
+        var original = new FileInfo(input).Length;
+        using var document = PdfFiles.OpenForChanges(input);
+        var signed = PdfFiles.IsSigned(document);
+        var outcome = PdfCompressor.Compress(document, PdfCompressor.Quality.Of(target.Choice("quality")), ctx.Cancellation, ctx.Progress);
+        if (outcome.Saved.Length > original * 0.98)
+            throw new ConversionException(Strings.AlreadyAsSmallAsTanjeloCanMakeIt);
+        var output = OutputPaths.Suffixed(input, "compressed", "pdf");
+        try
+        {
+            File.WriteAllBytes(output, outcome.Saved);
+        }
+        catch
+        {
+            OutputPaths.TryDelete(output);
+            throw;
+        }
+        ctx.Note(string.Format(Strings.PicturesMadeSmaller, Describe.Size(original), Describe.Size(outcome.Saved.Length), outcome.Replaced, outcome.Pictures));
+        if (signed) ctx.Note(Strings.TheSignatureIsnTValidInTheCopy);
+        return output;
+    }
+
+    /// <summary>How many pictures there are and their share of the file, and the largest of them before and after, side by side.</summary>
+    static Preview PreviewPdf(string input, Target target, PreviewRequest request)
+    {
+        var original = new FileInfo(input).Length;
+        using var document = PdfFiles.OpenForChanges(input);
+        var pictures = PdfCompressor.Pictures(document).Values.ToList();
+        var now = new Fact(Strings.Now, $"{Describe.Size(original)} · {Describe.Count(document.PageCount, Strings.OnePage, Strings.NPages)}");
+        if (pictures.Count == 0) return new Preview(null, [now, new Fact(Strings.PicturesInIt, Strings.NoPicturesInThisPDF)]);
+        var share = $"{Math.Min(100, Math.Round(100.0 * pictures.Sum(p => (long)p.Bytes) / original)):0}%";
+        var facts = new List<Fact>
+        {
+            now,
+            new(Strings.PicturesInIt, pictures.Count == 1 ? string.Format(Strings.OnePictureShareOfTheFile, share) : string.Format(Strings.NPicturesShareOfTheFile, pictures.Count, share)),
+        };
+        var largest = pictures.MaxBy(p => p.Bytes)!;
+        var before = $"{Describe.Pixels(largest.Image.Elements.GetInteger("/Width"), largest.Image.Elements.GetInteger("/Height"))} · {Describe.Size(largest.Bytes)}";
+        var shrunk = PdfCompressor.Shrink(largest, PdfCompressor.Quality.Of(target.Choice("quality")));
+        facts.Add(new Fact(Strings.LargestPicture, shrunk is null
+            ? $"{before}, {Strings.LeftAsItIs}"
+            : $"{before} → {Describe.Pixels(shrunk.Width, shrunk.Height)} · {Describe.Size(shrunk.Jpeg.Length)}"));
+        return new Preview(SideBySide(PdfCompressor.Decode(largest.Image), shrunk is null ? null : new MagickImage(shrunk.Jpeg), request.MaxSize), facts);
+    }
+
+    /// <summary>The picture before and after, each in half the width, at the same scale so the loss of detail shows.</summary>
+    static byte[]? SideBySide(MagickImage? before, MagickImage? after, int maxSize)
+    {
+        if (before is null) return null;
+        using var _ = before;
+        using var __ = after;
+        var half = Math.Max(1, (maxSize - 8) / 2);
+        foreach (var picture in new[] { before, after }.OfType<MagickImage>())
+        {
+            picture.ColorSpace = ColorSpace.sRGB;
+            // Shown at the size of the original, so a picture made smaller looks it.
+            var fit = (double)half / Math.Max(before.Width, before.Height);
+            if (fit < 1) picture.Resize((uint)Math.Max(1, Math.Round(before.Width * fit)), (uint)Math.Max(1, Math.Round(before.Height * fit)));
+        }
+        if (after is null) return before.ToByteArray(MagickFormat.Png);
+        using var both = new MagickImage(MagickColors.Transparent, before.Width * 2 + 8, Math.Max(before.Height, after.Height));
+        both.Composite(before, 0, 0, CompositeOperator.Over);
+        both.Composite(after, (int)before.Width + 8, 0, CompositeOperator.Over);
+        return both.ToByteArray(MagickFormat.Png);
+    }
+
     public async Task<Preview> PreviewAsync(IReadOnlyList<string> inputs, Target target, PreviewRequest request, JobContext ctx)
     {
         var input = inputs[0];
+        if (Formats.Key(input) == "pdf")
+            return await Task.Run(() => PreviewPdf(input, target, request), ctx.Cancellation);
         var original = new FileInfo(input).Length;
         if (Images.Contains(Formats.Key(input)))
         {

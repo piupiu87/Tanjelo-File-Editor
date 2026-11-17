@@ -5,7 +5,7 @@ namespace Tanjelo;
 
 /// <summary>
 /// The settings each tool was last run with, in %APPDATA%\Tanjelo\tools.json, so its options dialog opens with
-/// them. Only options marked <see cref="Option.Remember"/> are kept, and values that no longer fit are dropped.
+/// them. Only options marked <see cref="Option.Remember"/> are kept, never passwords, and values that no longer fit are dropped.
 /// </summary>
 sealed class ToolMemory(string path)
 {
@@ -20,7 +20,7 @@ sealed class ToolMemory(string path)
         var all = Read();
         if (!all.TryGetValue(target.Key, out var saved)) return new Dictionary<string, string>();
         return target.Options
-            .Where(o => o.Remember && saved.TryGetValue(o.Name, out var value) && o.Problem(value) is null)
+            .Where(o => o.IsRemembered && saved.TryGetValue(o.Name, out var value) && o.Problem(value) is null)
             .ToDictionary(o => o.Name, o => saved[o.Name]);
     }
 
@@ -29,7 +29,7 @@ sealed class ToolMemory(string path)
     {
         var all = Read();
         all[target.Key] = target.Options
-            .Where(o => o.Remember && target.Parameters.ContainsKey(o.Name))
+            .Where(o => o.IsRemembered && target.Parameters.ContainsKey(o.Name))
             .ToDictionary(o => o.Name, o => target.Parameters[o.Name]);
         try
         {

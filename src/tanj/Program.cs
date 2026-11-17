@@ -64,7 +64,9 @@ switch (args.FirstOrDefault())
             Console.WriteLine($"{group.Key.Kind} / {group.Key.Section}");
             foreach (var target in group)
             {
-                var settings = string.Concat(target.Parameters.Select(p => $" [--{p.Key}={p.Value}]"));
+                // A password is never printed, not even a default.
+                var settings = string.Concat(target.Parameters.Select(p =>
+                    $" [--{p.Key}={(target.Options.Any(o => o.Name == p.Key && o.Kind == OptionKind.Password) ? "" : p.Value)}]"));
                 Console.WriteLine($"  {target.Key,-16} {target.Label,-22} {target.Description}{settings}");
             }
         }
@@ -80,32 +82,7 @@ switch (args.FirstOrDefault())
         if (Inputs(args[2..]) is not { } selection) return 2;
         var target = Find(args[1], selection);
         if (target is null) return 2;
-        Console.WriteLine($"{target.Key}: {target.Label}  {target.Description}");
-        if (target.Options.Count == 0)
-        {
-            var settings = string.Join(", ", target.Parameters.Select(p => $"--{p.Key}={p.Value}"));
-            Console.WriteLine(settings.Length == 0 ? "  It takes no settings." : $"  Settings: {settings}");
-            return 0;
-        }
-        foreach (var option in target.Options)
-        {
-            var allowed = option.Kind switch
-            {
-                OptionKind.Number => $"{OptionValues.Format(option.Min)} to {OptionValues.Format(option.Max)}{(option.Unit is { } unit ? " " + unit : "")}",
-                OptionKind.Choice => string.Join(", ", option.Choices.Select(c => $"{c.Value} ({c.Label})")),
-                OptionKind.Toggle => "true or false",
-                OptionKind.Colour => "#RRGGBB, or #RRGGBBAA with transparency",
-                OptionKind.File => option.Optional ? "a file, or empty" : "a file",
-                OptionKind.TimeRange => "from-to, such as 0:30-1:45; empty for all of it",
-                OptionKind.Times => "times such as 0:05,1:12.5",
-                OptionKind.Order => "each file's place in the selection, such as 2,1,3",
-                _ => option.Optional ? "text, or empty" : "text",
-            };
-            var when = option.ShownWhen is { } w ? $"  (with {ShownWhen(w)})" : "";
-            Console.WriteLine($"  {$"--{option.Name}={target.Parameters[option.Name]}",-22} {option.Label}: {allowed}{when}");
-            if (option.Hint is { } hint)
-                Console.WriteLine($"  {"",-22} {hint}");
-        }
+        OptionList.Write(target, Console.Out);
         return 0;
     }
 
@@ -130,6 +107,7 @@ switch (args.FirstOrDefault())
             }
             values[name] = value;
         }
+        if (!Passwords.Fill(target, values, Console.In, Console.Error, Console.IsInputRedirected ? null : Passwords.AskHidden)) return 2;
         target = target.WithParameters(values);
         foreach (var option in target.Options.Where(o => o.IsShown(target.Parameters)))
         {
@@ -195,9 +173,6 @@ switch (args.FirstOrDefault())
         Console.Error.WriteLine("unknown command; run tanj --help");
         return 2;
 }
-
-static string ShownWhen(Condition condition) =>
-    $"--{condition.Name}={string.Join("|", condition.Values)}" + (condition.Or is { } or ? " or " + ShownWhen(or) : "");
 
 // The menu for a picture from the clipboard is the app's: nothing that would work on tanj's scratch copy of it.
 MenuModel Menu(IReadOnlyList<string> inputs) =>

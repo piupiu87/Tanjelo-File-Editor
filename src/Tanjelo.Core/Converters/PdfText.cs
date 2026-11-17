@@ -189,12 +189,38 @@ internal sealed class PdfText
 
     sealed record RawBlock(IReadOnlyList<RawLine> Lines);
 
+    /// <summary>The 0-based pages without a text layer worth the name, as with scans: the pages PDF → TXT reads with OCR.</summary>
+    public static IReadOnlyList<int> PagesWithoutText(string path)
+    {
+        using var document = Open(path);
+        var pages = new List<int>();
+        for (var i = 0; i < document.NumberOfPages; i++)
+        {
+            try
+            {
+                var page = document.GetPage(i + 1);
+                if (NeedsOcr(page, DuplicateOverlappingTextProcessor.Get(page.Letters))) pages.Add(i);
+            }
+            catch (Exception ex) when (ex is not (OperationCanceledException or OutOfMemoryException))
+            {
+                pages.Add(i); // a page PdfPig can't make sense of may still render
+            }
+        }
+        return pages;
+    }
+
+    /// <summary>No letters at all, or a few over a picture, which is usually a page number stamped on a scan.</summary>
+    static bool NeedsOcr(Page page, IReadOnlyList<Letter> letters)
+    {
+        var visible = letters.Count(l => !string.IsNullOrWhiteSpace(l.Value));
+        return visible == 0 || (visible < 10 && page.GetImages().Any());
+    }
+
     static List<RawBlock> Blocks(Page page, out bool needsOcr)
     {
         var letters = DuplicateOverlappingTextProcessor.Get(page.Letters); // drops the copies some PDFs print to fake bold
         var visible = letters.Count(l => !string.IsNullOrWhiteSpace(l.Value));
-        // A few letters over a picture is usually a page number stamped on a scan.
-        needsOcr = visible == 0 || (visible < 10 && page.GetImages().Any());
+        needsOcr = NeedsOcr(page, letters);
         if (visible == 0) return [];
 
         var words = NearestNeighbourWordExtractor.Instance.GetWords(letters);
@@ -298,6 +324,28 @@ internal sealed class PdfText
         {
             return null;
         }
+    }
+
+    /// <summary>An OCR engine for a language such as "ja" or "en-US", or for the user's own languages when it's empty; null when Windows has none for it.</summary>
+    internal static OcrEngine? CreateOcrEngine(string language)
+    {
+        if (language.Trim().Length == 0) return CreateOcrEngine();
+        try
+        {
+            var wanted = new Windows.Globalization.Language(language.Trim());
+            return OcrEngine.IsLanguageSupported(wanted) ? OcrEngine.TryCreateFromLanguage(wanted) : null;
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            return null; // not a language tag
+        }
+    }
+
+    /// <summary>The OCR languages Windows has, such as "en-US".</summary>
+    public static IReadOnlyList<string> OcrLanguages()
+    {
+        try { return OcrEngine.AvailableRecognizerLanguages.Select(l => l.LanguageTag).ToList(); }
+        catch (Exception ex) when (ex is not OutOfMemoryException) { return []; }
     }
 
     static async Task<List<RawBlock>> OcrAsync(OcrEngine engine, Windows.Data.Pdf.PdfDocument document, int index)

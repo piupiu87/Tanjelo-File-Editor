@@ -138,11 +138,32 @@ Screenshots and copied pictures, used without saving them first.
 - [x] Save to… and Save in "Folder" actions (S)
 - [x] `tanj --clipboard` (S)
 
-## v1.2.0: a clearer setup
+## v1.2.0: a clearer setup (released)
 
 - [x] Setup wizard: install for you or for everyone on the PC, in a folder you choose, with a progress bar (L)
 - [x] Optional tools on a setup page, each with what it's for: ffmpeg, pandoc, WebView2, 7-Zip, LibreOffice and the HEIC extensions, installed through winget (M)
 - [x] Tanjelo's own installer and uninstaller replace Velopack; 1.1 installs move over with settings and shelf pictures kept (L)
+
+## v1.3.0: PDF tools
+
+Everyday jobs on PDFs, one gesture each and all offline. Nothing new is bundled: PDFsharp, PdfPig, Magick.NET
+and Windows' own PDF renderer and OCR do it all.
+
+- [x] Protect a PDF with a password (AES-256), optionally limiting printing, copying and changes; Remove password (M)
+- [x] Compress PDFs: the pictures inside re-encoded at high, medium or low quality (M)
+- [x] Page numbers, header and footer text, and Bates numbers that carry on across several PDFs (M)
+- [x] Watermark with text or a picture: straight, diagonal or tiled (M)
+- [x] Make scanned PDFs searchable with Windows' OCR, and searchable PDFs from pictures (M)
+- [x] Split every N pages, at bookmarks, at listed pages or under a size; save the pictures in a PDF (M)
+- [x] Crop PDF margins, automatically or by set amounts (M)
+- [x] Flatten forms and comments into the page (M)
+- [x] Merge pictures and documents with PDFs into one PDF, a bookmark for each; blank pages and pictures in Organize pages (S)
+
+## v1.4.0: PDF editors
+
+- [ ] Redact PDF: boxes, or words and patterns found on the pages (OCR for scans). What's covered is removed from the file and the rest stays text; a page that can't be cleaned is burned in (L)
+- [ ] Fill & sign: type on pages, ticks, the date, a drawn, typed or picture signature, and the PDF's own form fields (L)
+- [ ] Compare two PDFs: a side-by-side report with added and removed words marked (M/L)
 
 ## Signed releases (on hold)
 
@@ -156,6 +177,7 @@ Screenshots and copied pictures, used without saving them first.
 
 - [ ] Drag-triggered menu: hold Shift while dragging a file, like Tangerine (L)
 - [ ] PDF to XLSX, which needs reliable table extraction (L)
+- [ ] Certificate signatures: sign a PDF with a certificate from Windows' store, which PDFsharp can do (M)
 
 ## Project and community
 
@@ -167,6 +189,8 @@ Screenshots and copied pictures, used without saving them first.
 
 - Apple-only formats: Pages, RTFD, Finder text clippings
 - Online or cloud conversion
+- PDF/A: a valid PDF/A from any PDF needs every font embedded and a validator to prove it
+- Editing a PDF's text and pictures in place
 
 ## Already ahead of Tangerine
 

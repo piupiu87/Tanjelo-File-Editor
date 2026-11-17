@@ -22,20 +22,57 @@ public sealed class ImageConverter(Toolbox tools) : IConverter
 
     static readonly HashSet<string> Animated = ["gif", "webp"];
 
+    /// <summary>The picture as a PDF page with its text read by OCR, as invisible text over it.</summary>
+    internal static readonly Target Searchable = new("searchable-pdf", Strings.SearchablePDF, Strings.ThePictureAsAPageWithItsText, Section.Document)
+    {
+        Parameters = new Dictionary<string, string> { ["language"] = "" },
+    };
+
     public IEnumerable<Target> TargetsFor(string input)
     {
         var key = Formats.Key(input);
         if (!Formats.Images.Contains(key)) return [];
         // HEIC sits with the other photo formats, after WebP and AVIF.
-        return tools.Heic ? [.. Outputs[..4], key == "gif" ? HeicStill : Heic, .. Outputs[4..]] : Outputs;
+        IEnumerable<Target> outputs = tools.Heic ? [.. Outputs[..4], key == "gif" ? HeicStill : Heic, .. Outputs[4..]] : Outputs;
+        // A searchable PDF goes next to the plain one, when Windows can read text.
+        return tools.Ocr ? [.. outputs, Searchable] : outputs;
     }
 
     // Only for photos, where HEIC is what people would look for; not on every picture's menu.
     public string? HintFor(string input) => !tools.Heic && Formats.Key(input) is "jpg" or "heic" ? HeicEncoder.Missing : null;
 
-    public Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx) => target.Key == "heic"
-        ? ToHeicAsync(input, ctx)
-        : Task.Run<IReadOnlyList<string>>(() =>
+    public Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx) => target.Key switch
+    {
+        "heic" => ToHeicAsync(input, ctx),
+        "searchable-pdf" => ToSearchablePdfAsync(input, target, ctx),
+        _ => ToFormat(input, target, ctx),
+    };
+
+    /// <summary>The PDF the "pdf" entry makes, made in a scratch folder, then read with OCR into the copy beside the picture.</summary>
+    static async Task<IReadOnlyList<string>> ToSearchablePdfAsync(string input, Target target, JobContext ctx)
+    {
+        using var temp = OutputPaths.CreateTemp();
+        var plain = Path.Combine(temp.Path, Formats.BaseName(input) + ".pdf");
+        await Task.Run(() =>
+        {
+            using var frames = Read(input);
+            if (frames.Count > 1 && Formats.Key(input) == "tiff")
+            {
+                foreach (var page in frames) PrepareForPdf(page, "tiff");
+                frames.Write(plain, MagickFormat.Pdf);
+                return;
+            }
+            var image = frames[0];
+            image.AutoOrient();
+            PrepareForPdf(image, Formats.Key(input));
+            image.Write(plain, MagickFormat.Pdf);
+        }, ctx.Cancellation);
+        var output = OutputPaths.Beside(input, "pdf");
+        await OcrLayer.WriteAsync(plain, output, null, target.Parameter("language"), ctx);
+        return [output];
+    }
+
+    static Task<IReadOnlyList<string>> ToFormat(string input, Target target, JobContext ctx) => Task.Run<IReadOnlyList<string>>(() =>
     {
         ctx.Cancellation.ThrowIfCancellationRequested();
         var inputKey = Formats.Key(input);
@@ -202,22 +239,55 @@ public sealed class ImageConverter(Toolbox tools) : IConverter
 }
 
 /// <summary>Several images become the pages of one PDF.</summary>
-public sealed class CombinePdfOperation : IBatchOperation
+public sealed class CombinePdfOperation(Toolbox tools) : IBatchOperation
 {
     public IEnumerable<Target> TargetsFor(IReadOnlyList<string> inputs)
     {
-        if (inputs.Count >= 2 && inputs.All(i => Formats.KindOf(i) == FileKind.Image))
-            yield return new Target("combine-pdf", Strings.OnePDF, string.Format(Strings.CombineImagesAsPages, inputs.Count), Section.Document)
+        if (inputs.Count < 2 || !inputs.All(i => Formats.KindOf(i) == FileKind.Image)) yield break;
+        yield return new Target("combine-pdf", Strings.OnePDF, string.Format(Strings.CombineImagesAsPages, inputs.Count), Section.Document)
+        {
+            IsBatch = true,
+            Running = Strings.CombiningIntoAPDF,
+            Done = Strings.CombinedIntoOnePDF,
+        };
+        // The same, with the pictures' text read by OCR, next to it when Windows can read text.
+        if (tools.Ocr)
+            yield return new Target("combine-searchable-pdf", Strings.OneSearchablePDF, string.Format(Strings.CombineImagesAsSearchablePages, inputs.Count), Section.Document)
             {
                 IsBatch = true,
                 Running = Strings.CombiningIntoAPDF,
                 Done = Strings.CombinedIntoOnePDF,
+                Parameters = new Dictionary<string, string> { ["language"] = "" },
             };
     }
 
-    public Task<IReadOnlyList<string>> RunAsync(IReadOnlyList<string> inputs, Target target, JobContext ctx) => Task.Run<IReadOnlyList<string>>(() =>
+    public async Task<IReadOnlyList<string>> RunAsync(IReadOnlyList<string> inputs, Target target, JobContext ctx)
     {
         var output = OutputPaths.Unique(OutputPaths.DirectoryOf(inputs[0]), "Combined", "pdf");
+        if (target.Key != "combine-searchable-pdf")
+        {
+            await Task.Run(() => Write(inputs, output, ctx, 1), ctx.Cancellation);
+            return [output];
+        }
+        using var temp = OutputPaths.CreateTemp();
+        var plain = Path.Combine(temp.Path, "Combined.pdf");
+        await Task.Run(() => Write(inputs, plain, ctx, 0.3), ctx.Cancellation);
+        var progress = ctx.Progress;
+        ctx.Progress = new ActionProgress<double>(f => progress.Report(0.3 + 0.7 * f));
+        try
+        {
+            await OcrLayer.WriteAsync(plain, output, null, target.Parameter("language"), ctx);
+        }
+        finally
+        {
+            ctx.Progress = progress;
+        }
+        return [output];
+    }
+
+    /// <summary>Each picture a page, upright, in the order selected.</summary>
+    static void Write(IReadOnlyList<string> inputs, string output, JobContext ctx, double share)
+    {
         using var pages = new MagickImageCollection();
         for (var i = 0; i < inputs.Count; i++)
         {
@@ -227,7 +297,7 @@ public sealed class CombinePdfOperation : IBatchOperation
             page.AutoOrient();
             ImageConverter.PrepareForPdf(page, Formats.Key(inputs[i]));
             pages.Add(page);
-            ctx.Progress.Report((i + 1.0) / (inputs.Count + 1));
+            ctx.Progress.Report(share * (i + 1.0) / (inputs.Count + 1));
         }
         try
         {
@@ -238,6 +308,5 @@ public sealed class CombinePdfOperation : IBatchOperation
             OutputPaths.TryDelete(output);
             throw;
         }
-        return [output];
-    }, ctx.Cancellation);
+    }
 }

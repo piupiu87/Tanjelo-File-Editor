@@ -22,7 +22,10 @@ PNG, JPG, WebP, AVIF, HEIC, GIF, BMP, TIFF, ICO, PSD, TGA and SVG become:
 - HEIC, upright and keeping the date taken, the camera and the location. Writing HEIC needs Windows' HEIF and HEVC
   extensions; reading it needs nothing.
 - ICO, from 16 to 256 px.
-- Several images at once: **One PDF**, or **One PPTX** with a slide each, shaped like the first picture.
+- **Searchable PDF**: the picture as a PDF page with its text read by Windows' OCR, as invisible text over it, so it
+  can be searched and copied. Shown when Windows has an OCR language.
+- Several images at once: **One PDF** or **One searchable PDF**, or **One PPTX** with a slide each, shaped like the
+  first picture.
 - TXT: the text in a screenshot or a photo of a page, read with Windows' OCR.
 
 *Engine:* Magick.NET and the Open XML SDK (built in), Windows' HEIF encoder and OCR.

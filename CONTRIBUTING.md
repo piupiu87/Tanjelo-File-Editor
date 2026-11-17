@@ -109,7 +109,9 @@ you don't mind changing.
 4. When the conversion needs a program that may not be installed, find it in `Toolbox`, offer nothing without it, and
    say what to install in `HintFor`.
 5. Tools that need settings declare them with `Target.WithOptions`; the app then shows the options dialog and `tanj`
-   takes them as `--name=value`.
+   takes them as `--name=value`. A setting that can only be checked against the files, such as a PDF's password, is
+   checked by `IValidator`, which the dialog asks before it closes. Passwords use `OptionKind.Password`, which is
+   never remembered, logged or shown back, and which `tanj` reads from standard input or asks for.
 6. Register the class in `ConverterEngine`. When two converters offer the same key for a file, the earlier one wins.
    Work done by hand, such as drawing on a photo, gets an editor: set `Target.Editor`, and add an `Editor<T>` in
    `src/Tanjelo/Editors/` whose `Result` fills in the same parameters `tanj` takes, so the engine does the saving. Its
@@ -119,6 +121,11 @@ you don't mind changing.
    frames by number with `Scratch.Numbered` and `Inspect.WhichFrame`, and go in the `Windows player` collection,
    which runs on its own. Every window is also checked with `A11y.Check` (each control named and reached by Tab) and
    rendered in a contrast theme with `AccessibilityTests.RenderInContrast`.
+   PDF tools that draw onto pages share three pieces in `Converters/PdfPages.cs` and `PdfLettering.cs`:
+   `PageGeometry` maps the page as it's seen (crop box, /Rotate, /UserUnit) onto its own coordinates,
+   `PageStamper` places a form drawn with PDFsharp over or under the page's content in a clean drawing state, and
+   `PdfLettering` draws text in Windows' fonts. Their fixtures, such as turned, cropped and encrypted PDFs, are in
+   `Fixtures.cs`, written as PDF operators so where everything sits is known exactly.
 7. Add tests next to the others, using `Scratch` for fixture files and `Env.Run` to go through the engine the way the
    app does. Skip with `Assert.SkipUnless` when an optional tool is missing.
 8. Describe it in [docs/FORMATS.md](docs/FORMATS.md) or [docs/TOOLS.md](docs/TOOLS.md), add it to the short tables in

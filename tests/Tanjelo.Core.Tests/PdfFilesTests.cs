@@ -31,7 +31,7 @@ public class PdfFilesTests
         }
 
         var error = Assert.Throws<ConversionException>(() => PdfFiles.OpenForImport(locked));
-        Assert.Equal("This PDF is password-protected.", error.Message);
+        Assert.Equal("This PDF is password-protected. Remove its password first with Remove password…", error.Message);
     }
 
     [Fact]

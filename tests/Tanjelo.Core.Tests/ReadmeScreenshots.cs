@@ -88,6 +88,66 @@ public class ReadmeScreenshots
     }
 
     [Fact]
+    public async Task Page_numbers_dialog()
+    {
+        Assert.SkipUnless(Folder is not null, Off);
+        using var scratch = new Scratch();
+        var photo = scratch.PathOf("lakeside.jpg");
+        var report = scratch.PathOf("Lakeside survey.pdf");
+        await Ui.Run(async () =>
+        {
+            Landscape(photo);
+            Report(report, photo);
+            var engine = Env.Engine();
+            var dialog = new OptionsWindow(engine, [report], Env.Offered(engine, "page-numbers", [report]), new Dictionary<string, string>
+            {
+                ["top"] = "Lakeside survey",
+                ["top-place"] = "right",
+                ["bottom"] = "Page {page} of {pages}",
+            });
+            var host = Fit(dialog);
+            for (var waited = 0; dialog.PreviewImage.Source is null || dialog.PreviewBusy.Visibility == Visibility.Visible; waited += 100)
+            {
+                Assert.True(waited < 30_000, "the preview never came");
+                await Ui.Settle(100);
+            }
+            Shoot(host, "page-numbers");
+            dialog.Close();
+        });
+    }
+
+    /// <summary>A made-up three-page report with the landscape on its first page.</summary>
+    static void Report(string path, string photo)
+    {
+        using var document = new PdfSharp.Pdf.PdfDocument();
+        string[] lines =
+        [
+            "The water was still before sunrise, and the first birds came in low over the reeds.",
+            "Counts were taken from the jetty at the same three times each morning.",
+            "Mist lifted from the far shore by half past six on every day of the count.",
+        ];
+        for (var n = 1; n <= 3; n++)
+        {
+            var page = document.AddPage();
+            page.Size = PdfSharp.PageSize.A4;
+            using var g = PdfSharp.Drawing.XGraphics.FromPdfPage(page);
+            var body = new PdfSharp.Drawing.XFont("Arial", 11);
+            var y = 90.0;
+            if (n == 1)
+            {
+                g.DrawString("Lakeside survey", new PdfSharp.Drawing.XFont("Arial", 26, PdfSharp.Drawing.XFontStyleEx.Bold), PdfSharp.Drawing.XBrushes.Black, 60, y);
+                g.DrawString("Spring count, three mornings", new PdfSharp.Drawing.XFont("Arial", 13), PdfSharp.Drawing.XBrushes.DimGray, 60, y + 24);
+                using var picture = PdfSharp.Drawing.XImage.FromFile(photo);
+                g.DrawImage(picture, 60, y + 44, 475, 475 * picture.PixelHeight / picture.PixelWidth);
+                y += 74 + 475.0 * picture.PixelHeight / picture.PixelWidth;
+            }
+            for (var line = 0; y < 760; line++, y += 18)
+                g.DrawString(lines[line % lines.Length], body, PdfSharp.Drawing.XBrushes.Black, 60, y);
+        }
+        document.Save(path);
+    }
+
+    [Fact]
     public async Task Setup_optional_tools_page()
     {
         Assert.SkipUnless(Folder is not null, Off);

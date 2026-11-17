@@ -161,7 +161,7 @@ public class PageEditorTests
             var window = new EditorWindow(locked, target, new PageEditor(locked, target));
             var host = Ui.Host(window, 900, 600);
             await window.LoadAsync();
-            Assert.Equal("This PDF is password-protected.", window.Message.Text);
+            Assert.Equal("This PDF is password-protected. Remove its password first with Remove password…", window.Message.Text);
             Assert.False(window.SaveButton.IsEnabled);
             Ui.Render(host, "pages-locked-light");
         });

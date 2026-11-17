@@ -27,6 +27,9 @@ independent project, not affiliated with Tangerine.
   See [what converts to what](#what-converts-to-what).
 - **Tools** do one job on a copy: compress to a size, crop, mute, change the speed, even out the volume, split or merge
   PDFs, join videos, save frames, remove the location and other metadata, and more.
+- **PDF tools**, one gesture each: protect with a password, compress, add page numbers and
+  Bates numbers, watermark, make scans searchable, split, save the pictures, crop margins, flatten forms, and merge
+  pictures and documents with PDFs. See [PDF tools](#pdf-tools).
 - **Editors** open a window for work by hand: organize PDF pages, redact faces and text in photos, annotate
   screenshots, edit photos with live sliders, and trim and bleep video and audio, or redact video, on a timeline.
 - **Actions** work on the files themselves: copy their paths, open a terminal there, share them, copy or move them to a
@@ -105,7 +108,7 @@ says how to add a language.
 
 | From | To | Needs |
 |---|---|---|
-| Images: PNG, JPG, WebP, AVIF, HEIC, GIF, BMP, TIFF, ICO, PSD, TGA, SVG | PNG, JPG, WebP, AVIF, HEIC, GIF, BMP, TIFF, ICO, PDF; several at once to **One PDF** or **One PPTX**; TXT (the text in the picture) | Built in; HEIC output needs Windows' HEIF and HEVC extensions |
+| Images: PNG, JPG, WebP, AVIF, HEIC, GIF, BMP, TIFF, ICO, PSD, TGA, SVG | PNG, JPG, WebP, AVIF, HEIC, GIF, BMP, TIFF, ICO, PDF or **Searchable PDF**; several at once to **One PDF**, **One searchable PDF** or **One PPTX**; TXT (the text in the picture) | Built in; HEIC output needs Windows' HEIF and HEVC extensions |
 | PDF | PNG or JPG per page, TXT, Markdown, PPTX, DOCX, EPUB | Built in; Word for DOCX, pandoc for EPUB |
 | Video: MP4, MOV, MKV, WebM, AVI, WMV… | MP4, MOV, MKV, WebM, AVI, WMV, animated GIF; the sound alone as MP3, M4A, WAV, FLAC | ffmpeg |
 | Audio: MP3, WAV, FLAC, M4A, OGG, Opus, WMA, AIFF | MP3, M4A, WAV, FLAC, OGG, Opus, AIFF, WMA | ffmpeg |
@@ -132,13 +135,14 @@ every tool, editor and action, with the settings `tanj` takes.
 
 **Quick tools** run straight away: mute a video (without re-encoding), play it at 0.5×, 1.5× or 2× speed keeping the
 pitch, or split it into 2, 3 or 4 equal parts; even out a recording's volume, make it mono or stereo, or trim the
-silence from its ends; split a PDF into pages, or merge several.
+silence from its ends; split a PDF into pages, merge PDFs (with pictures and documents among them), make a scan
+searchable, save a PDF's pictures, or flatten its forms and comments.
 
 **Tools with settings** open a dialog with a preview:
 
 | Tool | Works on | What it does |
 |---|---|---|
-| Compress… | Images, video, audio | Shrinks a file to a percentage of its size or to a size in MB |
+| Compress… | Images, video, audio, PDF | Shrinks a file to a percentage of its size or to a size in MB; a PDF's pictures at high, medium or low quality |
 | Metadata… | JPG, PNG, WebP, audio, video, PDF | Shows the details, and saves a copy without the location, the camera or the rest, or with a new title or author |
 | Crop… | Images, video | Crops to an aspect ratio, an exact size, or a box drawn on the preview |
 | Add background… | Images | Puts a colour, a gradient or a picture behind it, with space around, rounded corners and a shadow |
@@ -151,11 +155,30 @@ silence from its ends; split a PDF into pages, or merge several.
 
 <p align="center"><img src="docs/images/add-background.png" width="480" alt="The Add background dialog: a preview of the picture on a diagonal gradient with space around, rounded corners and a soft shadow, beside its settings"></p>
 
+### PDF tools
+
+Everyday jobs on PDFs, one gesture each and all offline. Each writes a copy beside the PDF and keeps its bookmarks,
+links and forms unless changing them is the point. Nothing extra is installed for them.
+
+| Tool | What it does |
+|---|---|
+| Protect… / Remove password… | A copy encrypted with AES-256 behind a password, limits on printing, copying and changes, or both; or a copy without them, given the password |
+| Compress… | Its pictures scaled down and re-encoded at high, medium or low quality; text, fonts and drawings stay as they are |
+| Page numbers… | A line at the top and the bottom of each page, with the page number, the page count, the date, the file's name or a Bates number that carries on across several PDFs |
+| Watermark… | Text or a picture across the pages: diagonal, straight or tiled, over the content or under it |
+| Make searchable | Scanned pages read with Windows' OCR, their words added as invisible text, so they can be searched and copied |
+| Split… / Save pictures | Parts of every few pages, at bookmarks, at listed pages or under a size; or the pictures in it, as files |
+| Crop margins… | The margins trimmed to the content, or by set amounts |
+| Flatten | Forms and comments become part of the page |
+| Merge into one PDF | PDFs, pictures and documents in the order selected, a bookmark each |
+
+<p align="center"><img src="docs/images/page-numbers.png" width="560" alt="The Page numbers dialog: a preview of a report's first page with its title at the top right and Page 1 of 3 at the bottom, beside the top and bottom lines and buttons that fill them"></p>
+
 **Editors** open a window of their own, for one file:
 
 | Editor | Works on | What you do |
 |---|---|---|
-| Organize pages… | PDF | Reorder, turn, copy, delete and add pages, shown as thumbnails |
+| Organize pages… | PDF | Reorder, turn, copy and delete pages, shown as thumbnails, and add pages of other PDFs, blank pages and pictures |
 | Redact… | Images | Cover faces (side-on, masked and in crowds too), words or any area for good; revealing metadata goes too |
 | Annotate… | Images | Add arrows, shapes, text, numbered callouts, a magnifier, and pen and highlighter strokes |
 | Edit photo… | Images | Adjust light, colour, detail and effects with sliders over a live preview |
@@ -241,6 +264,10 @@ collected (no account, no telemetry, no crash reports). The only network use is 
 
 Office, LibreOffice, ffmpeg, 7-Zip and the WebView2 runtime run on your PC; WebView2 runs with every web address blocked.
 
+**Passwords.** The passwords you give Protect… and Remove password… go only into the PDF being made. Tanjelo never
+keeps them: not with the settings it remembers for each tool, not in its log, and not on the result card. With `tanj`,
+`--password=-` reads one from standard input, so it doesn't stay in the shell's history.
+
 **The clipboard.** To park screenshots on the shelf as they're taken, Tanjelo is told by Windows each time something
 is copied. It looks only at which app copied it (Snipping Tool, the Win+Shift+S overlay, or Print Screen) and, for
 those, at the list of formats; what was copied is read only when it's a screenshot. Copies that password managers mark
@@ -289,6 +316,10 @@ tanj convert save-frames --times=0:05,1:12.5 clip.mp4
 tanj convert join-videos --order=2,1 intro.mp4 talk.mp4
 tanj convert md --page-breaks=true report.pdf     # a --- line between pages
 tanj convert organize-pdf --pages="3,1-2,2r90" report.pdf
+tanj convert organize-pdf --pages="1,blank,2-3,b1" --with=photo.jpg report.pdf
+tanj convert page-numbers --bottom="Page {page} of {pages}" --skip=1 report.pdf
+tanj convert unlock-pdf --password=- report-protected.pdf < password.txt
+tanj convert searchable-pdf --language=ja scan.pdf
 tanj convert redact --faces --style=pixelate team.jpg
 tanj convert annotate --spec=marks.json screenshot.png
 tanj convert adjust --exposure=0.3 --clarity=20 --vibrance=25 photo.jpg
@@ -361,7 +392,9 @@ v1.0 made Tanjelo ready for everyone: an installer and a winget package, the .NE
 an opt-in update check, an accessibility pass and text ready to translate. v1.1 brings clipboard pictures: screenshots
 parked on the shelf as they're taken, a menu for the picture on the clipboard, results back on the clipboard, Save to…,
 and `tanj --clipboard`. v1.2 brings a clearer setup: for you or for everyone, in a folder you choose, with a progress
-bar, and the optional tools on a page of their own. Releases ship unsigned: code signing, and the Windows 11 menu
+bar, and the optional tools on a page of their own. v1.3 brings PDF tools: protect, compress,
+page numbers and Bates, watermark, searchable scans, split, crop, flatten and merging any files; v1.4 is planned to
+bring PDF editors: redact, fill & sign and compare. Releases ship unsigned: code signing, and the Windows 11 menu
 entry that needs it, are on hold for a later release. See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan. Ideas and pull requests are welcome; open an issue first for anything big, and see
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
