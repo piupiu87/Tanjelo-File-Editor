@@ -182,8 +182,10 @@ PDF 2.0):
 - A forgotten password can't be got back, and Tanjelo keeps no copy.
 
 **Remove password…** shows for PDFs with a password or limits and saves `report-unlocked.pdf` without encryption. It
-asks for the password that works: the password to open, or the permissions password when the PDF has limits.
-A wrong password is caught before the dialog closes.
+asks for the password that removes the protection: the permissions password when the PDF has limits; otherwise its
+password, which is the password to open unless the PDF also has a permissions password, as some PDFs made elsewhere
+do without limiting anything. A wrong password is caught before the dialog closes, and the password to open of a
+PDF that has a permissions password too is answered by asking for that one.
 
 Passwords are never remembered, logged or shown back. With `tanj`, `--password=-` reads the password from standard
 input, and with no `--password` tanj asks for it with the typing hidden. A password typed on the command line works,
@@ -335,9 +337,13 @@ so they look the same everywhere and can't be changed. Each one's look (its norm
 shows, and it goes; the form goes too once no fields are left.
 
 - Links stay. Popups and hidden comments go without being drawn.
-- A text field with no look of its own, as forms that leave drawing them to the reader have, is drawn from its value
-  in the size and colour the form gives it. Other fields with none, such as an unticked box with no look, are left as
-  they are and counted on the card; an invisible signature stays as it is.
+- A text field or combo box with no look of its own is drawn from its value (a combo box's chosen option) in the
+  size and colour the form gives it. So is every one in a form that leaves drawing them to the reader
+  (`/NeedAppearances`), as an app that fills forms in may change the values and leave the old look; a password field's
+  value is never drawn. Check boxes and radio buttons keep the look of their state.
+- Other fields with no look, such as an unticked box with none, are left as they are and counted on the card; an
+  invisible signature stays as it is. A signed PDF's copy says its signature isn't valid any more, a visible signature
+  drawn into the page too.
 - XFA forms, made with LiveCycle Designer, are refused: open them in a PDF reader and print to PDF instead.
 - A PDF with no form fields or comments says so and writes nothing.
 

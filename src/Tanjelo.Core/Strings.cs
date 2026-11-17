@@ -753,7 +753,6 @@ public static class Strings
     public static string RemovePasswordButton => Get();
     public static string Password => Get();
     public static string ThisPDFLimitsPrintingCopyingOrChanges => Get();
-    public static string ThePasswordAskedForWhenItOpens => Get();
     public static string ItsPasswordToOpenOrItsPermissionsPassword => Get();
     public static string GiveAPasswordToOpenOrLimit => Get();
     public static string ThePermissionsPasswordMustDiffer => Get();
@@ -896,4 +895,5 @@ public static class Strings
     public static string IsnTAPDFOrAPicture => Get();
     public static string PDFsPicturesAndDocumentsInTheOrderSelected => Get();
     public static string InTheOrderSelectedABookmarkEach => Get();
+    public static string ThatPasswordDoesnTLiftItsLimits => Get();
 }

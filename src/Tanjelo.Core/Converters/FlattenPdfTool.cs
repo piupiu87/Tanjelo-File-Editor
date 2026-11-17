@@ -9,11 +9,11 @@ namespace Tanjelo.Core.Converters;
 /// <summary>
 /// Flatten: form fields, comments, stamps and drawn signatures become part of the page. Each visible annotation's
 /// normal appearance is drawn into the page where it shows (its bounding box, through its matrix, onto its
-/// rectangle, as the PDF standard sets out), and the annotation goes. Links stay and popups go. A text field with no
-/// appearance gets one drawn from its value first. So does every text field of a form that asks readers to draw its
-/// fields (/NeedAppearances): an app that fills one in may change the values and leave the old look, often blank, which
-/// readers never show. Other fields with no appearance are left as they are and counted. The form goes once no fields
-/// are left. XFA forms are refused.
+/// rectangle, as the PDF standard sets out), and the annotation goes. Links stay and popups go. A text field or combo
+/// box with no appearance gets one drawn from its value first. So does every one of a form that asks readers to draw
+/// its fields (/NeedAppearances): an app that fills one in may change the values and leave the old look, often blank,
+/// which readers never show. Check boxes and radio buttons keep the look of their state. Other fields with no
+/// appearance are left as they are and counted. The form goes once no fields are left. XFA forms are refused.
 /// </summary>
 public sealed partial class FlattenPdfTool : IConverter
 {
@@ -29,8 +29,9 @@ public sealed partial class FlattenPdfTool : IConverter
     // Annotation flags (PDF 2.0, table 167).
     const int Hidden = 1 << 1, NoView = 1 << 5;
 
-    // A text field's flag for a password, whose value readers never show (PDF 2.0, table 229).
-    const int PasswordField = 1 << 13;
+    // A text field's flag for a password, whose value readers never show (PDF 2.0, table 229), and a choice field's
+    // for a combo box, which shows its value in a box like a text field's (table 231).
+    const int PasswordField = 1 << 13, ComboBox = 1 << 17;
 
     public Task<IReadOnlyList<string>> ConvertAsync(string input, Target target, JobContext ctx) => Task.Run<IReadOnlyList<string>>(() =>
     {
@@ -66,7 +67,7 @@ public sealed partial class FlattenPdfTool : IConverter
                 changed++;
                 if (subtype == "/Popup" || (annotation.Elements.GetInteger("/F") & (Hidden | NoView)) != 0)
                     continue; // never drawn, so nothing to keep
-                var textField = subtype == "/Widget" && Field(annotation, "/FT") is PdfName { Value: "/Tx" };
+                var textField = subtype == "/Widget" && ShowsItsValue(annotation);
                 PdfDictionary? appearance;
                 if (textField && needAppearances)
                 {
@@ -194,17 +195,36 @@ public sealed partial class FlattenPdfTool : IConverter
         return [.. numbers];
     }
 
-    /// <summary>A text field's value as readers show it; null when it's empty, or a password, which is never drawn.</summary>
+    /// <summary>Whether the field shows its value as text in a box: a text field, or a combo box.</summary>
+    static bool ShowsItsValue(PdfDictionary annotation) => Field(annotation, "/FT") switch
+    {
+        PdfName { Value: "/Tx" } => true,
+        PdfName { Value: "/Ch" } => Field(annotation, "/Ff") is PdfInteger flags && (flags.Value & ComboBox) != 0,
+        _ => false,
+    };
+
+    /// <summary>
+    /// A text field's or combo box's value as readers show it, for a combo box the text of the option chosen; null
+    /// when it's empty, or a password, which is never drawn.
+    /// </summary>
     static string? TextValue(PdfDictionary annotation)
     {
-        if (Field(annotation, "/Ff") is PdfInteger flags && (flags.Value & PasswordField) != 0) return null;
+        var choice = Field(annotation, "/FT") is PdfName { Value: "/Ch" };
+        if (!choice && Field(annotation, "/Ff") is PdfInteger flags && (flags.Value & PasswordField) != 0) return null;
         var value = Field(annotation, "/V") switch
         {
             PdfString s => s.Value,
             PdfName n => n.Value.TrimStart('/'),
             _ => null,
         };
-        return string.IsNullOrEmpty(value) ? null : value;
+        if (string.IsNullOrEmpty(value)) return null;
+        // An option can be a pair: the value it sets, then the text it shows.
+        if (choice && Field(annotation, "/Opt") is PdfArray options)
+            foreach (var option in options.Elements.Select(Resolve))
+                if (option is PdfArray { Elements.Count: >= 2 } pair && Resolve(pair.Elements[0]) is PdfString set && set.Value == value
+                    && Resolve(pair.Elements[1]) is PdfString shown)
+                    return shown.Value;
+        return value;
     }
 
     [GeneratedRegex(@"(-?[\d.]+)\s+Tf")]

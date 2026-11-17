@@ -2215,11 +2215,8 @@
   <data name="ThisPDFLimitsPrintingCopyingOrChanges" xml:space="preserve">
     <value>This PDF limits printing, copying or changes, so it takes the password that lifts them, not the one to open it.</value>
   </data>
-  <data name="ThePasswordAskedForWhenItOpens" xml:space="preserve">
-    <value>The password asked for when the PDF opens.</value>
-  </data>
   <data name="ItsPasswordToOpenOrItsPermissionsPassword" xml:space="preserve">
-    <value>Its password to open, or its permissions password if it limits printing, copying or changes.</value>
+    <value>Its password to open, or its permissions password if it also has one, which is then the only one that removes the protection.</value>
   </data>
   <data name="GiveAPasswordToOpenOrLimit" xml:space="preserve">
     <value>Give a password to open, or limit printing, copying and changes.</value>
@@ -2643,5 +2640,8 @@
   </data>
   <data name="InTheOrderSelectedABookmarkEach" xml:space="preserve">
     <value>In the order selected, a bookmark each</value>
+  </data>
+  <data name="ThatPasswordDoesnTLiftItsLimits" xml:space="preserve">
+    <value>That password opens the PDF but doesn't lift its limits on printing, copying or changes. Give its permissions password.</value>
   </data>
 </root>

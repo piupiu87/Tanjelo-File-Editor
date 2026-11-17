@@ -23,7 +23,15 @@ static partial class PdfFiles
         }
         catch (PdfReaderException ex) when (ex.Message.Contains("owner password", StringComparison.OrdinalIgnoreCase))
         {
-            throw new ConversionException(password is null ? Strings.ThisPDFLimitsChanges : Strings.ThatPasswordOnlyOpensIt, ex);
+            // Changing a PDF takes its permissions password whenever it has one, limits or not; say which it is.
+            var limits = EncryptionOf(path)?.Limits == true;
+            throw new ConversionException((password is null, limits) switch
+            {
+                (true, true) => Strings.ThisPDFLimitsChanges,
+                (true, false) => Strings.ThisPDFIsPasswordProtected,
+                (false, true) => Strings.ThatPasswordDoesnTLiftItsLimits,
+                (false, false) => Strings.ThatPasswordOnlyOpensIt,
+            }, ex);
         }
         catch (PdfReaderException ex) when (ex.Message.Contains("password", StringComparison.OrdinalIgnoreCase))
         {

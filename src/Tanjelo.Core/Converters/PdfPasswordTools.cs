@@ -42,20 +42,12 @@ public sealed class PdfPasswordTools : IConverter, IValidator
         Running = Strings.RemovingThePassword,
         Done = Strings.PasswordRemoved,
         Confirm = Strings.RemovePasswordButton,
-    }.WithOptions(new Option("password", limits switch
-    {
-        true => Strings.PermissionsPassword,
-        false => Strings.PasswordToOpen,
-        null => Strings.Password,
-    }, OptionKind.Password, "")
+    }.WithOptions(new Option("password", limits == true ? Strings.PermissionsPassword : Strings.Password, OptionKind.Password, "")
     {
         Remember = false,
-        Hint = limits switch
-        {
-            true => Strings.ThisPDFLimitsPrintingCopyingOrChanges,
-            false => Strings.ThePasswordAskedForWhenItOpens,
-            null => Strings.ItsPasswordToOpenOrItsPermissionsPassword,
-        },
+        // Without limits it can still have a permissions password, and only that one removes the protection; the
+        // file doesn't say whether it has, so the field asks for either.
+        Hint = limits == true ? Strings.ThisPDFLimitsPrintingCopyingOrChanges : Strings.ItsPasswordToOpenOrItsPermissionsPassword,
     });
 
     public IEnumerable<Target> TargetsFor(string input)

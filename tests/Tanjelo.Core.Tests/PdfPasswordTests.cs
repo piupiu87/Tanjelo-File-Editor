@@ -17,6 +17,9 @@ public class PdfPasswordTests
     const string PermissionsPasswordNeeded =
         "That password opens the PDF, but it also has a permissions password, and only that one removes its protection. Give its permissions password.";
 
+    const string LimitsNeedPermissions =
+        "That password opens the PDF but doesn't lift its limits on printing, copying or changes. Give its permissions password.";
+
     static async Task<BatchResult> Run(string key, string input, params (string Name, string Value)[] values)
     {
         var engine = Env.Engine();
@@ -39,7 +42,7 @@ public class PdfPasswordTests
         Assert.Contains("protect-pdf", Env.Keys(plain));
         Assert.DoesNotContain("unlock-pdf", Env.Keys(plain));
         Assert.Null(PdfFiles.EncryptionOf(plain));
-        foreach (var (pdf, label) in new[] { (locked, "Password to open"), (limited, "Permissions password"), (both, "Permissions password") })
+        foreach (var (pdf, label) in new[] { (locked, "Password"), (limited, "Permissions password"), (both, "Permissions password") })
         {
             Assert.DoesNotContain("protect-pdf", Env.Keys(pdf));
             var unlock = Env.Offered(engine, "unlock-pdf", [pdf]);
@@ -107,7 +110,7 @@ public class PdfPasswordTests
             ("password", Open), ("limit", "true"), ("permissions-password", Permissions))).Outputs);
 
         var opened = await Run("unlock-pdf", protectedCopy, ("password", Open));
-        Assert.Equal(PermissionsPasswordNeeded, Assert.Single(opened.Failures).Message);
+        Assert.Equal(LimitsNeedPermissions, Assert.Single(opened.Failures).Message);
         var unlocked = Assert.Single((await Run("unlock-pdf", protectedCopy, ("password", Permissions))).Outputs);
 
         Assert.Null(PdfFiles.EncryptionOf(unlocked));
@@ -129,6 +132,19 @@ public class PdfPasswordTests
 
         Assert.Equal(PermissionsPasswordNeeded, Assert.Single(opened.Failures).Message);
         Assert.Single((await Run("unlock-pdf", pdf, ("password", Permissions))).Outputs);
+        // The file can't say whether it has a permissions password, so the field asks for either.
+        var field = Assert.Single(Env.Offered(Env.Engine(), "unlock-pdf", [pdf]).Options);
+        Assert.Equal("Password", field.Label);
+        Assert.Contains("permissions password if it also has one", field.Hint);
+
+        // With only a permissions password and nothing limited, a tool that changes it says it's protected, not limited.
+        var permissionsOnly = scratch.EncryptedPdf("permissions.pdf", "aes256", null, Permissions);
+        Assert.False(PdfFiles.EncryptionOf(permissionsOnly)!.Limits);
+        Assert.Equal("This PDF is password-protected. Remove its password first with Remove password…",
+            Assert.Single((await Run("flatten-pdf", permissionsOnly)).Failures).Message);
+        var limitsOnly = scratch.EncryptedPdf("limits.pdf", "aes256", null, Permissions, limits: true);
+        Assert.Equal("This PDF limits changes. Remove the limits first with Remove password…, which takes its permissions password.",
+            Assert.Single((await Run("flatten-pdf", limitsOnly)).Failures).Message);
     }
 
     [Theory]
@@ -196,7 +212,7 @@ public class PdfPasswordTests
         Assert.Equal("That password isn't right.", Assert.Single(failed.Failures).Message);
         Assert.DoesNotContain(wrong, shown);
         var empty = Env.Offered(engine, "unlock-pdf", [locked]);
-        Assert.Equal("Password to open is needed.", Assert.Throws<ConversionException>(() => empty.Password("password")).Message);
+        Assert.Equal("Password is needed.", Assert.Throws<ConversionException>(() => empty.Password("password")).Message);
 
         // tanj options and targets print no password, not even one given.
         var printed = new StringWriter();
@@ -238,7 +254,7 @@ public class PdfPasswordTests
         Assert.True(Tanj.Passwords.Fill(protect, values = [], TextReader.Null, errors = new StringWriter(), ask: null));
         Assert.False(values.ContainsKey("password"));
         Assert.False(Tanj.Passwords.Fill(unlock, [], TextReader.Null, errors, ask: null));
-        Assert.Equal("--password (Password to open) is needed; --password=- reads it from standard input.", errors.ToString().Trim());
+        Assert.Equal("--password (Password) is needed; --password=- reads it from standard input.", errors.ToString().Trim());
 
         // Typed on the command line it works, with a warning that names the setting, never the password.
         values = new Dictionary<string, string> { ["password"] = Open };

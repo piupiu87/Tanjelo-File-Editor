@@ -97,6 +97,57 @@ public class FlattenPdfTests
     }
 
     [Fact]
+    public async Task Without_being_asked_to_draw_its_fields_a_form_keeps_their_own_look()
+    {
+        using var scratch = new Scratch();
+        var pdf = scratch.FormPdf("form.pdf");
+        using (var document = PdfReader.Open(pdf, PdfDocumentOpenMode.Modify))
+        {
+            // The look says one thing and the value another; with no /NeedAppearances, readers show the look.
+            RawPdf.Appearance(document, Annotations(document)[0], 200, 20, "/Tx BMC q BT /Helv 12 Tf 0 g 2 6 Td (Old value) Tj ET Q EMC");
+            document.Save(pdf);
+        }
+
+        var output = Assert.Single((await Flatten(pdf)).Outputs);
+
+        using var flattened = PigDocument.Open(output);
+        var words = flattened.GetPage(1).GetWords().Select(w => w.Text).ToList();
+        Assert.Contains("Old", words);
+        Assert.DoesNotContain("Filled", words);
+    }
+
+    [Fact]
+    public async Task A_combo_box_shows_the_text_of_the_option_chosen()
+    {
+        using var scratch = new Scratch();
+        var pdf = scratch.FormPdf("form.pdf", needAppearances: true);
+        using (var document = PdfReader.Open(pdf, PdfDocumentOpenMode.Modify))
+        {
+            // Options that set a short value and show a longer text; chosen as "nl", with an old look of another choice.
+            var combo = RawPdf.Annotation(document, document.Pages[0], "/Widget", 100, 550, 300, 570);
+            combo.Elements["/FT"] = new PdfName("/Ch");
+            combo.Elements["/T"] = new PdfString("country");
+            combo.Elements.SetInteger("/Ff", 1 << 17);
+            var options = new PdfArray(document);
+            foreach (var (set, shown) in new[] { ("fr", "France"), ("nl", "Netherlands") })
+                options.Elements.Add(new PdfArray(document, new PdfString(set), new PdfString(shown)));
+            combo.Elements["/Opt"] = options;
+            combo.Elements["/V"] = new PdfString("nl");
+            combo.Elements["/DA"] = new PdfString("/Helv 12 Tf 0 g");
+            RawPdf.Appearance(document, combo, 200, 20, "/Tx BMC q BT /Helv 12 Tf 0 g 2 6 Td (France) Tj ET Q EMC");
+            document.Internals.Catalog.Elements.GetDictionary("/AcroForm")!.Elements.GetArray("/Fields")!.Elements.Add(combo.Reference!);
+            document.Save(pdf);
+        }
+
+        var output = Assert.Single((await Flatten(pdf)).Outputs);
+
+        using var flattened = PigDocument.Open(output);
+        var words = flattened.GetPage(1).GetWords().Select(w => w.Text).ToList();
+        Assert.Contains("Netherlands", words);
+        Assert.DoesNotContain("France", words);
+    }
+
+    [Fact]
     public async Task A_password_fields_value_is_never_drawn()
     {
         using var scratch = new Scratch();
